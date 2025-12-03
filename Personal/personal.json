@@ -1,0 +1,432 @@
+{
+  "profile_metadata": {
+    "category": "personal",
+    "last_updated": "2025-12-03",
+    "version": "1.0"
+  },
+  
+  "identity": {
+    "level_1": "Alex Rivera, they/them, Creative technologist and weekend rock climber",
+    "level_2": {
+      "name": "Alex Rivera",
+      "pronouns": ["they", "them"],
+      "age": 32,
+      "personality_type": "Creative problem-solver, introverted but warm",
+      "core_values": ["Authenticity", "Growth", "Connection"]
+    },
+    "level_3": {
+      "name": "Alex Rivera",
+      "pronouns": ["they", "them"],
+      "age": 32,
+      "date_of_birth": "1993-06-15",
+      "personality": {
+        "mbti": "INFP",
+        "enneagram": "Type 4 (The Individualist)",
+        "traits": ["Introspective", "Creative", "Empathetic", "Detail-oriented", "Quietly ambitious"],
+        "communication_style": "Thoughtful and measured, prefers written over verbal",
+        "conflict_style": "Avoidant initially, but direct when values are threatened"
+      },
+      "core_values": {
+        "primary": ["Authenticity", "Personal growth", "Deep connection"],
+        "secondary": ["Creative expression", "Mental health awareness", "Environmental sustainability"]
+      },
+      "identity_journey": {
+        "gender": "Non-binary, came out at 28",
+        "experience": "Navigating identity with curiosity and self-compassion",
+        "growth_areas": ["Setting boundaries", "Embracing visibility", "Trusting intuition"]
+      }
+    }
+  },
+  
+  "relationships": {
+    "level_1": "Partner Jordan (5 years), close with sister Maya, tight friend group of 4",
+    "level_2": {
+      "partner": {
+        "name": "Jordan",
+        "relationship_length": "5 years",
+        "relationship_style": "Supportive, collaborative, shared growth"
+      },
+      "family": ["Sister Maya (best friend)", "Parents (supportive but learning)"],
+      "friends": ["Core group of 4 close friends", "Weekly game nights"]
+    },
+    "level_3": {
+      "partner": {
+        "name": "Jordan Chen",
+        "pronouns": ["she", "her"],
+        "relationship_length": "5 years, 3 months",
+        "met": "At a tech meetup in 2019",
+        "relationship_style": "Secure attachment, collaborative decision-making",
+        "shared_interests": ["Hiking", "Cooking", "Documentary films", "Board games"],
+        "future_plans": ["Discussing marriage", "Possibly adopting a dog", "Long-term: considering kids"],
+        "love_languages": {
+          "alex": "Quality time, Words of affirmation",
+          "jordan": "Acts of service, Physical touch"
+        },
+        "conflict_patterns": "Both tend to overthink, need to schedule check-ins to prevent buildup"
+      },
+      "family": {
+        "sister": {
+          "name": "Maya Rivera",
+          "age": 29,
+          "relationship": "Best friend, confidant, protective of each other",
+          "contact_frequency": "Daily texts, weekly video calls"
+        },
+        "parents": {
+          "status": "Supportive but still learning about non-binary identity",
+          "contact_frequency": "Biweekly calls, monthly visits",
+          "dynamics": "Better boundaries established after coming out"
+        },
+        "extended": "Close with maternal grandmother, several cousins"
+      },
+      "friends": {
+        "core_group": [
+          {"name": "Sam", "known_since": "College", "role": "Adventure buddy"},
+          {"name": "Priya", "known_since": "First job", "role": "Career mentor"},
+          {"name": "Marcus", "known_since": "Climbing gym", "role": "Emotional support"},
+          {"name": "Jen", "known_since": "2020", "role": "Creative collaborator"}
+        ],
+        "social_patterns": {
+          "weekly": "Game nights or climbing sessions",
+          "monthly": "Dinner parties, group hikes",
+          "recharge_needs": "Needs alone time after social events, even with close friends"
+        }
+      },
+      "relationship_patterns": {
+        "attachment_style": "Anxious-secure (working toward fully secure)",
+        "boundaries": "Getting better at saying no, still a work in progress",
+        "emotional_needs": ["Reassurance", "Quality time", "Space to process"],
+        "giving_style": ["Active listening", "Thoughtful gestures", "Helping with projects"]
+      }
+    }
+  },
+  
+  "hobbies_interests": {
+    "level_1": "Rock climbing, reading sci-fi, cooking, journaling, meditation",
+    "level_2": {
+      "active_hobbies": ["Indoor/outdoor rock climbing (3x/week)", "Hiking", "Yoga"],
+      "creative_outlets": ["Digital art", "Writing poetry", "Cooking experiments"],
+      "intellectual_interests": ["Sci-fi novels", "Philosophy podcasts", "Urban design"],
+      "wellness_practices": ["Morning meditation (15 min)", "Evening journaling", "Therapy (biweekly)"]
+    },
+    "level_3": {
+      "rock_climbing": {
+        "frequency": "3-4 times per week",
+        "style": ["Bouldering (primary)", "Sport climbing (occasional)"],
+        "current_level": "V5-V6 bouldering, 5.11a sport",
+        "goals": "Send first V7 by end of year, outdoor lead climbing certification",
+        "community": "Regular climbing partner (Marcus), gym community friendships",
+        "equipment": "Evolv Shaman shoes, Black Diamond harness, personal rope"
+      },
+      "reading": {
+        "genres": ["Science fiction", "Speculative fiction", "Memoirs", "Poetry"],
+        "current_reads": ["Project Hail Mary", "Minor Feelings by Cathy Park Hong"],
+        "reading_goal": "52 books/year (currently at 38)",
+        "favorite_authors": ["N.K. Jemisin", "Ted Chiang", "Ocean Vuong"],
+        "reading_habits": "30-60 minutes before bed, audiobooks during commute"
+      },
+      "cooking": {
+        "skill_level": "Advanced home cook",
+        "specialties": ["Asian fusion", "Fermentation", "Bread baking"],
+        "frequency": "5-6 dinners/week at home",
+        "current_project": "Sourdough starter maintenance, experimenting with Korean banchan",
+        "cooking_philosophy": "Intuitive, improvisational, ingredient-focused"
+      },
+      "creative_practices": {
+        "digital_art": {
+          "tools": ["Procreate on iPad", "Occasional Figma"],
+          "style": "Abstract, geometric, nature-inspired",
+          "frequency": "Weekly sketching sessions",
+          "sharing": "Private Instagram for close friends"
+        },
+        "writing": {
+          "types": ["Poetry", "Personal essays", "Morning pages"],
+          "frequency": "Daily journaling, sporadic poetry",
+          "goals": "Submit to literary magazines this year"
+        }
+      },
+      "wellness_routine": {
+        "morning": ["15-min meditation (Insight Timer)", "Stretching", "Journaling (5 min)"],
+        "evening": ["Gratitude practice", "Reading", "Wind-down routine"],
+        "therapy": "Biweekly sessions focused on identity, relationships, anxiety management",
+        "mental_health": "Managing generalized anxiety, strong coping toolkit"
+      },
+      "learning_interests": {
+        "current": ["Spanish (Duolingo daily)", "Film photography basics"],
+        "future": ["Woodworking", "Wilderness first aid", "Urban foraging"]
+      }
+    }
+  },
+  
+  "health_wellness": {
+    "level_1": "Active lifestyle, therapy every 2 weeks, managing anxiety, good sleep hygiene",
+    "level_2": {
+      "physical_health": "Generally healthy, active, monitors sleep and nutrition",
+      "mental_health": "Generalized anxiety disorder, managed with therapy and coping strategies",
+      "healthcare": "Regular checkups, biweekly therapy",
+      "fitness_routine": "Climbing 3x/week, yoga 2x/week, daily walks"
+    },
+    "level_3": {
+      "physical_health": {
+        "general_status": "Healthy, active, no major conditions",
+        "fitness_level": "High - climbing and regular yoga practice",
+        "diet": "Flexitarian, mostly plant-based, occasional fish",
+        "sleep": {
+          "target": "7-8 hours",
+          "actual": "Usually 7 hours",
+          "quality": "Good with consistent bedtime routine",
+          "struggles": "Occasional anxiety-driven insomnia"
+        },
+        "chronic_conditions": "None",
+        "medications": "Multivitamin, vitamin D (winter)",
+        "healthcare_providers": ["Primary care physician", "Therapist", "Dentist"]
+      },
+      "mental_health": {
+        "diagnoses": ["Generalized Anxiety Disorder (diagnosed 2019)"],
+        "management": {
+          "therapy": "Biweekly CBT sessions with Dr. Sarah Thompson",
+          "medication": "Not currently medicated, open to discussion",
+          "coping_strategies": [
+            "Grounding exercises (5-4-3-2-1)",
+            "Journaling when spiraling",
+            "Physical movement (climbing helps most)",
+            "Reaching out to support network",
+            "Meditation and breathwork"
+          ]
+        },
+        "triggers": ["Work deadline pressure", "Social comparison", "Identity invalidation"],
+        "strengths": ["Self-aware", "Proactive about mental health", "Strong support system"],
+        "therapy_goals": ["Setting boundaries", "Reducing people-pleasing", "Body neutrality"]
+      },
+      "wellness_practices": {
+        "daily": ["Morning meditation", "Journaling", "Movement (walk/climb/yoga)"],
+        "weekly": ["Therapy", "Meal prep Sunday", "Friend connection"],
+        "monthly": ["Reflection journal review", "Self-assessment check-in"],
+        "self_care_priorities": ["Alone time", "Creative expression", "Nature time", "Quality sleep"]
+      }
+    }
+  },
+  
+  "daily_routine": {
+    "level_1": "Morning person, structured weekdays, flexible weekends, values evening wind-down time",
+    "level_2": {
+      "morning": "6:30am wake, meditation, light breakfast, work by 8:30am",
+      "workday": "Focused morning blocks, lunch break walk, afternoon collaboration",
+      "evening": "Cooking, quality time with Jordan, reading, 10:30pm bedtime",
+      "weekend": "Sleep in, climbing, meal prep, social activities"
+    },
+    "level_3": {
+      "weekday_routine": {
+        "morning": [
+          "6:30am - Wake up, no snooze",
+          "6:35-6:50am - Meditation and light stretching",
+          "6:50-7:15am - Shower, get ready",
+          "7:15-7:45am - Light breakfast (oatmeal or smoothie), coffee",
+          "7:45-8:15am - Morning pages journaling",
+          "8:15-8:30am - Commute prep or start work (hybrid schedule)"
+        ],
+        "work_hours": {
+          "schedule": "8:30am - 5:00pm",
+          "peak_productivity": "9:00am - 12:00pm",
+          "lunch": "12:30pm - 1:15pm (usually a walk + packed lunch)",
+          "afternoon_slump": "2:00-3:00pm (tea break, light tasks)",
+          "end_of_day": "Review tomorrow's priorities, close laptop by 5:15pm"
+        },
+        "evening": [
+          "5:30-7:00pm - Decompress (climbing/yoga/reading/cooking)",
+          "7:00-8:00pm - Dinner with Jordan",
+          "8:00-9:30pm - Shared activity (show, game, conversation) or personal time",
+          "9:30-10:30pm - Wind-down routine (skincare, reading, journaling)",
+          "10:30pm - Lights out"
+        ]
+      },
+      "weekend_routine": {
+        "saturday": "Sleep until 8am, climbing morning, errands/social afternoon, relaxed evening",
+        "sunday": "Slow morning, meal prep, creative projects, plan week ahead",
+        "flexibility": "Weekends are more fluid, follows energy rather than schedule"
+      },
+      "routine_preferences": {
+        "needs_structure": "Weekday mornings and bedtime",
+        "needs_flexibility": "Evenings and weekends",
+        "non_negotiables": ["Morning meditation", "8 hours between work", "Bedtime routine"],
+        "energy_management": "Protects mornings for deep work, afternoons for collaboration"
+      }
+    }
+  },
+  
+  "living_situation": {
+    "level_1": "1BR apartment with Jordan in Portland, cozy and plant-filled",
+    "level_2": {
+      "location": "Portland, Oregon - SE neighborhood",
+      "home_type": "1-bedroom apartment, 850 sq ft",
+      "living_with": "Partner Jordan",
+      "neighborhood": "Walkable, bike-friendly, close to parks and cafes"
+    },
+    "level_3": {
+      "current_home": {
+        "location": "Southeast Portland, Oregon",
+        "address_type": "Apartment, 3rd floor walk-up",
+        "size": "850 sq ft, 1 bed/1 bath",
+        "rent": "$1,650/month (split with Jordan)",
+        "lease": "Month-to-month (lived here 3 years)",
+        "move_in_date": "2022-09-01"
+      },
+      "home_vibe": {
+        "style": "Cozy maximalist - plants everywhere, art on walls, warm lighting",
+        "favorite_spaces": ["Reading nook by window", "Small balcony herb garden"],
+        "shared_spaces": "Kitchen is heart of home, collaborative cooking space",
+        "personal_space": "Small desk in corner of bedroom for creative work"
+      },
+      "neighborhood": {
+        "area": "Southeast Portland - Hawthorne/Division area",
+        "walkability": "95/100 - everything within 15-min walk",
+        "favorites": [
+          "Climbing gym (10-min bike)",
+          "Powell's Books (15-min drive)",
+          "Mt. Tabor Park (5-min bike)",
+          "Favorite coffee shop: Heart Coffee"
+        ],
+        "community": "Friendly, queer-inclusive, lots of artists and creatives"
+      },
+      "future_housing": {
+        "timeline": "Considering buying in 2-3 years",
+        "preferences": "2-bed (for home office), outdoor space, same neighborhood",
+        "constraints": "Portland housing market is expensive, need to save more"
+      },
+      "transportation": {
+        "primary": "Bike for local, bus for longer trips",
+        "owns_car": "No - occasional car rental for outdoor trips",
+        "commute": "Hybrid work, bike to office 15 minutes when in-person"
+      }
+    }
+  },
+  
+  "preferences_quirks": {
+    "level_1": "Morning person, needs quiet time to recharge, loves cozy spaces, tea over coffee",
+    "level_2": {
+      "sensory_preferences": ["Warm lighting", "Soft textures", "Ambient music", "Herbal tea"],
+      "social_energy": "Introvert who needs recovery time after socializing",
+      "decision_making": "Deliberate, needs time to process, values pros/cons lists",
+      "quirks": ["Cannot stand styrofoam sounds", "Organizes books by color", "Names all plants"]
+    },
+    "level_3": {
+      "sensory_profile": {
+        "lighting": "Hates overhead fluorescents, prefers warm lamps and natural light",
+        "sound": "Easily overstimulated by loud environments, loves rain sounds",
+        "texture": "Loves soft blankets, weighted comforter, smooth ceramics",
+        "temperature": "Runs cold, always has cardigan nearby",
+        "scent": "Loves lavender, eucalyptus, fresh bread, burning sage"
+      },
+      "food_preferences": {
+        "loves": ["Spicy food", "Fermented things", "Fresh herbs", "Sourdough bread"],
+        "dislikes": ["Cilantro (tastes like soap)", "Artificial sweeteners", "Mushy vegetables"],
+        "dietary_notes": "Flexitarian, mostly plant-based, will eat sustainably sourced fish",
+        "cooking_style": "Intuitive, ingredient-led, loves making kimchi and pickles"
+      },
+      "social_patterns": {
+        "group_size": "Prefers 1-on-1 or small groups (max 6)",
+        "socializing_frequency": "2-3 social events per week is ideal, more is draining",
+        "recharge_needs": "At least 2 full evenings alone per week",
+        "introvert_strategies": ["Irish goodbye at parties", "Scheduled end times", "Quiet corner seeking"]
+      },
+      "decision_making_style": {
+        "process": "Needs time to think, makes pros/cons lists, talks it through with Jordan",
+        "big_decisions": "Takes weeks to months, researches extensively",
+        "small_decisions": "Still deliberates (analysis paralysis on restaurant choices)",
+        "values_in_decisions": ["Alignment with values", "Long-term impact", "Gut feeling after analysis"]
+      },
+      "quirks_habits": {
+        "endearing": [
+          "Names all plants (Current: Phillip the Philodendron, Fern Gully)",
+          "Organizes books by color, then by 'vibe'",
+          "Makes elaborate tea rituals",
+          "Talks to plants while watering",
+          "Collects cool rocks from hikes"
+        ],
+        "annoying_to_self": [
+          "Overthinks everything",
+          "Struggles to make quick decisions",
+          "Apologizes too much (working on it)",
+          "Checks locks multiple times"
+        ],
+        "cannot_stand": [
+          "Styrofoam squeaking sounds (visceral reaction)",
+          "People chewing with mouth open",
+          "Aggressive drivers",
+          "Inauthentic small talk"
+        ]
+      },
+      "comfort_items": {
+        "objects": ["Weighted blanket", "Favorite mug", "Journal and good pen"],
+        "activities": ["Hot bath with epsom salts", "Rewatching comfort shows", "Baking bread"],
+        "places": ["Reading nook", "Mt. Tabor summit", "Local bookstore café"]
+      }
+    }
+  },
+  
+  "values_beliefs": {
+    "level_1": "Authenticity, growth mindset, environmentalism, social justice, kindness",
+    "level_2": {
+      "core_values": ["Authenticity", "Continuous growth", "Deep connection", "Environmental care"],
+      "political_stance": "Progressive, intersectional feminist, LGBTQ+ advocate",
+      "spiritual_beliefs": "Secular humanist with Buddhist-influenced mindfulness practice",
+      "giving_back": "Monthly donations, volunteer at LGBTQ+ youth center quarterly"
+    },
+    "level_3": {
+      "core_values_detailed": {
+        "authenticity": {
+          "why_it_matters": "Spent too long hiding parts of self, now values radical honesty",
+          "in_practice": "Coming out as non-binary, setting boundaries, living visibly",
+          "struggles": "Balancing authenticity with privacy, not everyone deserves full story"
+        },
+        "growth": {
+          "why_it_matters": "Believes people can change, has seen own transformation",
+          "in_practice": "Therapy, reading, trying new things, reflecting on mistakes",
+          "struggles": "Can be too hard on self, forgets to celebrate progress"
+        },
+        "connection": {
+          "why_it_matters": "Quality relationships are core to happiness and meaning",
+          "in_practice": "Prioritizes deep friendships, present with Jordan, vulnerable with trust",
+          "struggles": "Limited social energy means saying no to more shallow connections"
+        },
+        "environmentalism": {
+          "why_it_matters": "Loves nature, feels responsibility to protect it for future",
+          "in_practice": "Low-waste lifestyle, local food, bike transport, advocacy",
+          "struggles": "Systemic change needed, individual action feels insufficient"
+        }
+      },
+      "political_social_stance": {
+        "general": "Progressive, believes in collective care and systemic change",
+        "key_issues": [
+          "LGBTQ+ rights and visibility",
+          "Racial justice and equity",
+          "Environmental policy and climate action",
+          "Accessible mental healthcare",
+          "Housing affordability"
+        ],
+        "activism_level": "Moderate - donates, votes, occasional protests, educates others",
+        "voting": "Always votes, researches down-ballot candidates",
+        "media_diet": "Curated news (NPR, local papers), avoids doomscrolling"
+      },
+      "spiritual_philosophical": {
+        "framework": "Secular humanist with Buddhist-influenced mindfulness",
+        "beliefs_about_meaning": "Life has the meaning we create through connection and contribution",
+        "death_perspective": "Makes peace through legacy of impact on others",
+        "daily_practice": "Meditation, gratitude, presence",
+        "reads": "Buddhist philosophy, Stoicism, nature writing",
+        "not_aligned_with": "Organized religion, but respects others' beliefs"
+      },
+      "giving_back": {
+        "financial": "Monthly donations to ACLU, local LGBTQ+ center, environmental nonprofits",
+        "time": "Quarterly volunteer shifts at LGBTQ+ youth support drop-in",
+        "skills": "Offers free tech help to nonprofits occasionally",
+        "future_goals": "Increase giving as income grows, maybe board service someday"
+      },
+      "ethical_framework": {
+        "decision_test": "Does this align with my values? Does it harm others? Can I live with it?",
+        "gray_areas": "Believes in nuance, context matters, no absolute rules",
+        "accountability": "Takes responsibility, apologizes and repairs when wrong",
+        "growth": "Former self was more judgmental, now practices compassion"
+      }
+    }
+  }
+}
