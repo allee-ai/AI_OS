@@ -17,17 +17,65 @@ class Agent:
 	Also serves as the chat agent with identity, introspection, and generation.
 	"""
 	
-	def __init__(self, path: Path = STATE_FILE):
+	def __init__(self, path: Path = STATE_FILE, auto_bootstrap: bool = True):
 		self._path = path
 		self._lock = Lock()
+		self._bootstrapped = False
+		self._auto_bootstrap = auto_bootstrap
 		self._state_str = self._load()
+	
+	def bootstrap(self, context_level: int = 2, force: bool = False) -> dict:
+		"""Sync the full state hierarchy from source files.
+		
+		Pushes data through: machineID.json/user.json → identity.json → Nola.json
+		
+		Args:
+			context_level: Detail level (1=minimal, 2=moderate, 3=full)
+			force: If True, re-bootstrap even if already done
+		
+		Returns:
+			The current state dict after bootstrap
+		"""
+		if self._bootstrapped and not force:
+			return self.get_state()
+		
+		try:
+			# Import here to avoid circular imports at module load time
+			from identity_thread.machineID.machineID import push_machine
+			from identity_thread.userID.user import push_user
+			from identity_thread.identity import push_identity
+			
+			# Step 1: Push from raw files → identity.json
+			push_machine(context_level=context_level)
+			push_user(context_level=context_level)
+			
+			# Step 2: Push from identity.json → Nola.json
+			push_identity(context_level=context_level)
+			
+			# Reload to pick up changes
+			self.reload_state()
+			self._bootstrapped = True
+			
+		except Exception as e:
+			# If bootstrap fails (missing files, etc.), continue with existing state
+			# This allows the agent to work even if identity modules aren't set up
+			pass
+		
+		return self.get_state()
+	
+	def _ensure_bootstrapped(self):
+		"""Lazy bootstrap on first real access if auto_bootstrap is enabled."""
+		if self._auto_bootstrap and not self._bootstrapped:
+			self.bootstrap()
 	
 	@property
 	def name(self) -> str:
 		"""Return the agent's name from state or default."""
 		state = self.get_state()
 		identity = state.get("IdentityConfig", {})
-		return identity.get("name", "Nola")
+		# Identity may be stored as {"metadata":..., "data": {...}} or as plain dict
+		identity_data = identity.get("data", identity)
+		return identity_data.get("name", "Nola")
 	
 	def _load(self) -> str:
 		"""Load the contents of the state file and return as string."""
@@ -135,7 +183,7 @@ class Agent:
 			"conversation_state": state.get("conversation_state", {}),
 		}
 	
-	def generate(self, user_input: str, convo: str = "") -> str:
+	def generate(self, user_input: str, convo: str = "", stimuli_type: str = "realtime") -> str:
 		"""Generate a response to user input using Ollama.
 		
 		Args:
@@ -150,9 +198,20 @@ class Agent:
 		except ImportError:
 			return "[Error: ollama package not installed. Run: pip install ollama]"
 		
-		# Build system prompt from state
-		state = self.get_state()
-		identity = state.get("IdentityConfig", {})
+		# Ensure identity is synced for this stimuli type (best-effort)
+		try:
+			from identity_thread.identity import sync_for_stimuli
+			# ask identity layer to prepare appropriate context
+			sync_for_stimuli(stimuli_type)
+		except Exception:
+			# ignore if identity module not available
+			pass
+
+		# Reload state to pick up any recent pushes
+		state = self.get_state(reload=True)
+		identity_section = state.get("IdentityConfig", {})
+		# Support both new {metadata,data} and legacy flat formats
+		identity = identity_section.get("data", identity_section)
 		
 		system_prompt = f"""You are {self.name}, a helpful AI assistant.
 Your identity config: {json.dumps(identity, indent=2)}
@@ -170,20 +229,24 @@ Respond naturally and helpfully to the user."""
 		
 		try:
 			response = ollama.chat(
-				model="llama3.2",  # adjust model as needed
+				model="gpt-oss:20b-cloud",  # adjust model as needed
 				messages=messages
 			)
 			return response['message']['content']
 		except Exception as e:
 			return f"[Error generating response: {e}]"
 
-
 # Module-level singleton instance
 agent = Agent()
 
 
 def get_agent() -> Agent:
-	"""Return the module-level Agent singleton."""
+	"""Return the module-level Agent singleton.
+	
+	Ensures the singleton is bootstrapped (full sync chain) on first call.
+	To force a re-bootstrap, call agent.bootstrap(force=True).
+	"""
+	agent._ensure_bootstrapped()
 	return agent
 
 

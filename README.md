@@ -1,8 +1,8 @@
-# Personal AI with Layered Memory
+# Nola — Personal AI with Hierarchical State
 
-**A model-agnostic personal AI that learns you efficiently.**
+**A model-agnostic personal AI with thread-safe state management and metadata-driven sync.**
 
-Traditional chatbots either forget everything or dump your entire history into every conversation. This agent uses **layered context loading** - starting minimal and dynamically escalating depth only when the conversation demands it.
+Traditional chatbots either forget everything or dump your entire history into every conversation. Nola uses **hierarchical state architecture** — raw data modules sync through an identity aggregator into global runtime state, with metadata controlling the flow.
 
 ## The Problem
 
@@ -12,25 +12,47 @@ Traditional chatbots either forget everything or dump your entire history into e
 
 ## The Solution
 
-**3-Level Dynamic Context System:**
-- **Level 1** (Basic): "Alex works at TechCorp" → ~10 tokens
-- **Level 2** (Detailed): Active projects, schedules, relationships → ~50 tokens  
-- **Level 3** (Comprehensive): Full career history, team names, therapy notes → ~200 tokens
+**Hierarchical State + Metadata Contract:**
 
-The agent automatically escalates when you mention work/personal topics, then de-escalates after 2+ turns of irrelevant conversation.
+```
+Raw Data (machineID.json, user.json)
+    ↓ push with metadata
+Identity Aggregator (identity.json)
+    ↓ push with metadata  
+Global Runtime (Nola.json)
+    ↓
+Agent Singleton (thread-safe, auto-bootstrapped)
+```
+
+**3-Level Context System:**
+- **Level 1** (Minimal): Quick identity summary → ~10 tokens, realtime responses
+- **Level 2** (Moderate): Projects, schedule, relationships → ~50 tokens, default
+- **Level 3** (Full): Complete history, preferences, deep context → ~200 tokens, analytical
 
 ## Architecture
 
 ```
-agent.py           # Living cognitive entity (singleton)
-├── Personal/
-│   └── personal.json  # 3-level nested memory
-├── Work/
-│   └── work.json      # 3-level nested memory
-└── chat_demo.py       # Interactive demo with Ollama
+Nola/
+├── agent.py              # Thread-safe singleton with auto-bootstrap
+├── contract.py           # Metadata protocol for inter-thread communication
+├── Nola.json             # Global runtime state
+├── identity_thread/
+│   ├── identity.py       # Context aggregator (syncs submodules → Nola.json)
+│   ├── identity.json     # Aggregated identity data
+│   ├── machineID/
+│   │   ├── machineID.py  # Machine info module
+│   │   └── machineID.json
+│   └── userID/
+│       ├── user.py       # User info module
+│       └── user.json
+├── Stimuli/              # External stimuli control
+│   ├── comms/            # Phone, email modules
+│   └── conversations/    # Chat history storage
+├── chat_demo.py          # Interactive demo
+└── utils.py              # Shared helpers
 ```
 
-**Key Innovation:** Global state isn't static JSON - it's a living Python object that modules write to and sessions read from. Context depth adjusts in real-time based on conversation relevance.
+**Key Innovation:** Metadata is the control plane, config sections are the data plane. Modules signal sync needs via `needs_sync` flag, and the Agent auto-bootstraps the full chain on first access.
 
 ## Quick Start
 
@@ -38,90 +60,130 @@ agent.py           # Living cognitive entity (singleton)
 # Install dependencies
 pip install ollama
 
-# Pull model (or use any Ollama model)
-ollama pull gpt-oss:20b-cloud
 
 # Run the demo
 python chat_demo.py
 ```
 
+Or use the Agent directly:
+
+```python
+from agent import get_agent
+
+agent = get_agent()  # Auto-bootstraps on first call
+print(agent.name)
+response = agent.generate("Hello!", stimuli_type="realtime")
+```
+
 ## Example Conversation
 
 ```
-You: Hi Alex!
-Alex: Hey there! Hope your day's off to a great start.
+You: Hi Nola!
+Nola: Hey there! Hope your day's off to a great start.
 
 You: Work has me stressed
-🧠 ⬆️ Escalating work context: level 1 → 2
-Alex: I hear you—you're juggling the Cognitive Agent Framework 
+🧠 ⬆️ Escalating context: level 1 → 2
+Nola: I hear you—you're juggling the Cognitive Agent Framework 
       rollout and sprint deadlines. Let's talk through it...
 
 You: Tell me a joke
-[2 turns later, work context de-escalates back to level 1]
+[2 turns later, context de-escalates back to level 1]
 ```
 
 ## Features
 
-✅ **Model-agnostic** - Works with GPT, Claude, Llama, any LLM  
-✅ **Token-efficient** - Only loads depth when needed  
-✅ **Transparent** - You control what's remembered  
-✅ **Dynamic escalation** - Detects relevant topics automatically  
-✅ **Auto de-escalation** - Reduces context when topics shift  
+✅ **Thread-safe singleton** - Atomic reads/writes with Lock  
+✅ **Auto-bootstrap** - `get_agent()` syncs full state chain on first call  
+✅ **Metadata contract** - Modules communicate via standardized protocol  
+✅ **Hierarchical sync** - Raw data → aggregator → global state  
+✅ **Model-agnostic** - Works with any Ollama model  
+✅ **Context levels** - 1=minimal, 2=moderate, 3=full  
 ✅ **User-owned data** - Your data, your machine, no vendor lock-in
 
 ## How It Works
 
-1. **Bootstrap**: Agent loads level 1 context from all modules
-2. **Conversation**: User message triggers keyword detection
-3. **Escalation**: Relevant topics auto-load level 2 or 3 context
-4. **Generation**: LLM receives only current context depth
-5. **De-escalation**: After 2+ irrelevant turns, context reduces to level 1
+1. **Bootstrap**: `get_agent()` triggers full sync chain (machineID → identity → Nola.json)
+2. **Metadata Check**: Each module has `{metadata: {...}, data: {...}}` structure
+3. **Sync Protocol**: Modules set `needs_sync: true`, parent pulls and aggregates
+4. **Generation**: Agent builds system prompt from current IdentityConfig
+5. **Context Control**: `stimuli_type` parameter selects depth (realtime=1, analytical=3)
 
-## File Structure
+## Metadata Contract
 
-**`agent.py`** - The living agent
-- `_bootstrap()` - Loads initial level 1 context
-- `set_context_depth()` - Escalates/de-escalates dynamically
-- `generate()` - Calls LLM with current context
+All state sections follow this structure:
 
-**`Personal/personal.json`** - Layered personal memory
-- Identity, relationships, hobbies, health, routine, preferences, values
-- Each section has level_1 (summary), level_2 (details), level_3 (comprehensive)
+```json
+{
+  "metadata": {
+    "last_updated": "2025-12-13T10:00:00+00:00",
+    "context_level": 2,
+    "status": "ready",
+    "needs_sync": false,
+    "stale_threshold_seconds": 600,
+    "source_file": "identity_thread/identity.json"
+  },
+  "data": {
+    "machineID": { ... },
+    "userID": { ... }
+  }
+}
+```
 
-**`Work/work.json`** - Layered work memory  
-- Role, projects, expertise, schedule, collaboration, relationships, goals
-- Same 3-level nested structure
+**contract.py** provides helpers:
+- `create_metadata()` - Generate standard metadata dict
+- `should_sync()` - Check if module needs refresh
+- `is_stale()` - Check if data exceeded age threshold
+- `mark_synced()` - Clear needs_sync flag
+- `request_sync()` - Signal parent to pull
 
-**`chat_demo.py`** - Interactive demo
-- `manage_context_depth()` - Keyword detection + escalation/de-escalation logic
-- `chat()` - Main conversation loop
+## Agent API
+
+```python
+from agent import get_agent
+
+agent = get_agent()
+
+# Properties
+agent.name                    # "Nola"
+agent.system_state            # Raw JSON string
+
+# State management
+agent.get_state(reload=True)  # Get parsed dict
+agent.set_state("section", {})# Update top-level section atomically
+agent.reload_state()          # Force reload from disk
+
+# Bootstrap
+agent.bootstrap(context_level=2, force=True)  # Re-sync full chain
+
+# Generation
+agent.generate(user_input, stimuli_type="realtime", convo=None)
+agent.introspect(prompt)      # Self-reflection without history
+```
 
 ## Customization
 
-Edit the JSON files to match your own profile:
+1. **Machine identity**: Edit `identity_thread/machineID/machineID.json`
+2. **User identity**: Edit `identity_thread/userID/user.json`
+3. **Run sync**: `get_agent().bootstrap(force=True)` or restart Python
 
-1. **Personal context**: Update `Personal/personal.json` with your identity, relationships, hobbies, etc.
-2. **Work context**: Update `Work/work.json` with your role, projects, schedule, etc.
-3. **Adjust keywords**: Modify `manage_context_depth()` in `chat_demo.py` to match your topics
-
-Each section follows the pattern:
+Each raw file uses 3-level structure:
 ```json
 {
-  "section_name": {
-    "level_1": "Brief summary string",
+  "identity": {
+    "level_1": "Brief summary",
     "level_2": {"key": "More detail"},
     "level_3": {"key": {"nested": "Full depth"}}
   }
 }
 ```
 
-## Roadmap 
+## Roadmap
 
-- [ ] **Agent customization UI** - Set name, purpose, personality preferences
-- [ ] **Automatic profile generation** - Describe yourself, agent creates layered JSON
+- [ ] Agent customization UI
+- [ ] Automatic profile generation from description
 - [ ] Session persistence (save/resume conversations)
 - [ ] Background pulse system (autonomous reflection)
-- [ ] Module training (30k pairs → fine-tuned specialists)
+- [ ] Module training (fine-tuned specialists)
 - [ ] Multi-agent orchestration
 - [ ] Web UI
 
@@ -129,24 +191,13 @@ Each section follows the pattern:
 
 This is an **operating system for personal AI**, not just a chatbot. The LLM is the processor, but the agent architecture is what makes it yours.
 
-**Comparison:**
-
-| Feature | ChatGPT Memory | RAG Systems | This Agent |
-|---------|---------------|-------------|------------|
+| Feature | ChatGPT Memory | RAG Systems | Nola |
+|---------|---------------|-------------|------|
 | Token efficiency | ❌ Dumps everything | ⚠️ Retrieves many chunks | ✅ Dynamic depth |
 | User control | ❌ Black box | ⚠️ Partial | ✅ Full transparency |
+| Thread safety | ❌ N/A | ⚠️ Varies | ✅ Atomic operations |
+| State hierarchy | ❌ Flat | ⚠️ Flat | ✅ Layered sync |
 | Model flexibility | ❌ OpenAI only | ⚠️ Depends | ✅ Any model |
-| Scalability | ❌ Context limits | ⚠️ Expensive | ✅ Efficient |
-
-## Contributing
-
-This is a research prototype demonstrating layered context architecture. Contributions welcome!
-
-Ideas for v2:
-- Agent setup wizard (name, purpose, auto-generate profile)
-- More sophisticated escalation heuristics
-- Multi-modal memory (images, documents)
-- Cross-module reasoning
 
 ## License
 

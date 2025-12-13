@@ -19,3 +19,18 @@ new chat old chat functionality added with each chat having id name and seperate
 created thread system and moved personal/work to identity thread fixed imports
 changed personal to machineID 
 changed work to userID
+
+12/13/2025 V2 Architecture Overhaul
+- Agent class: thread-safe singleton with Lock, atomic file writes (tempfile + fsync + replace)
+- Added auto-bootstrap: get_agent() triggers full sync chain on first call
+- Created contract.py: metadata protocol for inter-thread communication
+  - create_metadata(), should_sync(), is_stale(), mark_synced(), request_sync()
+  - Metadata fields: last_updated, context_level, status, needs_sync, stale_threshold_seconds
+- Hierarchical state sync: machineID.json → identity.json → Nola.json
+- All identity modules updated to use metadata contract (identity.py, machineID.py, user.py)
+- JSON structure now: {metadata: {...}, data: {...}} per section
+- Context levels: 1=minimal (realtime), 2=moderate (default), 3=full (analytical)
+- Fixed chat_demo.py: extracted duplicate chat loop, fixed import bugs
+- Removed standalone bootstrap.py (now Agent.bootstrap() method)
+- Agent methods: get_state(), set_state(), reload_state(), bootstrap(), generate(), introspect()
+- Metadata = control plane, config sections = data plane

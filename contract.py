@@ -19,7 +19,7 @@ def create_metadata(
     context_level: int = 1,
     status: Literal["ready", "updating", "error", "stale"] = "ready",
     needs_sync: bool = False,
-    source_file: str = None,
+    source_file: str = None, # type: ignore
     stale_threshold_seconds: int = 600,
     **kwargs
 ) -> dict:

@@ -8,48 +8,28 @@ from agent import get_agent
 import json
 import os
 import tkinter as tk
-from tkinter import simpledialog, Listbox, END, SINGLE
+from tkinter import Listbox, END, SINGLE
 from utils import append_to_conversation, log
 
 
-def set_convo_id():
-    """Generate a unique conversation ID"""
-
+def set_convo_id() -> str:
+    """Generate a unique conversation ID."""
     from uuid import uuid4
-    convo_id = str(uuid4())
-    return convo_id
+    return str(uuid4())
 
-def name_convo():
+def name_convo() -> str:
+    """Prompt user for conversation name."""
     name = input("Enter a name for this conversation: ").strip()
-    if not name:
-        name = "Unnamed Conversation"
-    #later: name with llm
-    return name
+    return name if name else "Unnamed Conversation"
 
-def load_convo(convo_id: str, convo_name: str = ""):
-    """Load and continue an existing conversation by id."""
-    convo_path = f"Stimuli/{convo_id}.txt"
-    if not os.path.exists(convo_path):
-        print(f"Conversation file not found: {convo_path}")
-        return
-
-    # Read existing conversation
-    with open(convo_path, "r") as f:
-        history = f.read()
-
-    print("=" * 60)
-    print(f"Resuming Chat\nConversation ID: {convo_id}\nConversation Name: {convo_name}\nModel: gpt-oss:20b-cloud\n")
-    if history.strip():
-        print("Previous conversation:")
-        print(history[-2000:])  # Show last 2000 chars
-        print("..." if len(history) > 2000 else "")
-        print()
-
-    agent = get_agent()
-    print(f"👋 Agent '{agent.name}' is ready!")
-    print("   (Type 'quit' to exit, 'status' for agent info)")
-    print()
-
+def run_chat_loop(agent, convo_id: str, history: str = ""):
+    """Shared chat loop for both new and resumed conversations.
+    
+    Args:
+        agent: The Agent instance
+        convo_id: Conversation ID for logging
+        history: Previous conversation history (for context)
+    """
     while True:
         user_input = input("You: ").strip()
 
@@ -74,62 +54,68 @@ def load_convo(convo_id: str, convo_name: str = ""):
         print(response)
         print()
 
-        # Append to conversation file
+        # Append to conversation file and update history
         append_to_conversation(f"User: {user_input}", convo_id=convo_id)
         append_to_conversation(f"{agent.name}: {response}", convo_id=convo_id)
-    
-def new_chat():
-    convo_id = set_convo_id()
-    convo_name = name_convo()
-    #create file with id 
-    with open(f"Stimuli/{convo_id}.txt", "w") as convo_file:
-        convo_file.write("")
+        
+        # Update history for next turn
+        history += f"\nUser: {user_input}\n{agent.name}: {response}"
 
-    log(f"New conversation started: {convo_id}")
-    append_to_conversation(f"Conversation started, {convo_name}.", convo_id=convo_id)
-
+def print_chat_header(convo_id: str, convo_name: str, is_new: bool = True):
+    """Print chat session header."""
     print("=" * 60)
-    print(f"Interactive Chat with Layered Memory Agent\nConversation ID: {convo_id}\nConversation Name: {convo_name}\n Model: gpt-oss:20b-cloud\n")
+    mode = "Interactive Chat" if is_new else "Resuming Chat"
+    print(f"{mode}\nConversation ID: {convo_id}\nConversation Name: {convo_name}\nModel: llama3.2\n")
 
+def load_convo(convo_id: str, convo_name: str = ""):
+    """Load and continue an existing conversation by id."""
+    convo_path = f"Stimuli/{convo_id}.txt"
+    if not os.path.exists(convo_path):
+        print(f"Conversation file not found: {convo_path}")
+        return
+
+    # Read existing conversation
+    with open(convo_path, "r") as f:
+        history = f.read()
+
+    print_chat_header(convo_id, convo_name, is_new=False)
     
+    if history.strip():
+        print("Previous conversation:")
+        print(history[-2000:])
+        print("..." if len(history) > 2000 else "")
+        print()
+
     agent = get_agent()
     print(f"👋 Agent '{agent.name}' is ready!")
     print("   (Type 'quit' to exit, 'status' for agent info)")
     print()
-    
-    while True:
-        user_input = input("You: ").strip()
-        
-        if not user_input:
-            continue
-        
-        if user_input.lower() in ['quit', 'exit', 'q']:
-            print("\n👋 Goodbye!")
-            append_to_conversation("User ended the chat session.", convo_id=convo_id)
-            break
-        
-        if user_input.lower() == 'status':
-            print("\n🧠 Agent Status:")
-            print(json.dumps(agent.introspect(), indent=2))
-            append_to_conversation(f"Agent status requested: {json.dumps(agent.introspect())}", convo_id=convo_id)
-            print()
-            continue
-        
-    
-    
-        
-        # Generate response using agent's built-in method
-        print(f"\n{agent.name}: ", end="", flush=True)
-        response = agent.generate(user_input)
-        print(response)
-        print()
 
-        # Append to conversation file
-        append_to_conversation(f"User: {user_input}", convo_id=convo_id)
-        append_to_conversation(f"{agent.name}: {response}", convo_id=convo_id)
+    run_chat_loop(agent, convo_id, history)
 
+def new_chat():
+    """Start a new chat conversation."""
+    convo_id = set_convo_id()
+    convo_name = name_convo()
+    
+    # Create conversation file
+    os.makedirs("Stimuli", exist_ok=True)
+    with open(f"Stimuli/{convo_id}.txt", "w") as convo_file:
+        convo_file.write("")
 
-def get_old_chats():
+    log(f"New conversation started: {convo_id}\n")
+    append_to_conversation(f"Conversation started, {convo_name}.", convo_id=convo_id)
+
+    print_chat_header(convo_id, convo_name, is_new=True)
+
+    agent = get_agent()
+    print(f"👋 Agent '{agent.name}' is ready!")
+    print("   (Type 'quit' to exit, 'status' for agent info)")
+    print()
+
+    run_chat_loop(agent, convo_id, history="")
+
+def get_old_chats() -> list:
     """Load chats as list from Stimuli folder."""
     chats = []
     stimuli_path = "Stimuli"
@@ -137,22 +123,31 @@ def get_old_chats():
         return chats
 
     for filename in os.listdir(stimuli_path):
-        if filename.endswith(".txt") and filename != "conversation.txt" and filename != "readme.md":
+        if filename.endswith(".txt") and filename not in ("conversation.txt", "readme.md"):
             convo_id = filename.replace(".txt", "")
-            # Try to extract name from first line of file
             filepath = os.path.join(stimuli_path, filename)
             name = convo_id[:8]  # default: first 8 chars of id
+            
             try:
                 with open(filepath, "r") as f:
                     first_line = f.readline().strip()
-                    if first_line.startswith("Conversation started,"):
+                    # Parse JSON record if present
+                    if first_line.startswith("{"):
+                        record = json.loads(first_line)
+                        entry = record.get("entry", "")
+                        if entry.startswith("Conversation started,"):
+                            name = entry.replace("Conversation started,", "").strip().rstrip(".")
+                    elif first_line.startswith("Conversation started,"):
                         name = first_line.replace("Conversation started,", "").strip().rstrip(".")
             except Exception:
                 pass
+            
             chats.append({"id": convo_id, "name": name or convo_id[:8]})
+    
     return chats
 
-def show_chat_dialog(chats):
+
+def show_chat_dialog(chats: list):
     """Show a tkinter dialog to select from old chats."""
     selected = [None]
 
@@ -163,7 +158,7 @@ def show_chat_dialog(chats):
         root.destroy()
 
     def on_new():
-        selected[0] = "NEW" # type: ignore
+        selected[0] = "NEW"  # type: ignore
         root.destroy()
 
     root = tk.Tk()
@@ -186,7 +181,9 @@ def show_chat_dialog(chats):
     root.mainloop()
     return selected[0]
 
+
 def choose_chat():
+    """Main entry point - choose new or existing chat."""
     print("Select Chat Mode:")
     print("1. New Chat")
     print("2. Choose old chat")
@@ -201,7 +198,6 @@ def choose_chat():
             new_chat()
             return
 
-        # Show GUI dialog
         selected = show_chat_dialog(chats)
 
         if selected == "NEW" or selected is None:
@@ -211,5 +207,7 @@ def choose_chat():
     else:
         print("Invalid choice. Starting New Chat by default.")
         new_chat()
+
+
 if __name__ == "__main__":
     choose_chat()
