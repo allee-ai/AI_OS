@@ -1,0 +1,42 @@
+{
+  "metadata": {
+    "name": "Nola",
+    "version": "1.0",
+    "description": "An assistive AI designed to help users achieve their goals.",
+    "creation_date": "2025-12-07",
+    "author": "allee-ai",
+    "modules": [
+      "machineID",
+      "userID"
+    ],
+    "context_level": "1"
+  },
+  "machineID": {
+    "metadata": {
+      "last_updated": "2025-12-13T21:51:13.399764+00:00",
+      "context_level": 2,
+      "status": "ready",
+      "needs_sync": false,
+      "stale_threshold_seconds": 600,
+      "source_file": "/Users/cade/Desktop/Nola/identity_thread/machineID/machineID.json"
+    },
+    "data": {
+      "hostname": "test-machine",
+      "os": "macOS"
+    }
+  },
+  "userID": {
+    "metadata": {
+      "last_updated": "2025-12-13T21:51:13.400199+00:00",
+      "context_level": 1,
+      "status": "ready",
+      "needs_sync": false,
+      "stale_threshold_seconds": 600,
+      "source_file": "/Users/cade/Desktop/Nola/identity_thread/userID/user.json"
+    },
+    "data": {
+      "name": "test-user",
+      "role": "developer"
+    }
+  }
+}

@@ -115,7 +115,7 @@ Each section follows the pattern:
 }
 ```
 
-## Roadmap (v2)
+## Roadmap 
 
 - [ ] **Agent customization UI** - Set name, purpose, personality preferences
 - [ ] **Automatic profile generation** - Describe yourself, agent creates layered JSON
@@ -156,3 +156,4 @@ MIT
 
 **Built with:** Python 3.11+, Ollama, JSON-first design  
 **Philosophy:** Memory > vibes. Structure > scale. User > vendor.
+

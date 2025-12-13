@@ -1,0 +1,1 @@
+This directory stores outside stimuli for inference, current modules include comms, and cli conversations. 

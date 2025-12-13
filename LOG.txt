@@ -1,0 +1,21 @@
+created personal directory with personal.json and personal.py
+created work directory with work.json and work.py
+created cli ollama talk
+created context depth management from multiple directories
+
+12/7/2025 V2 updates
+Renamed agent to Nola change name = alex to name = nola in agent.py
+created Nola/LOG.txt to keep track of edits and intent
+created stimuli folder for external stimuli control for inference
+added phone module and email module to stimuli
+created utils.py dev functions for working inside agent
+append to conversation function added to utils 
+set chat id function
+2025-12-10T15:53:47.394008 - New conversation started: 116f2bb5-8b52-49c1-a3fa-b58f3d5e28cd
+2025-12-10T16:02:23.367895 - New conversation started: f261a28e-dba5-4429-8459-404579a3d283
+2025-12-10T16:04:35.626615 - New conversation started: ed74d76a-c5a9-4b36-9e0e-4b13f250c70a
+2025-12-10T16:50:21.541641 - New conversation started: dee4e7be-d7ea-4805-bb9d-3181469ca93a
+new chat old chat functionality added with each chat having id name and seperate file
+created thread system and moved personal/work to identity thread fixed imports
+changed personal to machineID 
+changed work to userID

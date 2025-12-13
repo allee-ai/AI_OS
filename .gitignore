@@ -3,3 +3,6 @@ __pycache__/
 
 # Ignore GitHub configuration directory
 .github/
+
+#ignore LOG files
+*.LOG
