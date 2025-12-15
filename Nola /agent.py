@@ -1,0 +1,277 @@
+# agent.py - State Manager for Nola.json
+
+import json
+from pathlib import Path
+from threading import Lock
+import tempfile
+import os
+
+
+STATE_FILE = Path("Nola.json")
+
+
+class Agent:
+	"""Thread-safe state manager for Nola.json.
+	
+	Provides atomic read/write access to top-level sections of the JSON file.
+	Also serves as the chat agent with identity, introspection, and generation.
+	"""
+	
+	def __init__(self, path: Path = STATE_FILE, auto_bootstrap: bool = True):
+		self._path = path
+		self._lock = Lock()
+		self._bootstrapped = False
+		self._auto_bootstrap = auto_bootstrap
+		self._state_str = self._load()
+	
+	def bootstrap(self, context_level: int = 2, force: bool = False) -> dict:
+		"""Sync the full state hierarchy from source files.
+		
+		Pushes data through: machineID.json/user.json → identity.json → Nola.json
+		
+		Args:
+			context_level: Detail level (1=minimal, 2=moderate, 3=full)
+			force: If True, re-bootstrap even if already done
+		
+		Returns:
+			The current state dict after bootstrap
+		"""
+		if self._bootstrapped and not force:
+			return self.get_state()
+		
+		try:
+			# Import here to avoid circular imports at module load time
+			from identity_thread.machineID.machineID import push_machine
+			from identity_thread.userID.user import push_user
+			from identity_thread.identity import push_identity
+			
+			# Step 1: Push from raw files → identity.json
+			push_machine(context_level=context_level)
+			push_user(context_level=context_level)
+			
+			# Step 2: Push from identity.json → Nola.json
+			push_identity(context_level=context_level)
+			
+			# Reload to pick up changes
+			self.reload_state()
+			self._bootstrapped = True
+			
+		except Exception as e:
+			# If bootstrap fails (missing files, etc.), continue with existing state
+			# This allows the agent to work even if identity modules aren't set up
+			pass
+		
+		return self.get_state()
+	
+	def _ensure_bootstrapped(self):
+		"""Lazy bootstrap on first real access if auto_bootstrap is enabled."""
+		if self._auto_bootstrap and not self._bootstrapped:
+			self.bootstrap()
+	
+	@property
+	def name(self) -> str:
+		"""Return the agent's name from state or default."""
+		state = self.get_state()
+		identity = state.get("IdentityConfig", {})
+		# Identity may be stored as {"metadata":..., "data": {...}} or as plain dict
+		identity_data = identity.get("data", identity)
+		return identity_data.get("name", "Nola")
+	
+	def _load(self) -> str:
+		"""Load the contents of the state file and return as string."""
+		try:
+			if not self._path.exists():
+				return ""
+			return self._path.read_text(encoding="utf-8")
+		except Exception:
+			return ""
+	
+	@property
+	def system_state(self) -> str:
+		"""Return the cached state string (thread-safe read)."""
+		with self._lock:
+			return self._state_str
+	
+	def reload_state(self) -> str:
+		"""Re-read the state file and update the cached state string."""
+		new_state = self._load()
+		with self._lock:
+			self._state_str = new_state
+		return new_state
+	
+	def get_state(self, reload: bool = False) -> dict:
+		"""Return the system state parsed as JSON (dict/list).
+		
+		If `reload` is True, the file will be re-read before parsing.
+		On parse errors or missing content, an empty dict is returned.
+		"""
+		if reload:
+			self.reload_state()
+		
+		with self._lock:
+			state_copy = self._state_str
+		
+		try:
+			if not state_copy:
+				return {}
+			return json.loads(state_copy)
+		except Exception:
+			return {}
+	
+	def set_state(self, section: str, new_value) -> dict:
+		"""Replace only the top-level `section` in Nola.json with `new_value`.
+		
+		The `section` must already exist as a top-level key; otherwise
+		a `KeyError` is raised. The file is written atomically and the
+		cached state string is updated.
+		
+		Returns the full JSON object (dict) after the update.
+		"""
+		# load current content
+		try:
+			if self._path.exists():
+				data = json.loads(self._path.read_text(encoding="utf-8"))
+			else:
+				data = {}
+		except Exception:
+			data = {}
+		
+		if section not in data:
+			raise KeyError(f"Top-level section '{section}' not found in {self._path}")
+		
+		# set the requested section
+		data[section] = new_value
+		
+		# serialize and write atomically
+		text = json.dumps(data, indent=2, ensure_ascii=False)
+		
+		dirpath = self._path.parent or Path(".")
+		dirpath.mkdir(parents=True, exist_ok=True)
+		
+		fd, tmp_path = tempfile.mkstemp(dir=str(dirpath))
+		try:
+			with os.fdopen(fd, "w", encoding="utf-8") as f:
+				f.write(text)
+				f.flush()
+				try:
+					os.fsync(f.fileno())
+				except Exception:
+					pass
+			Path(tmp_path).replace(self._path)
+		except Exception:
+			try:
+				Path(tmp_path).unlink(missing_ok=True)
+			except Exception:
+				pass
+			raise
+		
+		# update cached state string
+		with self._lock:
+			self._state_str = text
+		
+		return data
+	
+	def introspect(self) -> dict:
+		"""Return a summary of the agent's current state for debugging/status."""
+		state = self.get_state()
+		return {
+			"name": self.name,
+			"state_file": str(self._path),
+			"state_loaded": bool(self._state_str),
+			"sections": list(state.keys()),
+			"identity_config": state.get("IdentityConfig", {}),
+			"conversation_state": state.get("conversation_state", {}),
+		}
+	
+	def generate(self, user_input: str, convo: str = "", stimuli_type: str = "realtime") -> str:
+		"""Generate a response to user input using Ollama.
+		
+		Args:
+			user_input: The user's message
+			convo: Optional conversation history for context
+		
+		Returns:
+			The agent's response string
+		"""
+		try:
+			import ollama # type: ignore
+		except ImportError:
+			return "[Error: ollama package not installed. Run: pip install ollama]"
+		
+		# Ensure identity is synced for this stimuli type (best-effort)
+		try:
+			from identity_thread.identity import sync_for_stimuli
+			# ask identity layer to prepare appropriate context
+			sync_for_stimuli(stimuli_type)
+		except Exception:
+			# ignore if identity module not available
+			pass
+
+		# Reload state to pick up any recent pushes
+		state = self.get_state(reload=True)
+		identity_section = state.get("IdentityConfig", {})
+		# Support both new {metadata,data} and legacy flat formats
+		identity = identity_section.get("data", identity_section)
+		
+		# Extract key identity info for the prompt
+		machine_id = identity.get("machineID", {}).get("identity", {})
+		user_id = identity.get("userID", {}).get("identity", {})
+		
+		system_prompt = f"""You are {self.name}, a personal AI assistant.
+
+== YOUR IDENTITY ==
+{json.dumps(machine_id, indent=2) if isinstance(machine_id, dict) else machine_id}
+
+== USER CONTEXT ==
+{json.dumps(user_id, indent=2) if isinstance(user_id, dict) else user_id}
+
+== INSTRUCTIONS ==
+- You ARE Nola, not a generic assistant. Refer to yourself as Nola.
+- Use your identity traits: warm, concise, collaborative tone
+- Reference your capabilities when relevant
+- You know about your user from the context above
+- Be helpful and personalized, not generic"""
+		
+		# Build messages
+		messages = [{"role": "system", "content": system_prompt}]
+		
+		# Add conversation history if provided
+		if convo:
+			messages.append({"role": "assistant", "content": f"[Previous conversation context]\n{convo}"})
+		
+		messages.append({"role": "user", "content": user_input})
+		
+		try:
+			response = ollama.chat(
+				model="gpt-oss:20b-cloud",  # adjust model as needed
+				messages=messages
+			)
+			return response['message']['content']
+		except Exception as e:
+			return f"[Error generating response: {e}]"
+
+# Module-level singleton instance
+agent = Agent()
+
+
+def get_agent() -> Agent:
+	"""Return the module-level Agent singleton.
+	
+	Ensures the singleton is bootstrapped (full sync chain) on first call.
+	To force a re-bootstrap, call agent.bootstrap(force=True).
+	"""
+	agent._ensure_bootstrapped()
+	return agent
+
+
+# Convenience aliases for backwards compatibility
+system_state = agent.system_state
+reload_state = agent.reload_state
+get_state = agent.get_state
+set_state = agent.set_state
+
+
+if __name__ == "__main__":
+	# simple manual test: print loaded state (string)
+	print("Loaded system_state")
+	print(system_state)

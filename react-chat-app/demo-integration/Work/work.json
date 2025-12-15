@@ -1,0 +1,294 @@
+{
+  "profile_metadata": {
+    "category": "work",
+    "last_updated": "2025-12-03",
+    "version": "1.0"
+  },
+  
+  "current_role": {
+    "level_1": "Senior Software Engineer at TechCorp Inc, AI/ML Platform Team",
+    "level_2": {
+      "title": "Senior Software Engineer",
+      "company": "TechCorp Inc",
+      "department": "AI/ML Platform Team",
+      "tenure": "3 years",
+      "team_size": "12 engineers",
+      "reporting_to": "Engineering Manager - Platform Infrastructure"
+    },
+    "level_3": {
+      "title": "Senior Software Engineer",
+      "company": "TechCorp Inc",
+      "department": "AI/ML Platform Team",
+      "tenure": "3 years, 2 months",
+      "team_size": "12 engineers (5 senior, 4 mid-level, 3 junior)",
+      "reporting_to": "Sarah Chen - Engineering Manager, Platform Infrastructure",
+      "location": "San Francisco Bay Area (Hybrid: 2 days/week on-site)",
+      "employee_id": "EMP-4521",
+      "start_date": "2022-10-15",
+      "career_history": {
+        "previous_role": "Software Engineer II at DataFlow Systems",
+        "years_in_industry": 8,
+        "promotion_history": [
+          {"date": "2024-03-01", "from": "Software Engineer II", "to": "Senior Software Engineer"}
+        ],
+        "key_achievements": [
+          "Led migration of monolithic agent to modular architecture (Q2 2024)",
+          "Reduced context token usage by 65% through layered profile design",
+          "Mentored 3 junior engineers on AI agent development practices"
+        ]
+      },
+      "upcoming_reviews": {
+        "performance_review": "2026-01-15",
+        "promotion_eligibility": "2026-03-01 (Staff Engineer track)"
+      }
+    }
+  },
+  
+  "active_projects": {
+    "level_1": ["Cognitive Agent Framework", "Market Research Agent", "Background State Monitor"],
+    "level_2": [
+      {
+        "name": "Cognitive Agent Framework",
+        "status": "in_development",
+        "role": "Technical Lead",
+        "tech_stack": ["Python", "JSON state management", "LLM integration"]
+      },
+      {
+        "name": "Market Research Agent",
+        "status": "prototype_complete",
+        "role": "Lead Developer"
+      },
+      {
+        "name": "Background State Monitor",
+        "status": "planning",
+        "role": "Architect"
+      }
+    ],
+    "level_3": [
+      {
+        "name": "Cognitive Agent Framework",
+        "project_id": "PROJ-2847",
+        "status": "in_development",
+        "role": "Technical Lead",
+        "team": ["You (lead)", "Maya (backend)", "James (integration)", "Lisa (testing)"],
+        "timeline": {
+          "start_date": "2024-11-01",
+          "target_completion": "2025-02-28"
+        },
+        "tech_stack": {
+          "languages": ["Python 3.11+"],
+          "frameworks": ["FastAPI", "Pydantic"],
+          "storage": ["JSON file-based state", "Redis for caching"],
+          "llm_providers": ["Anthropic Claude", "OpenAI GPT-4"],
+          "deployment": ["Docker", "Kubernetes"]
+        },
+        "architecture_decisions": [
+          "Modular context slices over monolithic state",
+          "Background interval updates vs real-time streaming",
+          "File-based JSON for simplicity and debuggability",
+          "Tool pattern: ACTION_TARGET naming convention"
+        ],
+        "current_sprint": {
+          "sprint_number": 5,
+          "focus": "Personal and Work module integration",
+          "blockers": ["LLM rate limiting on background tasks"],
+          "this_week_tasks": [
+            "Implement background.py scheduler",
+            "Design layered profile loading system",
+            "Add global state merge logic"
+          ]
+        }
+      },
+      {
+        "name": "Market Research Agent (Allee Project)",
+        "project_id": "SIDE-0192",
+        "status": "prototype_complete",
+        "role": "Solo Developer/Architect",
+        "timeline": "Started 2024-11-20, v1.0 completed 2024-11-25",
+        "deliverable": "60-line streamlined agent profile with extensible design",
+        "tools_defined": ["SEARCH_WEB", "QUERY_DATABASE", "ANALYZE_DATA", "GENERATE_REPORT", "SCAN_COMPETITORS"],
+        "lessons_learned": [
+          "Start minimal with clear extension points",
+          "Configurable parameters > hardcoded values",
+          "Empty sections signal intentional extensibility"
+        ],
+        "next_phase": "Tool implementation and integration testing"
+      },
+      {
+        "name": "Background State Monitor",
+        "project_id": "PROJ-2847-SUB-A",
+        "status": "design_phase",
+        "role": "Architect",
+        "description": "Interval-based context evaluation and global state updates",
+        "requirements": [
+          "Dynamic interval scheduling (avoid blocking main conversation)",
+          "LLM-based relevance detection (check if update needed)",
+          "Minimal token usage (only update when necessary)",
+          "Module isolation (Personal/Work run independently)"
+        ],
+        "technical_approach": "Threading with configurable intervals, LLM decision gate, JSON diff merging",
+        "risks": ["LLM rate limits", "State synchronization conflicts", "Performance on long-running sessions"]
+      }
+    ]
+  },
+  
+  "technical_expertise": {
+    "level_1": "Python, JavaScript, SQL | Agent architectures, State management, LLM orchestration",
+    "level_2": {
+      "languages": ["Python", "JavaScript", "SQL"],
+      "specializations": ["Agent architectures", "State management", "LLM orchestration"],
+      "tools": ["VS Code", "Git", "Terminal automation"],
+      "current_learning": "Advanced cognitive architecture patterns"
+    },
+    "level_3": {
+      "languages": {
+        "expert": ["Python", "JavaScript"],
+        "proficient": ["SQL", "Shell scripting"],
+        "familiar": ["TypeScript", "Go"]
+      },
+      "specializations": {
+        "primary": ["Agent architectures", "State management", "LLM orchestration"],
+        "secondary": ["API design", "System architecture", "Performance optimization"],
+        "emerging": ["Cognitive architectures", "Multi-agent coordination", "Context-aware systems"]
+      },
+      "tools_and_platforms": {
+        "daily": ["VS Code", "Git", "Terminal", "Claude/GPT APIs"],
+        "frequent": ["Docker", "PostgreSQL", "Redis", "Postman"],
+        "occasional": ["Kubernetes", "Grafana", "Datadog"]
+      },
+      "architecture_philosophy": "Simplicity first, extensibility always, premature optimization never",
+      "current_learning": [
+        "Advanced cognitive architecture patterns",
+        "Efficient context window management",
+        "Multi-agent communication protocols"
+      ]
+    }
+  },
+  
+  "work_schedule": {
+    "level_1": "PST, 9am-6pm weekdays, deep work blocks 10am-12pm and 2pm-5pm",
+    "level_2": {
+      "timezone": "PST",
+      "typical_hours": "9am-6pm weekdays",
+      "deep_work_blocks": ["10am-12pm", "2pm-5pm"],
+      "meeting_heavy_days": ["Tuesday", "Thursday"]
+    },
+    "level_3": {
+      "timezone": "America/Los_Angeles (PST/PDT)",
+      "typical_hours": "9:00 AM - 6:00 PM weekdays",
+      "flexibility": "High - Results-oriented culture",
+      "deep_work_blocks": [
+        {"time": "10:00 AM - 12:00 PM", "purpose": "Complex development tasks"},
+        {"time": "2:00 PM - 5:00 PM", "purpose": "Architecture and design work"}
+      ],
+      "meeting_patterns": {
+        "monday": "Team standup 9:30 AM, light meeting day",
+        "tuesday": "1-on-1s with reports, architecture reviews",
+        "wednesday": "Deep work day - minimal meetings",
+        "thursday": "Sprint planning, demo sessions, stakeholder meetings",
+        "friday": "Retrospectives, knowledge sharing, flexible schedule"
+      },
+      "on_call_rotation": "1 week per month (primary escalation)",
+      "pto_balance": "15 days remaining (as of 2025-12-03)"
+    }
+  },
+  
+  "collaboration_style": {
+    "level_1": "Async-first, thorough code reviews, data-driven decisions",
+    "level_2": {
+      "communication": "Async-first, detailed documentation",
+      "code_review": "Thorough, educational feedback",
+      "decision_making": "Data-driven with rapid prototyping"
+    },
+    "level_3": {
+      "communication_preferences": {
+        "async_first": "Slack/email for non-urgent, detailed writeups preferred",
+        "sync_for": "Complex decisions, brainstorming, unblocking",
+        "response_time": "Within 4 hours during work hours",
+        "documentation": "Heavy emphasis - code comments, README files, architecture docs"
+      },
+      "code_review_approach": {
+        "style": "Thorough but encouraging",
+        "focus_areas": ["Architecture clarity", "Edge cases", "Maintainability"],
+        "turnaround": "24 hours for standard PRs, 4 hours for urgent",
+        "teaching_moments": "Uses reviews to mentor junior developers"
+      },
+      "decision_making": {
+        "process": "Data-driven with rapid prototyping",
+        "timeline": "Quick decisions on implementation details, deliberate on architecture",
+        "stakeholder_involvement": "High - regular updates to PM and EM",
+        "documentation": "ADRs (Architecture Decision Records) for major choices"
+      },
+      "mentorship": {
+        "current_mentees": ["Alex (junior engineer)", "Priya (new grad)", "Tom (intern)"],
+        "style": "Hands-on guidance with increasing autonomy",
+        "time_investment": "~5 hours/week across all mentees"
+      }
+    }
+  },
+  
+  "work_relationships": {
+    "level_1": "Reports to Sarah Chen (EM), works with Michael Torres (PM)",
+    "level_2": {
+      "manager": "Sarah Chen - Engineering Manager",
+      "product_manager": "Michael Torres",
+      "key_collaborators": ["Maya Patel", "James Wilson", "Lisa Rodriguez"]
+    },
+    "level_3": {
+      "key_stakeholders": [
+        {"name": "Sarah Chen", "role": "Engineering Manager", "relationship": "Direct manager, weekly 1-on-1s"},
+        {"name": "Michael Torres", "role": "Product Manager", "relationship": "Primary PM, daily collaboration"},
+        {"name": "Dr. Amanda Liu", "role": "AI Research Lead", "relationship": "Technical advisor on ML components"},
+        {"name": "David Park", "role": "Staff Engineer", "relationship": "Architecture review partner"}
+      ],
+      "peer_collaborators": [
+        "Maya Patel - Backend specialist, pair programming partner",
+        "James Wilson - Integration expert, code review buddy",
+        "Lisa Rodriguez - QA lead, testing strategy collaborator"
+      ]
+    }
+  },
+  
+  "professional_development": {
+    "level_1": "Target: Staff Engineer by Q1 2026",
+    "level_2": {
+      "current_goals": ["Master cognitive architectures", "Build agent portfolio", "Staff Engineer prep"],
+      "upcoming_training": "LLM Engineering Workshop (Jan 2025)"
+    },
+    "level_3": {
+      "current_goals": [
+        "Master cognitive architecture design patterns",
+        "Build portfolio of production agent systems",
+        "Prepare for Staff Engineer promotion (target: Q1 2026)"
+      ],
+      "conferences_attended": [
+        {"name": "AI Engineer Summit", "date": "2024-10-15", "location": "San Francisco"},
+        {"name": "PyCon", "date": "2024-05-20", "location": "Pittsburgh"}
+      ],
+      "upcoming_training": "LLM Engineering Workshop (2025-01-10)",
+      "side_projects": [
+        "Allee - Market research agent framework",
+        "Personal cognitive assistant prototype"
+      ]
+    }
+  },
+  
+  "work_environment": {
+    "level_1": "SF Bay Area, hybrid 2 days/week, innovation-focused culture",
+    "level_2": {
+      "location": "San Francisco Bay Area (Hybrid: 2 days/week on-site)",
+      "company_culture": "Innovation-focused, async-friendly, high autonomy",
+      "work_life_balance": "Strong - flexible hours, unlimited PTO"
+    },
+    "level_3": {
+      "office_setup": {
+        "location": "San Francisco office, Desk 3F-42",
+        "equipment": ["MacBook Pro M3", "34-inch ultrawide monitor", "Mechanical keyboard", "Vertical mouse"],
+        "home_office": "Fully equipped - same monitor setup"
+      },
+      "company_culture": "Innovation-focused, async-friendly, high autonomy",
+      "team_dynamics": "Collaborative, supportive, technically excellent",
+      "work_life_balance": "Strong - flexible hours, unlimited PTO, no crunch culture"
+    }
+  }
+}

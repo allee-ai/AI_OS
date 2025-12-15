@@ -1,0 +1,139 @@
+.message-input-container {
+  border-top: 1px solid #e1e5e9;
+  background: #ffffff;
+}
+
+.message-input-form {
+  padding: 16px 20px;
+}
+
+.input-wrapper {
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+  background: #f8f9fa;
+  border: 1px solid #e1e5e9;
+  border-radius: 24px;
+  padding: 8px;
+  transition: border-color 0.2s ease;
+}
+
+.input-wrapper:focus-within {
+  border-color: #6c5ce7;
+  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+}
+
+.message-textarea {
+  flex: 1;
+  resize: none;
+  border: none;
+  background: transparent;
+  padding: 8px 12px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #2d3436;
+  outline: none;
+  max-height: 120px;
+  min-height: 20px;
+}
+
+.message-textarea.error {
+  color: #e74c3c;
+}
+
+.message-textarea::placeholder {
+  color: #636e72;
+}
+
+.message-textarea:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.send-button {
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: #6c5ce7;
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.send-button:hover:not(:disabled) {
+  background: #5f3dc4;
+  transform: scale(1.05);
+}
+
+.send-button:disabled {
+  background: #ddd;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.loading-spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+.input-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 8px;
+  padding: 0 4px;
+}
+
+.connection-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.status-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #636e72;
+}
+
+.status-indicator.connected {
+  background: #00b894;
+}
+
+.status-indicator.disconnected {
+  background: #e74c3c;
+}
+
+.status-text {
+  font-size: 12px;
+  color: #636e72;
+}
+
+.char-counter {
+  font-size: 12px;
+  color: #636e72;
+}
+
+.char-counter.warning {
+  color: #fdcb6e;
+}
+
+.char-counter.error {
+  color: #e74c3c;
+}

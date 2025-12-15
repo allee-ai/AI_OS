@@ -1,0 +1,15 @@
+{
+  "session_id": "react_20251215_144248",
+  "channel": "react-chat",
+  "started": "2025-12-15T14:42:49.878529",
+  "turns": [
+    {
+      "timestamp": "2025-12-15T14:42:49.878536",
+      "user": "Hello Nola!",
+      "assistant": "Hello! How can I help you today?",
+      "stimuli_type": "conversational",
+      "context_level": 2
+    }
+  ],
+  "last_updated": "2025-12-15T14:42:49.878539"
+}
