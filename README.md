@@ -1,134 +1,98 @@
-# React Chat App → Nola Stimuli Channel
+# Nola: Local-First Personal AI with Hierarchical Context
 
-A local-first AI chat application that serves as a **communication stimuli channel** for [Nola](Nola/README.md) - a personal AI with hierarchical state management. Built with React + TypeScript frontend and FastAPI backend, connected to Nola's Hierarchical Experiential Attention (HEA) system.
+A privacy-first, open-source personal AI system with **Hierarchical Experiential Attention (HEA)**, persistent memory, and multi-channel stimuli support. Nola is not just a chat app—she is a context-aware, extensible cognitive agent that runs entirely on your machine.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 ![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
 ![Node](https://img.shields.io/badge/node-18+-green.svg)
 
-## 🧠 What is This?
+---
 
-This chat interface is one of several **stimuli channels** that feed into Nola's cognitive system:
+## 🧠 Why Nola?
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    STIMULI CHANNELS                      │
-├──────────────┬──────────────┬──────────────┬────────────┤
-│  React Chat  │    Twilio    │    Email     │    CLI     │
-│  (this app)  │   (future)   │   (future)   │  (exists)  │
-└──────┬───────┴──────────────┴──────────────┴────────────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────────┐
-│              NOLA - Hierarchical State                   │
-├─────────────────────────────────────────────────────────┤
-│  Context Manager (HEA)                                   │
-│  ├── L1: Realtime (~10 tokens) - Quick responses        │
-│  ├── L2: Conversational (~50 tokens) - Default          │
-│  └── L3: Analytical (~200 tokens) - Deep context        │
-├─────────────────────────────────────────────────────────┤
-│  Identity Thread                                         │
-│  ├── machineID.json → identity.json → Nola.json         │
-│  └── userID.json ──┘                                    │
-├─────────────────────────────────────────────────────────┤
-│  Ollama (Local LLM)                                      │
-└─────────────────────────────────────────────────────────┘
-```
+- **Not just a chatbot:** Nola is a local-first, privacy-respecting AI with a persistent, hierarchical memory system.
+- **Hierarchical Context:** Every message is classified and routed through a context manager (HEA) that dynamically adjusts how much of your identity and history is used.
+- **User-owned data:** All conversations and identity data are stored locally—never in the cloud.
+- **Multi-channel:** React chat is just one stimuli channel. CLI, email, and more are supported or planned.
+- **Research + Product:** Designed for both everyday use and as a platform for AI/UX research.
 
-## ✨ Features
-
-- **Hierarchical Context** - Automatic L1/L2/L3 context escalation based on message analysis
-- **Real-time Chat** - WebSocket-based streaming responses
-- **Local AI** - Powered by Ollama (runs entirely on your machine)
-- **Conversation Persistence** - Stored in `Nola/Stimuli/conversations/`
-- **Modern Stack** - React 18 + TypeScript + Vite + FastAPI
-- **User-Owned Data** - Your conversations, your machine, no cloud
+---
 
 ## 🚀 Quick Start
 
-### Option 1: One-Command Start (Recommended)
+### 1. One-Command Start (Recommended)
 
 **macOS/Linux:**
 ```bash
-git clone https://github.com/YOUR_USERNAME/react-chat-app.git
-cd react-chat-app
+git clone https://github.com/allee-ai/AI_OS.git
+cd AI_OS
 chmod +x start.sh
 ./start.sh
 ```
 
 **Windows:**
 ```cmd
-git clone https://github.com/YOUR_USERNAME/react-chat-app.git
-cd react-chat-app
+git clone https://github.com/allee-ai/AI_OS.git
+cd AI_OS
 start.bat
 ```
 
 The script will:
-1. Check/install prerequisites
+1. Check/install prerequisites (Ollama, Python, Node)
 2. Start Ollama if needed
 3. Install dependencies
 4. Start backend & frontend
 5. Open browser automatically
 
-### Option 2: Docker
+### 2. Docker
 
 ```bash
-# Ensure Ollama is running on host
-ollama serve
-
-# Start with Docker Compose
+ollama serve  # Ensure Ollama is running on host
 chmod +x start-docker.sh
 ./start-docker.sh
 ```
 
-### Option 3: Manual Setup
+---
 
-#### Prerequisites
+## 🏗️ Architecture Overview
 
-1. **Ollama** - https://ollama.ai
-   ```bash
-   # Install Ollama, then:
-   ollama serve
-   ollama pull llama3.2:3b  # or your preferred model
-   ```
-
-2. **Python 3.11+**
-   ```bash
-   python3 --version
-   ```
-
-3. **Node.js 18+**
-   ```bash
-   node --version
-   ```
-
-#### Setup
-
-```bash
-# Clone repository
-git clone https://github.com/YOUR_USERNAME/react-chat-app.git
-cd react-chat-app
-
-# Backend setup
-python3 -m venv .venv
-source .venv/bin/activate  # Windows: .venv\Scripts\activate
-pip install -r backend/requirements.txt
-
-# Frontend setup
-cd frontend
-npm install
-cd ..
-
-# Start backend (Terminal 1)
-cd backend
-uvicorn main:app --reload --port 8000
-
-# Start frontend (Terminal 2)
-cd frontend
-npm run dev
+```
+┌─────────────────────────────────────────────────────────┐
+│                    STIMULI CHANNELS                    │
+├──────────────┬──────────────┬──────────────┬───────────┤
+│  React Chat  │    Twilio    │    Email     │   CLI     │
+│  (this app)  │   (future)   │   (future)   │ (exists)  │
+└──────┬───────┴──────────────┴──────────────┴───────────┘
+       │
+       ▼
+┌─────────────────────────────────────────────────────────┐
+│              NOLA - Hierarchical State                  │
+├────────────────────────────────────────────────────────┤
+│  Context Manager (HEA)                                 │
+│  ├── L1: Realtime (~10 tokens) - Quick responses       │
+│  ├── L2: Conversational (~50 tokens) - Default         │
+│  └── L3: Analytical (~200 tokens) - Deep context       │
+├────────────────────────────────────────────────────────┤
+│  Identity Thread                                      │
+│  ├── machineID.json → identity.json → Nola.json        │
+│  └── userID.json ──┘                                   │
+├────────────────────────────────────────────────────────┤
+│  Ollama (Local LLM)                                   │
+└────────────────────────────────────────────────────────┘
 ```
 
-Open http://localhost:5173 in your browser.
+---
+
+## ✨ Features
+
+- **Hierarchical Context (HEA):** L1/L2/L3 context levels, automatic escalation based on message type
+- **Persistent Memory:** All conversations and identity data are stored in `Nola/Stimuli/conversations/`
+- **Local AI:** Powered by Ollama (runs entirely on your machine)
+- **Multi-channel:** React, CLI, and more
+- **Modern Stack:** React 18 + TypeScript + Vite + FastAPI
+- **User-Owned Data:** Your conversations, your machine, no cloud
+
+---
 
 ## 📁 Project Structure
 
@@ -169,83 +133,18 @@ React_Demo/
     └── ISSUE_TEMPLATE/
 ```
 
-## 🔧 Configuration
+---
 
-### Environment Variables
+## 🧩 Key Concepts
 
-Create `.env` in `react-chat-app/backend/`:
-```env
-CORS_ORIGINS=http://localhost:5173,http://127.0.0.1:5173
-HOST=0.0.0.0
-PORT=8000
-DEBUG=true
-```
+- **Stimuli Channel:** Any interface (chat, CLI, email, etc.) that sends messages to Nola’s cognitive system.
+- **Identity Thread:** Aggregates machine and user identity, filters by context level.
+- **Context Manager (HEA):** Classifies each message and selects the right context depth.
+- **Persistence:** All chat and identity data is stored locally for privacy and continuity.
 
-### Ollama Models
+---
 
-Nola uses these models (configure in `Nola/agent.py`):
-- `gpt-oss:20b-cloud` (primary)
-- `llama3.2:3b` (fallback)
-- `mistral:7b` (fallback)
-
-### Context Levels
-
-The chat automatically selects context depth based on your message:
-
-| Message Type | Context Level | Tokens | Example |
-|--------------|---------------|--------|---------|
-| Casual | L1 (realtime) | ~10 | "Hi!", "Thanks" |
-| Substantive | L2 (conversational) | ~50 | "I'm stressed about work" |
-| Analytical | L3 (analytical) | ~200 | "Analyze my productivity patterns" |
-
-## 📡 API Endpoints
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/health` | GET | Health check |
-| `/api/chat/message` | POST | Send message |
-| `/api/chat/history` | GET | Get chat history |
-| `/api/chat/agent/status` | GET | Agent status |
-| `/api/chat/clear` | POST | Clear history |
-| `/ws` | WebSocket | Real-time chat |
-
-## 🐛 Troubleshooting
-
-### "Ollama not found"
-```bash
-# Install Ollama from https://ollama.ai
-# Then run:
-ollama serve
-```
-
-### "Connection refused" / Network error
-```bash
-# Check if backend is running
-curl http://localhost:8000/health
-
-# Check if frontend is running
-curl http://localhost:5173
-```
-
-### "Model not found"
-```bash
-# Pull required models
-ollama pull llama3.2:3b
-ollama pull mistral:7b
-```
-
-### Port already in use
-```bash
-# macOS/Linux
-lsof -ti:8000 | xargs kill -9
-lsof -ti:5173 | xargs kill -9
-
-# Windows
-netstat -ano | findstr :8000
-taskkill /PID <PID> /F
-```
-
-## 🛠️ Development
+## 🛠️ Development & API
 
 ### Backend
 
@@ -271,6 +170,8 @@ cd frontend
 npm run build  # Runs TypeScript compiler
 ```
 
+---
+
 ## 📦 Building for Production
 
 ### Docker
@@ -292,6 +193,8 @@ npm run build
 # Serve dist/ with any static server
 ```
 
+---
+
 ## 🤝 Contributing
 
 1. Fork the repository
@@ -300,9 +203,7 @@ npm run build
 4. Push to branch (`git push origin feature/amazing`)
 5. Open a Pull Request
 
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE) file.
+---
 
 ## 🙏 Acknowledgments
 
