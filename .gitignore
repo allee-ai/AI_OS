@@ -48,4 +48,4 @@ temp/
 Thumbs.db
 
 # Conversation data (optional - uncomment to exclude from repo)
-# Nola*/Stimuli/conversations/*.json
+Nola*/Stimuli/conversations/*.json
