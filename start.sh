@@ -134,7 +134,7 @@ fi
 # Start backend
 echo -e "${YELLOW}  → Starting backend (FastAPI + Nola)...${NC}"
 cd "$CHAT_APP/backend"
-"$VENV_DIR/bin/uvicorn" main:app --host 0.0.0.0 --port 8000 &
+"$VENV_DIR/bin/python" -m uvicorn main:app --host 0.0.0.0 --port 8000 &
 BACKEND_PID=$!
 cd "$REPO_ROOT"
 

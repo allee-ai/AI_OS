@@ -13,12 +13,12 @@
   },
   "machineID": {
     "metadata": {
-      "last_updated": "2025-12-17T20:56:34.926618+00:00",
+      "last_updated": "2025-12-17T21:43:42.739373+00:00",
       "context_level": 2,
       "status": "ready",
       "needs_sync": false,
       "stale_threshold_seconds": 600,
-      "source_file": "Nola/identity_thread/machineID/machineID.json"
+      "source_file": "/Users/cade/Desktop/AI_OS copy/Nola/react-chat-app/backend/services/../../../identity_thread/machineID/machineID.json"
     },
     "data": {
       "profile_metadata": {
@@ -45,12 +45,12 @@
   },
   "userID": {
     "metadata": {
-      "last_updated": "2025-12-17T20:56:34.927318+00:00",
+      "last_updated": "2025-12-17T21:43:42.739680+00:00",
       "context_level": 2,
       "status": "ready",
       "needs_sync": false,
       "stale_threshold_seconds": 600,
-      "source_file": "Nola/identity_thread/userID/user.json"
+      "source_file": "/Users/cade/Desktop/AI_OS copy/Nola/react-chat-app/backend/services/../../../identity_thread/userID/user.json"
     },
     "data": {
       "profile_metadata": {
