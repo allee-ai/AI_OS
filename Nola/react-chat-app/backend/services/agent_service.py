@@ -14,11 +14,8 @@ from pathlib import Path
 from typing import Optional, List
 from models.chat_models import ChatMessage
 
-# Add Nola to Python path
-# Note: Handle both "Nola" and "Nola " (with trailing space) for compatibility
+# Add Nola to Python path (repo-relative)
 nola_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "Nola")
-if not os.path.exists(nola_path):
-    nola_path = os.path.join(os.path.dirname(__file__), "..", "..", "..", "Nola ")
 sys.path.insert(0, nola_path)
 
 # Also need Nola's parent for relative imports within Nola

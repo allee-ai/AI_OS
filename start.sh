@@ -22,12 +22,9 @@ echo ""
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_ROOT"
 
-# Detect Nola directory (handle "Nola" or "Nola " with trailing space)
+# Detect Nola directory
 if [ -d "Nola" ]; then
     NOLA_DIR="$REPO_ROOT/Nola"
-elif [ -d "Nola " ]; then
-    NOLA_DIR="$REPO_ROOT/Nola "
-    echo -e "${YELLOW}⚠️  Note: Nola directory has trailing space. Consider renaming.${NC}"
 else
     echo -e "${RED}❌ Nola directory not found!${NC}"
     exit 1

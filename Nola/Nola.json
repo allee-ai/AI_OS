@@ -11,7 +11,7 @@
       "status": "ready",
       "needs_sync": false,
       "stale_threshold_seconds": 600,
-      "source_file": "/Users/cade/Desktop/React_Demo/Nola /identity_thread/identity.json"
+      "source_file": "Nola/identity_thread/identity.json"
     },
     "data": {
       "machineID": {

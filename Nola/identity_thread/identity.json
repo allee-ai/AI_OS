@@ -18,7 +18,7 @@
       "status": "ready",
       "needs_sync": false,
       "stale_threshold_seconds": 600,
-      "source_file": "/Users/cade/Desktop/React_Demo/Nola /react-chat-app/backend/services/../../../identity_thread/machineID/machineID.json"
+      "source_file": "Nola/identity_thread/machineID/machineID.json"
     },
     "data": {
       "profile_metadata": {
@@ -50,7 +50,7 @@
       "status": "ready",
       "needs_sync": false,
       "stale_threshold_seconds": 600,
-      "source_file": "/Users/cade/Desktop/React_Demo/Nola /react-chat-app/backend/services/../../../identity_thread/userID/user.json"
+      "source_file": "Nola/identity_thread/userID/user.json"
     },
     "data": {
       "profile_metadata": {
