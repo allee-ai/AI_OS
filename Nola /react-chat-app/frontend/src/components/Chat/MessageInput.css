@@ -19,8 +19,8 @@
 }
 
 .input-wrapper:focus-within {
-  border-color: #6c5ce7;
-  box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1);
+  border-color: #0f3460;
+  box-shadow: 0 0 0 3px rgba(15, 52, 96, 0.15);
 }
 
 .message-textarea {
@@ -55,7 +55,7 @@
   width: 36px;
   height: 36px;
   border: none;
-  background: #6c5ce7;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
   color: white;
   border-radius: 50%;
   cursor: pointer;
@@ -67,7 +67,7 @@
 }
 
 .send-button:hover:not(:disabled) {
-  background: #5f3dc4;
+  background: linear-gradient(135deg, #0f3460 0%, #1a1a2e 100%);
   transform: scale(1.05);
 }
 

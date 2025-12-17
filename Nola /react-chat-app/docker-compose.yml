@@ -8,7 +8,7 @@ services:
     ports:
       - "8000:8000"
     volumes:
-      - ./demo-integration:/app/demo-integration:ro
+      - ./Nola:/app/Nola:ro
     environment:
       - PYTHONUNBUFFERED=1
       - OLLAMA_HOST=host.docker.internal:11434

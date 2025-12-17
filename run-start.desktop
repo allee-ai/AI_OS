@@ -1,0 +1,6 @@
+[Desktop Entry]
+Type=Application
+Name=Run Start
+Exec=sh -c 'cd "$(dirname "$(readlink -f "%k")")" && if [ -x ./start.sh ]; then ./start.sh; else bash ./start.sh; fi; echo; read -n1 -s -r -p "Press any key to close..."'
+Terminal=true
+Categories=Utility;

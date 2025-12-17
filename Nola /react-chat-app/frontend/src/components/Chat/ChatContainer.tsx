@@ -32,15 +32,15 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
         <div className="agent-info">
           <div className="agent-avatar">
             <div className={`avatar-indicator ${agentStatus?.status || 'offline'}`}>
-              {agentStatus?.name?.[0] || 'A'}
+              🧠
             </div>
           </div>
           <div className="agent-details">
-            <h3 className="agent-name">{agentStatus?.name || 'Agent'}</h3>
+            <h3 className="agent-name">{agentStatus?.name || 'Nola'}</h3>
             <div className="agent-status">
               <div className={`status-dot ${agentStatus?.status || 'offline'}`} />
               <span className="status-text">
-                {isAgentTyping ? 'Typing...' : agentStatus?.status || 'offline'}
+                {isAgentTyping ? 'Thinking...' : agentStatus?.status || 'offline'}
               </span>
             </div>
           </div>

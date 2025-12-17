@@ -5,8 +5,8 @@ function App() {
   return (
     <div className="app">
       <div className="app-header">
-        <h1>React Chat Demo</h1>
-        <p>Local-first AI chat with intelligent context management</p>
+        <h1>🧠 Nola</h1>
+        <p>Personal AI with hierarchical memory</p>
       </div>
       
       <main className="app-main">
@@ -14,7 +14,7 @@ function App() {
       </main>
       
       <footer className="app-footer">
-        <p>Powered by Demo Backend AI • Real-time WebSocket Connection</p>
+        <p>Local-first • Your data stays on your machine • Powered by Ollama</p>
       </footer>
     </div>
   )

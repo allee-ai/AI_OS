@@ -1,4 +1,5 @@
 # Backend Dockerfile - FastAPI with Ollama integration
+#if youre new to coding this file is used to create a container for the backend of the chat application
 FROM python:3.11-slim
 
 WORKDIR /app
@@ -17,8 +18,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Copy backend code
 COPY backend/ .
 
-# Copy demo-integration for agent
-COPY demo-integration/ /app/demo-integration/
+# Copy Nola state for agent
+COPY Nola/ /app/Nola/
 
 # Expose port
 EXPOSE 8000

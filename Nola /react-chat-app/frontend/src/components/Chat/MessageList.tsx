@@ -31,6 +31,19 @@ export const MessageList: React.FC<MessageListProps> = ({
   return (
     <div className="message-list">
       <div className="messages-container">
+        {messages.length === 0 && !isAgentTyping && (
+          <div className="empty-state">
+            <div className="empty-icon">👋</div>
+            <h3>Welcome!</h3>
+            <p>Start a conversation with Nola. Try saying:</p>
+            <div className="suggestion-chips">
+              <span className="chip">"Hi Nola!"</span>
+              <span className="chip">"How can you help me?"</span>
+              <span className="chip">"Tell me about yourself"</span>
+            </div>
+          </div>
+        )}
+        
         {messages.map((message) => (
           <div
             key={message.id}

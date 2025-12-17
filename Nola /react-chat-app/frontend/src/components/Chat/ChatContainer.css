@@ -33,22 +33,22 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: #6c5ce7;
+  background: linear-gradient(135deg, #1a1a2e 0%, #0f3460 100%);
   color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 20px;
   position: relative;
 }
 
 .avatar-indicator.ready {
-  background: #00b894;
+  background: linear-gradient(135deg, #00b894 0%, #00a085 100%);
 }
 
 .avatar-indicator.thinking {
-  background: #fdcb6e;
+  background: linear-gradient(135deg, #fdcb6e 0%, #f39c12 100%);
 }
 
 .avatar-indicator.offline {

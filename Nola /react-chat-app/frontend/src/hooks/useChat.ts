@@ -52,30 +52,9 @@ export const useChat = () => {
 
       case 'agent_typing_stop':
         setIsAgentTyping(false);
-        // Finalize streaming message if exists
-        if (streamingMessageRef.current && streamingMessageIdRef.current) {
-          const finalMessage: ChatMessage = {
-            id: streamingMessageIdRef.current,
-            content: streamingMessageRef.current,
-            role: 'assistant',
-            timestamp: new Date()
-          };
-          
-          setMessages(prev => {
-            // Replace streaming message or add new one
-            const existing = prev.find(m => m.id === streamingMessageIdRef.current);
-            if (existing) {
-              return prev.map(m => 
-                m.id === streamingMessageIdRef.current ? finalMessage : m
-              );
-            } else {
-              return [...prev, finalMessage];
-            }
-          });
-          
-          streamingMessageRef.current = '';
-          streamingMessageIdRef.current = '';
-        }
+        // Clear streaming refs (message already finalized by last chunk)
+        streamingMessageRef.current = '';
+        streamingMessageIdRef.current = '';
         break;
 
       case 'agent_response_chunk':

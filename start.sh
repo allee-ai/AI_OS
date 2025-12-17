@@ -33,7 +33,14 @@ else
     exit 1
 fi
 
-CHAT_APP="$REPO_ROOT/react-chat-app"
+# Resolve chat app location: prefer top-level, otherwise nested under Nola/Nola 
+if [ -d "$REPO_ROOT/react-chat-app" ]; then
+    CHAT_APP="$REPO_ROOT/react-chat-app"
+elif [ -d "$NOLA_DIR/react-chat-app" ]; then
+    CHAT_APP="$NOLA_DIR/react-chat-app"
+else
+    CHAT_APP="$REPO_ROOT/react-chat-app"
+fi
 VENV_DIR="$REPO_ROOT/.venv"
 
 # Helper functions
