@@ -1,0 +1,36 @@
+# MIT License
+
+Copyright (c) 2025 AI_OS Project
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+
+---
+
+## Open Source Philosophy
+
+While this project is licensed under the permissive MIT License, we strongly encourage contributors and integrators to prioritize open-source dependencies and services wherever possible. 
+
+**Preferred Integrations:**
+- **Messaging**: Matrix, Element, or other federated communication protocols
+- **Voice/Telephone**: Asterisk, FreeSWITCH, or other self-hosted communication platforms
+- **Infrastructure**: Self-hosted and decentralized solutions that align with our local-first philosophy
+
+Our goal is to build a cognitive framework that remains accessible and free from vendor lock-in. While you're legally free to integrate with any service under this MIT license, we believe the future of AI should be built on open foundations that users can inspect, modify, and control.
+
+This ensures that AI_OS instances remain tools for empowerment rather than dependency.

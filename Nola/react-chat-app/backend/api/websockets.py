@@ -1,9 +1,13 @@
-from fastapi import WebSocket, WebSocketDisconnect
-from typing import List, Dict
+from fastapi import WebSocket
+from typing import Dict
 import json
 import asyncio
-from datetime import datetime
-from models.chat_models import WebSocketMessage, ChatMessage
+import sys
+from pathlib import Path
+
+# Import from centralized location - add Nola root to path
+nola_root = Path(__file__).parent.parent.parent.parent
+sys.path.insert(0, str(nola_root))
 from services.agent_service import get_agent_service
 
 class WebSocketManager:

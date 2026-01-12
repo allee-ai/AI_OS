@@ -1,0 +1,1 @@
+{"category": "linking_activation", "timestamp": "2026-01-09T08:14:42.134105+00:00", "confidence": 0.85, "input": "Did Sarah mention coffee?", "output": "Activated: sarah.mentioned.coffee, sarah.likes.coffee_shop", "context": {"source_concepts": ["sarah", "coffee"], "activated_count": 3}, "id": "linking_activation_256236cf173e"}

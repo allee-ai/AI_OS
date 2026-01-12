@@ -16,6 +16,13 @@ echo ""
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$SCRIPT_DIR"
 
+# Load optional .env
+if [ -f "$SCRIPT_DIR/.env" ]; then
+    set -a
+    source "$SCRIPT_DIR/.env"
+    set +a
+fi
+
 # Check Docker
 if ! command -v docker &> /dev/null; then
     echo -e "${RED}❌ Docker not found. Please install Docker Desktop${NC}"
@@ -23,19 +30,16 @@ if ! command -v docker &> /dev/null; then
 fi
 echo -e "${GREEN}✅ Docker installed${NC}"
 
-# Check Ollama (must run on host, not in container)
-if ! curl -s http://localhost:11434/api/tags >/dev/null 2>&1; then
-    echo -e "${RED}❌ Ollama must be running on host machine${NC}"
-    echo -e "${YELLOW}   Run: ollama serve${NC}"
-    exit 1
-fi
-echo -e "${GREEN}✅ Ollama running on host${NC}"
-
 echo ""
 echo -e "${BLUE}🔧 Building and starting containers...${NC}"
 
 # Build and start
 docker-compose up --build -d
+
+# Ensure model is pulled into the Ollama container (default: llama3:8b or env override)
+MODEL_NAME="${NOLA_MODEL_NAME:-llama3:8b}"
+echo -e "${YELLOW}⏳ Ensuring model '${MODEL_NAME}' is available in Ollama...${NC}"
+docker-compose exec -T ollama ollama pull "$MODEL_NAME" >/dev/null 2>&1 || true
 
 echo ""
 echo -e "${YELLOW}⏳ Waiting for services...${NC}"

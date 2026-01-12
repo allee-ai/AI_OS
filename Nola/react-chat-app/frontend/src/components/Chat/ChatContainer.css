@@ -1,13 +1,24 @@
+.chat-layout {
+  display: flex;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
 .chat-container {
   display: flex;
   flex-direction: column;
-  height: 100vh;
-  max-width: 800px;
-  margin: 0 auto;
+  height: 100%;
+  flex: 1;
+  min-width: 0;
   background: #ffffff;
-  border: 1px solid #e1e5e9;
-  border-radius: 8px;
+  border: none;
+  border-radius: 0;
   overflow: hidden;
+  min-height: 0;
+  flex-shrink: 1;
+  flex-grow: 1;
+  box-shadow: none;
 }
 
 .chat-header {
@@ -17,6 +28,49 @@
   padding: 16px 20px;
   background: #f8f9fa;
   border-bottom: 1px solid #e1e5e9;
+}
+
+.live-context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 10px 16px;
+  background: #f3f5f8;
+  border-bottom: 1px solid #e1e5e9;
+}
+
+.context-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: white;
+  border: 1px solid #e1e5e9;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #2d3436;
+}
+
+.pill-label {
+  color: #636e72;
+}
+
+.pill-value {
+  font-weight: 700;
+}
+
+.context-note {
+  flex: 1;
+  min-width: 180px;
+  padding: 6px 10px;
+  background: #fff7e6;
+  border: 1px solid #f5d38a;
+  border-radius: 10px;
+  font-size: 12px;
+  color: #8a6a00;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .agent-info {

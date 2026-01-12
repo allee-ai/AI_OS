@@ -23,9 +23,18 @@ build/
 .env.local
 .env.*.local
 
+# API Keys & Secrets (CRITICAL - never commit!)
+**/openai_key.txt
+**/api_key.txt
+**/*_key.txt
+**/*_secret.txt
+**/*.pem
+**/*.key
+
 # Logs
 *.log
 LOG.txt
+logs/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
@@ -35,9 +44,19 @@ pids/
 *.pid
 *.seed
 
+# Database files
+*.db
+*.sqlite
+*.sqlite3
+data/db/*.db
+
+# But keep the data/db directory structure
+!data/db/.gitkeep
+
 # Test coverage
 coverage/
 .nyc_output/
+.pytest_cache/
 
 # Temporary files
 tmp/
@@ -49,3 +68,10 @@ Thumbs.db
 
 # Conversation data (optional - uncomment to exclude from repo)
 Nola*/Stimuli/conversations/*.json
+
+# Local evaluator checklist
+docs/checklist.md
+
+# Eval transcripts (generated at runtime)
+eval/transcripts/*.json
+eval/transcripts/*.md

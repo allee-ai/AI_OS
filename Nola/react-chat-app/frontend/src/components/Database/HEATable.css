@@ -1,0 +1,240 @@
+.hea-table-container {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+}
+
+.table-header {
+  padding: 16px 20px;
+  background: #252526;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.table-header h3 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 600;
+  color: #cccccc;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.level-badge {
+  font-size: 11px;
+  font-weight: 500;
+  background: #0e639c;
+  color: #ffffff;
+  padding: 3px 8px;
+  border-radius: 3px;
+  margin-left: 8px;
+}
+
+.record-count {
+  font-size: 12px;
+  color: #858585;
+  background: #333;
+  padding: 4px 8px;
+  border-radius: 3px;
+}
+
+.hea-table-scroll {
+  flex: 1;
+  overflow: auto;
+}
+
+.hea-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
+}
+
+.hea-table thead {
+  position: sticky;
+  top: 0;
+  z-index: 10;
+  background: #2d2d30;
+}
+
+.hea-table th {
+  padding: 12px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #858585;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 2px solid #555;
+  background: #2d2d30;
+}
+
+.hea-table tbody tr {
+  border-bottom: 1px solid #333;
+  transition: background-color 0.2s;
+}
+
+.hea-table tbody tr:hover {
+  background: #252526;
+}
+
+.module-column {
+  width: 15%;
+  min-width: 120px;
+}
+
+.data-column {
+  width: 55%;
+  min-width: 300px;
+}
+
+.meta-column {
+  width: 15%;
+  min-width: 100px;
+}
+
+.module-cell {
+  padding: 12px 16px;
+  vertical-align: top;
+  background: #252526;
+  border-right: 1px solid #333;
+}
+
+.module-name {
+  font-weight: 600;
+  color: #4ec9b0;
+  font-size: 13px;
+}
+
+.module-key {
+  font-size: 11px;
+  color: #dcdcaa;
+  margin-top: 2px;
+  font-family: 'SF Mono', 'Monaco', monospace;
+}
+
+.module-meta {
+  font-size: 10px;
+  color: #6a6a6a;
+  margin-top: 4px;
+}
+
+.data-cell {
+  padding: 0;
+  vertical-align: top;
+}
+
+.status-cell {
+  padding: 12px 16px;
+  vertical-align: top;
+  text-align: center;
+}
+
+.status-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.weight-badge {
+  font-size: 11px;
+  padding: 3px 8px;
+  border-radius: 3px;
+  font-weight: 500;
+  background: #3d5a80;
+  color: #98c1d9;
+}
+
+.status-badge.ready {
+  background: #2d4f2d;
+  color: #6a9955;
+}
+
+.status-badge.updating {
+  background: #4f4d2d;
+  color: #dcdcaa;
+}
+
+.status-badge.error {
+  background: #4f2d2d;
+  color: #f48771;
+}
+
+.status-badge.stale {
+  background: #4f3d2d;
+  color: #ce9178;
+}
+
+.status-badge.unknown {
+  background: #333;
+  color: #858585;
+}
+
+.meta-cell {
+  padding: 12px 16px;
+  vertical-align: top;
+  text-align: center;
+}
+
+.timestamp {
+  font-size: 11px;
+  color: #858585;
+}
+
+.time-detail {
+  font-size: 10px;
+  color: #6a6a6a;
+  margin-top: 2px;
+}
+
+/* Table Footer */
+.table-footer {
+  padding: 12px 20px;
+  background: #252526;
+  border-top: 1px solid #333;
+}
+
+.footer-info {
+  display: flex;
+  gap: 20px;
+  justify-content: center;
+}
+
+.info-item {
+  font-size: 11px;
+  color: #858585;
+}
+
+/* Scrollbar styling */
+.hea-table-scroll::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+.hea-table-scroll::-webkit-scrollbar-track {
+  background: #1e1e1e;
+}
+
+.hea-table-scroll::-webkit-scrollbar-thumb {
+  background: #424242;
+  border-radius: 5px;
+}
+
+.hea-table-scroll::-webkit-scrollbar-thumb:hover {
+  background: #4e4e4e;
+}
+
+/* Empty state */
+.hea-table tbody tr:empty::after {
+  content: 'No data available';
+  display: block;
+  padding: 32px;
+  text-align: center;
+  color: #858585;
+  font-style: italic;
+}

@@ -1,213 +1,239 @@
-# Nola: Local-First Personal AI with Hierarchical Context
+# Nola — Your Personal AI That Actually Remembers You
 
-A privacy-first, open-source personal AI system with **Hierarchical Experiential Attention (HEA)**, persistent memory, and multi-channel stimuli support. Nola is not just a chat app—she is a context-aware, extensible cognitive agent that runs entirely on your machine.
+**A private AI assistant that runs on your computer. No cloud. No subscriptions. Your data stays yours.**
 
+![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
-![Python](https://img.shields.io/badge/python-3.11+-blue.svg)
-![Node](https://img.shields.io/badge/node-18+-green.svg)
 
 ---
 
-## 🧠 Why Nola?
+## What is Nola?
 
-- **Not just a chatbot:** Nola is a local-first, privacy-respecting AI with a persistent, hierarchical memory system.
-- **Hierarchical Context:** Every message is classified and routed through a context manager (HEA) that dynamically adjusts how much of your identity and history is used.
-- **User-owned data:** All conversations and identity data are stored locally—never in the cloud.
-- **Multi-channel:** React chat is just one stimuli channel. CLI, email, and more are supported or planned.
-- **Research + Product:** Designed for both everyday use and as a platform for AI/UX research.
+Nola is a personal AI that:
+- **Remembers your conversations** — She learns what you like, your projects, your preferences
+- **Runs 100% on your computer** — Nothing goes to the cloud
+- **Gets smarter over time** — The more you chat, the better she understands you
+- **Is completely free** — Open source, no subscriptions
+
+Think of it like having a personal assistant who actually pays attention and remembers what you've talked about.
 
 ---
 
-## 🚀 Quick Start
+## Getting Started (5 minutes)
 
-### 1. One-Command Start (Recommended)
+### What You'll Need
 
-**macOS/Linux:**
+- A Mac, Windows, or Linux computer
+- About 8GB of free disk space
+- Internet connection (just for the initial setup)
+
+### Step 1: Download Nola
+
+Open your terminal (on Mac: search "Terminal" in Spotlight) and run:
+
 ```bash
 git clone https://github.com/allee-ai/AI_OS.git
 cd AI_OS
-chmod +x start.sh
+```
+
+> **Don't have git?** Download the ZIP from [GitHub](https://github.com/allee-ai/AI_OS) → green "Code" button → "Download ZIP", then unzip and open that folder in terminal.
+
+### Step 2: Configure Environment (Optional)
+
+Copy the example environment file and customize if needed:
+
+```bash
+cp .env.example .env
+```
+
+> **Note:** The default settings work out of the box. Only edit `.env` if you want to add API keys for extended features (Kernel browser automation, Linear integration, etc.)
+
+### Step 3: Start Nola
+
+**Mac/Linux:**
+```bash
 ./start.sh
 ```
 
 **Windows:**
 ```cmd
-git clone https://github.com/allee-ai/AI_OS.git
-cd AI_OS
 start.bat
 ```
 
-The script will:
-1. Check/install prerequisites (Ollama, Python, Node)
-2. Start Ollama if needed
-3. Install dependencies
-4. Start backend & frontend
-5. Open browser automatically
+That's it! The script handles everything:
+- ✅ Installs the AI brain (Ollama)
+- ✅ Sets up the chat interface
+- ✅ Opens your browser automatically
 
-### 2. Docker
+> **First time?** The first launch downloads the AI model (~4GB). This only happens once.
+
+### Step 3: Start Chatting!
+
+Your browser will open to `http://localhost:5173` — just start talking to Nola!
+
+---
+
+## How Nola Remembers Things
+
+```
+You: "I'm working on a Python project called TaskMaster"
+     ↓
+Nola saves this fact about you
+     ↓
+Later...
+     ↓
+You: "How's my project going?"
+Nola: "How's TaskMaster coming along? Need any Python help?"
+```
+
+**The more you chat, the more she learns.** Mention your job, hobbies, preferences — she'll remember and use that in future conversations.
+
+---
+
+## Customizing Nola
+
+### Change Her Name or Personality
+
+Edit `Nola/Nola.json`:
+
+```json
+{
+  "name": "Aria",
+  "personality": "friendly and enthusiastic",
+  "greeting": "Hey there! What's on your mind?"
+}
+```
+
+### Tell Her About Yourself
+
+Edit `Nola/identity_thread/userID/user.json`:
+
+```json
+{
+  "name": "Alex",
+  "occupation": "software developer",
+  "interests": ["gaming", "cooking", "hiking"],
+  "preferences": {
+    "communication_style": "casual"
+  }
+}
+```
+
+---
+
+## Frequently Asked Questions
+
+### Is my data really private?
+
+**Yes.** Everything runs on your computer. Your conversations are stored in a folder on your machine (`Nola/Stimuli/conversations/`), not on any server.
+
+### Do I need internet after setup?
+
+**No.** Once installed, Nola works completely offline.
+
+### How much does it cost?
+
+**$0.** Nola is open source and free forever.
+
+### What computer specs do I need?
+
+| | Minimum | Recommended |
+|---|---------|-------------|
+| RAM | 8GB | 16GB |
+| Storage | 8GB free | 15GB free |
+| OS | macOS 10.15+, Windows 10+, Ubuntu 20.04+ | Same |
+
+### Can I use a different AI model?
+
+Yes! Edit `.env` and change `OLLAMA_MODEL` to any model Ollama supports. Try `llama3.1` for more capabilities or `phi3` for faster responses.
+
+### Something broke!
+
+1. Close everything and run `./start.sh` again
+2. Make sure no other app is using port 5173 or 8000
+3. Check [Troubleshooting](docs/implementation/troubleshooting.md)
+4. Open an [issue on GitHub](https://github.com/allee-ai/AI_OS/issues)
+
+---
+
+## What Can You Do With Nola?
+
+| Use Case | Example |
+|----------|---------|
+| **Daily assistant** | "Remind me what we discussed yesterday" |
+| **Project helper** | "Help me brainstorm features for TaskMaster" |
+| **Learning buddy** | "Quiz me on the Python concepts we covered" |
+| **Writing partner** | "Help me draft an email to my team" |
+
+---
+
+## Using Docker (Alternative Setup)
+
+If you prefer containers:
 
 ```bash
-ollama serve  # Ensure Ollama is running on host
-chmod +x start-docker.sh
+# Make sure Ollama is running on your host machine first
+ollama serve
+
+# Then start the Docker containers
 ./start-docker.sh
 ```
 
 ---
 
-## 🏗️ Architecture Overview
+## The Bigger Picture
 
-```
-┌─────────────────────────────────────────────────────────┐
-│                    STIMULI CHANNELS                    │
-├──────────────┬──────────────┬──────────────┬───────────┤
-│  React Chat  │    Twilio    │    Email     │   CLI     │
-│  (this app)  │   (future)   │   (future)   │ (exists)  │
-└──────┬───────┴──────────────┴──────────────┴───────────┘
-       │
-       ▼
-┌─────────────────────────────────────────────────────────┐
-│              NOLA - Hierarchical State                  │
-├────────────────────────────────────────────────────────┤
-│  Context Manager (HEA)                                 │
-│  ├── L1: Realtime (~10 tokens) - Quick responses       │
-│  ├── L2: Conversational (~50 tokens) - Default         │
-│  └── L3: Analytical (~200 tokens) - Deep context       │
-├────────────────────────────────────────────────────────┤
-│  Identity Thread                                      │
-│  ├── machineID.json → identity.json → Nola.json        │
-│  └── userID.json ──┘                                   │
-├────────────────────────────────────────────────────────┤
-│  Ollama (Local LLM)                                   │
-└────────────────────────────────────────────────────────┘
-```
+Nola isn't just a chatbot — it's a **Cognitive Operating System** in development.
+
+### What Makes This Different
+
+| Standard AI | Nola |
+|-------------|------|
+| Stateless (forgets everything) | Persistent identity across sessions |
+| Flat context (O(N²) noise) | Hierarchical attention (O(k·c²) signal) |
+| Requires retraining to "learn" | Learns through experience, not weights |
+| One-size-fits-all | Adapts to YOU over time |
+
+### The Roadmap
+
+See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
+- ✅ **Now:** Subconscious, memory threads, HEA context levels
+- 🔄 **Next:** Memory consolidation, philosophy constraints
+- 🚀 **Future:** Reflex automation, dream states, multi-model routing, enterprise integration
 
 ---
 
-## ✨ Features
+## Looking for Collaborators
 
-- **Hierarchical Context (HEA):** L1/L2/L3 context levels, automatic escalation based on message type
-- **Persistent Memory:** All conversations and identity data are stored in `Nola/Stimuli/conversations/`
-- **Local AI:** Powered by Ollama (runs entirely on your machine)
-- **Multi-channel:** React, CLI, and more
-- **Modern Stack:** React 18 + TypeScript + Vite + FastAPI
-- **User-Owned Data:** Your conversations, your machine, no cloud
+This is a solo project built since April 2025. The foundation is solid, the theory is proven, but with help it could move 10x faster.
 
----
+**I'm looking for:**
+- Python developers (async, state management)
+- React developers (UI/UX improvements)
+- AI researchers (cognitive architecture feedback)
+- Backing (funding, partnerships, or just belief)
 
-## 📁 Project Structure
-
-```
-React_Demo/
-├── Nola/                    # 🧠 The brain - hierarchical state system
-│   ├── agent.py            # Thread-safe singleton agent
-│   ├── contract.py         # Metadata protocol
-│   ├── Nola.json           # Global runtime state
-│   ├── identity_thread/    # Identity hierarchy
-│   │   ├── identity.json   # Aggregated identity
-│   │   ├── machineID/      # Machine context module
-│   │   └── userID/         # User context module
-│   └── Stimuli/
-│       ├── conversations/  # 💬 Chat history stored here
-│       └── comms/          # Future: Twilio, email modules
-│
-├── react-chat-app/         # 💻 This stimuli channel
-│   ├── backend/            # FastAPI server
-│   │   ├── main.py         # App entry point
-│   │   ├── services/
-│   │   │   └── agent_service.py  # ⭐ Nola integration + HEA
-│   │   └── api/
-│   │       ├── chat.py     # REST endpoints
-│   │       └── websockets.py
-│   └── frontend/           # React + Vite app
-│       └── src/
-│           ├── components/Chat/
-│           ├── hooks/
-│           └── services/
-│
-├── docs/                   # 📚 Theory & evaluation
-│   ├── concept_attention_theory.md
-│   └── tests.md
-│
-└── .github/               # 👥 Contributor infrastructure
-    ├── agents/            # AI agent profiles
-    └── ISSUE_TEMPLATE/
-```
+**Interested?** Open an issue, start a discussion, or reach out directly.
 
 ---
 
-## 🧩 Key Concepts
+## Learn More
 
-- **Stimuli Channel:** Any interface (chat, CLI, email, etc.) that sends messages to Nola’s cognitive system.
-- **Identity Thread:** Aggregates machine and user identity, filters by context level.
-- **Context Manager (HEA):** Classifies each message and selects the right context depth.
-- **Persistence:** All chat and identity data is stored locally for privacy and continuity.
-
----
-
-## 🛠️ Development & API
-
-### Backend
-
-```bash
-cd backend
-uvicorn main:app --reload --port 8000
-# API docs at http://localhost:8000/docs
-```
-
-### Frontend
-
-```bash
-cd frontend
-npm run dev      # Development server
-npm run build    # Production build
-npm run preview  # Preview production build
-```
-
-### Type Checking
-
-```bash
-cd frontend
-npm run build  # Runs TypeScript compiler
-```
+| Guide | Description |
+|-------|-------------|
+| [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
+| [**Developer Guide**](DEVELOPERS.md) | Build features, understand the code |
+| [**All Documentation**](docs/README.md) | Full documentation index |
+| [**Architecture**](Nola/ARCHITECTURE.md) | Technical deep-dive |
+| [**Contributing**](CONTRIBUTING.md) | Help make Nola better |
 
 ---
 
-## 📦 Building for Production
+## Get Help
 
-### Docker
-
-```bash
-docker-compose up --build
-```
-
-### Manual Build
-
-```bash
-# Backend - runs as-is with uvicorn
-cd backend
-uvicorn main:app --host 0.0.0.0 --port 8000
-
-# Frontend - build static files
-cd frontend
-npm run build
-# Serve dist/ with any static server
-```
+- **GitHub Issues:** [Report bugs or request features](https://github.com/allee-ai/AI_OS/issues)
+- **Discussions:** Share how you're using Nola
 
 ---
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing`)
-5. Open a Pull Request
-
----
-
-## 🙏 Acknowledgments
-
-- [Ollama](https://ollama.ai) - Local LLM runtime
-- [FastAPI](https://fastapi.tiangolo.com) - Modern Python web framework
-- [Vite](https://vitejs.dev) - Next-gen frontend tooling
-- [React](https://react.dev) - UI library
+*Built with ❤️ by someone who believes AI should grow with you, not reset every conversation.*

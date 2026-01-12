@@ -1,0 +1,11 @@
+#!/bin/bash
+# macOS App Bundle Launcher for Nola AI OS
+
+# Get the directory where this app bundle lives (escape spaces properly)
+APP_DIR="$(cd "$(dirname "$0")/../../../" && pwd)"
+
+# Open Terminal and run start.sh
+osascript -e "tell application \"Terminal\"
+    activate
+    do script \"cd \\\"$APP_DIR\\\" && ./start.sh\"
+end tell"

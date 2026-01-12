@@ -1,0 +1,28 @@
+# AI_OS - Root Requirements
+# Install with: pip install -r requirements.txt
+
+# Core backend
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+websockets>=12.0
+pydantic>=2.5.0
+pydantic-settings>=2.0.0
+python-multipart>=0.0.6
+starlette>=0.27.0
+python-dotenv>=1.0.0
+aiofiles>=23.2.1
+
+# Ollama client (local LLM)
+ollama>=0.1.0
+
+# Optional: Kernel browser automation (for "living body" features)
+# Uncomment if you have a KERNEL_API_KEY
+# kernel>=0.1.0
+# playwright>=1.40.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+
+# Development
+httpx>=0.25.0

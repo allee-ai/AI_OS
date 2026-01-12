@@ -11,6 +11,7 @@ class ChatMessage(BaseModel):
 class SendMessageRequest(BaseModel):
     content: str
     session_id: Optional[str] = None
+    model_id: Optional[str] = None
 
 class SendMessageResponse(BaseModel):
     message: ChatMessage

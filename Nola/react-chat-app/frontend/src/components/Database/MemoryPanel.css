@@ -1,0 +1,271 @@
+.memory-panel {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #1a1a2e;
+  overflow: hidden;
+}
+
+.memory-header {
+  padding: 12px 16px;
+  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
+  border-bottom: 1px solid #0f3460;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.header-left h3 {
+  margin: 0;
+  color: #e8e8e8;
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.refresh-button {
+  padding: 4px 8px;
+  background: #0f3460;
+  color: #64b5f6;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.refresh-button:hover:not(:disabled) {
+  background: #1a5490;
+}
+
+.refresh-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Tab Selector */
+.tab-selector {
+  display: flex;
+  gap: 6px;
+}
+
+.tab-button {
+  flex: 1;
+  padding: 8px 12px;
+  background: #0f3460;
+  color: #888;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.tab-button:hover {
+  background: #1a5490;
+  color: #ccc;
+}
+
+.tab-button.active {
+  background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
+  color: #1a1a2e;
+}
+
+.tab-button .tab-hint {
+  font-size: 10px;
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+/* Context Level Selector */
+.context-level-selector {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.level-buttons {
+  display: flex;
+  gap: 3px;
+}
+
+.level-button {
+  padding: 4px 10px;
+  background: #0f3460;
+  border: none;
+  color: #888;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 600;
+  transition: all 0.2s;
+  min-width: 32px;
+}
+
+.level-button:hover {
+  background: #1a5490;
+  color: #ccc;
+}
+
+.level-button.active {
+  background: #64b5f6;
+  color: #1a1a2e;
+}
+
+.memory-content {
+  flex: 1;
+  overflow: auto;
+  min-height: 0;
+}
+
+.loading-state,
+.error-state,
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: #888;
+  text-align: center;
+  padding: 20px;
+}
+
+.empty-state .empty-icon {
+  font-size: 32px;
+  margin-bottom: 12px;
+}
+
+.empty-state .hint {
+  font-size: 12px;
+  color: #666;
+  margin-top: 8px;
+}
+
+.error-state {
+  color: #ff6b6b;
+}
+
+.error-state button {
+  margin-top: 12px;
+  padding: 8px 16px;
+  background: #0f3460;
+  color: #e8e8e8;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid #0f3460;
+  border-top-color: #64b5f6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 12px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Changes List for Dynamic Tab */
+.changes-list {
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.change-card {
+  background: #16213e;
+  border: 1px solid #0f3460;
+  border-radius: 8px;
+  padding: 12px;
+  transition: border-color 0.2s;
+}
+
+.change-card:hover {
+  border-color: #1a5490;
+}
+
+.change-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+
+.change-module {
+  font-weight: 600;
+  color: #64b5f6;
+  font-size: 13px;
+}
+
+.change-time {
+  font-size: 11px;
+  color: #666;
+}
+
+.change-field {
+  font-size: 12px;
+  color: #aaa;
+  margin-bottom: 8px;
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.change-diff {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-family: 'SF Mono', Monaco, monospace;
+}
+
+.old-value,
+.new-value {
+  display: flex;
+  gap: 8px;
+  padding: 6px 8px;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.old-value {
+  background: rgba(255, 107, 107, 0.15);
+  color: #ff6b6b;
+}
+
+.new-value {
+  background: rgba(100, 181, 246, 0.15);
+  color: #64b5f6;
+}
+
+.diff-label {
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.diff-content {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

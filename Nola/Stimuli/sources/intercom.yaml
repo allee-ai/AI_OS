@@ -1,0 +1,40 @@
+# Intercom Stimuli Source
+# Pulls conversations, pushes replies
+
+name: intercom
+type: rest
+enabled: false
+
+poll_interval: 120
+
+auth:
+  method: bearer
+  token_env: INTERCOM_ACCESS_TOKEN
+
+# Pull: Get open conversations
+pull:
+  endpoint: https://api.intercom.io/conversations
+  method: GET
+  params:
+    open: "true"
+    display_as: "plaintext"
+  
+  mapping:
+    messages: "$.conversations"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.source.author.id"
+    sender_name: "$.source.author.name"
+    subject: "$.source.subject"
+    body: "$.source.body"
+
+# Push: Reply to conversation
+push:
+  endpoint: https://api.intercom.io/conversations/{{thread_id}}/reply
+  method: POST
+  
+  body_template:
+    type: "admin"
+    admin_id: "{{admin_id}}"
+    message_type: "comment"
+    body: "{{body}}"

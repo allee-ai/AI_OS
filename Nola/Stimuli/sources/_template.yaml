@@ -1,0 +1,79 @@
+# Example API Stimuli Source
+# Template for adding new integrations
+
+name: example
+type: rest
+enabled: false  # Set to true when configured
+
+# How often to check for new stimuli (seconds)
+poll_interval: 300
+
+# =====================================================
+# AUTHENTICATION
+# =====================================================
+auth:
+  # Options: "bearer", "oauth2", "api_key", "basic", "none"
+  method: bearer
+  
+  # For bearer: env var containing token
+  token_env: EXAMPLE_API_TOKEN
+  
+  # For oauth2: path to token JSON file
+  # token_path: ~/.nola/tokens/example.json
+  
+  # For api_key: env var and header name
+  # key_env: EXAMPLE_API_KEY
+  # key_param: X-API-Key
+
+
+# =====================================================
+# PULL: Fetch incoming stimuli
+# =====================================================
+pull:
+  endpoint: https://api.example.com/v1/messages
+  method: GET
+  
+  # Query parameters
+  params:
+    status: unread
+    limit: 25
+  
+  # Map API response → normalized format
+  # Use JSONPath syntax: $.field, $.nested.field, $.array[0]
+  mapping:
+    # Path to array of messages in response
+    messages: "$.data.messages"
+    
+    # Fields to extract from each message
+    id: "$.id"
+    thread_id: "$.conversation_id"
+    sender_id: "$.sender.id"
+    sender_name: "$.sender.display_name"
+    subject: "$.subject"        # null if not applicable
+    body: "$.content.text"
+    timestamp: "$.created_at"   # ISO8601 format
+
+
+# =====================================================
+# PUSH: Send response (usually as draft/queue)
+# =====================================================
+push:
+  endpoint: https://api.example.com/v1/drafts
+  method: POST
+  
+  # Template with variable slots
+  # {{variable}} replaced at runtime
+  # 
+  # DETERMINISTIC (filled by code):
+  #   - to, to_name, thread_id, in_reply_to
+  #   
+  # PROBABILISTIC (filled by LLM):
+  #   - subject, body
+  #
+  body_template:
+    recipient_id: "{{to}}"
+    thread_id: "{{thread_id}}"
+    reply_to: "{{in_reply_to}}"
+    content:
+      subject: "{{subject}}"
+      body: "{{body}}"

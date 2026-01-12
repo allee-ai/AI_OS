@@ -8,6 +8,7 @@ export interface ChatMessage {
 export interface SendMessageRequest {
   content: string;
   session_id?: string;
+  model_id?: string;
 }
 
 export interface SendMessageResponse {
@@ -26,4 +27,16 @@ export interface WebSocketMessage {
   content?: string;
   message_id?: string;
   is_final?: boolean;
+}
+
+export interface ModelInfo {
+  id: string;
+  name: string;
+  provider: 'ollama' | 'cloud';
+  description?: string;
+}
+
+export interface ModelsResponse {
+  models: ModelInfo[];
+  current: string;
 }

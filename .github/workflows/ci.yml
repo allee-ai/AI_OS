@@ -1,0 +1,62 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  backend-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Python 3.11
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install backend dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r Nola/react-chat-app/backend/requirements.txt
+    
+    - name: Smoke test backend imports
+      run: |
+        cd Nola/react-chat-app/backend
+        python -c "from main import app; from api.chat import router; print('✅ Backend imports OK')"
+    
+    - name: Check Nola agent import
+      run: |
+        cd Nola
+        python -c "from agent import get_agent; print('✅ Nola agent import OK')"
+
+  frontend-check:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v4
+    
+    - name: Set up Node.js 20
+      uses: actions/setup-node@v4
+      with:
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: 'Nola/react-chat-app/frontend/package-lock.json'
+    
+    - name: Install frontend dependencies
+      run: |
+        cd Nola/react-chat-app/frontend
+        npm ci
+    
+    - name: Build frontend
+      run: |
+        cd Nola/react-chat-app/frontend
+        npm run build
+    
+    - name: TypeScript check
+      run: |
+        cd Nola/react-chat-app/frontend
+        npx tsc --noEmit

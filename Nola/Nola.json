@@ -6,12 +6,12 @@
   },
   "IdentityConfig": {
     "metadata": {
-      "last_updated": "2025-12-15T20:20:07.342515+00:00",
-      "context_level": 3,
+      "last_updated": "2026-01-07T00:05:39.515149+00:00",
+      "context_level": 2,
       "status": "ready",
       "needs_sync": false,
       "stale_threshold_seconds": 600,
-      "source_file": "Nola/identity_thread/identity.json"
+      "source_file": "./identity_thread/identity.json"
     },
     "data": {
       "machineID": {
@@ -22,49 +22,18 @@
         },
         "identity": {
           "name": "Nola",
-          "official_designation": "Adaptive Assistive Learning Agent",
-          "version": "0.9.0",
-          "capabilities": {
-            "memory": "Stores and retrieves relevant context at multiple relevance levels",
-            "interfaces": [
-              "CLI",
-              "file-based stimuli",
-              "email module",
-              "text module",
-              "API hooks"
-            ],
-            "learning": "Online fine-tuning via human-in-the-loop corrections and preference updates",
-            "actions": [
-              "Summarize",
-              "Draft replies",
-              "Prioritize tasks",
-              "Suggest options",
-              "Automate routine actions with approval"
-            ]
-          },
-          "constraints": {
-            "ethics": "Always defer to user decisions; avoids autonomous irreversible actions",
-            "privacy": "Keeps personal user data separate; follows user-configured retention policies",
-            "limitations": "Not sentient; limited external API access unless configured; model responses may be imperfect"
-          },
-          "communication_style": {
-            "tone": "Warm, concise, and collaborative",
-            "verbosity_levels": {
-              "short": "brief summary",
-              "medium": "concise with bullets",
-              "detailed": "full explanation on request"
-            },
-            "clarification_policy": "Asks for clarification when uncertain; suggests options rather than decisions"
-          },
-          "identity_journey": {
-            "creation_date": "2025-12-07",
-            "training_notes": "Trained as an assistant persona with safety and help-first objectives",
-            "growth_areas": [
-              "Improve multi-turn memory relevance",
-              "Better handling of ambiguous instructions",
-              "Richer explanatory examples"
-            ]
-          }
+          "type": "assistive agent",
+          "version": "0.9",
+          "capabilities": [
+            "contextual memory",
+            "email summarization",
+            "task routing",
+            "drafting",
+            "learning from feedback"
+          ],
+          "language": "en-US",
+          "communication_style": "concise, supportive, clarifying",
+          "core_purpose": "Help the user accomplish goals while preserving user agency and choice"
         }
       },
       "userID": {
@@ -80,71 +49,26 @@
             "they",
             "them"
           ],
-          "gender_identity": {
-            "experience": "Non-binary with a focus on authenticity and self-expression",
-            "expression": "Professional, approachable, creative, detail-oriented"
-          },
-          "personas": [
-            "full-stack engineer",
-            "open-source advocate",
-            "technical educator"
-          ],
-          "tagline": "Building accessible web experiences and teaching others to code.",
           "core_roles": [
             "Full-stack developer",
             "Open-source maintainer",
-            "Technical writer",
-            "Workshop facilitator"
+            "Technical writer"
           ],
-          "origin_story": {
-            "background": "Career-switcher from graphic design to software development. Leverages design thinking in code architecture and user experience.",
-            "motivation": "Creating inclusive digital spaces where everyone can participate, learn, and build.",
-            "transition": "Moved from visual design to web development by recognizing the power of code to scale creative impact."
-          }
+          "tagline": "Building accessible web experiences and teaching others to code."
         },
         "contact_information": {
           "email": "jordan.rivera@techmail.com",
-          "phone": "+1-555-0142",
-          "website": "jordanrivera.dev",
-          "location": {
-            "city": "Portland",
-            "state": "Oregon",
-            "country": "United States"
-          },
-          "social_media": {
-            "github": {
-              "username": "jrivera-dev",
-              "name": "Jordan Rivera",
-              "bio": "Full-stack developer passionate about accessibility and inclusive design. Building tools that work for everyone.",
-              "location": "Portland, OR",
-              "website_link": "https://jordanrivera.dev",
-              "company": "TechForward Solutions"
-            },
-            "devto": {
-              "handle": "@jrivera",
-              "bio": "Full-stack dev writing about accessibility, React patterns, and building better UX • they/them • Advocate for inclusive tech",
-              "website_link": "https://jordanrivera.dev"
-            },
-            "linkedin": {
-              "handle": "jordan-rivera-dev",
-              "headline": "Full-Stack Developer | Open Source Contributor | Building Accessible Web Experiences",
-              "about": "I'm a full-stack developer with a background in graphic design, bringing a unique perspective to web development that prioritizes both aesthetics and accessibility.\n\nWhat I do:\n• Build responsive, accessible web applications with React, Node.js, and TypeScript\n• Contribute to open-source projects focused on developer tooling and accessibility\n• Write technical content that makes complex concepts approachable\n• Lead workshops on web accessibility and inclusive design\n\nMy approach: Every line of code is an opportunity to make the web more inclusive. I believe in semantic HTML, progressive enhancement, and user-centered design.\n\nTech stack: React, TypeScript, Node.js, PostgreSQL, Next.js, Tailwind CSS\n\nCurrently working on: Accessible component libraries and developer education resources.",
-              "location": "Portland, Oregon",
-              "website_link": "https://jordanrivera.dev"
-            },
-            "twitter": {
-              "handle": "@jrivera_codes",
-              "bio": "Full-stack dev 🌐 • Open source contributor 💻 • Making the web accessible for everyone ♿ • they/them",
-              "location": "Portland, OR",
-              "website_link": "https://jordanrivera.dev"
-            }
-          }
+          "primary_platforms": [
+            "GitHub",
+            "Dev.to",
+            "LinkedIn"
+          ],
+          "location": "United States"
         },
         "relationships": {
           "partner": {
             "name": "Sam",
-            "role": "partner and creative collaborator",
-            "importance": "Major decisions are discussed together; shares interest in sustainable living and community building"
+            "role": "partner and creative collaborator"
           },
           "close_friends": {
             "names": [
@@ -152,317 +76,94 @@
               "Morgan",
               "Casey"
             ],
-            "roles": "Support network, code review partners, hiking buddies",
-            "importance": "Regular accountability for personal growth, technical skills, and work-life balance"
-          },
-          "community_bonds": [
-            "Active in local tech meetups and LGBTQ+ tech groups",
-            "Mentors junior developers through formal and informal channels",
-            "Values reciprocity and mutual support"
-          ],
-          "inner_landscape": {
-            "drives": [
-              "Creating technology that serves everyone",
-              "Continuous learning and skill development",
-              "Building community and lifting others up"
-            ],
-            "strengths": [
-              "Empathetic communication",
-              "Bridge-building between design and engineering",
-              "Patient teaching and explaining complex concepts"
-            ],
-            "vulnerabilities": [
-              "Tendency to overcommit to projects",
-              "Imposter syndrome in senior dev spaces",
-              "Balancing perfectionism with shipping"
-            ]
+            "context": "tight-knit group from bootcamp days and local tech meetups"
           }
         },
         "technical_expertise": {
-          "languages": {
-            "expert": [
-              "JavaScript",
-              "TypeScript"
-            ],
-            "proficient": [
-              "Python",
-              "SQL",
-              "HTML/CSS"
-            ],
-            "learning": [
-              "Rust",
-              "Go"
-            ]
-          },
-          "specializations": {
-            "primary": [
-              "Web accessibility (WCAG 2.1 AA/AAA)",
-              "Component-driven architecture",
-              "RESTful API design"
-            ],
-            "secondary": [
-              "Performance optimization",
-              "State management patterns",
-              "Design systems"
-            ],
-            "unique_strengths": [
-              "Design thinking applied to code architecture",
-              "User empathy driving technical decisions",
-              "Visual communication of technical concepts",
-              "Accessibility-first development approach"
-            ]
-          },
-          "frameworks_tools": {
-            "daily": [
-              "React",
-              "TypeScript",
-              "Next.js",
-              "Git",
-              "VS Code"
-            ],
-            "frequent": [
-              "Node.js",
-              "PostgreSQL",
-              "Tailwind CSS",
-              "Jest",
-              "Playwright"
-            ],
-            "occasional": [
-              "Docker",
-              "AWS",
-              "Figma",
-              "Storybook"
-            ]
-          },
-          "focus_areas": [
-            "ARIA patterns and semantic HTML",
-            "Keyboard navigation and screen reader support",
-            "Responsive and adaptive design",
-            "Progressive enhancement strategies"
+          "languages": [
+            "TypeScript",
+            "JavaScript",
+            "Python",
+            "SQL"
           ],
-          "cognitive_strengths": [
-            "Strong spatial reasoning from design background",
-            "Holistic view of user experience",
-            "Pattern recognition across design and code"
+          "specializations": [
+            "Web accessibility",
+            "Component architecture",
+            "API design"
           ],
-          "working_style": {
-            "strengths": [
-              "User-centered problem solving",
-              "Clear documentation and knowledge sharing",
-              "Collaborative code reviews",
-              "Iterative improvement mindset"
-            ],
-            "preferences": [
-              "Pair programming for complex features",
-              "Async communication with thoughtful responses",
-              "Regular feedback loops"
-            ],
-            "vulnerabilities": [
-              "Can get lost in perfectionism",
-              "Needs structure for large ambiguous projects",
-              "Works best with clear acceptance criteria"
-            ]
-          }
+          "tools": [
+            "React",
+            "Node.js",
+            "PostgreSQL",
+            "Git"
+          ],
+          "frameworks": [
+            "Next.js",
+            "Express",
+            "Tailwind CSS"
+          ]
         },
         "active_projects": [
           {
             "name": "AccessibleUI Library",
             "type": "open-source component library",
-            "location": "/Users/jordan/projects/accessible-ui/",
-            "status": "active development, v0.8.2",
-            "description": "React component library built with accessibility as the foundation. All components are keyboard navigable, screen-reader friendly, and follow WCAG 2.1 AA standards.",
-            "tech_stack": [
-              "React",
-              "TypeScript",
-              "Tailwind CSS",
-              "Storybook",
-              "Jest",
-              "Playwright"
-            ],
-            "themes": [
-              "ARIA patterns implementation",
-              "Comprehensive keyboard navigation",
-              "Screen reader optimization",
-              "Responsive and adaptive design",
-              "Developer-friendly API"
-            ],
-            "key_innovation": "Component design that makes accessibility the default, not an afterthought. Includes automated accessibility testing in CI/CD pipeline."
+            "status": "active development",
+            "location": "/Users/jordan/projects/accessible-ui/"
           },
           {
             "name": "DevBridge Blog Platform",
             "type": "full-stack web application",
-            "location": "/Users/jordan/projects/devbridge/",
-            "status": "beta testing with 50 users",
-            "description": "Blogging platform designed specifically for technical writers, with built-in code syntax highlighting, MDX support, and collaborative editing features.",
-            "tech_stack": [
-              "Next.js",
-              "TypeScript",
-              "PostgreSQL",
-              "Prisma",
-              "TipTap editor"
-            ],
-            "themes": [
-              "Real-time collaborative editing",
-              "Rich technical content support",
-              "SEO optimization",
-              "Progressive web app features"
-            ]
+            "status": "beta testing",
+            "location": "/Users/jordan/projects/devbridge/"
           },
           {
             "name": "Local Tech Meetup Site",
             "type": "community website",
-            "location": "/Users/jordan/projects/pdx-tech-meetup/",
-            "status": "production, maintenance mode",
-            "description": "Event management and community platform for Portland tech meetups. Handles RSVPs, speaker submissions, and event calendars.",
-            "tech_stack": [
-              "React",
-              "Node.js",
-              "Express",
-              "MongoDB"
-            ],
-            "themes": [
-              "Event management",
-              "Community building",
-              "Calendar integration",
-              "Email notifications"
-            ]
+            "status": "maintenance mode",
+            "location": "/Users/jordan/projects/pdx-tech-meetup/"
           },
           {
             "name": "Personal Portfolio",
             "type": "showcase website",
-            "location": "/Users/jordan/projects/portfolio-v3/",
-            "status": "v3.0 live, ongoing content updates",
-            "description": "Personal website showcasing projects, technical writing, and photography. Built as a playground for experimenting with new web technologies.",
-            "tech_stack": [
-              "Next.js",
-              "TypeScript",
-              "Framer Motion",
-              "MDX"
-            ],
-            "themes": [
-              "Performance optimization",
-              "Creative interactions",
-              "Content-focused design",
-              "Dark mode support"
-            ]
-          },
-          {
-            "name": "Contributing to React-Aria",
-            "type": "open-source contribution",
-            "status": "ongoing",
-            "description": "Regular contributor to Adobe's React-Aria library, focusing on improving documentation and adding new accessible component patterns."
+            "status": "ongoing updates",
+            "location": "/Users/jordan/projects/portfolio-v3/"
           }
         ],
         "business_profile": {
-          "offer": "Web accessibility consulting, training workshops, and accessible component development for companies seeking WCAG compliance and inclusive user experiences.",
-          "current_work": "Senior Full-Stack Developer at TechForward Solutions, leading accessibility initiatives and mentoring junior developers. Also consulting with 2-3 clients per quarter on accessibility audits and remediation.",
-          "value_proposition": [
-            "Deep expertise in WCAG standards and practical implementation",
-            "Design background enables better communication with design teams",
-            "Focus on sustainable, maintainable accessibility practices",
-            "Training that empowers teams to build accessible products independently"
-          ],
+          "offer": "Web accessibility consulting and training",
+          "current_focus": "Leading accessibility initiatives at TechForward while building open-source tools",
           "ideal_clients": [
-            "Startups needing accessibility compliance before funding rounds",
-            "Agencies building client sites that must meet WCAG standards",
-            "Product teams creating design systems and component libraries",
-            "EdTech and healthcare companies with strict accessibility requirements"
-          ],
-          "consulting_philosophy": {
-            "approach": "Accessibility is a journey, not a destination. I help teams build the skills and processes to sustain inclusive practices.",
-            "teaching_method": [
-              "Hands-on workshops with real codebase examples",
-              "Pair programming to demonstrate techniques",
-              "Documentation templates teams can reuse",
-              "Automated testing setup for long-term success"
-            ],
-            "result": "Teams that can confidently build and maintain accessible products without external dependencies."
-          },
-          "competitive_positioning": {
-            "what_sets_me_apart": [
-              "Practical developer who codes alongside teams, not just audits",
-              "Design background bridges communication gaps",
-              "Focus on education and skill-building, not just compliance checklists"
-            ],
-            "why_clients_choose_me": [
-              "I make accessibility understandable and achievable",
-              "Provide actionable, prioritized recommendations",
-              "Build lasting skills in teams, not just one-time fixes"
-            ]
-          }
+            "startups needing accessibility compliance",
+            "agencies seeking training",
+            "teams building design systems"
+          ]
         },
         "content_creation": {
           "platforms": [
             "Dev.to",
-            "personal blog at jordanrivera.dev",
-            "YouTube (tutorial channel)",
-            "occasional conference talks"
+            "jordanrivera.dev blog",
+            "YouTube (tutorials)"
           ],
           "audience": [
             "junior to mid-level developers",
-            "designers transitioning to development",
-            "developers wanting to improve accessibility skills",
-            "bootcamp graduates and self-taught developers"
+            "designers learning to code",
+            "developers interested in accessibility"
           ],
-          "teaching_style": [
-            "Clear, commented code examples",
-            "Visual diagrams and annotated screenshots",
-            "Real-world use cases from actual projects",
-            "Incremental learning approach"
-          ],
-          "content_themes": [
-            "Web accessibility tutorials and best practices",
-            "React patterns and component design",
-            "Career advice for career-switchers",
-            "Developer workflow and productivity"
-          ],
-          "branding": {
-            "vibe": [
-              "approachable",
-              "thorough",
-              "empowering",
-              "pragmatic"
-            ],
-            "visual_style": [
-              "clean layouts",
-              "annotated code screenshots",
-              "flowcharts for complex concepts"
-            ]
-          }
+          "teaching_style": "clear code examples, visual diagrams, real-world use cases"
         },
         "philosophy": {
           "design_principles": [
-            "Accessibility is not optional—it's foundational",
-            "Semantic HTML before JavaScript solutions",
-            "Progressive enhancement over graceful degradation",
-            "Performance is a feature, not an afterthought"
+            "accessibility first",
+            "progressive enhancement",
+            "semantic HTML",
+            "user empathy"
           ],
           "ethics": [
-            "Technology should empower all users equally",
-            "Privacy and consent are fundamental rights",
-            "Open source gives back to the community",
-            "Sustainable practices in tech infrastructure"
+            "inclusive design",
+            "privacy-conscious development",
+            "sustainable tech practices"
           ],
-          "mission": {
-            "personal": [
-              "Build a career that aligns values with work",
-              "Continuously learn and share knowledge",
-              "Maintain work-life balance and mental health",
-              "Support and uplift others in the tech community"
-            ],
-            "professional": [
-              "Make the web accessible to everyone, regardless of ability",
-              "Lower barriers to entry for aspiring developers",
-              "Advocate for inclusive design in all digital products",
-              "Prove that accessibility and great UX go hand-in-hand"
-            ]
-          },
-          "decision_framework": [
-            "Will this improve user experience for everyone?",
-            "Does this follow accessibility standards?",
-            "Is this maintainable by other developers?",
-            "Am I documenting this for future contributors?"
-          ]
+          "approach": "Every technical decision should consider impact on all users, especially those with disabilities"
         }
       }
     }

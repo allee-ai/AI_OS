@@ -1,0 +1,2 @@
+# This file ensures the data/db directory exists in git
+# Database files (*.db) are gitignored but the directory structure is preserved

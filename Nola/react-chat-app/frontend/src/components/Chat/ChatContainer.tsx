@@ -1,7 +1,11 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import { MessageList } from './MessageList';
 import { MessageInput } from './MessageInput';
+import { ModelSelector } from './ModelSelector';
+import { ConversationSidebar } from './ConversationSidebar';
+import { SystemPromptSidebar } from './SystemPromptSidebar';
 import { useChat } from '../../hooks/useChat';
+import { useIntrospection } from '../../hooks/useIntrospection';
 import './ChatContainer.css';
 
 interface ChatContainerProps {
@@ -16,8 +20,14 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
     isLoading, 
     isConnected, 
     agentStatus,
-    isAgentTyping 
+    isAgentTyping,
+    loadConversation,
+    sessionId
   } = useChat();
+
+  const { data: introspection } = useIntrospection({ level: 2, pollInterval: 4000, autoStart: true });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const [rightSidebarCollapsed, setRightSidebarCollapsed] = useState(true);
 
   const handleClearHistory = async () => {
     if (window.confirm('Are you sure you want to clear all chat history?')) {
@@ -26,8 +36,26 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
     }
   };
 
+  const handleSelectConversation = useCallback(async (selectedSessionId: string) => {
+    if (loadConversation) {
+      await loadConversation(selectedSessionId);
+    }
+  }, [loadConversation]);
+
+  const handleNewConversation = useCallback(async () => {
+    await clearHistory();
+  }, [clearHistory]);
+
   return (
-    <div className="chat-container">
+    <div className="chat-layout">
+      <ConversationSidebar
+        currentSessionId={sessionId}
+        onSelectConversation={handleSelectConversation}
+        onNewConversation={handleNewConversation}
+        isCollapsed={sidebarCollapsed}
+        onToggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+      />
+      <div className="chat-container">
       <div className="chat-header">
         <div className="agent-info">
           <div className="agent-avatar">
@@ -47,6 +75,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
         </div>
         
         <div className="chat-actions">
+          <ModelSelector />
           {messages.length > 0 && (
             <button 
               onClick={handleClearHistory}
@@ -66,15 +95,41 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
         </div>
       </div>
 
+      <div className="live-context-bar">
+        <div className="context-pill">
+          <span className="pill-label">Context</span>
+          <span className="pill-value">{introspection?.context?.fact_count ?? 0} facts</span>
+        </div>
+        <div className="context-pill">
+          <span className="pill-label">Threads</span>
+          <span className="pill-value">{introspection?.context?.thread_count ?? 0}</span>
+        </div>
+        <div className="context-pill">
+          <span className="pill-label">Level</span>
+          <span className="pill-value">L{introspection?.context_level ?? 2}</span>
+        </div>
+        {introspection?.recent_events?.[0]?.message && (
+          <div className="context-note" title={introspection.recent_events[0].message}>
+            Last event: {introspection.recent_events[0].message}
+          </div>
+        )}
+      </div>
+
       <MessageList 
         messages={messages} 
         isAgentTyping={isAgentTyping}
+        conversationId={sessionId}
       />
       
       <MessageInput 
         onSendMessage={sendMessage}
         isLoading={isLoading}
         isConnected={isConnected}
+      />
+      </div>
+      <SystemPromptSidebar
+        isCollapsed={rightSidebarCollapsed}
+        onToggleCollapse={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
       />
     </div>
   );

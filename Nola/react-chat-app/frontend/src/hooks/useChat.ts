@@ -8,6 +8,7 @@ export const useChat = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
+  const [sessionId, setSessionId] = useState<string | undefined>();
   const streamingMessageRef = useRef<string>('');
   const streamingMessageIdRef = useRef<string>('');
 
@@ -146,8 +147,41 @@ export const useChat = () => {
     try {
       await apiService.clearChatHistory();
       setMessages([]);
+      setSessionId(undefined);
     } catch (error) {
       console.error('Failed to clear history:', error);
+    }
+  }, []);
+
+  const loadConversation = useCallback(async (conversationSessionId: string) => {
+    try {
+      const conversation = await apiService.getConversation(conversationSessionId);
+      
+      // Convert turns to messages
+      const loadedMessages: ChatMessage[] = [];
+      for (const turn of conversation.turns || []) {
+        if (turn.user) {
+          loadedMessages.push({
+            id: `user_${turn.timestamp}`,
+            content: turn.user,
+            role: 'user',
+            timestamp: new Date(turn.timestamp)
+          });
+        }
+        if (turn.assistant) {
+          loadedMessages.push({
+            id: `assistant_${turn.timestamp}`,
+            content: turn.assistant,
+            role: 'assistant',
+            timestamp: new Date(turn.timestamp)
+          });
+        }
+      }
+      
+      setMessages(loadedMessages);
+      setSessionId(conversationSessionId);
+    } catch (error) {
+      console.error('Failed to load conversation:', error);
     }
   }, []);
 
@@ -155,9 +189,11 @@ export const useChat = () => {
     messages,
     sendMessage,
     clearHistory,
+    loadConversation,
     isLoading,
     isConnected,
     agentStatus,
-    isAgentTyping
+    isAgentTyping,
+    sessionId
   };
 };

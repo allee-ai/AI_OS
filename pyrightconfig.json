@@ -1,0 +1,9 @@
+{
+  "include": ["Nola", "tests", "eval"],
+  "exclude": ["**/__pycache__", ".venv", "node_modules"],
+  "extraPaths": ["."],
+  "pythonVersion": "3.11",
+  "typeCheckingMode": "basic",
+  "reportMissingImports": "warning",
+  "reportMissingModuleSource": "none"
+}
