@@ -1717,22 +1717,53 @@ def pull_identity_flat(level: int = 2, min_weight: float = 0.0, limit: int = 50)
     
     Returns list of {key, metadata_type, metadata_desc, value, weight}
     where 'value' is L1, L2, or L3 depending on level.
+    
+    Prioritizes profile_facts (new system), falls back to identity_flat (legacy).
     """
-    conn = get_connection(readonly=False)
+    conn = get_connection(readonly=True)
     cur = conn.cursor()
-    init_identity_flat(conn)
     
-    level_col = {1: 'l1', 2: 'l2', 3: 'l3'}.get(level, 'l2')
+    level_col_map = {1: 'l1_value', 2: 'l2_value', 3: 'l3_value'}
+    level_col = level_col_map.get(level, 'l2_value')
     
-    cur.execute(f"""
-        SELECT key, metadata_type, metadata_desc, {level_col} as value, l1, l2, l3, weight, access_count
-        FROM identity_flat
-        WHERE weight >= ?
-        ORDER BY weight DESC
-        LIMIT ?
-    """, (min_weight, limit))
+    # Try new profile_facts system first
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='profile_facts'")
+    if cur.fetchone():
+        cur.execute(f"""
+            SELECT 
+                pf.key,
+                p.type_name as metadata_type,
+                COALESCE(pf.fact_type, '') as metadata_desc,
+                COALESCE(pf.{level_col}, '') as value,
+                COALESCE(pf.l1_value, '') as l1,
+                COALESCE(pf.l2_value, '') as l2,
+                COALESCE(pf.l3_value, '') as l3,
+                pf.weight,
+                pf.access_count
+            FROM profile_facts pf
+            JOIN profiles p ON pf.profile_id = p.profile_id
+            WHERE pf.weight >= ?
+            ORDER BY pf.weight DESC
+            LIMIT ?
+        """, (min_weight, limit))
+        rows = [dict(row) for row in cur.fetchall()]
+        if rows:
+            return rows
     
-    return [dict(row) for row in cur.fetchall()]
+    # Fallback to legacy identity_flat
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='identity_flat'")
+    if cur.fetchone():
+        legacy_col = {1: 'l1', 2: 'l2', 3: 'l3'}.get(level, 'l2')
+        cur.execute(f"""
+            SELECT key, metadata_type, metadata_desc, {legacy_col} as value, l1, l2, l3, weight, access_count
+            FROM identity_flat
+            WHERE weight >= ?
+            ORDER BY weight DESC
+            LIMIT ?
+        """, (min_weight, limit))
+        return [dict(row) for row in cur.fetchall()]
+    
+    return []
 
 
 def get_identity_context(level: int = 2, token_budget: int = 500) -> str:
@@ -1763,17 +1794,43 @@ def get_identity_table_data() -> List[Dict]:
     Get all identity rows with full L1/L2/L3 data for UI table display.
     
     Returns list of {key, metadata_type, metadata_desc, l1, l2, l3, weight}
+    
+    Prioritizes profile_facts (new system), falls back to identity_flat (legacy).
     """
     conn = get_connection(readonly=True)
     cur = conn.cursor()
     
-    cur.execute("""
-        SELECT key, metadata_type, metadata_desc, l1, l2, l3, weight
-        FROM identity_flat
-        ORDER BY weight DESC
-    """)
+    # Try new profile_facts system first
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='profile_facts'")
+    if cur.fetchone():
+        cur.execute("""
+            SELECT 
+                pf.key,
+                p.type_name as metadata_type,
+                COALESCE(pf.fact_type, '') as metadata_desc,
+                COALESCE(pf.l1_value, '') as l1,
+                COALESCE(pf.l2_value, '') as l2,
+                COALESCE(pf.l3_value, '') as l3,
+                pf.weight
+            FROM profile_facts pf
+            JOIN profiles p ON pf.profile_id = p.profile_id
+            ORDER BY pf.weight DESC
+        """)
+        rows = [dict(row) for row in cur.fetchall()]
+        if rows:
+            return rows
     
-    return [dict(row) for row in cur.fetchall()]
+    # Fallback to legacy identity_flat
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='identity_flat'")
+    if cur.fetchone():
+        cur.execute("""
+            SELECT key, metadata_type, metadata_desc, l1, l2, l3, weight
+            FROM identity_flat
+            ORDER BY weight DESC
+        """)
+        return [dict(row) for row in cur.fetchall()]
+    
+    return []
 
 
 # ============================================================================
@@ -1856,24 +1913,53 @@ def pull_philosophy_flat(level: int = 2, min_weight: float = 0.0, limit: int = 5
     
     Returns list of {key, metadata_type, metadata_desc, value, weight}
     where 'value' is L1, L2, or L3 depending on level.
+    
+    Prioritizes philosophy_profile_facts (new system), falls back to philosophy_flat (legacy).
     """
     conn = get_connection(readonly=True)
     cur = conn.cursor()
     
-    # Ensure table exists
-    init_philosophy_flat(conn)
+    level_col_map = {1: 'l1_value', 2: 'l2_value', 3: 'l3_value'}
+    level_col = level_col_map.get(level, 'l2_value')
     
-    level_col = {1: 'l1', 2: 'l2', 3: 'l3'}.get(level, 'l2')
+    # Try new philosophy_profile_facts system first
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='philosophy_profile_facts'")
+    if cur.fetchone():
+        cur.execute(f"""
+            SELECT 
+                pf.key,
+                p.type_name as metadata_type,
+                COALESCE(p.description, '') as metadata_desc,
+                COALESCE(pf.{level_col}, '') as value,
+                COALESCE(pf.l1_value, '') as l1,
+                COALESCE(pf.l2_value, '') as l2,
+                COALESCE(pf.l3_value, '') as l3,
+                pf.weight,
+                pf.access_count
+            FROM philosophy_profile_facts pf
+            JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
+            WHERE pf.weight >= ?
+            ORDER BY pf.weight DESC
+            LIMIT ?
+        """, (min_weight, limit))
+        rows = [dict(row) for row in cur.fetchall()]
+        if rows:
+            return rows
     
-    cur.execute(f"""
-        SELECT key, metadata_type, metadata_desc, {level_col} as value, l1, l2, l3, weight, access_count
-        FROM philosophy_flat
-        WHERE weight >= ?
-        ORDER BY weight DESC
-        LIMIT ?
-    """, (min_weight, limit))
+    # Fallback to legacy philosophy_flat
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='philosophy_flat'")
+    if cur.fetchone():
+        legacy_col = {1: 'l1', 2: 'l2', 3: 'l3'}.get(level, 'l2')
+        cur.execute(f"""
+            SELECT key, metadata_type, metadata_desc, {legacy_col} as value, l1, l2, l3, weight, access_count
+            FROM philosophy_flat
+            WHERE weight >= ?
+            ORDER BY weight DESC
+            LIMIT ?
+        """, (min_weight, limit))
+        return [dict(row) for row in cur.fetchall()]
     
-    return [dict(row) for row in cur.fetchall()]
+    return []
 
 
 def get_philosophy_table_data() -> List[Dict]:
@@ -1881,20 +1967,43 @@ def get_philosophy_table_data() -> List[Dict]:
     Get all philosophy rows with full L1/L2/L3 data for UI table display.
     
     Returns list of {key, metadata_type, metadata_desc, l1, l2, l3, weight}
+    
+    Prioritizes philosophy_profile_facts (new system), falls back to philosophy_flat (legacy).
     """
     conn = get_connection(readonly=True)
     cur = conn.cursor()
     
-    # Ensure table exists
-    init_philosophy_flat(conn)
+    # Try new philosophy_profile_facts system first
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='philosophy_profile_facts'")
+    if cur.fetchone():
+        cur.execute("""
+            SELECT 
+                pf.key,
+                p.type_name as metadata_type,
+                COALESCE(p.description, '') as metadata_desc,
+                COALESCE(pf.l1_value, '') as l1,
+                COALESCE(pf.l2_value, '') as l2,
+                COALESCE(pf.l3_value, '') as l3,
+                pf.weight
+            FROM philosophy_profile_facts pf
+            JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
+            ORDER BY pf.weight DESC
+        """)
+        rows = [dict(row) for row in cur.fetchall()]
+        if rows:
+            return rows
     
-    cur.execute("""
-        SELECT key, metadata_type, metadata_desc, l1, l2, l3, weight
-        FROM philosophy_flat
-        ORDER BY weight DESC
-    """)
+    # Fallback to legacy philosophy_flat
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='philosophy_flat'")
+    if cur.fetchone():
+        cur.execute("""
+            SELECT key, metadata_type, metadata_desc, l1, l2, l3, weight
+            FROM philosophy_flat
+            ORDER BY weight DESC
+        """)
+        return [dict(row) for row in cur.fetchall()]
     
-    return [dict(row) for row in cur.fetchall()]
+    return []
 
 
 def migrate_philosophy_to_flat() -> int:

@@ -517,12 +517,10 @@ async def get_all_threads_health():
             except Exception:
                 has_data = False
             
-            if health.status.value == "ok" and has_data:
+            # Trust the adapter's health status - if it says ok, believe it
+            if health.status.value == "ok":
                 status = "ok"
-                message = f"{len(data)} items"
-            elif health.status.value == "ok":
-                status = "degraded"
-                message = "No data"
+                message = health.message if health.message else (f"{len(data)} items" if has_data else "Ready")
             else:
                 status = health.status.value
                 message = health.message

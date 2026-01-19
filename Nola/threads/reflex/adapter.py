@@ -35,6 +35,30 @@ class ReflexThreadAdapter(BaseThreadAdapter):
     _name = "reflex"
     _description = "Quick patterns, shortcuts, and triggers"
     
+    def health(self) -> HealthReport:
+        """Check reflex thread health."""
+        try:
+            # Reflex works even without data - it's ready to learn
+            modules = self.get_modules()
+            greetings = self.get_greetings(level=1)
+            shortcuts = self.get_shortcuts(level=1)
+            
+            total_patterns = len(greetings) + len(shortcuts)
+            
+            if total_patterns > 0:
+                return HealthReport.ok(
+                    f"{total_patterns} patterns",
+                    row_count=total_patterns
+                )
+            else:
+                # Even with no patterns, reflex is ready
+                return HealthReport.ok(
+                    "Ready (no patterns yet)",
+                    row_count=0
+                )
+        except Exception as e:
+            return HealthReport.error(str(e))
+    
     def get_greetings(self, level: int = 2) -> List[Dict]:
         """Get greeting patterns."""
         return self.get_module_data("greetings", level)

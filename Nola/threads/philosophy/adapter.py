@@ -17,8 +17,10 @@ from datetime import datetime, timezone
 
 try:
     from Nola.threads.base import BaseThreadAdapter, HealthReport, IntrospectionResult
+    from Nola.threads.schema import pull_philosophy_flat, get_philosophy_table_data
 except ImportError:
     from ..base import BaseThreadAdapter, HealthReport, IntrospectionResult
+    from ..schema import pull_philosophy_flat, get_philosophy_table_data
 
 
 class PhilosophyThreadAdapter(BaseThreadAdapter):
@@ -33,6 +35,43 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
     
     _name = "philosophy"
     _description = "Values, reasoning frameworks, and ethical bounds"
+    
+    def get_data(self, level: int = 2, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
+        """
+        Get philosophy data at specified HEA level.
+        
+        Returns list of {key, metadata_type, metadata_desc, value, weight}
+        where 'value' is L1, L2, or L3 content based on level.
+        """
+        rows = pull_philosophy_flat(level=level, min_weight=min_weight, limit=limit)
+        return rows
+    
+    def get_table_data(self) -> List[Dict]:
+        """
+        Get all philosophy rows with full L1/L2/L3 for table display.
+        
+        Returns list of {key, metadata_type, metadata_desc, l1, l2, l3, weight}
+        """
+        return get_philosophy_table_data()
+    
+    def health(self) -> HealthReport:
+        """Check philosophy thread health."""
+        try:
+            rows = pull_philosophy_flat(level=2)
+            row_count = len(rows)
+            
+            if row_count == 0:
+                return HealthReport.degraded(
+                    "No philosophy data found",
+                    row_count=0
+                )
+            
+            return HealthReport.ok(
+                f"{row_count} principles",
+                row_count=row_count
+            )
+        except Exception as e:
+            return HealthReport.error(str(e))
     
     def get_core_values(self, level: int = 2) -> List[Dict]:
         """Get core values."""

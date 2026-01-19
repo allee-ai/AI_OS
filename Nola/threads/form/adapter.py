@@ -52,6 +52,24 @@ class FormThreadAdapter(BaseThreadAdapter):
     _description = "Tool use, actions, and capabilities"
     _seeded = False
     
+    def health(self) -> HealthReport:
+        """Check form thread health."""
+        try:
+            if _HAS_TOOLS:
+                tools = get_available_tools()
+                if tools:
+                    return HealthReport.ok(
+                        f"{len(tools)} tools available",
+                        tool_count=len(tools)
+                    )
+            # Form is ready even without registered tools
+            return HealthReport.ok(
+                "Ready (tools from config)",
+                tool_count=0
+            )
+        except Exception as e:
+            return HealthReport.error(str(e))
+    
     def seed_tools(self, force: bool = False) -> int:
         """
         Seed tool definitions from tools.py into the database.
