@@ -49,6 +49,8 @@ pids/
 *.sqlite
 *.sqlite3
 data/db/*.db
+# But allow demo database (ships pre-populated)
+!data/db/state_demo.db
 
 # But keep the data/db directory structure
 !data/db/.gitkeep

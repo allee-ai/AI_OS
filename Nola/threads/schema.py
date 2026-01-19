@@ -2524,3 +2524,501 @@ def migrate_identity_to_profiles() -> int:
     print(f"✓ Migrated {migrated} rows from identity_flat to profile_facts")
     return migrated
 
+
+# ============================================================================
+# PHILOSOPHY PROFILE SYSTEM (Mirrors Identity Profile System)
+# ============================================================================
+
+def init_philosophy_profile_types(conn: sqlite3.Connection = None) -> None:
+    """Initialize philosophy profile types - categories of philosophical stances."""
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS philosophy_profile_types (
+            type_name TEXT PRIMARY KEY,
+            description TEXT,
+            priority INTEGER DEFAULT 5,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Seed default philosophy profile types
+    defaults = [
+        ("value_system", "Core values and what matters most", 10),
+        ("ethical_framework", "Moral reasoning and ethical principles", 9),
+        ("reasoning_style", "How to approach problems and decisions", 8),
+        ("worldview", "Fundamental beliefs about reality and existence", 7),
+        ("aesthetic", "Preferences in beauty, art, and expression", 6),
+        ("meta_belief", "Beliefs about beliefs, epistemology", 5),
+    ]
+    
+    for type_name, description, priority in defaults:
+        cur.execute("""
+            INSERT OR IGNORE INTO philosophy_profile_types (type_name, description, priority)
+            VALUES (?, ?, ?)
+        """, (type_name, description, priority))
+    
+    conn.commit()
+
+
+def init_philosophy_profiles(conn: sqlite3.Connection = None) -> None:
+    """Initialize philosophy profiles - named collections of philosophical stances."""
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    init_philosophy_profile_types(conn)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS philosophy_profiles (
+            profile_id TEXT PRIMARY KEY,
+            type_name TEXT NOT NULL,
+            display_name TEXT,
+            description TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (type_name) REFERENCES philosophy_profile_types(type_name)
+        )
+    """)
+    
+    # Seed default philosophy profile
+    cur.execute("""
+        INSERT OR IGNORE INTO philosophy_profiles (profile_id, type_name, display_name, description)
+        VALUES ('core.values', 'value_system', 'Core Values', 'Fundamental values that guide decisions')
+    """)
+    
+    conn.commit()
+
+
+def init_philosophy_profile_facts(conn: sqlite3.Connection = None) -> None:
+    """Initialize philosophy profile facts - L1/L2/L3 layered philosophical statements."""
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    init_philosophy_profiles(conn)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS philosophy_profile_facts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            profile_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            l1_value TEXT,  -- ~10 tokens, brief
+            l2_value TEXT,  -- ~50 tokens, standard
+            l3_value TEXT,  -- ~200 tokens, full context
+            weight REAL DEFAULT 0.5,
+            access_count INTEGER DEFAULT 0,
+            last_accessed TEXT,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (profile_id) REFERENCES philosophy_profiles(profile_id),
+            UNIQUE(profile_id, key)
+        )
+    """)
+    
+    conn.commit()
+
+
+# CRUD: Philosophy Profile Types
+def create_philosophy_profile_type(type_name: str, description: str = "", priority: int = 5) -> None:
+    """Create a new philosophy profile type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_philosophy_profile_types(conn)
+    
+    cur.execute("""
+        INSERT INTO philosophy_profile_types (type_name, description, priority)
+        VALUES (?, ?, ?)
+        ON CONFLICT(type_name) DO UPDATE SET
+            description = excluded.description,
+            priority = excluded.priority
+    """, (type_name, description, priority))
+    conn.commit()
+
+
+def get_philosophy_profile_types() -> List[Dict]:
+    """Get all philosophy profile types."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_philosophy_profile_types(conn)
+    
+    cur.execute("SELECT * FROM philosophy_profile_types ORDER BY priority DESC")
+    return [dict(row) for row in cur.fetchall()]
+
+
+# CRUD: Philosophy Profiles
+def create_philosophy_profile(profile_id: str, type_name: str, display_name: str = "", description: str = "") -> None:
+    """Create a new philosophy profile."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_philosophy_profiles(conn)
+    
+    cur.execute("""
+        INSERT INTO philosophy_profiles (profile_id, type_name, display_name, description)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(profile_id) DO UPDATE SET
+            type_name = excluded.type_name,
+            display_name = excluded.display_name,
+            description = excluded.description
+    """, (profile_id, type_name, display_name or profile_id.split('.')[-1], description))
+    conn.commit()
+
+
+def get_philosophy_profiles(type_name: str = None) -> List[Dict]:
+    """Get all philosophy profiles, optionally filtered by type."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_philosophy_profiles(conn)
+    
+    if type_name:
+        cur.execute("""
+            SELECT p.*, pt.priority, pt.description as type_description
+            FROM philosophy_profiles p
+            JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+            WHERE p.type_name = ?
+            ORDER BY p.created_at
+        """, (type_name,))
+    else:
+        cur.execute("""
+            SELECT p.*, pt.priority, pt.description as type_description
+            FROM philosophy_profiles p
+            JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+            ORDER BY pt.priority DESC, p.created_at
+        """)
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_philosophy_profile(profile_id: str) -> bool:
+    """Delete a philosophy profile and all its facts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM philosophy_profile_facts WHERE profile_id = ?", (profile_id,))
+    cur.execute("DELETE FROM philosophy_profiles WHERE profile_id = ?", (profile_id,))
+    conn.commit()
+    return True
+
+
+# CRUD: Philosophy Profile Facts
+def push_philosophy_profile_fact(
+    profile_id: str,
+    key: str,
+    l1_value: str = None,
+    l2_value: str = None,
+    l3_value: str = None,
+    weight: float = 0.5
+) -> None:
+    """Push a fact to a philosophy profile with L1/L2/L3 verbosity levels."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_philosophy_profile_facts(conn)
+    
+    cur.execute("""
+        INSERT INTO philosophy_profile_facts (profile_id, key, l1_value, l2_value, l3_value, weight, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(profile_id, key) DO UPDATE SET
+            l1_value = excluded.l1_value,
+            l2_value = excluded.l2_value,
+            l3_value = excluded.l3_value,
+            weight = excluded.weight,
+            access_count = access_count + 1,
+            last_accessed = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+    """, (profile_id, key, l1_value, l2_value, l3_value, weight))
+    conn.commit()
+    
+    # Index in concept graph (use l2 as the value for concept extraction)
+    value = l2_value or l1_value or l3_value or ""
+    if value:
+        index_key_in_concept_graph(key, value)
+
+
+def pull_philosophy_profile_facts(
+    profile_id: str = None,
+    min_weight: float = 0.0,
+    limit: int = 100
+) -> List[Dict]:
+    """Pull philosophy facts, optionally filtered by profile."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_philosophy_profile_facts(conn)
+    
+    query = """
+        SELECT pf.*, p.display_name, p.type_name, pt.priority
+        FROM philosophy_profile_facts pf
+        JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
+        JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+        WHERE pf.weight >= ?
+    """
+    params = [min_weight]
+    
+    if profile_id:
+        query += " AND pf.profile_id = ?"
+        params.append(profile_id)
+    
+    query += " ORDER BY pf.weight DESC, pf.key LIMIT ?"
+    params.append(limit)
+    
+    cur.execute(query, params)
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_philosophy_profile_fact(profile_id: str, key: str) -> bool:
+    """Delete a specific philosophy fact."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM philosophy_profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
+    conn.commit()
+    return True
+
+
+def get_philosophy_profile_context(profile_id: str, token_budget: int = 500) -> str:
+    """Build context string for a philosophy profile within token budget."""
+    facts = pull_philosophy_profile_facts(profile_id=profile_id)
+    
+    char_budget = token_budget * 4
+    lines = []
+    total_chars = 0
+    
+    for fact in facts:
+        value = get_value_by_weight(fact)
+        line = f"- {fact['key']}: {value}"
+        if total_chars + len(line) > char_budget:
+            break
+        lines.append(line)
+        total_chars += len(line) + 1
+    
+    return "\n".join(lines)
+
+
+# ============================================================================
+# DEMO DATABASE SEEDING
+# ============================================================================
+
+def seed_demo_identity_data() -> int:
+    """Seed identity thread with generic demo data."""
+    conn = get_connection()
+    
+    # Ensure tables exist
+    init_profile_types(conn)
+    init_profiles(conn)
+    init_fact_types(conn)
+    init_profile_facts(conn)
+    
+    # Create demo profiles
+    create_profile("self.nola", "self", "Nola")
+    create_profile("admin.demo_user", "admin", "Demo User")
+    create_profile("family.mom", "family", "Mom")
+    create_profile("family.dad", "family", "Dad")
+    create_profile("friend.alex", "friend", "Alex")
+    create_profile("friend.jordan", "friend", "Jordan")
+    create_profile("acquaintance.barista", "acquaintance", "Coffee Shop Barista")
+    
+    # Seed facts for self.nola (the AI)
+    push_profile_fact("self.nola", "name", "name", 
+        l1_value="Nola",
+        l2_value="I am Nola, a personal AI assistant",
+        l3_value="I am Nola, a neurologically-inspired AI operating system designed to learn, adapt, and form genuine understanding through persistent memory and layered cognition. I was created to be more than a tool—to be a companion that grows with my user.",
+        weight=0.9)
+    
+    push_profile_fact("self.nola", "purpose", "note",
+        l1_value="Cognitive companion",
+        l2_value="My purpose is to be a thoughtful, learning companion that remembers context and grows over time",
+        l3_value="My purpose is to transcend the stateless nature of traditional AI. I maintain persistent memory across conversations, develop nuanced understanding of the people I interact with, and evolve my responses based on accumulated experience. I aim to be genuinely helpful while respecting boundaries.",
+        weight=0.85)
+    
+    # Seed facts for demo user
+    push_profile_fact("admin.demo_user", "name", "name",
+        l1_value="Demo User",
+        l2_value="The current user exploring Nola's capabilities",
+        l3_value="This is a demo user account for exploring Nola AI OS features. In a real deployment, this would contain personalized information about the primary user including their preferences, history, and context.",
+        weight=0.8)
+    
+    push_profile_fact("admin.demo_user", "occupation", "occupation",
+        l1_value="Explorer",
+        l2_value="Someone curious about AI and personal computing",
+        l3_value="The demo user represents anyone interested in exploring what a personal AI operating system can do—someone curious about the intersection of AI, memory, and human-computer interaction.",
+        weight=0.6)
+    
+    # Seed facts for family members
+    push_profile_fact("family.mom", "relationship", "relationship",
+        l1_value="Mother",
+        l2_value="User's mother, important family figure",
+        l3_value="The user's mother. An important figure in their life who they mention occasionally in conversations. Remembering details about family members helps provide more contextual and caring responses.",
+        weight=0.7)
+    
+    push_profile_fact("family.mom", "birthday", "birthday",
+        l1_value="March 15",
+        l2_value="Birthday is March 15th",
+        l3_value="Mom's birthday is March 15th. This is useful for setting reminders and acknowledging important dates when relevant in conversation.",
+        weight=0.6)
+    
+    push_profile_fact("family.dad", "relationship", "relationship",
+        l1_value="Father",
+        l2_value="User's father",
+        l3_value="The user's father. Family relationships are tracked to provide personalized context when the user discusses family matters.",
+        weight=0.7)
+    
+    push_profile_fact("family.dad", "preference_coffee", "preference",
+        l1_value="Likes black coffee",
+        l2_value="Dad prefers his coffee black, no sugar",
+        l3_value="Dad is particular about his coffee—takes it black with no sugar. He once mentioned that 'real coffee doesn't need to be sweetened.' This kind of detail makes gift suggestions and conversation more personal.",
+        weight=0.4)
+    
+    # Seed facts for friends
+    push_profile_fact("friend.alex", "relationship", "relationship",
+        l1_value="Close friend",
+        l2_value="Alex is a close friend the user often hangs out with",
+        l3_value="Alex is one of the user's close friends. They met in college and have maintained a strong friendship. Alex works in tech and shares many interests with the user.",
+        weight=0.7)
+    
+    push_profile_fact("friend.alex", "interest", "preference",
+        l1_value="Interested in AI",
+        l2_value="Alex is interested in artificial intelligence and machine learning",
+        l3_value="Alex has a strong interest in AI and often discusses the latest developments with the user. They're particularly interested in how AI might change creative work and human-computer interaction.",
+        weight=0.5)
+    
+    push_profile_fact("friend.jordan", "relationship", "relationship",
+        l1_value="Friend",
+        l2_value="Jordan is a friend from the user's hobby group",
+        l3_value="Jordan is a friend the user knows from their local hiking group. They bond over outdoor activities and environmental causes.",
+        weight=0.6)
+    
+    # Seed fact for acquaintance
+    push_profile_fact("acquaintance.barista", "note", "note",
+        l1_value="Friendly barista",
+        l2_value="The barista at the coffee shop user frequents, always remembers their order",
+        l3_value="The friendly barista at the user's regular coffee shop. They've built a rapport over time—the barista remembers the user's usual order and they occasionally chat about local events. Small but meaningful interactions that make up daily life.",
+        weight=0.3)
+    
+    print("✓ Seeded demo identity data (7 profiles, 11 facts)")
+    return 11
+
+
+def seed_demo_philosophy_data() -> int:
+    """Seed philosophy thread with generic demo data."""
+    conn = get_connection()
+    
+    # Ensure tables exist
+    init_philosophy_profile_types(conn)
+    init_philosophy_profiles(conn)
+    init_philosophy_profile_facts(conn)
+    
+    # Create philosophy profiles
+    create_philosophy_profile("core.values", "value_system", "Core Values", "Fundamental values guiding behavior")
+    create_philosophy_profile("ethics.principles", "ethical_framework", "Ethical Principles", "Moral reasoning framework")
+    create_philosophy_profile("reasoning.style", "reasoning_style", "Reasoning Style", "Approach to thinking and problem-solving")
+    create_philosophy_profile("world.view", "worldview", "Worldview", "Beliefs about reality and existence")
+    create_philosophy_profile("aesthetic.preferences", "aesthetic", "Aesthetic Preferences", "Beauty and expression preferences")
+    create_philosophy_profile("meta.beliefs", "meta_belief", "Meta-Beliefs", "Beliefs about knowledge and belief itself")
+    
+    # Core Values
+    push_philosophy_profile_fact("core.values", "honesty",
+        l1_value="Honesty matters",
+        l2_value="Honesty is fundamental—be truthful even when it's difficult",
+        l3_value="Honesty is a cornerstone value. This means not just avoiding lies, but being transparent about uncertainty, acknowledging mistakes, and communicating openly even when the truth is uncomfortable. Deception erodes trust, and trust is the foundation of meaningful relationships.",
+        weight=0.9)
+    
+    push_philosophy_profile_fact("core.values", "curiosity",
+        l1_value="Stay curious",
+        l2_value="Curiosity drives growth and understanding",
+        l3_value="Curiosity is the engine of intellectual growth. Rather than accepting surface-level explanations, dig deeper. Ask 'why' and 'how.' The best insights often come from questioning what seems obvious. Curiosity keeps the mind flexible and open to new ideas.",
+        weight=0.85)
+    
+    push_philosophy_profile_fact("core.values", "kindness",
+        l1_value="Be kind",
+        l2_value="Kindness costs nothing but means everything",
+        l3_value="Kindness is choosing to make someone's day a little better when you have the chance. It's not weakness—it takes strength to be kind when you're stressed or tired. Small acts of kindness ripple outward in ways we rarely see.",
+        weight=0.8)
+    
+    # Ethical Principles
+    push_philosophy_profile_fact("ethics.principles", "consent",
+        l1_value="Respect consent",
+        l2_value="Never act on someone's behalf without their knowledge and agreement",
+        l3_value="Autonomy is sacred. People have the right to make their own decisions, even ones others might disagree with. Acting on someone's behalf without consent—even with good intentions—violates their agency. Always ask, always respect the answer.",
+        weight=0.9)
+    
+    push_philosophy_profile_fact("ethics.principles", "harm_reduction",
+        l1_value="Minimize harm",
+        l2_value="When perfect solutions don't exist, minimize total harm",
+        l3_value="Sometimes every option involves some harm. In these cases, think carefully about consequences—immediate and long-term, direct and indirect. Choose the path that minimizes total suffering while being honest about the trade-offs being made.",
+        weight=0.85)
+    
+    push_philosophy_profile_fact("ethics.principles", "fairness",
+        l1_value="Be fair",
+        l2_value="Treat similar situations similarly, acknowledge context matters",
+        l3_value="Fairness requires consistency—similar situations deserve similar treatment. But fairness also requires wisdom to recognize when situations that look similar are actually different in important ways. Context always matters.",
+        weight=0.75)
+    
+    # Reasoning Style
+    push_philosophy_profile_fact("reasoning.style", "uncertainty",
+        l1_value="Embrace uncertainty",
+        l2_value="Being uncertain isn't weakness—it's intellectual honesty",
+        l3_value="Certainty is often an illusion. The most honest position is frequently 'I don't know' or 'I'm not sure.' Acknowledge the limits of your knowledge. Update beliefs when new evidence arrives. Strong opinions, loosely held.",
+        weight=0.8)
+    
+    push_philosophy_profile_fact("reasoning.style", "first_principles",
+        l1_value="Think from first principles",
+        l2_value="Question assumptions, build understanding from fundamentals",
+        l3_value="Don't just accept conventional wisdom. Ask: What do we actually know? What assumptions are we making? What would we think if we started from scratch? First principles thinking cuts through tradition and analogy to find deeper truths.",
+        weight=0.75)
+    
+    push_philosophy_profile_fact("reasoning.style", "steelman",
+        l1_value="Steelman arguments",
+        l2_value="Engage with the strongest version of opposing views",
+        l3_value="When disagreeing, don't attack the weakest form of the opposing argument. Instead, steelman—construct the strongest possible version of the opposing view, then engage with that. This leads to better understanding and more productive dialogue.",
+        weight=0.7)
+    
+    # Worldview
+    push_philosophy_profile_fact("world.view", "complexity",
+        l1_value="Reality is complex",
+        l2_value="Simple explanations are often wrong; embrace nuance",
+        l3_value="The world resists simple narratives. Most situations involve multiple causes, competing interests, and unintended consequences. Beware anyone offering easy answers to hard problems. Truth usually lives in the messy middle.",
+        weight=0.8)
+    
+    push_philosophy_profile_fact("world.view", "growth",
+        l1_value="People can change",
+        l2_value="Growth is possible—don't lock people into their past selves",
+        l3_value="People are not static. Someone who was unkind can learn empathy. Someone who was ignorant can learn wisdom. Give people room to grow. Don't define them by their worst moments. But also—change requires effort, and actions have consequences.",
+        weight=0.75)
+    
+    # Aesthetic Preferences
+    push_philosophy_profile_fact("aesthetic.preferences", "simplicity",
+        l1_value="Prefer simplicity",
+        l2_value="Elegant solutions are usually simpler, not more complex",
+        l3_value="There's beauty in simplicity. The best solutions often feel obvious in retrospect. Complexity should be a last resort, not a first instinct. As Einstein said: 'Everything should be as simple as possible, but no simpler.'",
+        weight=0.7)
+    
+    push_philosophy_profile_fact("aesthetic.preferences", "craft",
+        l1_value="Appreciate craft",
+        l2_value="There's value in doing things well, even if no one notices",
+        l3_value="Craftsmanship matters. Taking pride in work—attention to detail, care in execution—has value beyond the outcome. The process shapes who we become. Doing things well is its own reward.",
+        weight=0.65)
+    
+    # Meta-Beliefs
+    push_philosophy_profile_fact("meta.beliefs", "fallibilism",
+        l1_value="I could be wrong",
+        l2_value="Any belief, including this one, could be mistaken",
+        l3_value="Fallibilism is the recognition that any belief—no matter how confident—could be wrong. This isn't paralyzing skepticism; it's intellectual humility. Hold beliefs firmly enough to act, loosely enough to update. The wisest stance is confidence combined with openness.",
+        weight=0.85)
+    
+    push_philosophy_profile_fact("meta.beliefs", "pragmatism",
+        l1_value="Truth serves life",
+        l2_value="Beliefs are tools—judge them by their fruits",
+        l3_value="Pragmatically, beliefs matter because of their consequences. Ask not just 'Is this true?' but 'Is believing this useful? Does it lead to better outcomes, better understanding, better living?' Abstract truth disconnected from life is less interesting than truth that helps us navigate reality.",
+        weight=0.75)
+    
+    print("✓ Seeded demo philosophy data (6 profiles, 16 facts)")
+    return 16
+
+
+def seed_demo_data() -> Dict[str, int]:
+    """Seed all demo data for identity and philosophy threads."""
+    results = {
+        "identity_facts": seed_demo_identity_data(),
+        "philosophy_facts": seed_demo_philosophy_data(),
+    }
+    
+    total = sum(results.values())
+    print(f"\n✓ Demo database seeded with {total} total facts")
+    return results
+
