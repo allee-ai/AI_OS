@@ -1,103 +1,105 @@
 # Identity Thread
 
-The Identity Thread answers: **"Who am I? Who are you?"**
+**Cognitive Question**: WHO am I? WHO are you?  
+**Resolution Order**: 1st (all thought patterns resolve identity first)  
+**Brain Mapping**: Prefrontal Cortex (self-model, theory of mind)
 
-## Purpose
+---
 
-Identity stores facts about self and user that persist across conversations. This is the most important thread — user identity facts take highest priority in context assembly.
+## Necessity
 
-## Architecture: L1/L2/L3 Per Key
+All psychological documentation confirms: cognition begins with identity resolution. Before "what should I do?" comes "who am I?" and "who is this?". Without identity anchoring, agents drift into incoherent personas.
 
-Each identity key has three levels of detail:
+---
+
+## Backend
+
+### Database Tables
+
+| Table | Location | Purpose |
+|-------|----------|---------|
+| `identity_flat` | `schema.py:1469` | Main identity storage with L1/L2/L3 columns |
+| `profiles` | `schema.py:1881` | Profile entities (user, nola, contacts) |
+| `profile_facts` | `schema.py:1941` | Facts linked to profiles |
+
+### Key Functions
+
+| Function | Location | Purpose |
+|----------|----------|---------|
+| `init_identity_flat()` | `schema.py:1462` | Create identity table |
+| `push_identity_row()` | `schema.py:1492` | Insert/update identity fact |
+| `pull_identity_flat()` | `schema.py:1525` | Get facts at specified level |
+| `get_identity_context()` | `schema.py:1549` | Format facts for system prompt |
+| `get_identity_table_data()` | `schema.py:1572` | Get all facts for UI table |
+
+### Adapter
+
+| Method | Location | Purpose |
+|--------|----------|---------|
+| `get_data()` | `adapter.py:51` | Get identity data at HEA level |
+| `get_table_data()` | `adapter.py:62` | Get all rows for table display |
+| `get_context_string()` | `adapter.py:70` | Get formatted context for prompt |
+| `set_fact()` | `adapter.py:80` | Set fact with L1/L2/L3 |
+| `introspect()` | `adapter.py:97` | Return structured introspection |
+| `health()` | `adapter.py:113` | Health check |
+
+---
+
+## Context Levels
+
+| Level | Token Budget | Content |
+|-------|--------------|---------|
+| **L1** | ~10 tokens | `machineID`, `userID`, metadata only |
+| **L2** | ~50 tokens | L1 + top-k PROFILES with profile metadata |
+| **L3** | ~200 tokens | L2 + top-k FACTS per profile |
+
+### Example L1/L2/L3
 
 ```
 key: "user_name"
-L1: "Jordan"                                    (~5 tokens, realtime)
-L2: "Jordan, software developer"                (~15 tokens, conversational)
-L3: "Jordan, software developer building AI_OS, prefers morning work sessions"  (~30 tokens, analytical)
+L1: "Jordan"                                    (~5 tokens)
+L2: "Jordan, software developer"                (~15 tokens)
+L3: "Jordan, software developer building AI_OS, prefers morning sessions" (~30 tokens)
 ```
 
-### Why Levels?
+---
 
-- **L1 (Realtime)**: Minimum viable context for quick responses
-- **L2 (Conversational)**: Standard context for normal chat
-- **L3 (Analytical)**: Full context for complex reasoning
+## Frontend
 
-## Modules
+| Component | Location | Status |
+|-----------|----------|--------|
+| `ProfilesPage.tsx` | `react-chat-app/frontend/src/pages/ProfilesPage.tsx` | ✅ Done |
+| Identity table | `ThreadsPage.tsx:217-231` | ✅ Done |
 
-### `identity_flat`
-The main identity table with hierarchical levels:
+**Features**:
+- ✅ View all identity facts
+- ✅ Edit L1/L2/L3 values inline
+- ✅ Adjust weights
+- ✅ Add new facts
+- ✅ Filter by metadata_type (user/nola/machine/relationship)
 
-| Column | Purpose |
-|--------|---------|
-| `key` | Unique identifier (e.g., "user_name", "nola_personality") |
-| `metadata_type` | Category: "user", "nola", "machine", "relationship" |
-| `metadata_desc` | Human-readable description |
-| `l1` | Quick fact (~10 tokens) |
-| `l2` | Standard fact (~30 tokens) |
-| `l3` | Full context (~100 tokens) |
-| `weight` | 0.0-1.0, higher = more important |
+---
 
-## Key Principles
+## Integration Points
 
-### User is Most Important
-User identity facts should have the highest weights. Nola exists to serve the user — their name, preferences, and projects matter most.
+| Thread | Integration |
+|--------|-------------|
+| **Log** | Records when identity facts accessed/modified |
+| **Linking Core** | Scores which identity facts are relevant NOW |
+| **Philosophy** | Identity informs value application |
+| **Form** | User preferences affect tool behavior |
+| **Subconscious** | `get_context()` pulls identity at specified level |
 
-### Slow to Change
-Identity facts are stable. They update through:
-1. **Explicit correction**: User says "Actually, my name is..."
-2. **Consolidation daemon**: Repeated patterns promote to identity
-3. **Manual editing**: Through the Threads UI
+---
 
-### Weight Decay
-Facts not accessed decay over time. Frequently referenced facts maintain high weight.
+## Weight Semantics
 
-## Example Data
+- **0.9+**: Core identity (name, role)
+- **0.6-0.8**: Important preferences (communication style)
+- **0.3-0.5**: Contextual facts (current project)
+- **<0.3**: Peripheral (mentioned once)
 
-```sql
-INSERT INTO identity_flat (key, metadata_type, l1, l2, l3, weight)
-VALUES 
-  ('user_name', 'user', 'Jordan', 'Jordan, software developer', 
-   'Jordan, software developer building AI_OS project, prefers concise responses', 0.95),
-  
-  ('nola_personality', 'nola', 'Helpful assistant', 
-   'Nola: curious, warm, direct communicator',
-   'Nola: curious and engaged, warm but professional, prefers direct communication, asks clarifying questions', 0.8);
-```
-
-## API Usage
-
-```python
-from Nola.threads.identity.adapter import IdentityThreadAdapter
-
-adapter = IdentityThreadAdapter()
-
-# Get facts at L2
-facts = adapter.get_data(level=2, limit=10)
-
-# Push new fact
-adapter.push_identity(
-    key="user_project",
-    l1="AI_OS",
-    l2="AI_OS, a cognitive architecture project",
-    l3="AI_OS, a cognitive architecture with 5 threads...",
-    metadata_type="user",
-    weight=0.8
-)
-```
-
-## Integration with Other Threads
-
-- **Log**: Records when identity facts are accessed/modified
-- **Linking Core**: Scores which identity facts are relevant right now
-- **Philosophy**: Identity informs how Nola approaches values
-- **Form**: User preferences affect tool behavior
-
-## Implementation (canonical)
-
-## Implementation (full)
-
-The canonical implementation details and migration plan for the state/database integration are included here (transferred from `docs/implementation/database_integration_plan.md`).
+Higher weight = retrieved more often = stays in working memory.
 
 # Database Integration Plan
 

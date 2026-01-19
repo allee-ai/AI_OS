@@ -250,7 +250,7 @@ class SubconsciousCore:
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
     
-    def get_consciousness_context(self, level: int = 2) -> str:
+    def get_consciousness_context(self, level: int = 2, include_meta: bool = True) -> str:
         """
         Format context as a string for system prompt injection.
         
@@ -259,6 +259,7 @@ class SubconsciousCore:
         
         Args:
             level: Context detail level (1=minimal, 2=moderate, 3=full)
+            include_meta: Include thread architecture metadata (for self-awareness)
         
         Returns:
             Formatted string suitable for system prompt
@@ -266,9 +267,51 @@ class SubconsciousCore:
         context = self.get_context(level)
         threads = context.get("threads", {})
 
-        if not threads:
-            return ""
+        lines = []
+        
+        # === THREAD ARCHITECTURE METADATA ===
+        if include_meta:
+            lines.append("## My Cognitive Architecture")
+            lines.append("")
+            lines.append("I am Nola. This is my internal structure:")
+            lines.append("")
+            lines.append("| Thread | Question | What I Store |")
+            lines.append("|--------|----------|--------------|")
+            lines.append("| **Identity** | WHO | My self-model, my user, our relationship |")
+            lines.append("| **Form** | WHAT | My tools, my actions, my capabilities |")
+            lines.append("| **Philosophy** | WHY | My values, my ethics, my reasoning style |")
+            lines.append("| **Reflex** | HOW | My learned patterns, my shortcuts |")
+            lines.append("| **Log** | WHEN/WHERE | My event timeline, my session history |")
+            lines.append("| **Linking Core** | WHICH | My concept graph, my relevance scoring |")
+            lines.append("")
+            lines.append("**How I work:**")
+            lines.append("- My `concept_links` table stores my associations (Hebbian learning)")
+            lines.append("- My `spread_activate()` determines what's relevant to current input")
+            lines.append("- My facts have L1/L2/L3 compression levels (more detail = higher level)")
+            lines.append("- My weights (0.0-1.0) determine importance and retrieval priority")
+            lines.append("")
+            
+            # Include graph stats if available
+            try:
+                from Nola.threads.schema import get_connection
+                conn = get_connection(readonly=True)
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM concept_links")
+                link_count = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(DISTINCT concept_a) + COUNT(DISTINCT concept_b) FROM concept_links")
+                concept_count = cur.fetchone()[0] // 2 or 1
+                cur.execute("SELECT AVG(strength) FROM concept_links")
+                avg_strength = cur.fetchone()[0] or 0
+                
+                lines.append(f"**My current graph state:** {link_count} links, ~{concept_count} concepts, avg strength {avg_strength:.2f}")
+                lines.append("")
+            except Exception:
+                pass
 
+        if not threads:
+            return "\n".join(lines).strip() if lines else ""
+
+        # === FOCUSED CONTEXT (existing logic) ===
         # Per-module budgets (tokens) with sensible defaults per HEA level
         module_budgets = {
             1: {"identity": 50, "temp_memory": 50, "log_thread": 40, "default": 50},
@@ -278,7 +321,7 @@ class SubconsciousCore:
 
         budgets = module_budgets.get(level, module_budgets[2])
 
-        lines = ["## Focused Context"]
+        lines.append("## Focused Context")
         lines.append(f"_Level L{level}; per-module caps enforced_")
         lines.append("")
 

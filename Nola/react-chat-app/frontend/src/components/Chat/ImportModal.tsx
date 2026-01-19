@@ -1,5 +1,4 @@
 import React, { useState, useRef } from 'react';
-import { apiService } from '../../services/api';
 import './ImportModal.css';
 
 interface ImportModalProps {
@@ -63,9 +62,9 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     // Check for folder drop
     for (const item of items) {
       if (item.kind === 'file') {
-        const entry = item.webkitGetAsEntry();
-        if (entry?.isDirectory) {
-          await handleFolderUpload(entry as FileSystemDirectoryEntry);
+        const _entry = item.webkitGetAsEntry();
+        if (_entry?.isDirectory) {
+          await handleFolderUpload(_entry as FileSystemDirectoryEntry);
           return;
         }
       }
@@ -78,7 +77,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
     }
   };
 
-  const handleFolderUpload = async (entry: FileSystemDirectoryEntry) => {
+  const handleFolderUpload = async (_entry: FileSystemDirectoryEntry) => {
     setError(null);
     setStep('importing');
     setUploadProgress(10);

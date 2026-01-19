@@ -6,6 +6,7 @@ export const API_CONFIG = {
     SEND_MESSAGE: '/api/chat/message',
     AGENT_STATUS: '/api/chat/agent-status',
     CLEAR_HISTORY: '/api/chat/clear',
+    START_SESSION: '/api/chat/start-session',
     GET_MODELS: '/api/models',
     SET_MODEL: '/api/models/current',
     // Introspection endpoints (trailing slashes required by FastAPI)

@@ -112,6 +112,25 @@ class APIService {
     }
   }
 
+  async startSession(): Promise<{ message: ChatMessage; agent_status: string }> {
+    const response = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.START_SESSION}`, {
+      method: 'POST'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return {
+      message: {
+        ...data.message,
+        timestamp: new Date(data.message.timestamp)
+      },
+      agent_status: data.agent_status
+    };
+  }
+
   // Database API methods
   async getDatabaseTables(): Promise<{ tables: string[] }> {
     const response = await fetch(`${this.baseUrl}/api/database/tables`);

@@ -153,6 +153,19 @@ export const useChat = () => {
     }
   }, []);
 
+  const startNewSession = useCallback(async () => {
+    try {
+      // Start new session and get Nola's proactive intro
+      const { message: introMessage } = await apiService.startSession();
+      setMessages([introMessage]);
+      setSessionId(undefined);
+    } catch (error) {
+      console.error('Failed to start session:', error);
+      // Fallback to just clearing
+      await clearHistory();
+    }
+  }, [clearHistory]);
+
   const loadConversation = useCallback(async (conversationSessionId: string) => {
     try {
       const conversation = await apiService.getConversation(conversationSessionId);
@@ -189,6 +202,7 @@ export const useChat = () => {
     messages,
     sendMessage,
     clearHistory,
+    startNewSession,
     loadConversation,
     isLoading,
     isConnected,

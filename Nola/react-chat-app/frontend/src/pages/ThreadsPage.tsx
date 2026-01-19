@@ -4,6 +4,7 @@ import './ThreadsPage.css';
 import ToolDashboard from '../components/ToolDashboard';
 import ReflexDashboard from '../components/ReflexDashboard';
 import ProfilesPage from './ProfilesPage';
+import ConceptGraph3D from '../components/ConceptGraph3D';
 
 interface ThreadHealth {
   name: string;
@@ -54,7 +55,7 @@ const THREAD_ICONS: Record<string, string> = {
 };
 
 // Threads that display documentation instead of data tables
-const DOC_THREADS = new Set(['linking_core']);
+const DOC_THREADS = new Set<string>([]);  // linking_core now has 3D viz
 
 // Event type options for log
 const EVENT_TYPES = ['convo', 'system', 'user_action', 'memory', 'activation', 'file'];
@@ -621,7 +622,7 @@ export const ThreadsPage = () => {
     </div>
   );
 
-  const renderIdentityTable = () => renderFlatTable(identityRows, 'identity');
+  // renderIdentityTable is now handled by ProfilesPage component
   const renderPhilosophyTable = () => renderFlatTable(philosophyRows, 'philosophy');
 
   const renderGenericView = () => (
@@ -784,7 +785,7 @@ export const ThreadsPage = () => {
               </div>
               {renderReadme()}
             </>
-          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' ? (
+          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'linking_core' ? (
             <div className="empty-state">
               <p>No data in {activeThread}</p>
               <p className="muted">{threads[activeThread]?.message}</p>
@@ -794,6 +795,10 @@ export const ThreadsPage = () => {
               {activeThread === 'identity' ? (
                 <div style={{ height: '100%', width: '100%' }}>
                   <ProfilesPage />
+                </div>
+              ) : activeThread === 'linking_core' ? (
+                <div style={{ height: '100%', width: '100%', minHeight: '600px' }}>
+                  <ConceptGraph3D mode="ambient" />
                 </div>
               ) : (
                 <>

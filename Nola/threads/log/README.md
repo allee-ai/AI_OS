@@ -1,103 +1,179 @@
 # Log Thread
 
-The Log Thread answers: **"What happened? When? How long have we been talking?"**
+**Cognitive Question**: WHEN did it happen? WHERE did it come from?  
+**Resolution Order**: 5th (after patterns checked, establish timeline)  
+**Brain Mapping**: Hippocampus (episodic memory, timeline formation)
 
-## Purpose
+---
 
-Log provides temporal awareness — a timeline of events, sessions, and patterns. Unlike other threads that store "what is true", Log stores "what has occurred".
+## Necessity
 
-## Architecture: Recency-Based Levels
+Log provides temporal awareness — a timeline of events, sessions, and patterns. Unlike other threads that store "what is true", Log stores "what has occurred". This is how Nola knows "we talked about this yesterday" or "you've been working for 2 hours."
 
-Log doesn't use depth-based L1/L2/L3. Instead, levels determine **how far back** to look:
+---
 
+## Backend
+
+### Database Tables
+
+| Table | Location | Purpose |
+|-------|----------|---------|
+| `unified_events` | `schema.py:86` | Central event timeline |
+| `log_events` | Module table | System events (errors, starts) |
+| `log_sessions` | Module table | Conversation sessions |
+| `log_temporal` | Module table | Time-based patterns |
+
+### Schema: unified_events
+
+```sql
+CREATE TABLE unified_events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+    event_type TEXT NOT NULL,
+    source TEXT DEFAULT 'system',
+    data TEXT,
+    metadata_json TEXT,
+    session_id TEXT,
+    related_key TEXT,
+    related_table TEXT
+)
 ```
-L1 = Last 10 events    (quick glance at recent activity)
-L2 = Last 100 events   (conversation-scale history)
-L3 = Last 1000 events  (full timeline)
+
+### Core Functions
+
+| Function | Location | Purpose |
+|----------|----------|---------|
+| `log_event()` | `schema.py:111` | Log event to unified timeline |
+| `get_events()` | `schema.py:172` | Query events with filters |
+| `pull_log_events()` | `schema.py:1278` | Pull by recency + weight |
+| `init_event_log_table()` | `schema.py:76` | Initialize tables |
+
+### Adapter
+
+| Method | Location | Purpose |
+|--------|----------|---------|
+| `get_data()` | `adapter.py:62` | Get events by recency level |
+| `start_session()` | `adapter.py:80` | Start conversation session |
+| `end_session()` | `adapter.py:99` | End conversation session |
+| `log_message()` | `adapter.py:120` | Log a conversation message |
+| `get_session_duration()` | `adapter.py:140` | Get time since session start |
+
+---
+
+## Context Levels (Recency-Based)
+
+Log uses **recency**, not depth:
+
+| Level | Events | Use Case |
+|-------|--------|----------|
+| **L1** | 10 most recent | Quick glance at activity |
+| **L2** | 100 most recent | Conversation-scale history |
+| **L3** | 1000 most recent | Full timeline |
+
+```python
+LOG_LIMITS = {1: 10, 2: 100, 3: 1000}
 ```
 
-### Why Recency?
-
-Events are inherently temporal. You don't need "more detail" about an event — you need to know if it happened recently or long ago.
-
-## Modules
-
-### `log_events`
-System events with timestamps:
-
-| Column | Purpose |
-|--------|---------|
-| `key` | Unique event ID (e.g., "evt_20260108_143022_123456") |
-| `metadata_json` | Event type and source |
-| `data_json` | Message and details |
-| `weight` | Importance (higher = more significant) |
-| `created_at` | When it happened |
-
-### `log_sessions`
-Conversation session tracking:
-
-| Column | Purpose |
-|--------|---------|
-| `key` | Session ID (e.g., "session_20260108_143022") |
-| `data_json` | Start time, status, message count |
-| `weight` | Session importance |
+---
 
 ## Event Types
 
-```
-system:wake      - Nola started up
-system:shutdown  - Nola shut down
-convo:start      - Conversation began
-convo:end        - Conversation ended
-memory:extract   - Fact extracted from conversation
-memory:consolidate - Facts consolidated to long-term
-identity:update  - Identity fact changed
-error:*          - Various error events
-```
+| Type | Relevance Score | Purpose |
+|------|-----------------|---------|
+| `convo` | 8 | Conversation events (direct interaction) |
+| `memory` | 7 | Memory/reflection events (cognitive) |
+| `user_action` | 6 | User actions in UI |
+| `file` | 4 | File operations |
+| `system` | 2 | System events (background) |
+| `activation` | 1 | Spread activation (technical) |
 
-## Weight for Temporal Importance
-
-Weight in Log represents **significance**, not permanence:
-
-- **High weight (0.7+)**: Important events (user corrections, errors, milestones)
-- **Medium weight (0.3-0.6)**: Normal events (messages, tool uses)
-- **Low weight (0.1-0.2)**: Routine events (system wakes, heartbeats)
-
-Over time, Linking Core can use weight + recency to surface contextually important past events.
-
-## Example Data
-
-```sql
--- System wake event
-INSERT INTO log_events (key, metadata_json, data_json, weight)
-VALUES (
-  'evt_20260108_143022_123456',
-  '{"type": "system:wake", "source": "subconscious"}',
-  '{"message": "Subconscious awakened with 6 threads", "timestamp": "2026-01-08T14:30:22Z"}',
-  0.2
-);
-
--- Memory extraction (more important)
-INSERT INTO log_events (key, metadata_json, data_json, weight)
-VALUES (
-  'evt_20260108_144500_789012',
-  '{"type": "memory:extract", "source": "memory_service"}',
-  '{"message": "Learned: User prefers morning meetings", "fact_key": "user_schedule_pref"}',
-  0.6
-);
+Defined in `adapter.py:35`:
+```python
+EVENT_TYPE_RELEVANCE = {
+    "convo": 8,
+    "memory": 7,
+    "user_action": 6,
+    "file": 4,
+    "system": 2,
+    "activation": 1
+}
 ```
 
-## API Usage
+---
+
+## Frontend
+
+| Component | Location | Status |
+|-----------|----------|--------|
+| Log events table | `ThreadsPage.tsx` | ✅ Done |
+| Session viewer | `ThreadsPage.tsx` | ✅ Done |
+
+**Features**:
+- ✅ View event timeline
+- ✅ Filter by event type
+- ✅ Session tracking
+- ⬜ Timeline visualization
+- ⬜ Pattern detection UI
+
+---
+
+## Weight Semantics
+
+Weight represents **significance**, not permanence:
+
+- **0.7+**: Important events (user corrections, errors, milestones)
+- **0.3-0.6**: Normal events (messages, tool uses)
+- **0.1-0.2**: Routine events (system wakes, heartbeats)
+
+---
+
+## Integration Points
+
+| Thread | Integration |
+|--------|-------------|
+| **Identity** | Log records when identity facts change |
+| **Form** | Action history tracked with timestamps |
+| **Philosophy** | Log can track ethical decisions over time |
+| **Reflex** | Track pattern frequency for 10x promotion |
+| **Linking Core** | Temporal proximity affects relevance scoring |
+
+---
+
+## Usage Examples
 
 ```python
-from Nola.threads.log.adapter import LogThreadAdapter
+from Nola.threads.schema import log_event, get_events
 
-adapter = LogThreadAdapter()
+# Log a conversation start
+log_event("convo", "Conversation started with Jordan",
+          {"context_level": 2}, source="local", session_id="abc123")
 
-# Get last 10 events (L1)
-recent = adapter.get_data(level=1)
+# Log a memory extraction
+log_event("memory", "Learned: Sarah likes coffee",
+          {"hier_key": "sarah.likes.coffee", "score": 0.72},
+          related_key="sarah.likes.coffee")
 
-# Get last 100 events (L2)
+# Log an activation event
+log_event("activation", "Spread activation fired",
+          {"query": "coffee", "activated": ["sarah"], "links": 2})
+
+# Query recent events
+events = get_events(event_type="convo", limit=50)
+```
+
+---
+
+## Temporal Reasoning
+
+Log enables temporal awareness in responses:
+
+| Pattern | How |
+|---------|-----|
+| "We talked about this yesterday" | Query events with Sarah in data, check timestamp |
+| "You've been working for 2 hours" | Get session start, calculate duration |
+| "Last time you mentioned X..." | Search events for X, return context |
+
+Linking Core uses temporal proximity — recent mentions boost related concepts.
 history = adapter.get_data(level=2)
 
 # Log a new event

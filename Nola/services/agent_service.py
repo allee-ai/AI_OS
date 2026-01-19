@@ -463,6 +463,77 @@ class AgentService:
         self.context_manager.reset()
         self.session_id = f"react_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
 
+    async def get_proactive_intro(self) -> ChatMessage:
+        """
+        Generate Nola's proactive intro for a new conversation.
+        
+        Returns a message from Nola introducing her current state:
+        - Recent memories/topics
+        - Graph stats (concepts, links)
+        - Prompt for user context
+        """
+        intro_parts = ["Hey, I'm Nola. "]
+        
+        # Get graph stats
+        try:
+            from Nola.threads.schema import get_connection
+            conn = get_connection(readonly=True)
+            cur = conn.cursor()
+            
+            # Count links and concepts
+            cur.execute("SELECT COUNT(*) FROM concept_links")
+            link_count = cur.fetchone()[0]
+            
+            cur.execute("SELECT AVG(strength) FROM concept_links WHERE strength > 0.3")
+            avg_strength = cur.fetchone()[0] or 0
+            
+            # Get top concepts by link count
+            cur.execute("""
+                SELECT concept_a, COUNT(*) as cnt 
+                FROM concept_links 
+                WHERE strength > 0.3
+                GROUP BY concept_a 
+                ORDER BY cnt DESC 
+                LIMIT 3
+            """)
+            top_concepts = [row[0] for row in cur.fetchall()]
+            
+            if link_count > 0:
+                intro_parts.append(f"I have {link_count} associations in my mind")
+                if top_concepts:
+                    intro_parts.append(f", with strongest links around: {', '.join(top_concepts)}. ")
+                else:
+                    intro_parts.append(". ")
+            else:
+                intro_parts.append("I'm starting fresh—no associations yet. ")
+        except Exception as e:
+            print(f"Graph stats error: {e}")
+            intro_parts.append("I'm ready to learn. ")
+        
+        # Get recent conversation topics from log
+        try:
+            from Nola.threads.schema import get_events
+            recent = get_events(event_type="convo", limit=3)
+            if recent:
+                intro_parts.append("Recently we've been talking. ")
+        except Exception:
+            pass
+        
+        # Prompt for context
+        intro_parts.append("\n\nWhat are we working on today? The more detail you give me, the better I can focus.")
+        
+        intro_message = ChatMessage(
+            id=f"nola_intro_{datetime.now().timestamp()}",
+            content="".join(intro_parts),
+            role="assistant",
+            timestamp=datetime.now()
+        )
+        
+        # Add to history
+        self.message_history.append(intro_message)
+        
+        return intro_message
+
     def _get_identity_summary(self) -> str:
         """Return a concise identity summary from thread system for prompt injection."""
         if pull_identity is None:

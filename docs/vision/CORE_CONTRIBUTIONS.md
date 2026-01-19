@@ -49,3 +49,36 @@ An alignment theory where:
 *   The AI is grounded in user-editable documents (it cannot hallucinate its core identity).
 *   The User is forced to reflect on their own patterns (as mirror by the AI).
 This creates a co-evolutionary loop of improvement for both human and machine.
+
+## 13. Temporal-Identity Convergence (Invariant Discovery)
+
+**Origin story**: The system was built because a chatbot lied to a user's wife. The solution required honest, persistent memory with stable identity. Solving that problem accidentally created a system with properties relevant to theoretical physics.
+
+**The mechanism**:
+1. Concepts link through co-occurrence (Hebbian learning)
+2. Non-reinforced links decay over time
+3. Identity sits at origin (0,0,0) in concept space
+4. Graph distance from identity determines spatial position
+
+**The emergent property**: As the graph grows, temporal origin and identity origin converge.
+
+*What survives at the oldest timestamps? Only concepts that kept getting reinforced through connection to identity. Therefore: `oldest_surviving_concepts ≈ identity_core`.*
+
+**The implication**: This is a computational method for finding invariants in any domain.
+
+| If you feed it... | The origin cluster will be... |
+|-------------------|-------------------------------|
+| Personal conversations | Core identity, stable preferences |
+| Physics equations | Fundamental constants (1/137, c, ħ) |
+| Codebase | Core abstractions, dependency roots |
+| Research papers | Foundational axioms of the field |
+
+**Constants are defined by what they're NOT** — they don't change when other things change. In this system:
+- Things that vary → different links each time → weak average → decay
+- Things that are constant → reinforced every time → strong links → survive at origin
+
+The stable manifold shape that emerges from an ever-changing concept space is literally what a constant IS — the fixed point under all transformations.
+
+**This wasn't designed. It emerged.** The architecture was built for honest memory and consistent identity. But solving "don't lie to my wife" requires solving "what doesn't change" — and that's the invariance problem that physics is trying to solve.
+
+*Survival through time = fundamentality.*

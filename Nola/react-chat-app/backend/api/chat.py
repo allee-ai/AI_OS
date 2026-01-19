@@ -77,3 +77,19 @@ async def clear_chat_history():
         return {"message": "Chat history cleared"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error clearing history: {str(e)}")
+
+
+@router.post("/start-session", response_model=SendMessageResponse)
+async def start_session():
+    """Start a new session with Nola's proactive intro"""
+    try:
+        agent_service = get_agent_service()
+        await agent_service.clear_history()
+        intro_message = await agent_service.get_proactive_intro()
+        
+        return SendMessageResponse(
+            message=intro_message,
+            agent_status="ready"
+        )
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error starting session: {str(e)}")

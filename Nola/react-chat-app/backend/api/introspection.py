@@ -1042,3 +1042,286 @@ async def get_system_log_events(limit: int = 100):
         return get_system_log(limit=limit)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not get system log: {str(e)}")
+
+
+# ========== Concept Graph Endpoints (Linking Core Visualization) ==========
+
+class ConceptLink(BaseModel):
+    """A single link between two concepts."""
+    concept_a: str
+    concept_b: str
+    strength: float
+    fire_count: int
+    last_fired: Optional[str] = None
+
+
+class ConceptNode(BaseModel):
+    """A concept node for graph visualization."""
+    id: str
+    label: str
+    connections: int = 0
+    total_strength: float = 0.0
+
+
+class ConceptGraphResponse(BaseModel):
+    """Full concept graph data for visualization."""
+    nodes: List[ConceptNode]
+    links: List[ConceptLink]
+    stats: Dict[str, Any]
+
+
+class ActivatedConcept(BaseModel):
+    """Result from spread activation."""
+    concept: str
+    activation: float
+    path: List[str]
+
+
+class SpreadActivateResponse(BaseModel):
+    """Response from spread activation query."""
+    input_concepts: List[str]
+    activated: List[ActivatedConcept]
+    total_activated: int
+
+
+class StrengthUpdateRequest(BaseModel):
+    """Request to update link strength."""
+    concept_a: str
+    concept_b: str
+    strength: float
+
+
+@router.get("/concept-links", response_model=ConceptGraphResponse)
+async def get_concept_links(min_strength: float = 0.05, limit: int = 500):
+    """
+    Get all concept links for graph visualization.
+    
+    Returns nodes and edges for rendering the concept graph.
+    This is the core data for the 3D neural network visualization.
+    
+    Args:
+        min_strength: Minimum link strength to include (default 0.05)
+        limit: Maximum links to return (default 500)
+    """
+    try:
+        from Nola.threads.schema import get_connection, init_concept_links_table
+        
+        conn = get_connection(readonly=True)
+        cur = conn.cursor()
+        
+        # Ensure table exists
+        init_concept_links_table(conn)
+        
+        # Get all links above threshold
+        cur.execute("""
+            SELECT concept_a, concept_b, strength, fire_count, last_fired
+            FROM concept_links 
+            WHERE strength >= ?
+            ORDER BY strength DESC
+            LIMIT ?
+        """, (min_strength, limit))
+        
+        links = []
+        node_map: Dict[str, Dict] = {}
+        
+        for row in cur.fetchall():
+            concept_a, concept_b, strength, fire_count, last_fired = row
+            
+            links.append(ConceptLink(
+                concept_a=concept_a,
+                concept_b=concept_b,
+                strength=strength,
+                fire_count=fire_count,
+                last_fired=last_fired
+            ))
+            
+            # Track nodes
+            for concept in [concept_a, concept_b]:
+                if concept not in node_map:
+                    node_map[concept] = {"id": concept, "label": concept, "connections": 0, "total_strength": 0.0}
+                node_map[concept]["connections"] += 1
+                node_map[concept]["total_strength"] += strength
+        
+        nodes = [ConceptNode(**n) for n in node_map.values()]
+        
+        # Get stats
+        cur.execute("SELECT COUNT(*), AVG(strength), MAX(strength) FROM concept_links")
+        stats_row = cur.fetchone()
+        stats = {
+            "total_links": stats_row[0] or 0,
+            "avg_strength": round(stats_row[1] or 0, 3),
+            "max_strength": round(stats_row[2] or 0, 3),
+            "unique_concepts": len(nodes),
+            "returned_links": len(links)
+        }
+        
+        return ConceptGraphResponse(nodes=nodes, links=links, stats=stats)
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not get concept links: {str(e)}")
+
+
+@router.get("/spread-activate", response_model=SpreadActivateResponse)
+async def spread_activate_query(
+    q: str,
+    threshold: float = 0.1,
+    max_hops: int = 1,
+    limit: int = 50
+):
+    """
+    Perform spread activation from a query.
+    
+    Extracts concepts from the query text and spreads activation
+    through the concept graph. Returns all activated concepts.
+    
+    This is the live "thinking" visualization - watch activation
+    spread through the network as you type.
+    
+    Args:
+        q: Query text to extract concepts from
+        threshold: Minimum activation to return (default 0.1)
+        max_hops: How many hops to spread (default 1)
+        limit: Max concepts to return (default 50)
+    """
+    try:
+        from Nola.threads.schema import spread_activate, find_concepts_by_substring, extract_concepts_from_text
+        
+        # Extract concepts from query
+        extracted_concepts = extract_concepts_from_text(q)
+        
+        if not extracted_concepts:
+            return SpreadActivateResponse(
+                input_concepts=[],
+                activated=[],
+                total_activated=0
+            )
+        
+        # Find concepts in graph that partially match the search terms
+        # This enables "gmail" to find "form.communication.gmail" etc.
+        matched_concepts = find_concepts_by_substring(extracted_concepts, limit=15)
+        
+        # Use matched concepts as input (fall back to extracted if no matches)
+        input_concepts = matched_concepts if matched_concepts else extracted_concepts
+        
+        # Spread activation
+        activated = spread_activate(
+            input_concepts=input_concepts,
+            activation_threshold=threshold,
+            max_hops=max_hops,
+            limit=limit
+        )
+        
+        return SpreadActivateResponse(
+            input_concepts=input_concepts,  # Show what was actually activated
+            activated=[
+                ActivatedConcept(
+                    concept=a["concept"],
+                    activation=round(a["activation"], 3),
+                    path=a["path"]
+                )
+                for a in activated
+            ],
+            total_activated=len(activated)
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Spread activation failed: {str(e)}")
+
+
+@router.post("/concept-links/strengthen")
+async def strengthen_concept_link(req: StrengthUpdateRequest):
+    """
+    Manually strengthen or weaken a concept link.
+    
+    This lets users directly edit the concept graph - shaping
+    how Nola focuses attention.
+    
+    Args:
+        concept_a: First concept
+        concept_b: Second concept  
+        strength: New strength value (0.0 - 1.0)
+    """
+    try:
+        from Nola.threads.schema import get_connection, init_concept_links_table
+        
+        if req.strength < 0 or req.strength > 1:
+            raise HTTPException(status_code=400, detail="Strength must be between 0 and 1")
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        init_concept_links_table(conn)
+        
+        # Canonical ordering
+        a, b = (req.concept_a, req.concept_b) if req.concept_a < req.concept_b else (req.concept_b, req.concept_a)
+        
+        if req.strength == 0:
+            # Delete the link
+            cur.execute("DELETE FROM concept_links WHERE concept_a = ? AND concept_b = ?", (a, b))
+            conn.commit()
+            return {"status": "deleted", "concept_a": a, "concept_b": b}
+        else:
+            # Upsert
+            cur.execute("""
+                INSERT INTO concept_links (concept_a, concept_b, strength, fire_count, last_fired)
+                VALUES (?, ?, ?, 1, CURRENT_TIMESTAMP)
+                ON CONFLICT(concept_a, concept_b) DO UPDATE SET
+                    strength = ?,
+                    last_fired = CURRENT_TIMESTAMP
+            """, (a, b, req.strength, req.strength))
+            conn.commit()
+            return {"status": "updated", "concept_a": a, "concept_b": b, "strength": req.strength}
+            
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not update link: {str(e)}")
+
+
+@router.delete("/concept-links")
+async def delete_concept_link(concept_a: str, concept_b: str):
+    """
+    Delete a concept link entirely.
+    """
+    try:
+        from Nola.threads.schema import get_connection
+        
+        conn = get_connection()
+        cur = conn.cursor()
+        
+        # Canonical ordering
+        a, b = (concept_a, concept_b) if concept_a < concept_b else (concept_b, concept_a)
+        
+        cur.execute("DELETE FROM concept_links WHERE concept_a = ? AND concept_b = ?", (a, b))
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Link not found")
+        conn.commit()
+        
+        return {"status": "deleted", "concept_a": a, "concept_b": b}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Could not delete link: {str(e)}")
+
+
+@router.post("/concept-links/reindex")
+async def reindex_concept_graph():
+    """
+    Re-index all existing identity and philosophy facts into the concept graph.
+    
+    Run this to populate the 3D visualization from existing profiles.
+    Safe to run multiple times - uses Hebbian learning so links just strengthen.
+    """
+    try:
+        from Nola.threads.schema import reindex_all_to_concept_graph
+        
+        stats = reindex_all_to_concept_graph()
+        return {
+            "status": "ok",
+            "identity_facts": stats["identity"],
+            "philosophy_facts": stats["philosophy"],
+            "total_links": stats["total_links"],
+            "message": f"Indexed {stats['identity']} identity + {stats['philosophy']} philosophy facts → {stats['total_links']} concept links"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Reindex failed: {str(e)}")

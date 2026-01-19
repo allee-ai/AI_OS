@@ -494,6 +494,50 @@ def decay_concept_links(decay_rate: float = 0.95, min_strength: float = 0.05) ->
     return pruned
 
 
+def find_concepts_by_substring(search_terms: List[str], limit: int = 20) -> List[str]:
+    """
+    Find concepts in the graph that contain any of the search terms as substrings.
+    
+    This enables partial matching:
+    - "gmail" → finds "form.communication.gmail", "send_message_gmail", etc.
+    - "sarah" → finds "identity.user.sarah", "sarah.likes.coffee", etc.
+    
+    Args:
+        search_terms: List of terms to search for
+        limit: Max concepts to return per term
+    
+    Returns:
+        List of matching concept IDs from the graph
+    """
+    if not search_terms:
+        return []
+    
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    
+    matches = set()
+    
+    for term in search_terms:
+        term_lower = term.lower().strip()
+        if len(term_lower) < 2:
+            continue
+        
+        # Find concepts containing this term (in concept_a or concept_b)
+        cur.execute("""
+            SELECT DISTINCT concept_a FROM concept_links 
+            WHERE LOWER(concept_a) LIKE ?
+            UNION
+            SELECT DISTINCT concept_b FROM concept_links 
+            WHERE LOWER(concept_b) LIKE ?
+            LIMIT ?
+        """, (f'%{term_lower}%', f'%{term_lower}%', limit))
+        
+        for row in cur.fetchall():
+            matches.add(row[0])
+    
+    return list(matches)
+
+
 def spread_activate(
     input_concepts: List[str],
     activation_threshold: float = 0.1,
@@ -665,6 +709,142 @@ def record_concept_cooccurrence(concepts: List[str], learning_rate: float = 0.1)
             count += 1
     
     return count
+
+
+# ============================================================================
+# SCHEMA: Concept Graph Indexing (Auto-populate from keys)
+# ============================================================================
+
+def extract_concepts_from_value(value: str) -> List[str]:
+    """
+    Extract concept tokens from a fact value.
+    
+    "Sarah works at Blue Bottle Coffee" → ["sarah", "blue", "bottle", "coffee"]
+    "User prefers Python for coding" → ["python", "coding"]
+    """
+    import re
+    
+    # Lowercase and split
+    text = value.lower()
+    
+    # Remove common stop words
+    stop_words = {
+        'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
+        'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
+        'should', 'may', 'might', 'must', 'shall', 'can', 'need', 'dare',
+        'to', 'of', 'in', 'for', 'on', 'with', 'at', 'by', 'from', 'as',
+        'into', 'through', 'during', 'before', 'after', 'above', 'below',
+        'between', 'under', 'again', 'further', 'then', 'once', 'here',
+        'there', 'when', 'where', 'why', 'how', 'all', 'each', 'few', 'more',
+        'most', 'other', 'some', 'such', 'no', 'nor', 'not', 'only', 'own',
+        'same', 'so', 'than', 'too', 'very', 'just', 'and', 'but', 'if', 'or',
+        'because', 'until', 'while', 'this', 'that', 'these', 'those', 'i',
+        'me', 'my', 'myself', 'we', 'our', 'ours', 'you', 'your', 'yours',
+        'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them',
+        'their', 'what', 'which', 'who', 'whom', 'user', 'nola'
+    }
+    
+    # Extract words (alphanumeric, min 2 chars)
+    words = re.findall(r'\b[a-z][a-z0-9_]{1,}\b', text)
+    
+    # Filter stop words and return unique
+    concepts = [w for w in words if w not in stop_words]
+    return list(set(concepts))
+
+
+def index_key_in_concept_graph(key: str, value: str, learning_rate: float = 0.15) -> int:
+    """
+    Index a key:value pair into the concept graph.
+    
+    This is the magic that makes the 3D visualization work:
+    1. Links parent↔child along dot notation (identity → identity.user → identity.user.likes)
+    2. Extracts concepts from value and cross-links them
+    
+    Args:
+        key: Hierarchical key like "identity.user.likes.brown"
+        value: The fact value like "User really loves the color brown"
+        learning_rate: Strength for new links (default 0.15 = visible but not overwhelming)
+    
+    Returns:
+        Number of links created/strengthened
+    """
+    links_created = 0
+    
+    # 1. Link parent↔child along the key hierarchy
+    parts = key.split('.')
+    for i in range(len(parts) - 1):
+        parent = '.'.join(parts[:i+1])
+        child = '.'.join(parts[:i+2])
+        # Parent-child links are strong (0.8) - they're structural
+        link_concepts(parent, child, learning_rate=0.3)
+        links_created += 1
+    
+    # 2. Extract concepts from the value and link to the full key
+    value_concepts = extract_concepts_from_value(value)
+    for concept in value_concepts:
+        # Link the key to extracted concepts
+        link_concepts(key, concept, learning_rate=learning_rate)
+        links_created += 1
+        
+        # Also link the leaf (last part of key) to the concept
+        # This creates cross-links: identity.user.likes.brown ↔ brown ↔ identity.sarah.likes.brown
+        leaf = parts[-1] if parts else key
+        if leaf != concept:  # Don't self-link
+            link_concepts(leaf, concept, learning_rate=learning_rate)
+            links_created += 1
+    
+    # 3. Link sibling concepts from the value together
+    # If value mentions "coffee" and "morning", link them
+    if len(value_concepts) >= 2:
+        for i, a in enumerate(value_concepts):
+            for b in value_concepts[i+1:]:
+                link_concepts(a, b, learning_rate=learning_rate * 0.5)
+                links_created += 1
+    
+    return links_created
+
+
+def reindex_all_to_concept_graph() -> Dict[str, int]:
+    """
+    Re-index all existing identity and philosophy facts into the concept graph.
+    
+    Run this once to populate the graph from existing data,
+    or after schema changes.
+    
+    Returns:
+        Dict with counts: {"identity": N, "philosophy": M, "total_links": X}
+    """
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    
+    stats = {"identity": 0, "philosophy": 0, "total_links": 0}
+    
+    # Index identity_flat
+    try:
+        cur.execute("SELECT key, l3 FROM identity_flat")
+        for row in cur.fetchall():
+            key, l3 = row[0], row[1]
+            if key and l3:
+                links = index_key_in_concept_graph(key, l3, learning_rate=0.15)
+                stats["identity"] += 1
+                stats["total_links"] += links
+    except Exception as e:
+        print(f"⚠️ identity_flat reindex error: {e}")
+    
+    # Index philosophy_flat
+    try:
+        cur.execute("SELECT key, l3 FROM philosophy_flat")
+        for row in cur.fetchall():
+            key, l3 = row[0], row[1]
+            if key and l3:
+                links = index_key_in_concept_graph(key, l3, learning_rate=0.15)
+                stats["philosophy"] += 1
+                stats["total_links"] += links
+    except Exception as e:
+        print(f"⚠️ philosophy_flat reindex error: {e}")
+    
+    print(f"✅ Reindexed {stats['identity']} identity + {stats['philosophy']} philosophy → {stats['total_links']} links")
+    return stats
 
 
 # ============================================================================
@@ -1520,6 +1700,15 @@ def push_identity_row(
     """, (key, metadata_type, metadata_desc, l1, l2, l3, weight))
     
     conn.commit()
+    
+    # Index this key:value into the concept graph
+    # Use L3 (most detailed) for concept extraction
+    try:
+        index_key_in_concept_graph(key, l3, learning_rate=0.15)
+    except Exception as e:
+        # Don't fail the write if indexing fails
+        import sys
+        print(f"⚠️ Concept indexing failed for {key}: {e}", file=sys.stderr)
 
 
 def pull_identity_flat(level: int = 2, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
@@ -1529,8 +1718,9 @@ def pull_identity_flat(level: int = 2, min_weight: float = 0.0, limit: int = 50)
     Returns list of {key, metadata_type, metadata_desc, value, weight}
     where 'value' is L1, L2, or L3 depending on level.
     """
-    conn = get_connection(readonly=True)
+    conn = get_connection(readonly=False)
     cur = conn.cursor()
+    init_identity_flat(conn)
     
     level_col = {1: 'l1', 2: 'l2', 3: 'l3'}.get(level, 'l2')
     
@@ -1651,6 +1841,13 @@ def push_philosophy_row(
     """, (key, metadata_type, metadata_desc, l1, l2, l3, weight))
     
     conn.commit()
+    
+    # Index this key:value into the concept graph
+    try:
+        index_key_in_concept_graph(key, l3, learning_rate=0.15)
+    except Exception as e:
+        import sys
+        print(f"⚠️ Concept indexing failed for {key}: {e}", file=sys.stderr)
 
 
 def pull_philosophy_flat(level: int = 2, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
@@ -2000,7 +2197,7 @@ def create_profile_type(
 
 def get_profile_types() -> List[Dict]:
     """Get all profile types."""
-    conn = get_connection(readonly=True)
+    conn = get_connection(readonly=False)
     cur = conn.cursor()
     init_profile_types(conn)
     
@@ -2044,7 +2241,7 @@ def create_profile(profile_id: str, type_name: str, display_name: str = "") -> N
 
 def get_profiles(type_name: str = None) -> List[Dict]:
     """Get all profiles, optionally filtered by type."""
-    conn = get_connection(readonly=True)
+    conn = get_connection(readonly=False)
     cur = conn.cursor()
     init_profiles(conn)
     
@@ -2099,7 +2296,7 @@ def create_fact_type(fact_type: str, description: str = "", default_weight: floa
 
 def get_fact_types() -> List[Dict]:
     """Get all fact types."""
-    conn = get_connection(readonly=True)
+    conn = get_connection(readonly=False)
     cur = conn.cursor()
     init_fact_types(conn)
     
@@ -2167,7 +2364,7 @@ def pull_profile_facts(
     limit: int = 100
 ) -> List[Dict]:
     """Pull facts, optionally filtered by profile and/or fact type."""
-    conn = get_connection(readonly=True)
+    conn = get_connection(readonly=False)
     cur = conn.cursor()
     init_profile_facts(conn)
     

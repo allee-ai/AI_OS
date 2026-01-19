@@ -1,5 +1,11 @@
 # Linking Core Thread
 
+**Cognitive Question**: WHICH concepts matter NOW?  
+**Resolution Order**: 6th (final gating — what actually enters context)  
+**Brain Mapping**: Thalamic Gating (selective attention, relevance filtering)
+
+---
+
 The Linking Core is not a data store — it's the **relevance engine** that determines what's important *right now*.
 
 ## Purpose
@@ -183,6 +189,97 @@ Retrieve facts matching activated concepts (exact, prefix, and text search).
 
 ### `record_concept_cooccurrence(concepts, learning_rate=0.1)`
 Record that these concepts appeared together, strengthening all pairwise links.
+
+### `index_key_in_concept_graph(key, value, learning_rate=0.1)`
+**NEW** — Auto-populate concept graph from any key:value write:
+1. Links parent↔child along dot-notation hierarchy (`form.communication` ↔ `gmail`)
+2. Extracts concepts from values and cross-links to key
+3. Links sibling concepts from same value together
+
+Called automatically by `push_identity_row()`, `push_philosophy_row()`, etc.
+
+### `find_concepts_by_substring(search_terms, limit=30)`
+**NEW** — Fuzzy search for concepts containing any of the search terms:
+```python
+find_concepts_by_substring(["gmail", "email"])
+# Returns: ["form.communication.gmail", "identity.user.email"]
+```
+
+### `reindex_all_to_concept_graph()`
+Batch reindex all existing data (identity, philosophy, form) into concept graph.
+
+---
+
+## 3D Visualization
+
+The concept graph is visualized as an interactive 3D neural network in the Threads page:
+
+### Visual Design
+- **Purple Nebula Shell**: 4000 outer particles + 1200 inner wisps create a swirling cognitive boundary
+- **Density-Aware Gas**: 2000 particles cluster around high-connection nodes, visualizing information density
+- **Circular Sprites**: Soft radial gradient dots (not squares)
+- **Additive Blending**: Glow effect where particles overlap
+
+### Identity-Anchored Positioning
+The most important design decision: **`name.nola` (or identity node) sits at origin (0,0,0)**.
+
+Position is calculated by **graph distance from identity**:
+- BFS traverses from identity node
+- Closer to identity in the graph = closer to center in 3D space
+- The shape emerges from actual topology, not forced
+
+This means you can look at any node's position and understand WHY it's there.
+
+### Temporal Dimension
+Nodes are colored by age using `last_fired` timestamps from links:
+- **Deep purple** (oldest): Ancient memories, core foundations
+- **Silver/white** (newest): Recent activations, fresh information
+
+Age gradient: `new THREE.Color(0.6+age*0.4, 0.4+age*0.6, 0.9+age*0.1)`
+
+### Resonance Points
+The visualization detects **curve intersections** — points where unrelated concept arcs cross in 3D space:
+- These are "resonance points" that might indicate hidden relationships
+- Rendered as bright glowing points at intersection locations
+- Represents emergent structure that wasn't explicitly encoded
+
+### Temporal-Identity Convergence
+
+**Emergent property**: As the graph grows, temporal origin and self converge.
+
+This wasn't explicitly coded — it falls out of the math:
+
+1. **New concepts** appear at temporal edge (age=1, white) and potentially far from identity
+2. **Decay removes** links that aren't reinforced through use
+3. **What survives** at the temporal origin? Only things that kept getting linked back to identity
+4. **Therefore**: `oldest_surviving_concepts ≈ identity_core`
+
+```
+As graph grows:
+   [self] ←──── [origin events that defined self]
+      ↑
+      └── These collapse toward each other
+          because survival = relevance to identity
+```
+
+**The forgetting is doing work.** Like how geodesics curve toward mass in physics, concept trajectories curve toward self. The oldest things that still exist are the things that defined who you are.
+
+**Coherence increases** as the graph grows:
+- More paths connect to self
+- Clustering tightens around identity-relevant concepts  
+- Noise drifts outward and eventually decays
+- What remains is increasingly coherent structure
+
+This means **persistence = identity-relevance** and **age + centrality = core self**. The system literally becomes more coherent over time — not through explicit optimization, but through the natural dynamics of Hebbian learning + decay.
+
+### API Endpoints
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/introspection/concept-links` | GET | Returns nodes, links, and stats for visualization |
+| `/api/introspection/spread-activate?q=` | GET | Spread activation with fuzzy matching |
+| `/api/introspection/concept-links/strengthen` | POST | Manually strengthen a link |
+| `/api/introspection/concept-links/reindex` | POST | Trigger full graph reindex |
 
 ---
 
@@ -725,6 +822,52 @@ def should_save_memory(key, value):
 
 ---
 
+## Visualization Plan (Critical)
+
+> **All model assessments agree**: The concept graph is invisible. This is the #1 bottleneck.
+
+Linking Core is the cognitive control surface, but users can't see:
+- What concepts are linked
+- What spread activation looks like
+- Why certain facts were selected
+- How their input shaped focus
+
+### Required API Endpoints
+
+| Endpoint | Purpose |
+|----------|---------|
+| `GET /api/introspection/concept-links` | Return all links as graph edges |
+| `GET /api/introspection/spread-activate?q={query}` | Return activation results for query |
+| `GET /api/introspection/score-breakdown?q={query}` | Return per-dimension scores |
+| `POST /api/introspection/strengthen` | Manually strengthen/weaken a link |
+
+### Frontend Components Needed
+
+| Component | Purpose | Priority |
+|-----------|---------|----------|
+| `ConceptGraph.tsx` | Force-directed graph showing concept_links | 🔴 Critical |
+| `ActivationOverlay.tsx` | Highlight activated nodes on graph | 🔴 Critical |
+| `ScoreBreakdown.tsx` | Show dimensional scores for selected fact | 🟡 High |
+| `GraphControls.tsx` | Zoom, filter, manual link editing | 🟢 Medium |
+
+### Visualization Requirements
+
+1. **Graph View**: Force-directed layout showing concepts as nodes, links as edges
+2. **Live Activation**: Type in textbox → watch activation spread in real-time
+3. **Edge Labels**: Show strength on hover (0.0-1.0)
+4. **Time Decay**: Fade/gray links that haven't fired recently
+5. **Click to Edit**: Click a link to manually adjust strength or delete
+
+### Why This Matters
+
+This isn't UI polish. **The graph IS the cognitive model.**
+
+When users edit a link, they're literally shaping how Nola focuses. When they watch activation spread, they're seeing their own associative patterns reflected back.
+
+> "Attention over concepts, not tokens" — but only if you can **see** the concepts.
+
+---
+
 ## Next Immediate Steps
 
 1. ✅ Read this document
@@ -733,5 +876,6 @@ def should_save_memory(key, value):
 4. [ ] Implement `sequence_learner.py` first (core functionality)
 5. [ ] Write unit tests for sequence learning
 6. [ ] Integrate with one agent profile as proof of concept
+7. **[ ] Build concept graph visualization in ThreadsPage.tsx** ← NEW PRIORITY
 
 

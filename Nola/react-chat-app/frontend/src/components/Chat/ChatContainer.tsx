@@ -17,6 +17,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
     messages, 
     sendMessage, 
     clearHistory,
+    startNewSession,
     isLoading, 
     isConnected, 
     agentStatus,
@@ -43,8 +44,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
   }, [loadConversation]);
 
   const handleNewConversation = useCallback(async () => {
-    await clearHistory();
-  }, [clearHistory]);
+    await startNewSession();
+  }, [startNewSession]);
 
   return (
     <div className="chat-layout">

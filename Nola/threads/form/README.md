@@ -1,103 +1,137 @@
 # Form Thread
 
-The Form Thread answers: **"What can I do? What's happening right now?"**
+**Cognitive Question**: WHAT can I do? WHAT am I doing?  
+**Resolution Order**: 2nd (after WHO, resolve capabilities and current state)  
+**Brain Mapping**: Motor Cortex + Sensory Cortex (action/perception)
 
-## Purpose
+---
 
-Form manages capabilities and current state. It tracks what tools exist (static) and what's actively happening (dynamic).
+## Necessity
 
-## Files
+Embodiment requires knowing: "What am I? What can I do? What am I currently doing?" This is the physical self — tools, actions, state. Without Form, an agent is a disembodied voice with no ability to act.
+
+---
+
+## Backend
+
+### Database Tables
+
+| Table | Location | Purpose |
+|-------|----------|---------|
+| `form_tool_registry` | `schema.py` (module table) | Available tools and capabilities |
+| `form_action_history` | `schema.py` (module table) | Record of actions taken |
+| `form_browser` | `schema.py` (module table) | Browser/Kernel state |
+
+### Key Files
 
 | File | Purpose |
 |------|---------|
 | `adapter.py` | Thread adapter with introspection |
-| `tools.py` | Tool definitions and registry |
+| `tools.py` | Tool definitions and registry (TOOLS list) |
 | `executor.py` | Tool execution framework |
 
-## Quick Start
+### Tool Registry (`tools.py`)
 
-```python
-from Nola.threads.form import (
-    FormThreadAdapter,
-    get_available_tools,
-    execute_tool,
-    format_tools_for_prompt,
-)
+| Function | Location | Purpose |
+|----------|----------|---------|
+| `ToolDefinition` | `tools.py:24` | Dataclass for tool definition |
+| `TOOLS` | `tools.py:47` | Master list of all tools |
+| `get_available_tools()` | `tools.py:200+` | Get tools with requirements met |
+| `check_tool_availability()` | `tools.py:180+` | Check if tool can run |
+| `format_tools_for_prompt()` | `tools.py:220+` | Format tools for system prompt |
 
-# Get available tools (those with requirements met)
-tools = get_available_tools()
-for t in tools:
-    print(f"{t.name}: {t.description}")
+### Adapter
 
-# Format for system prompt
-prompt_text = format_tools_for_prompt(level=2)
+| Method | Location | Purpose |
+|--------|----------|---------|
+| `seed_tools()` | `adapter.py:54` | Register tools from tools.py into DB |
+| `get_tools()` | `adapter.py:74` | Get available tools |
+| `get_tools_formatted()` | `adapter.py:78` | Get tools formatted for prompt |
+| `get_action_history()` | `adapter.py:83` | Get recent actions |
+| `register_tool()` | `adapter.py:91` | Register a tool in registry |
+| `record_action()` | `adapter.py:121` | Record an action taken |
 
-# Execute a tool
-result = execute_tool("memory_identity", "get_identity", {"level": 2})
-print(result.output)
+---
 
-# Introspection (auto-seeds tools)
-adapter = FormThreadAdapter()
-facts = adapter.introspect(context_level=2)
-```
+## Context Levels
 
-## Tool Categories
+| Level | Token Budget | Content |
+|-------|--------------|---------|
+| **L1** | ~10 tokens | metadata, `current_actions`, `past_actions` (last 3) |
+| **L2** | ~50 tokens | L1 + top-k AVAILABLE TOOLS with metadata |
+| **L3** | ~200 tokens | L2 + actual Python code (only when editing tool) |
 
-| Category | Tools |
-|----------|-------|
-| **Communication** | stimuli_gmail, stimuli_slack, stimuli_sms, stimuli_discord, stimuli_telegram |
-| **Browser** | browser, web_search |
-| **Memory** | memory_identity, memory_philosophy, memory_log, memory_linking |
-| **Files** | file_read, file_write |
-| **Automation** | terminal, scheduler, stimuli_github, stimuli_linear, stimuli_notion |
-| **Internal** | ask_llm, introspect, notify |
+### Metadata vs Data Split
 
-## Architecture: Metadata vs Data Split
-
-Form uses a unique split:
-
-```
-metadata_json = CAPABILITIES (what CAN happen)
-data_json = CURRENT STATE (what IS happening)
-```
-
-### Example: Browser Tool
+Form uses a unique architecture:
+- **metadata_json** = CAPABILITIES (what CAN happen, static)
+- **data_json** = CURRENT STATE (what IS happening, dynamic)
 
 ```json
 {
   "key": "tool_browser",
   "metadata": {
     "name": "browser",
-    "description": "Kernel browser for web automation",
-    "actions": ["navigate", "screenshot", "interact", "extract"],
+    "actions": ["navigate", "screenshot", "click"],
     "requires": ["KERNEL_API_KEY"]
   },
   "data": {
     "available": true,
     "session_id": "abc123",
-    "current_url": "https://github.com",
-    "last_used": "2026-01-08T14:30:00Z"
+    "current_url": "https://github.com"
   }
 }
 ```
 
-**Metadata** (static): What the browser can do
-**Data** (dynamic): What the browser is doing now
+---
 
-## Modules
+## Frontend
 
-### `form_tool_registry`
-Available tools and their capabilities:
+| Component | Location | Status |
+|-----------|----------|--------|
+| `ToolDashboard.tsx` | `react-chat-app/frontend/src/components/ToolDashboard.tsx` | ✅ Done |
+| Form tab in ThreadsPage | `ThreadsPage.tsx` | ✅ Done |
 
-| Tool | Capabilities |
-|------|--------------|
-| `browser` | Navigate, screenshot, interact, extract |
-| `terminal` | Execute commands, read output |
-| `files` | Read, write, search workspace |
-| `search` | Web search, documentation lookup |
+**Features**:
+- ✅ View all registered tools
+- ✅ See availability status (green/red)
+- ✅ View required env vars
+- ⬜ Tool editor (L3 - view/edit Python)
 
-### `form_action_history`
-Record of actions taken:
+---
+
+## Tool Categories
+
+| Category | Tools |
+|----------|-------|
+| **Communication** | `stimuli_gmail`, `stimuli_slack`, `stimuli_sms`, `stimuli_discord`, `stimuli_telegram` |
+| **Browser** | `browser`, `web_search` |
+| **Memory** | `memory_identity`, `memory_philosophy`, `memory_log`, `memory_linking` |
+| **Files** | `file_read`, `file_write` |
+| **Automation** | `terminal`, `scheduler`, `stimuli_github`, `stimuli_linear`, `stimuli_notion` |
+| **Internal** | `ask_llm`, `introspect`, `notify` |
+
+---
+
+## Integration Points
+
+| Thread | Integration |
+|--------|-------------|
+| **Identity** | User preferences affect tool behavior |
+| **Philosophy** | Tools must respect ethical bounds |
+| **Reflex** | Shortcuts can trigger tools |
+| **Log** | Actions are logged with timestamps |
+| **Linking Core** | Tool usage affects concept associations |
+
+---
+
+## Weight Semantics
+
+- **0.8+**: Core tools (browser, terminal, files)
+- **0.5-0.7**: Communication tools (based on user config)
+- **0.3-0.5**: Specialized tools (less frequent use)
+
+Weight affects tool suggestion priority.
 
 | Field | Purpose |
 |-------|---------|
