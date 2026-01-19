@@ -23,6 +23,12 @@ build/
 .env.local
 .env.*.local
 
+# VM deployment scripts (local-only)
+connect_vm_nola.sh
+*.command
+create_vm_desktop_app.sh
+*.app/
+
 # API Keys & Secrets (CRITICAL - never commit!)
 **/openai_key.txt
 **/api_key.txt
