@@ -14,6 +14,9 @@ from api.stimuli import router as stimuli_router
 from api.form import router as form_router
 from api.reflex import router as reflex_router
 from api.services import router as services_router
+from api.finetune import router as finetune_router
+from api.profiles import router as profiles_router
+from api.import_routes import router as import_router
 from api.websockets import websocket_manager
 from core.config import settings
 import json
@@ -60,6 +63,9 @@ app.include_router(stimuli_router)
 app.include_router(form_router, prefix="/api/form", tags=["form"])
 app.include_router(reflex_router)
 app.include_router(services_router)
+app.include_router(finetune_router, prefix="/api/finetune", tags=["finetune"])
+app.include_router(profiles_router)
+app.include_router(import_router)
 
 
 @app.on_event("startup")

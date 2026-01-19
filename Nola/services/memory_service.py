@@ -11,6 +11,13 @@ from Nola.path_utils import (
     warn_if_not_venv,
 )
 
+# Global lock for thread safety
+try:
+    from Nola.core.locks import MEMORY_WRITE_LOCK
+except ImportError:
+    import threading
+    MEMORY_WRITE_LOCK = threading.RLock()
+
 project_root = ensure_project_root_on_path(Path(__file__).resolve())
 nola_root = ensure_nola_root_on_path(Path(__file__).resolve())
 _venv_warning = warn_if_not_venv(project_root)
@@ -59,12 +66,13 @@ def _save_dynamic_memory_to_db(memory_data: dict):
     """Save dynamic memory to thread database."""
     try:
         from Nola.threads.schema import push_to_module
-        push_to_module(
-            "identity", "user_profile", "dynamic_memory",
-            {"type": "memory_structure", "description": "User's dynamic memory levels"},
-            {"levels": memory_data},
-            level=2
-        )
+        with MEMORY_WRITE_LOCK:
+            push_to_module(
+                "identity", "user_profile", "dynamic_memory",
+                {"type": "memory_structure", "description": "User's dynamic memory levels"},
+                {"levels": memory_data},
+                level=2
+            )
     except Exception as e:
         print(f"Error saving dynamic memory to DB: {e}")
 
@@ -188,51 +196,51 @@ class MemoryService:
             USE_LLM_EXTRACTOR = True
         except ImportError:
             USE_LLM_EXTRACTOR = False
-        
-        all_concepts = []
-        
-        for fact in facts:
-            # Extract concepts for linking (always do this)
-            concepts = extract_concepts_from_text(fact)
-            all_concepts.extend(concepts)
+        with MEMORY_WRITE_LOCK:
+            all_concepts = []
             
-            if USE_LLM_EXTRACTOR:
-                # NEW: Use LLM-based extraction and storage
-                # This handles key generation, L1/L2/L3, and thread routing
-                result = extract_and_store_fact(fact, weight=0.4)  # Lower weight for auto-extracted
+            for fact in facts:
+                # Extract concepts for linking (always do this)
+                concepts = extract_concepts_from_text(fact)
+                all_concepts.extend(concepts)
                 
-                if result.get("stored"):
-                    print(f"📝 Stored: {result['full_path']}")
-                    # Log to unified log
-                    unified_log(
-                        "memory",
-                        f"Learned: {fact[:50]}{'...' if len(fact) > 50 else ''}",
-                        {"path": result['full_path'], "l1": result['l1'], "concepts": concepts},
-                        source="memory_service",
-                        session_id=self.session_id,
-                        related_key=result['key']
-                    )
+                if USE_LLM_EXTRACTOR:
+                    # NEW: Use LLM-based extraction and storage
+                    # This handles key generation, L1/L2/L3, and thread routing
+                    result = extract_and_store_fact(fact, weight=0.4)  # Lower weight for auto-extracted
+                    
+                    if result.get("stored"):
+                        print(f"📝 Stored: {result['full_path']}")
+                        # Log to unified log
+                        unified_log(
+                            "memory",
+                            f"Learned: {fact[:50]}{'...' if len(fact) > 50 else ''}",
+                            {"path": result['full_path'], "l1": result['l1'], "concepts": concepts},
+                            source="memory_service",
+                            session_id=self.session_id,
+                            related_key=result['key']
+                        )
+                    else:
+                        # Fallback: just add to temp_memory for later processing
+                        add_fact(
+                            session_id=self.session_id,
+                            text=fact,
+                            source="conversation",
+                            metadata={"concepts": concepts}
+                        )
                 else:
-                    # Fallback: just add to temp_memory for later processing
+                    # LEGACY: Add to temp_memory only
                     add_fact(
                         session_id=self.session_id,
                         text=fact,
                         source="conversation",
                         metadata={"concepts": concepts}
                     )
-            else:
-                # LEGACY: Add to temp_memory only
-                add_fact(
-                    session_id=self.session_id,
-                    text=fact,
-                    source="conversation",
-                    metadata={"concepts": concepts}
-                )
-                print(f"📝 Queued fact for consolidation: {fact[:50]}...")
-        
-        # Record concept co-occurrence for spread activation
-        if len(all_concepts) >= 2:
-            self._record_concept_links(all_concepts)
+                    print(f"📝 Queued fact for consolidation: {fact[:50]}...")
+            
+            # Record concept co-occurrence for spread activation
+            if len(all_concepts) >= 2:
+                self._record_concept_links(all_concepts)
     
     def _record_concept_links(self, concepts: List[str]):
         """
@@ -244,8 +252,8 @@ class MemoryService:
             - Later "coffee" mentioned → sarah.* activates
         """
         try:
-            from Nola.threads.schema import record_concept_cooccurrence
-            pairs = record_concept_cooccurrence(concepts, learning_rate=0.1)
+            with MEMORY_WRITE_LOCK:
+                pairs = record_concept_cooccurrence(concepts, learning_rate=0.1)
             if pairs > 0:
                 print(f"🔗 Linked {pairs} concept pairs for spread activation")
         except Exception as e:
@@ -260,6 +268,8 @@ class MemoryService:
             from Nola.threads.schema import record_cooccurrence
             # Use first 50 chars of each fact as key
             keys = [f[:50].strip() for f in facts if f.strip()]
+            with MEMORY_WRITE_LOCK:
+                keys = [f[:50].strip() for f in facts if f.strip()]
             pairs = record_cooccurrence(keys)
             if pairs > 0:
                 print(f"🔗 Recorded {pairs} co-occurrence pairs")

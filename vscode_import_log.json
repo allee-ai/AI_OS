@@ -1,0 +1,552 @@
+{
+  "timestamp": "2026-01-14T14:56:58.613344",
+  "total_files": 163,
+  "imported": 163,
+  "failed": 0,
+  "results": [
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 14,
+      "imported": 14,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.422850"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.423006"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.425710"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 10,
+      "imported": 10,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.467153"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.472259"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 8,
+      "imported": 8,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.498098"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.498306"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 3,
+      "imported": 3,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.587711"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.588278"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.588556"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.589377"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.590551"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.590665"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.590780"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.590881"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.590983"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.604821"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.605000"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.605209"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.605457"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 2,
+      "imported": 2,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.623947"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.624788"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.632565"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:55.633505"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.239132"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 2,
+      "imported": 2,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.239634"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.243565"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.243732"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.243871"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.256895"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.258991"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.283230"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.283386"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.292798"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.294841"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.295013"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:56.295137"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 37,
+      "imported": 37,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.316408"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 7,
+      "imported": 7,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.404169"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.404524"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.404647"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.404762"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.405168"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.405292"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.405397"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.433743"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.433938"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.434043"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.434138"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 3,
+      "imported": 3,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.440726"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.440847"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.457369"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 11,
+      "imported": 11,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.488783"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.489953"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.490352"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 2,
+      "imported": 2,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.490549"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.490714"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.490812"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.530377"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.530606"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 7,
+      "imported": 7,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.541692"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.541845"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.543741"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.569516"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.570406"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.570532"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 1,
+      "imported": 1,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.601264"
+    },
+    {
+      "platform": "VSCode-Copilot",
+      "total_conversations": 2,
+      "imported": 2,
+      "failed": 0,
+      "attachments_moved": 0,
+      "timestamp": "2026-01-14T14:56:58.613317"
+    }
+  ]
+}

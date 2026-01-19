@@ -143,3 +143,13 @@ First match wins.
 - **Philosophy**: Reflexes must align with values
 - **Form**: Shortcuts can trigger tools
 - **Linking Core**: Reflex patterns can have associated concepts
+
+## Implementation (canonical)
+
+Implementation notes and promotion rules live in `Nola/threads/reflex/IMPLEMENTATION.md`.
+
+Quick implementer notes:
+- Promotion: 10x rule triggers promotion; Log records frequency and consolidation daemon performs promotions.
+- Match order: system → user → social. Keep this prioritized in `adapter.match_pattern()`.
+- Persist reflex metadata and actions in `reflex_*` module tables.
+

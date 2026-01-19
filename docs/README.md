@@ -4,76 +4,54 @@ All documentation for the AI_OS / Nola project.
 
 ---
 
-## Quick Links
+## 🚀 Guides (Start Here)
 
 | I want to... | Read this |
 |--------------|-----------|
-| Understand the project | [ROADMAP.md](ROADMAP.md) |
-| Continue someone's work | [HANDOFF.md](HANDOFF.md) |
-| See current dev notes | [DEV_NOTES.md](DEV_NOTES.md) |
-| Implement focus system | [FOCUS_CHECKLIST.md](FOCUS_CHECKLIST.md) |
+| Start the project | [QUICKSTART.md](guides/QUICKSTART.md) |
+| Continue someone's work | [HANDOFF.md](guides/HANDOFF.md) |
+| Check project health | [REPO_HEALTH.md](guides/REPO_HEALTH.md) |
 
 ---
 
-## 📚 Theory & Research
+## 🔭 Vision & Research
 
-Conceptual foundations and research papers.
+Conceptual foundations and the 12 Novel Contributions.
 
 | Document | Description |
 |----------|-------------|
-| [write_up.md](theory/write_up.md) | **Main research paper** - Structure Beats Scale |
-| [AI_OS_RESEARCH_PAPER.md](theory/AI_OS_RESEARCH_PAPER.md) | Extended research paper |
-| [concept_attention_theory.md](theory/concept_attention_theory.md) | HEA theory - hierarchical attention |
-| [LIVING_BODY_ARCHITECTURE.md](theory/LIVING_BODY_ARCHITECTURE.md) | Persistent agent body design |
-| [Theory_convo.md](theory/Theory_convo.md) | Design discussions archive |
-| [author_note.md](theory/author_note.md) | Personal notes on the project |
+| [**CORE_CONTRIBUTIONS.md**](vision/CORE_CONTRIBUTIONS.md) | **MUST READ: The 12 Novel Innovations** |
+| [AI_OS_RESEARCH_PAPER.md](vision/AI_OS_RESEARCH_PAPER.md) | Main Research Paper |
+| [CONCEPT_ATTENTION.md](vision/CONCEPT_ATTENTION.md) | HEA Theory (Hierarchical Attention) |
+| [LIVING_BODY.md](vision/LIVING_BODY.md) | Persistent Agent Body Architecture |
+| [NEUROSCIENCE_VALIDATION.md](vision/NEUROSCIENCE_VALIDATION.md) | Biological grounding for the OS |
 
 ---
 
-## 🔧 Implementation
+## ⚙️ Specs & Reference
 
-Technical plans and guides for building features.
+Technical details and troubleshooting.
 
 | Document | Description |
 |----------|-------------|
-| [FOCUS_IMPLEMENTATION.md](implementation/FOCUS_IMPLEMENTATION.md) | Focus system architecture plan |
-| [database_integration_plan.md](implementation/database_integration_plan.md) | SQLite schema design |
-| [log_thread_implementation_plan.md](implementation/log_thread_implementation_plan.md) | Event logging architecture |
-| [KERNEL_DEMO_SETUP.md](implementation/KERNEL_DEMO_SETUP.md) | Browser automation setup |
-| [KERNEL_INTEGRATION_SUMMARY.md](implementation/KERNEL_INTEGRATION_SUMMARY.md) | Kernel integration details |
-| [INTEGRATION_COMPLETE.md](implementation/INTEGRATION_COMPLETE.md) | Integration completion checklist |
-| [troubleshooting.md](implementation/troubleshooting.md) | Common problems and solutions |
+| [TROUBLESHOOTING.md](specs/TROUBLESHOOTING.md) | Common errors and fixes |
+| [BRAIN_THREAD_MAPPING.md](specs/BRAIN_THREAD_MAPPING.md) | Mapping database to threads |
 
 ---
 
-## 📋 Logs & History
+## 📜 Logs & Meta
 
-Changelogs, session logs, and historical records.
+Project history and tracking.
 
 | Document | Description |
 |----------|-------------|
-| [CHANGELOG.md](logs/CHANGELOG.md) | Version history and changes |
-| [LOG.txt](logs/LOG.txt) | Development session logs |
+| [ROADMAP.md](ROADMAP.md) | High-level vision & feature status |
+| [CHANGELOG.md](logs/CHANGELOG.md) | Version history |
+| [DEV_NOTES_RAW.md](logs/DEV_NOTES_RAW.md) | Catch-all developer scratchpad |
+| [CONSOLIDATED_INDEX.md](CONSOLIDATED_INDEX.md) | Full audit of all docs |
 
 ---
 
-## 📦 Archive
+## 🏛️ Archive
 
-Completed or outdated documents kept for reference.
-
-| Document | Description |
-|----------|-------------|
-| [checklist.md](archive/checklist.md) | Old evaluator checklist (completed) |
-| [WEDNESDAY_DEMO_CARD.md](archive/WEDNESDAY_DEMO_CARD.md) | Demo talking points (past event) |
-| [tests.md](archive/tests.md) | Test documentation |
-| [evaluation_framework.md](archive/evaluation_framework.md) | Benchmark methodology |
-| [FrontendChecklist](archive/FrontendChecklist) | Frontend checklist (completed) |
-
----
-
-## Other Files
-
-| File | Location | Description |
-|------|----------|-------------|
-| [license.md](license.md) | docs/ | License information |
-| [Nola threads checklist](../Nola/threads/REBUILD_CHECKLIST.md) | Nola/threads/ | Thread system rebuild status |
+Old implementation plans and deprecated notes. See [archive/](archive/) for more.

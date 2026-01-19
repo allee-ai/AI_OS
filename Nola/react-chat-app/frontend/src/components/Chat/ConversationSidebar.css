@@ -16,31 +16,58 @@
 }
 
 .sidebar-header {
-  padding: 12px;
+  padding: 16px;
   display: flex;
   gap: 8px;
   border-bottom: 1px solid var(--border-color, #2a2a4a);
 }
 
-.new-chat-button {
+.sidebar-actions {
   flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px;
+  background: var(--bg-primary, #16162a);
+  border: 1px solid var(--border-color, #2a2a4a);
+  border-radius: 8px;
+}
+
+.new-chat-button,
+.import-button,
+.settings-button {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  padding: 10px 16px;
+  padding: 8px 12px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.new-chat-button {
   background: var(--accent-color, #6366f1);
   color: white;
-  border: none;
-  border-radius: 8px;
-  cursor: pointer;
-  font-size: 14px;
-  font-weight: 500;
-  transition: background 0.2s;
 }
 
 .new-chat-button:hover {
   background: var(--accent-hover, #5558e3);
+}
+
+.import-button,
+.settings-button {
+  background: var(--bg-hover, #2a2a4a);
+  color: var(--text-secondary, #aaa);
+}
+
+.import-button:hover,
+.settings-button:hover {
+  background: var(--bg-active, #3a3a5a);
+  color: var(--text-primary, #fff);
 }
 
 .collapse-toggle {
@@ -184,4 +211,64 @@
 
 .conversations-list::-webkit-scrollbar-thumb:hover {
   background: var(--text-secondary, #888);
+}
+
+/* Section divider */
+.section-divider {
+  margin: 20px 0 12px 0;
+  padding: 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: var(--text-muted, #666);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.section-divider::before,
+.section-divider::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--border-color, #2a2a4a);
+}
+
+/* Archive section */
+.archive-section {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: none;
+}
+
+.archive-toggle {
+  width: 100%;
+  padding: 10px 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-secondary, #888);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  font-weight: 500;
+  text-align: left;
+  transition: all 0.2s;
+  border-radius: 6px;
+  margin: 0 8px;
+}
+
+.archive-toggle:hover {
+  background: var(--bg-hover, #2a2a4a);
+  color: var(--text-primary, #fff);
+}
+
+.conversation-item.archived {
+  opacity: 0.7;
+}
+
+.conversation-item.archived:hover {
+  opacity: 1;
 }

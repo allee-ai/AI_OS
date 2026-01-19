@@ -124,3 +124,12 @@ This is how Nola develops a genuine personality over time.
 - **Form**: Philosophy constrains what actions are acceptable
 - **Reflex**: Quick responses should align with values
 - **Linking Core**: Values can boost relevance of aligned facts
+
+## Implementation (canonical)
+
+Implementation guidance and safety checklists live in `Nola/threads/philosophy/IMPLEMENTATION.md`.
+
+Quick implementer notes:
+- Philosophy enforces constraints before Form executes actions — document `detect_harm()` and `preserve_dignity()` placeholders here.
+- Keep a clear mapping between system prompt defaults and dynamic Philosophy entries so the prompt remains auditable.
+

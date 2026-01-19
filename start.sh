@@ -52,34 +52,44 @@ echo ""
 if [ -z "${NOLA_MODE:-}" ] || [ -z "${BUILD_METHOD:-}" ]; then
     if [ "$OS" = "macos" ]; then
         # macOS: Single dialog with buttons
+        # Updated to include Dev Mode
         CHOICE=$(osascript <<'EOF'
 tell application "System Events"
     activate
-    set theResult to display dialog "🧠 Nola AI OS" & return & return & "Choose your configuration:" buttons {"Demo Mode", "Personal Mode"} default button "Personal Mode" with title "Nola Launcher" with icon note
+    set theResult to display dialog "🧠 Nola AI OS" & return & return & "Choose your configuration:" buttons {"Demo Mode", "Personal Mode", "Dev Mode"} default button "Dev Mode" with title "Nola Launcher" with icon note
     return button returned of theResult
 end tell
 EOF
         )
         if [ "$CHOICE" = "Demo Mode" ]; then
             export NOLA_MODE="demo"
+            export DEV_MODE="false"
+        elif [ "$CHOICE" = "Dev Mode" ]; then
+            export NOLA_MODE="personal"
+            export DEV_MODE="true"
         else
             export NOLA_MODE="personal"
+            export DEV_MODE="false"
         fi
         export BUILD_METHOD="local"
-        export DEV_MODE="false"
     else
         # Linux/other: Terminal prompt
-        echo -e "${BLUE}Select data mode:${NC}"
+        echo -e "${BLUE}Select mode:${NC}"
         echo -e "  [1] Personal - Your private data"
         echo -e "  [2] Demo - Sample showcase data"
-        read -r -p "Choose 1 or 2 [default: 1]: " MODE_CHOICE
+        echo -e "  [3] Dev Mode - Personal data + Dev tools"
+        read -r -p "Choose 1, 2, or 3 [default: 3]: " MODE_CHOICE
         if [ "$MODE_CHOICE" = "2" ]; then
             export NOLA_MODE="demo"
+            export DEV_MODE="false"
+        elif [ "$MODE_CHOICE" = "1" ]; then
+            export NOLA_MODE="personal"
+            export DEV_MODE="false"
         else
             export NOLA_MODE="personal"
+            export DEV_MODE="true"
         fi
         export BUILD_METHOD="local"
-        export DEV_MODE="false"
     fi
 fi
 
@@ -246,7 +256,12 @@ if [ "$MODEL_PROVIDER" = "ollama" ]; then
     # Auto-pull configured model
     echo -e "${YELLOW}  → Ensuring model '${MODEL_NAME}' is available...${NC}"
     ollama pull "$MODEL_NAME" >/dev/null 2>&1 || true
-    echo -e "${GREEN}  ✓ Ollama running (${MODEL_NAME})${NC}"
+    
+    # Auto-pull embedding model (needed for memory consolidation)
+    echo -e "${YELLOW}  → Ensuring embedding model 'nomic-embed-text' is available...${NC}"
+    ollama pull nomic-embed-text >/dev/null 2>&1 || true
+    
+    echo -e "${GREEN}  ✓ Ollama running (${MODEL_NAME} + embeddings)${NC}"
 else
     echo -e "${YELLOW}⚡ Skipping Ollama (provider=${MODEL_PROVIDER})${NC}"
 fi
@@ -270,19 +285,29 @@ echo ""
 echo -e "${BLUE}🔧 Setting up environment...${NC}"
 
 # Create venv if needed
-if [ ! -d "$VENV_DIR" ]; then
-    echo -e "${YELLOW}  → Creating virtual environment...${NC}"
-    python3 -m venv "$VENV_DIR"
+# We rely on uv to manage the environment now, but keep this check for non-uv fallback logic if needed later
+# or just let uv handle it.
+
+# Install/Sync dependencies logic
+if command -v uv >/dev/null 2>&1; then
+    echo -e "${YELLOW}  → Syncing dependencies with uv...${NC}"
+    # Ensure virtualenv execution
+    uv sync
+else
+    # Fallback for systems without uv
+    if [ ! -d "$VENV_DIR" ]; then
+        echo -e "${YELLOW}  → Creating virtual environment...${NC}"
+        python3 -m venv "$VENV_DIR"
+    fi
+    source "$VENV_DIR/bin/activate"
+    
+    echo -e "${YELLOW}  → Installing backend dependencies (pip)...${NC}"
+    pip install -q -r "$REPO_ROOT/requirements.txt"
+    pip install -q -r "$CHAT_APP/backend/requirements.txt"
 fi
 
-# Activate venv
-source "$VENV_DIR/bin/activate"
-
-# Install backend deps
-echo -e "${YELLOW}  → Installing backend dependencies...${NC}"
-pip install -q -r "$CHAT_APP/backend/requirements.txt"
-
 # Install frontend deps
+echo -e "${YELLOW}  → Installing frontend dependencies...${NC}"
 echo -e "${YELLOW}  → Installing frontend dependencies...${NC}"
 cd "$CHAT_APP/frontend"
 npm install --silent 2>/dev/null

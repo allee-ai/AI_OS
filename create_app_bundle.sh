@@ -46,19 +46,26 @@ cat > "Nola.app/Contents/Info.plist" << 'EOF'
 </plist>
 EOF
 
-# Create launcher script that opens Terminal and runs start.sh
+# Create launcher script that uses 'open' on run.command (most reliable method)
+# Using relative path so the app works even if the folder is moved
+
 cat > "Nola.app/Contents/MacOS/Nola" << 'LAUNCHER'
 #!/bin/bash
 # macOS App Bundle Launcher for Nola AI OS
+# This acts as a bridge to execute the run.command file in the actual repo
 
-# Get the directory where this app bundle lives (escape spaces properly)
-APP_DIR="$(cd "$(dirname "$0")/../../../" && pwd)"
+# Calculate repo path relative to this script: .../Nola.app/Contents/MacOS/Nola -> ../../../
+# This allows the entire AI_OS folder to be moved or renamed without breaking the app
+REPO_PATH="$(cd "$(dirname "$0")/../../.." && pwd)"
+COMMAND_FILE="$REPO_PATH/run.command"
 
-# Open Terminal and run start.sh
-osascript -e "tell application \"Terminal\"
-    activate
-    do script \"cd \\\"$APP_DIR\\\" && ./start.sh\"
-end tell"
+if [ -f "$COMMAND_FILE" ]; then
+    # Opening a .command file forces macOS to open a new Terminal window and run it
+    /usr/bin/open "$COMMAND_FILE"
+else
+    # Fallback error dialog
+    osascript -e 'display dialog "Critical Error: Could not find run.command!\n\nExpected at: '"$REPO_PATH"'/run.command\n\nEnsure Nola.app is located inside the root of the Nola AI OS folder." buttons {"OK"} default button "OK" with icon stop'
+fi
 LAUNCHER
 
 # Make launcher executable (IMPORTANT - must be executable for app to work)

@@ -4,7 +4,7 @@ export const API_CONFIG = {
   ENDPOINTS: {
     CHAT_HISTORY: '/api/chat/history',
     SEND_MESSAGE: '/api/chat/message',
-    AGENT_STATUS: '/api/chat/agent/status',
+    AGENT_STATUS: '/api/chat/agent-status',
     CLEAR_HISTORY: '/api/chat/clear',
     GET_MODELS: '/api/models',
     SET_MODEL: '/api/models/current',

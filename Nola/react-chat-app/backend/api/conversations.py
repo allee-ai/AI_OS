@@ -30,6 +30,7 @@ class ConversationSummary(BaseModel):
     turn_count: int
     last_message: Optional[str] = None
     preview: Optional[str] = None
+    archived: bool = False
 
 
 class ConversationDetail(BaseModel):
@@ -138,8 +139,8 @@ def _get_conversation_name(data: dict, session_id: str) -> str:
 
 
 @router.get("", response_model=List[ConversationSummary])
-async def list_conversations(limit: int = 50):
-    """List all saved conversations, newest first."""
+async def list_conversations(limit: int = 50, archived: bool = False):
+    """List all saved conversations, newest first. Filter by archived status."""
     conversations = []
     
     if not CONVERSATIONS_PATH.exists():
@@ -151,10 +152,15 @@ async def list_conversations(limit: int = 50):
     # Sort by modification time, newest first
     files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
     
-    for file in files[:limit]:
+    for file in files[:limit * 2]:  # Read more to account for filtering
         try:
             with open(file) as f:
                 data = json.load(f)
+            
+            # Filter by archived status
+            is_archived = data.get("archived", False)
+            if is_archived != archived:
+                continue
             
             session_id = data.get("session_id", file.stem)
             turns = data.get("turns", [])
@@ -165,8 +171,13 @@ async def list_conversations(limit: int = 50):
                 started=data.get("started", ""),
                 turn_count=len(turns),
                 last_message=turns[-1].get("assistant", "")[:100] if turns else None,
-                preview=_get_conversation_preview(data)
+                preview=_get_conversation_preview(data),
+                archived=is_archived
             ))
+            
+            if len(conversations) >= limit:
+                break
+                
         except Exception as e:
             print(f"Error loading {file}: {e}")
             continue
@@ -224,6 +235,44 @@ async def delete_conversation(session_id: str):
     convo_file.unlink()
     
     return {"success": True, "deleted": session_id}
+
+
+@router.post("/{session_id}/archive")
+async def archive_conversation(session_id: str):
+    """Archive a conversation (hide from main list)."""
+    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    
+    if not convo_file.exists():
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    with open(convo_file) as f:
+        data = json.load(f)
+    
+    data["archived"] = True
+    
+    with open(convo_file, "w") as f:
+        json.dump(data, f, indent=2)
+    
+    return {"success": True, "archived": True}
+
+
+@router.post("/{session_id}/unarchive")
+async def unarchive_conversation(session_id: str):
+    """Unarchive a conversation (restore to main list)."""
+    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    
+    if not convo_file.exists():
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    with open(convo_file) as f:
+        data = json.load(f)
+    
+    data["archived"] = False
+    
+    with open(convo_file, "w") as f:
+        json.dump(data, f, indent=2)
+    
+    return {"success": True, "archived": False}
 
 
 @router.post("/new")

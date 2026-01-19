@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom';
 import './ThreadsPage.css';
 import ToolDashboard from '../components/ToolDashboard';
 import ReflexDashboard from '../components/ReflexDashboard';
+import ProfilesPage from './ProfilesPage';
 
 interface ThreadHealth {
   name: string;
@@ -234,7 +235,8 @@ export const ThreadsPage = () => {
     }
     
     if (activeThread === 'identity') {
-      fetchIdentityData();
+      // fetchIdentityData(); // Replaced by ProfilesPage component
+      setDataLoading(false);
     } else if (activeThread === 'philosophy') {
       fetchPhilosophyData();
     } else if (activeThread === 'log') {
@@ -750,25 +752,25 @@ export const ThreadsPage = () => {
         <h1>🧵 Threads</h1>
       </div>
 
-      <div className="threads-layout">
-        <nav className="thread-nav">
-          {loading ? (
-            <div className="muted">Loading...</div>
-          ) : (
-            Object.values(threads).map(t => (
-              <button
-                key={t.name}
-                className={`thread-tab ${activeThread === t.name ? 'active' : ''} ${t.status}`}
-                onClick={() => setActiveThread(t.name)}
-              >
-                <span className="thread-icon">{THREAD_ICONS[t.name] || '🧵'}</span>
-                <span className="thread-name">{t.name}</span>
-                <span className={`thread-status-dot ${t.status}`} />
-              </button>
-            ))
-          )}
-        </nav>
+      <nav className="thread-nav">
+        {loading ? (
+          <div className="muted">Loading...</div>
+        ) : (
+          Object.values(threads).map(t => (
+            <button
+              key={t.name}
+              className={`thread-tab ${activeThread === t.name ? 'active' : ''} ${t.status}`}
+              onClick={() => setActiveThread(t.name)}
+            >
+              <span className="thread-icon">{THREAD_ICONS[t.name] || '🧵'}</span>
+              <span className="thread-name">{t.name}</span>
+              <span className={`thread-status-dot ${t.status}`} />
+            </button>
+          ))
+        )}
+      </nav>
 
+      <div className="threads-layout">
         <main className="thread-content">
           {!activeThread ? (
             <div className="empty-state">Select a thread to view</div>
@@ -782,29 +784,35 @@ export const ThreadsPage = () => {
               </div>
               {renderReadme()}
             </>
-          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) ? (
+          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' ? (
             <div className="empty-state">
               <p>No data in {activeThread}</p>
               <p className="muted">{threads[activeThread]?.message}</p>
             </div>
           ) : (
             <>
-              <div className="thread-data-header">
-                <h2>{THREAD_ICONS[activeThread]} {activeThread}</h2>
-                <span className="item-count">{totalItems} items</span>
-              </div>
-              
-              {activeThread === 'identity' 
-                ? renderIdentityTable() 
-                : activeThread === 'philosophy'
-                ? renderPhilosophyTable()
-                : activeThread === 'log' 
-                ? renderLogView() 
-                : activeThread === 'form'
-                ? <ToolDashboard />
-                : activeThread === 'reflex'
-                ? <ReflexDashboard />
-                : renderGenericView()}
+              {activeThread === 'identity' ? (
+                <div style={{ height: '100%', width: '100%' }}>
+                  <ProfilesPage />
+                </div>
+              ) : (
+                <>
+                  <div className="thread-data-header">
+                    <h2>{THREAD_ICONS[activeThread]} {activeThread}</h2>
+                    <span className="item-count">{totalItems} items</span>
+                  </div>
+                  
+                  {activeThread === 'philosophy'
+                    ? renderPhilosophyTable()
+                    : activeThread === 'log' 
+                    ? renderLogView() 
+                    : activeThread === 'form'
+                    ? <ToolDashboard />
+                    : activeThread === 'reflex'
+                    ? <ReflexDashboard />
+                    : renderGenericView()}
+                </>
+              )}
             </>
           )}
         </main>

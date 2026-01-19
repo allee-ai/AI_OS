@@ -32,6 +32,17 @@ except ImportError:
 # Recency limits per context level
 LOG_LIMITS = {1: 10, 2: 100, 3: 1000}
 
+# Event type relevance scores for sparse activation (0-10 scale)
+# Used with score_thread_relevance() for three-tier gating
+EVENT_TYPE_RELEVANCE = {
+    "convo": 8,       # High: Conversation events (direct interaction)
+    "memory": 7,      # High: Memory/reflection events (cognitive)
+    "user_action": 6, # Medium-High: User actions (significant)
+    "file": 4,        # Medium: File operations (context dependent)
+    "system": 2,      # Low: System events (background)
+    "activation": 1   # Low: Activation patterns (technical)
+}
+
 
 class LogThreadAdapter(BaseThreadAdapter):
     """

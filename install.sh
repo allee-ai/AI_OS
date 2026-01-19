@@ -70,8 +70,24 @@ fi
 # Install Python dependencies
 echo ""
 echo "📦 Installing Python dependencies..."
-if [ -f "requirements.txt" ]; then
-    pip3 install -r requirements.txt --quiet 2>/dev/null || echo "  ⚠️ Some Python packages may need manual install"
+
+if command -v uv &> /dev/null; then
+    echo "  ⚡ Using uv for fast installation..."
+    uv sync
+else
+    # Fallback to standard pip
+    if [ ! -d ".venv" ]; then
+        echo "  → Creating virtual environment (.venv)..."
+        python3 -m venv .venv
+    fi
+    source .venv/bin/activate
+    
+    echo "  → Installing core requirements..."
+    pip3 install -r requirements.txt --quiet
+    if [ -f "Nola/react-chat-app/backend/requirements.txt" ]; then
+        echo "  → Installing backend requirements..."
+        pip3 install -r Nola/react-chat-app/backend/requirements.txt --quiet
+    fi
 fi
 
 # Install Node dependencies for frontend

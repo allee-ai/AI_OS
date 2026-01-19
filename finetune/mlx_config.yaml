@@ -1,0 +1,70 @@
+# Low-Rank Adaptation (LoRA) Config for M4 Air
+# This file tells the MLX trainer HOW to learn.
+# ==============================================================================
+
+# 1. The Model (The Brain)
+# We use a 4-bit quantized model. This means the 7 Billion weights are compressed from 16-bit to 4-bit numbers.
+# Result: The model shrinks from ~14GB RAM to ~5GB RAM. Essential for your machine.
+model: "mlx-community/Mistral-7B-Instruct-v0.3-4bit"
+
+# 2. LoRA Parameters (The New Knowledge)
+# Instead of retraining the whole brain (Impossible on a laptop), 
+# we freeze the brain and only train tiny "adapter" layers on top.
+lora_parameters:
+  # Rank (r): The complexity of the adapter matrix. 
+  # Higher (16, 32) = smarter but more RAM/slower. 
+  # Lower (4, 8) = faster, less RAM. 8 is standard for teaching "style" or "format".
+  rank: 8
+  
+  # Alpha: The strength of the update signal. Usually set to 2x Rank.
+  alpha: 16
+  
+  # Dropout: Randomly ignores 5% of neurons during training.
+  # Prevents "overfitting" (memorizing the exact answers instead of understanding the concept).
+  dropout: 0.05
+  
+  # Scale: A multiplier for how much the adapter weighs against the original brain.
+  # 10.0 is a strong signal "Listen to me!".
+  scale: 10.0
+
+# 3. Memory & Speed Optimization (Crucial for M4 Air)
+# ------------------------------------------------------------------------------
+# Batch Size: How many examples the GPU processes in parallel.
+# Keep this at 1 for Apple Silicon to avoid "Out of Memory" crashes.
+batch_size: 1
+
+# Gradient Accumulation: The magic trick for stability.
+# We read 1 example (batch_size), calculate errors, but DON'T update the brain yet.
+# We wait until we've processed 4 examples. 
+# This simulates a "Batch Size of 4" mathematically, but with the RAM usage of 1.
+grad_accumulation_steps: 4
+
+# Checkpointing: Trades CPU speed for RAM. 
+# It re-calculates math on the fly during the backward pass instead of storing it in RAM. 
+# Slows down training ~20%, but enables 7B training on 16GB RAM.
+grad_checkpointing: true
+
+# 4. The Learning Schedule
+learning_rate: 1e-5  # How big of a step to take when correcting errors. 1e-5 is small/cautious.
+
+lr_schedule: 
+  name: cosine_decay # Starts slow, speeds up to max, then slows down at the end. Best for stability.
+  warmup: 100        # The first 100 steps use a tiny learning rate to "warm up" the weights.
+  warmup_init: 1e-7  # The starting speed during warmup.
+  arguments: [200, 1000, 1e-7]
+
+# 5. Training Duration
+# How many steps to take?
+# If you have 55 examples:
+# 1 Epoch = 55 steps (seeing every example once).
+# 600 Iterations = ~10 Epochs (seeing every example 10 times).
+iters: 600
+
+max_seq_length: 2048 # Max context window. Mistral supports 32k, but 2k saves massive RAM.
+
+# 6. Reporting
+steps_per_report: 10 # Logs "Loss" (Error rate) every 10 steps. You want this number to go DOWN.
+steps_per_eval: 50   # Tests against "valid.jsonl" (data it hasn't trained on) to check for cheating.
+save_every: 100      # Saves backup adapters every 100 steps.
+
+seed: 42 # Ensures if you run this twice, you get the exact same result (Science!)

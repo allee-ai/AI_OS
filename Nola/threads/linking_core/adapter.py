@@ -393,6 +393,220 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         results.sort(key=lambda x: x["score"], reverse=True)
         return [r["text"] for r in results[:top_k]]
     
+    def score_threads(self, stimuli: str) -> Dict[str, float]:
+        """
+        Score all threads for relevance to stimuli.
+        
+        Returns scores (0-10 scale) for three-tier context gating:
+          - 0-3.5: Tier 1 (metadata only)
+          - 3.5-7: Tier 2 (profile metadata)
+          - 7-10: Tier 3 (full facts with L1/L2/L3)
+        
+        Called by reflex thread or subconscious when needed.
+        Does NOT decide when to run - that's reflex's job.
+        
+        Args:
+            stimuli: Input text to score against
+        
+        Returns:
+            Dict mapping thread_name -> relevance_score (0-10)
+        """
+        stimuli_lower = stimuli.lower()
+        scores = {}
+        
+        # Get all threads
+        try:
+            from Nola.threads import get_all_threads
+            threads = get_all_threads()
+        except:
+            return {}
+        
+        # Score each thread based on keywords
+        for thread in threads:
+            thread_name = getattr(thread, '_name', str(thread))
+            
+            if thread_name == 'identity':
+                # Identity: Always medium-high (core profile context)
+                base = 7.0
+                if any(kw in stimuli_lower for kw in ['who am', 'who are you', 'tell me about', 'yourself']):
+                    scores[thread_name] = 9.0
+                elif any(kw in stimuli_lower for kw in ['who', 'me', 'my ', 'i am', 'you are']):
+                    scores[thread_name] = 8.0
+                else:
+                    scores[thread_name] = base
+            
+            elif thread_name == 'log':
+                # Log: Temporal/debugging keywords
+                if any(kw in stimuli_lower for kw in ['when', 'recent', 'earlier', 'yesterday', 'last', 'history']):
+                    scores[thread_name] = 9.0
+                elif any(kw in stimuli_lower for kw in ['debug', 'error', 'problem', 'what happened']):
+                    scores[thread_name] = 8.0
+                elif any(kw in stimuli_lower for kw in ['time', 'today', 'now']):
+                    scores[thread_name] = 7.0
+                else:
+                    scores[thread_name] = 5.0
+            
+            elif thread_name == 'philosophy':
+                # Philosophy: Values/reasoning keywords
+                if any(kw in stimuli_lower for kw in ['why should', 'believe', 'value', 'ethics', 'principle']):
+                    scores[thread_name] = 9.0
+                elif any(kw in stimuli_lower for kw in ['why', 'think', 'feel', 'opinion']):
+                    scores[thread_name] = 7.0
+                else:
+                    scores[thread_name] = 3.0
+            
+            elif thread_name == 'form':
+                # Form: Action/tool keywords
+                if any(kw in stimuli_lower for kw in ['create', 'make', 'build', 'write', 'run', 'execute']):
+                    scores[thread_name] = 8.0
+                elif any(kw in stimuli_lower for kw in ['how to', 'can you', 'help me']):
+                    scores[thread_name] = 7.0
+                else:
+                    scores[thread_name] = 4.0
+            
+            elif thread_name == 'reflex':
+                # Reflex: Pattern/habit keywords
+                if any(kw in stimuli_lower for kw in ['usually', 'always', 'often', 'pattern', 'habit']):
+                    scores[thread_name] = 7.0
+                else:
+                    scores[thread_name] = 3.0
+            
+            elif thread_name == 'linking_core':
+                # Linking core: Doesn't produce facts, just metadata
+                scores[thread_name] = 2.0
+            
+            else:
+                scores[thread_name] = 5.0
+        
+        self._last_scores = scores
+        return scores
+    
+    def score_relevance(
+        self,
+        stimuli: str,
+        facts: List[str],
+        context_keys: List[str] = None,
+        use_embeddings: bool = True,
+        use_cooccurrence: bool = True,
+        use_spread_activation: bool = True
+    ) -> List[Tuple[str, float]]:
+        """
+        Comprehensive relevance scoring using multiple techniques.
+        
+        This is the CORE SCORING FUNCTION for consolidation, context assembly,
+        and any time we need to rank facts by relevance.
+        
+        Combines:
+        1. Embedding similarity (semantic matching)
+        2. Co-occurrence scoring (concepts appearing together)
+        3. Spread activation (concept graph traversal)
+        4. Keyword matching (fallback)
+        
+        Used by:
+        - Consolidation: Score facts for compression
+        - Context assembly: Rank facts for inclusion
+        - Memory retrieval: Find relevant memories
+        
+        Args:
+            stimuli: Input text to score against
+            facts: List of fact texts to score
+            context_keys: Optional list of known concept keys for co-occurrence boost
+            use_embeddings: Use embedding similarity (requires Ollama)
+            use_cooccurrence: Boost facts with co-occurring concepts
+            use_spread_activation: Use concept graph for activation spreading
+        
+        Returns:
+            List of (fact, score) tuples sorted by score descending
+        """
+        if not facts:
+            return []
+        
+        # Extract concepts from stimuli for mapping
+        try:
+            from Nola.threads.schema import extract_concepts_from_text, get_cooccurrence_score
+            input_concepts = extract_concepts_from_text(stimuli)
+        except:
+            input_concepts = []
+            use_cooccurrence = False
+            use_spread_activation = False
+        
+        scored = []
+        
+        for fact in facts:
+            total_score = 0.0
+            components = {}
+            
+            # 1. Embedding similarity (if available)
+            if use_embeddings and HAS_RELEVANCE:
+                try:
+                    input_emb = self._embed(stimuli)
+                    fact_emb = self._embed(fact)
+                    if input_emb and fact_emb:
+                        sim = self._cosine_similarity(input_emb, fact_emb)
+                        components['embedding'] = sim
+                        total_score += sim * 0.5  # 50% weight
+                except:
+                    pass
+            
+            # 2. Co-occurrence scoring (concepts that appear together)
+            if use_cooccurrence and context_keys:
+                try:
+                    # Extract concepts from this fact
+                    fact_concepts = extract_concepts_from_text(fact)
+                    if fact_concepts and input_concepts:
+                        # Average co-occurrence score across fact concepts
+                        cooccur_scores = []
+                        for fact_concept in fact_concepts[:3]:  # Top 3 concepts
+                            score = get_cooccurrence_score(fact_concept, input_concepts)
+                            if score > 0:
+                                cooccur_scores.append(score)
+                        
+                        if cooccur_scores:
+                            avg_cooccur = sum(cooccur_scores) / len(cooccur_scores)
+                            components['cooccurrence'] = avg_cooccur
+                            total_score += avg_cooccur * 0.3  # 30% weight
+                except:
+                    pass
+            
+            # 3. Spread activation (concept graph)
+            if use_spread_activation and input_concepts:
+                try:
+                    from Nola.threads.schema import spread_activate
+                    # Activate concepts from input
+                    activated = spread_activate(input_concepts, activation_threshold=0.1, max_hops=1, limit=20)
+                    activated_concepts = {a['concept']: a['activation'] for a in activated}
+                    
+                    # Check if fact concepts are in activated set
+                    fact_concepts = extract_concepts_from_text(fact)
+                    activation_scores = [activated_concepts.get(c, 0) for c in fact_concepts]
+                    if activation_scores:
+                        max_activation = max(activation_scores)
+                        components['activation'] = max_activation
+                        total_score += max_activation * 0.2  # 20% weight
+                except:
+                    pass
+            
+            # 4. Keyword matching (fallback/always-on)
+            input_words = set(stimuli.lower().split())
+            fact_words = set(fact.lower().split())
+            overlap = len(input_words & fact_words)
+            keyword_score = overlap / max(len(input_words), 1)
+            components['keyword'] = keyword_score
+            
+            # If no other methods worked, keyword is 100% weight
+            if total_score == 0:
+                total_score = keyword_score
+            else:
+                total_score += keyword_score * 0.1  # 10% weight as tie-breaker
+            
+            scored.append((fact, total_score, components))
+        
+        # Sort by total score
+        scored.sort(key=lambda x: x[1], reverse=True)
+        
+        # Return (fact, score) without components for cleaner API
+        return [(fact, score) for fact, score, _ in scored]
+    
     def score_topics(self, input_text: str, topics: Dict[str, Any]) -> Dict[str, float]:
         """
         Score topic keys by relevance to input.

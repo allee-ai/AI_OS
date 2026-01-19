@@ -197,7 +197,17 @@ class APIService {
 
   // Conversations API methods
   async getConversations(limit: number = 50): Promise<any[]> {
-    const response = await fetch(`${this.baseUrl}/api/conversations?limit=${limit}`);
+    const response = await fetch(`${this.baseUrl}/api/conversations?limit=${limit}&archived=false`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    return response.json();
+  }
+
+  async getArchivedConversations(limit: number = 50): Promise<any[]> {
+    const response = await fetch(`${this.baseUrl}/api/conversations?limit=${limit}&archived=true`);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -223,6 +233,26 @@ class APIService {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({ name }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  async archiveConversation(sessionId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/${sessionId}/archive`, {
+      method: 'POST',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  async unarchiveConversation(sessionId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/${sessionId}/unarchive`, {
+      method: 'POST',
     });
 
     if (!response.ok) {

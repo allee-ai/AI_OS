@@ -1,21 +1,24 @@
 """
 Nola Consolidation Daemon
 =========================
-Periodic service that processes facts from temp_memory and promotes
-high-scoring ones to long-term memory (user.json / identity DB).
+Periodic service that compresses temp_memory facts using L3→L2→L1 pipeline
+and promotes high-scoring ones to permanent threads.
 
-Flow:
-    1. Get pending facts from temp_memory
-    2. Score each fact using MemoryService.score_fact()
-    3. Facts scoring above threshold → promote to L3 (or L2 if very high)
-    4. Log consolidation event
-    5. Mark facts as consolidated in temp_memory
-    6. Record history in consolidation_history table
+FACT LIFECYCLE (L3 → L2 → L1 Compression):
+    1. New facts enter temp_memory at full detail (L3)
+    2. Consolidation scores all facts using linking_core.score_relevance()
+    3. High-scoring facts (>0.8): Keep L1+L2+L3, weight=0.9
+    4. Medium facts (0.5-0.8): Keep L1+L2 only, drop L3, weight=0.6
+    5. Low facts (0.3-0.5): Keep L1 only, weight=0.3
+    6. Very low (<0.3): Discard entirely
+    7. Update concept_links with co-occurrences
+    8. Clear temp_memory
 
-Triggers:
-    - After N conversations (configurable)
-    - On explicit API call (/api/consolidate)
-    - On timer (optional background task)
+SUBCONSCIOUS LOOPS:
+    - Consolidation: Every N turns or session end
+    - Decay: Daily/weekly temporal decay
+    - Reinforcement: Per-access Hebbian strengthening
+    - Deduplication: On new fact creation
 
 Usage:
     from Nola.services.consolidation_daemon import ConsolidationDaemon
@@ -27,28 +30,44 @@ Usage:
 import json
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple, Optional
 
 # Import dependencies
 from Nola.temp_memory import get_all_pending, mark_consolidated, get_stats
 from Nola.services.memory_service import MemoryService
-from Nola.threads.schema import get_connection
+from Nola.threads.schema import (
+    get_connection, 
+    extract_concepts_from_text,
+    record_concept_cooccurrence,
+    upsert_fact_relevance
+)
+
+# Import linking_core for modern scoring
+try:
+    from Nola.threads.linking_core.adapter import LinkingCoreThreadAdapter
+    HAS_LINKING_CORE = True
+except ImportError:
+    HAS_LINKING_CORE = False
+    LinkingCoreThreadAdapter = None
 
 # Import log functions from new thread system
 try:
     from Nola.threads.log import log_event
+    from Nola.threads import get_thread
 except ImportError:
     log_event = None
+    get_thread = None
 
 
 @dataclass
 class ConsolidationConfig:
-    """Configuration for the consolidation daemon."""
+    """Configuration for L3→L2→L1 compression consolidation."""
     
-    # Score thresholds
-    l2_threshold: float = 4.0   # Score >= 4.0 → promote to L2
-    l3_threshold: float = 3.0   # Score >= 3.0 → promote to L3
-    discard_threshold: float = 2.0  # Score < 2.0 → discard (mark consolidated but don't save)
+    # Score thresholds for compression tiers (0.0-1.0 scale from linking_core)
+    high_score_threshold: float = 0.8    # Keep L1+L2+L3, weight=0.9
+    medium_score_threshold: float = 0.5  # Keep L1+L2 only, weight=0.6
+    low_score_threshold: float = 0.3     # Keep L1 only, weight=0.3
+    discard_threshold: float = 0.3       # Below this: discard entirely
     
     # Batch settings
     max_facts_per_run: int = 50  # Process at most N facts per run
@@ -57,7 +76,7 @@ class ConsolidationConfig:
     auto_trigger_after_convos: int = 5  # Auto-run after N conversations
     
     # Model
-    model: str = None  # Uses env NOLA_MODEL_NAME or default
+    model: Optional[str] = None  # Uses env NOLA_MODEL_NAME or default
 
 
 class ConsolidationDaemon:
@@ -65,10 +84,10 @@ class ConsolidationDaemon:
     Daemon for consolidating short-term memory facts to long-term storage.
     """
     
-    def __init__(self, config: ConsolidationConfig = None):
+    def __init__(self, config: Optional[ConsolidationConfig] = None):
         self.config = config or ConsolidationConfig()
         self.memory_service = MemoryService(
-            model=self.config.model,
+            model=self.config.model or "",
             session_id="consolidation_daemon"
         )
         self._ensure_history_table()
@@ -101,7 +120,10 @@ class ConsolidationDaemon:
     
     def run(self, dry_run: bool = False) -> Dict[str, Any]:
         """
-        Run the consolidation process.
+        Run L3→L2→L1 compression consolidation.
+        
+        Uses linking_core for multidimensional scoring and compresses facts
+        based on score tiers (high/medium/low).
         
         Args:
             dry_run: If True, score facts but don't actually consolidate
@@ -113,10 +135,11 @@ class ConsolidationDaemon:
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "dry_run": dry_run,
             "facts_processed": 0,
-            "promoted_l2": 0,
-            "promoted_l3": 0,
-            "discarded": 0,
-            "skipped": 0,
+            "high_score": 0,      # L1+L2+L3
+            "medium_score": 0,    # L1+L2
+            "low_score": 0,       # L1 only
+            "discarded": 0,       # Below threshold
+            "concept_links_updated": 0,
             "errors": [],
             "details": []
         }
@@ -132,51 +155,80 @@ class ConsolidationDaemon:
         pending = pending[:self.config.max_facts_per_run]
         result["facts_processed"] = len(pending)
         
-        # Process each fact
-        for fact in pending:
+        # Generate session summary for context (combine all pending fact text)
+        session_summary = " ".join([fact.text for fact in pending])
+        
+        # Score all facts using linking_core
+        scored_facts = self._score_facts_batch(session_summary, pending)
+        
+        # Extract concepts from session for co-occurrence tracking
+        if not dry_run:
+            concepts = extract_concepts_from_text(session_summary)
+            if concepts:
+                record_concept_cooccurrence(concepts)
+                result["concept_links_updated"] = len(concepts)
+        
+        # Process each scored fact with L3→L2→L1 compression
+        for fact, score_data in scored_facts:
             try:
-                # Score the fact
-                score = self.memory_service.score_fact(fact.text)
-                score_json = json.dumps(score)
+                final_score = score_data.get("final_score", 0.0)
                 
                 detail = {
                     "fact_id": fact.id,
                     "text": fact.text[:100],
-                    "score": score["total"],
+                    "score": final_score,
+                    "levels_kept": None,
+                    "weight": None,
                     "action": None
                 }
                 
-                # Determine action based on score
-                if score["total"] >= self.config.l2_threshold:
-                    # High score → promote to L2
+                # L3→L2→L1 Compression tiers
+                if final_score >= self.config.high_score_threshold:
+                    # High score → Keep L1+L2+L3, weight=0.9
+                    levels = [1, 2, 3]
+                    weight = 0.9
                     if not dry_run:
-                        self._promote_to_level(fact, 2, score)
-                        mark_consolidated(fact.id, score_json)
-                        self._record_history(fact, 2, score)
-                    detail["action"] = "promoted_l2"
-                    result["promoted_l2"] += 1
+                        self._promote_with_levels(fact, levels, weight, score_data)
+                        mark_consolidated(fact.id, json.dumps(score_data))
+                        self._record_history(fact, levels, score_data)
+                    detail["action"] = "high_score"
+                    detail["levels_kept"] = levels
+                    detail["weight"] = weight
+                    result["high_score"] += 1
                     
-                elif score["total"] >= self.config.l3_threshold:
-                    # Medium score → promote to L3
+                elif final_score >= self.config.medium_score_threshold:
+                    # Medium score → Keep L1+L2 only, weight=0.6
+                    levels = [1, 2]
+                    weight = 0.6
                     if not dry_run:
-                        self._promote_to_level(fact, 3, score)
-                        mark_consolidated(fact.id, score_json)
-                        self._record_history(fact, 3, score)
-                    detail["action"] = "promoted_l3"
-                    result["promoted_l3"] += 1
+                        self._promote_with_levels(fact, levels, weight, score_data)
+                        mark_consolidated(fact.id, json.dumps(score_data))
+                        self._record_history(fact, levels, score_data)
+                    detail["action"] = "medium_score"
+                    detail["levels_kept"] = levels
+                    detail["weight"] = weight
+                    result["medium_score"] += 1
                     
-                elif score["total"] < self.config.discard_threshold:
-                    # Low score → discard
+                elif final_score >= self.config.low_score_threshold:
+                    # Low score → Keep L1 only, weight=0.3
+                    levels = [1]
+                    weight = 0.3
                     if not dry_run:
-                        mark_consolidated(fact.id, score_json)
-                        self._record_history(fact, 0, score, "discarded_low_score")
-                    detail["action"] = "discarded"
-                    result["discarded"] += 1
+                        self._promote_with_levels(fact, levels, weight, score_data)
+                        mark_consolidated(fact.id, json.dumps(score_data))
+                        self._record_history(fact, levels, score_data)
+                    detail["action"] = "low_score"
+                    detail["levels_kept"] = levels
+                    detail["weight"] = weight
+                    result["low_score"] += 1
                     
                 else:
-                    # Score between discard and L3 threshold → keep pending
-                    detail["action"] = "skipped"
-                    result["skipped"] += 1
+                    # Very low score → Discard
+                    if not dry_run:
+                        mark_consolidated(fact.id, json.dumps(score_data))
+                        self._record_history(fact, [], score_data, "discarded_low_score")
+                    detail["action"] = "discarded"
+                    result["discarded"] += 1
                 
                 result["details"].append(detail)
                 
@@ -191,15 +243,129 @@ class ConsolidationDaemon:
             log_event(
                 "memory:consolidate",
                 "consolidation_daemon",
-                f"Processed {result['facts_processed']} facts",
-                promoted_l2=result["promoted_l2"],
-                promoted_l3=result["promoted_l3"],
-                discarded=result["discarded"]
+                f"Processed {result['facts_processed']} facts: {result['high_score']} high, {result['medium_score']} medium, {result['low_score']} low, {result['discarded']} discarded",
+                high_score=result["high_score"],
+                medium_score=result["medium_score"],
+                low_score=result["low_score"],
+                discarded=result["discarded"],
+                concepts_updated=result["concept_links_updated"]
             )
         
         return result
     
-    def _promote_to_level(self, fact, level: int, score: dict):
+    def _score_facts_batch(self, session_summary: str, facts: List) -> List[Tuple[Any, Dict]]:
+        """
+        Score all facts using linking_core or fallback to MemoryService.
+        
+        Args:
+            session_summary: Combined text from all facts for context
+            facts: List of fact objects to score
+        
+        Returns:
+            List of (fact, score_dict) tuples
+        """
+        if HAS_LINKING_CORE and LinkingCoreThreadAdapter:
+            # Use linking_core for modern multi-dimensional scoring
+            adapter = LinkingCoreThreadAdapter()
+            fact_texts = [f.text for f in facts]
+            
+            # score_relevance returns List[Tuple[str, float]] - (fact_text, score)
+            scored_tuples = adapter.score_relevance(
+                stimuli=session_summary,
+                facts=fact_texts,
+                use_embeddings=True,
+                use_cooccurrence=True,
+                use_spread_activation=True
+            )
+            
+            # Build dict for easy lookup: fact_text -> score
+            score_map = {text: score for text, score in scored_tuples}
+            
+            # Match facts with their scores, create full score dicts
+            results = []
+            for fact in facts:
+                final_score = score_map.get(fact.text, 0.0)
+                score_dict = {
+                    "final_score": final_score,
+                    "embedding_score": final_score,  # Simplified for now
+                    "identity_score": 0.0,
+                    "log_score": 0.0,
+                    "form_score": 0.0,
+                    "philosophy_score": 0.0,
+                    "reflex_score": 0.0,
+                    "cooccurrence_score": 0.0
+                }
+                results.append((fact, score_dict))
+            return results
+        else:
+            # Fallback to old MemoryService scoring
+            results = []
+            for fact in facts:
+                score = self.memory_service.score_fact(fact.text)
+                # Convert old score (0-10) to new format (0-1.0)
+                normalized = {
+                    "final_score": min(1.0, score.get("total", 0) / 10.0),
+                    "legacy_score": score,
+                    "identity_score": 0.0,
+                    "log_score": 0.0,
+                    "form_score": 0.0,
+                    "philosophy_score": 0.0,
+                    "reflex_score": 0.0,
+                    "cooccurrence_score": 0.0
+                }
+                results.append((fact, normalized))
+            return results
+    
+    def _promote_with_levels(self, fact, levels: List[int], weight: float, score_data: dict):
+        """
+        Promote a fact to identity thread with L3→L2→L1 compression.
+        
+        Args:
+            fact: Fact object from temp_memory
+            levels: Which levels to keep (e.g., [1,2,3] or [1,2] or [1])
+            weight: Importance weight (0.0-1.0)
+            score_data: Score dict from linking_core
+        """
+        try:
+            # Get identity thread
+            if get_thread:
+                identity = get_thread("identity")
+                
+                # Push to identity using new thread system with levels
+                identity.push(
+                    key="dynamic_memory",
+                    value=fact.text,  # L3 is full text
+                    levels=levels,
+                    weight=weight,
+                    metadata={
+                        "source": "consolidation_daemon",
+                        "consolidated_at": datetime.now(timezone.utc).isoformat(),
+                        "final_score": score_data.get("final_score", 0.0)
+                    }
+                )
+                
+                # Write dimensional scores to fact_relevance table
+                fact_key = fact.text[:50]  # Use first 50 chars as key
+                upsert_fact_relevance(
+                    fact_key=fact_key,
+                    fact_text=fact.text,
+                    scores={
+                        "identity_score": score_data.get("identity_score", 0.0),
+                        "log_score": score_data.get("log_score", 0.0),
+                        "form_score": score_data.get("form_score", 0.0),
+                        "philosophy_score": score_data.get("philosophy_score", 0.0),
+                        "reflex_score": score_data.get("reflex_score", 0.0),
+                        "cooccurrence_score": score_data.get("cooccurrence_score", 0.0),
+                        "final_score": score_data.get("final_score", 0.0)
+                    },
+                    source_thread="identity",
+                    session_id=self.memory_service.session_id
+                )
+        except Exception as e:
+            # Fallback to old method if new thread system unavailable
+            self._promote_to_level_legacy(fact, max(levels), score_data)
+    
+    def _promote_to_level_legacy(self, fact, level: int, score: dict):
         """
         Promote a fact to the specified level in the thread database.
         
@@ -243,13 +409,22 @@ class ConsolidationDaemon:
                 level=level
             )
     
-    def _record_history(self, fact, new_level: int, score: dict, reason: str = None):
-        """Record the consolidation in history table."""
+    def _record_history(self, fact, levels: List[int], score: dict, reason: Optional[str] = None):
+        """
+        Record consolidation history with L3→L2→L1 compression info.
+        
+        Args:
+            fact: Fact object
+            levels: List of levels kept (e.g., [1,2,3])
+            score: Score dict
+            reason: Optional reason string
+        """
         conn = get_connection()
         cursor = conn.cursor()
         
         if reason is None:
-            reason = f"score={score['total']:.2f}"
+            final_score = score.get("final_score", score.get("total", 0))
+            reason = f"L3→L2→L1: kept levels {levels}, score={final_score:.3f}"
         
         cursor.execute("""
             INSERT INTO consolidation_history 
@@ -259,7 +434,7 @@ class ConsolidationDaemon:
             fact.text,
             fact.id,
             0,  # Original level (0 = temp_memory)
-            new_level,
+            max(levels) if levels else 0,  # Record highest level kept
             json.dumps(score),
             reason,
             fact.session_id

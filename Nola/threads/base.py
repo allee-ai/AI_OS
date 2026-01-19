@@ -248,6 +248,36 @@ class BaseThreadAdapter:
         """
         return 0.5
     
+    def score_thread_relevance(self, query: str, context: Dict[str, Any] = None) -> float:
+        """
+        Score this thread's overall relevance to a query for sparse activation.
+        
+        NOTE: Delegates to linking_core.score_threads().
+        Individual threads should NOT override this.
+        
+        Used for three-tier context gating:
+          - Score 0-3.5: Tier 1 (Metadata only)
+          - Score 3.5-7: Tier 2 (Profile metadata)
+          - Score 7-10: Tier 3 (Full facts with L1/L2/L3)
+        
+        Args:
+            query: The stimuli to score against
+            context: Optional dict (unused, for backward compatibility)
+        
+        Returns:
+            Score from 0.0 to 10.0
+        """
+        try:
+            from Nola.threads import get_thread
+            linking_core = get_thread('linking_core')
+            if linking_core:
+                scores = linking_core.score_threads(query)
+                return scores.get(self._name, 5.0)
+        except:
+            pass
+        
+        return 5.0
+    
     def get_score_explanation(self, fact: str, score: float, context: Dict[str, Any] = None) -> str:
         """
         Explain why this thread gave this score.

@@ -20,11 +20,33 @@ from typing import Optional, List, Dict, Any, Tuple
 # Database path - use absolute path to avoid cache/import issues
 _THIS_FILE = Path(__file__).resolve()
 _PROJECT_ROOT = _THIS_FILE.parent.parent.parent  # AI_OS/
-DEFAULT_DB_PATH = _PROJECT_ROOT / "data" / "db" / "state.db"
+
+# --- DUAL DATABASE SUPPORT ---
+# We check the environment variable NOLA_MODE to switch databases.
+# NOLA_MODE="demo" -> uses data/db/state_demo.db
+# NOLA_MODE="personal" (default) -> uses data/db/state.db
+
+_MODE = os.getenv("NOLA_MODE", "personal").lower()
+
+if _MODE == "demo":
+    DEFAULT_DB_FILE = "state_demo.db"
+else:
+    DEFAULT_DB_FILE = "state.db"
+
+DEFAULT_DB_PATH = _PROJECT_ROOT / "data" / "db" / DEFAULT_DB_FILE
 DB_PATH = Path(os.getenv("STATE_DB_PATH", str(DEFAULT_DB_PATH)))
 
+# Debug info
+if _MODE == "demo":
+    print(f"🎮 RUNNING IN DEMO MODE ({DEFAULT_DB_FILE})")
+elif _MODE == "personal":
+    pass # Silent for normal mode
+else:
+    print(f"ℹ️  Running in {_MODE} mode ({DEFAULT_DB_FILE})")
+# -----------------------------
+
 # Debug: print on first import
-if not DEFAULT_DB_PATH.exists():
+if not DEFAULT_DB_PATH.exists() and _MODE != "demo": # Don't warn for missing demo, might be auto-created
     print(f"⚠️ WARNING: Database not found at {DEFAULT_DB_PATH}")
     print(f"   __file__ resolved to: {_THIS_FILE}")
 
@@ -1801,3 +1823,507 @@ if __name__ == "__main__":
     else:
         print(f"Unknown command: {cmd}")
         sys.exit(1)
+
+
+# ============================================================================
+# SCHEMA: Profile Manager (User-defined profile types and profiles)
+# ============================================================================
+
+def init_profile_types(conn: Optional[sqlite3.Connection] = None) -> None:
+    """
+    Create user-defined profile types table.
+    Types define the structure: trust level, context priority, permissions.
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profile_types (
+            type_name TEXT PRIMARY KEY,
+            trust_level INTEGER DEFAULT 1,
+            context_priority INTEGER DEFAULT 2,
+            can_edit BOOLEAN DEFAULT FALSE,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Seed defaults if empty
+    cur.execute("SELECT COUNT(*) FROM profile_types")
+    if cur.fetchone()[0] == 0:
+        defaults = [
+            ("self", 10, 3, True, "The AI itself"),
+            ("admin", 9, 3, True, "Primary user with full control"),
+            ("family", 7, 2, False, "Close family members"),
+            ("friend", 5, 2, False, "Friends and trusted contacts"),
+            ("acquaintance", 2, 1, False, "People you know casually"),
+        ]
+        cur.executemany("""
+            INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
+            VALUES (?, ?, ?, ?, ?)
+        """, defaults)
+    
+    if own_conn:
+        conn.commit()
+
+
+def init_profiles(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Create profiles table."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    init_profile_types(conn)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profiles (
+            profile_id TEXT PRIMARY KEY,
+            type_name TEXT NOT NULL,
+            display_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (type_name) REFERENCES profile_types(type_name)
+        )
+    """)
+    
+    # Seed default self profile
+    cur.execute("SELECT COUNT(*) FROM profiles WHERE profile_id = 'self.nola'")
+    if cur.fetchone()[0] == 0:
+        cur.execute("""
+            INSERT INTO profiles (profile_id, type_name, display_name)
+            VALUES ('self.nola', 'self', 'Nola')
+        """)
+    
+    if own_conn:
+        conn.commit()
+
+
+def init_fact_types(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Create user-defined fact types table."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS fact_types (
+            fact_type TEXT PRIMARY KEY,
+            description TEXT,
+            default_weight REAL DEFAULT 0.5,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Seed defaults
+    cur.execute("SELECT COUNT(*) FROM fact_types")
+    if cur.fetchone()[0] == 0:
+        defaults = [
+            ("name", "Display name or identifier", 0.9),
+            ("birthday", "Date of birth", 0.5),
+            ("occupation", "Job or profession", 0.6),
+            ("location", "Where they live or work", 0.5),
+            ("preference", "Likes, dislikes, preferences", 0.4),
+            ("belief", "Values, opinions, worldview", 0.5),
+            ("relationship", "Connection to other profiles", 0.7),
+            ("note", "Freeform notes", 0.3),
+        ]
+        cur.executemany("""
+            INSERT INTO fact_types (fact_type, description, default_weight)
+            VALUES (?, ?, ?)
+        """, defaults)
+    
+    if own_conn:
+        conn.commit()
+
+
+def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Create profile facts table with composite key."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    init_profiles(conn)
+    init_fact_types(conn)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profile_facts (
+            profile_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            fact_type TEXT NOT NULL,
+            l1_value TEXT,
+            l2_value TEXT,
+            l3_value TEXT,
+            weight REAL DEFAULT 0.5,
+            access_count INTEGER DEFAULT 0,
+            last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (profile_id, key),
+            FOREIGN KEY (profile_id) REFERENCES profiles(profile_id),
+            FOREIGN KEY (fact_type) REFERENCES fact_types(fact_type)
+        )
+    """)
+    
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_profile_facts_weight ON profile_facts(weight DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_profile_facts_type ON profile_facts(fact_type)")
+    
+    if own_conn:
+        conn.commit()
+
+
+# ============================================================================
+# CRUD: Profile Types
+# ============================================================================
+
+def create_profile_type(
+    type_name: str,
+    trust_level: int = 1,
+    context_priority: int = 2,
+    can_edit: bool = False,
+    description: str = ""
+) -> None:
+    """Create a new profile type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_profile_types(conn)
+    
+    cur.execute("""
+        INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(type_name) DO UPDATE SET
+            trust_level = excluded.trust_level,
+            context_priority = excluded.context_priority,
+            can_edit = excluded.can_edit,
+            description = excluded.description
+    """, (type_name, trust_level, context_priority, can_edit, description))
+    conn.commit()
+
+
+def get_profile_types() -> List[Dict]:
+    """Get all profile types."""
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    init_profile_types(conn)
+    
+    cur.execute("SELECT * FROM profile_types ORDER BY trust_level DESC")
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_profile_type(type_name: str) -> bool:
+    """Delete a profile type (only if no profiles use it)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM profiles WHERE type_name = ?", (type_name,))
+    if cur.fetchone()[0] > 0:
+        return False
+    
+    cur.execute("DELETE FROM profile_types WHERE type_name = ?", (type_name,))
+    conn.commit()
+    return True
+
+
+# ============================================================================
+# CRUD: Profiles
+# ============================================================================
+
+def create_profile(profile_id: str, type_name: str, display_name: str = "") -> None:
+    """Create a new profile."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_profiles(conn)
+    
+    cur.execute("""
+        INSERT INTO profiles (profile_id, type_name, display_name)
+        VALUES (?, ?, ?)
+        ON CONFLICT(profile_id) DO UPDATE SET
+            type_name = excluded.type_name,
+            display_name = excluded.display_name
+    """, (profile_id, type_name, display_name or profile_id.split('.')[-1]))
+    conn.commit()
+
+
+def get_profiles(type_name: str = None) -> List[Dict]:
+    """Get all profiles, optionally filtered by type."""
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    init_profiles(conn)
+    
+    if type_name:
+        cur.execute("""
+            SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
+            FROM profiles p
+            JOIN profile_types pt ON p.type_name = pt.type_name
+            WHERE p.type_name = ?
+            ORDER BY p.created_at
+        """, (type_name,))
+    else:
+        cur.execute("""
+            SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
+            FROM profiles p
+            JOIN profile_types pt ON p.type_name = pt.type_name
+            ORDER BY pt.trust_level DESC, p.created_at
+        """)
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_profile(profile_id: str) -> bool:
+    """Delete a profile and all its facts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM profile_facts WHERE profile_id = ?", (profile_id,))
+    cur.execute("DELETE FROM profiles WHERE profile_id = ?", (profile_id,))
+    conn.commit()
+    return True
+
+
+# ============================================================================
+# CRUD: Fact Types
+# ============================================================================
+
+def create_fact_type(fact_type: str, description: str = "", default_weight: float = 0.5) -> None:
+    """Create a new fact type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_fact_types(conn)
+    
+    cur.execute("""
+        INSERT INTO fact_types (fact_type, description, default_weight)
+        VALUES (?, ?, ?)
+        ON CONFLICT(fact_type) DO UPDATE SET
+            description = excluded.description,
+            default_weight = excluded.default_weight
+    """, (fact_type, description, default_weight))
+    conn.commit()
+
+
+def get_fact_types() -> List[Dict]:
+    """Get all fact types."""
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    init_fact_types(conn)
+    
+    cur.execute("SELECT * FROM fact_types ORDER BY fact_type")
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_fact_type(fact_type: str) -> bool:
+    """Delete a fact type (only if no facts use it)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM profile_facts WHERE fact_type = ?", (fact_type,))
+    if cur.fetchone()[0] > 0:
+        return False
+    
+    cur.execute("DELETE FROM fact_types WHERE fact_type = ?", (fact_type,))
+    conn.commit()
+    return True
+
+
+# ============================================================================
+# CRUD: Profile Facts
+# ============================================================================
+
+def push_profile_fact(
+    profile_id: str,
+    key: str,
+    fact_type: str,
+    l1_value: str = None,
+    l2_value: str = None,
+    l3_value: str = None,
+    weight: float = None
+) -> None:
+    """Push a fact to a profile with L1/L2/L3 verbosity levels."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_profile_facts(conn)
+    
+    if weight is None:
+        cur.execute("SELECT default_weight FROM fact_types WHERE fact_type = ?", (fact_type,))
+        row = cur.fetchone()
+        weight = row[0] if row else 0.5
+    
+    cur.execute("""
+        INSERT INTO profile_facts (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(profile_id, key) DO UPDATE SET
+            fact_type = excluded.fact_type,
+            l1_value = excluded.l1_value,
+            l2_value = excluded.l2_value,
+            l3_value = excluded.l3_value,
+            weight = excluded.weight,
+            access_count = access_count + 1,
+            last_accessed = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+    """, (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight))
+    conn.commit()
+
+
+def pull_profile_facts(
+    profile_id: str = None,
+    fact_type: str = None,
+    min_weight: float = 0.0,
+    limit: int = 100
+) -> List[Dict]:
+    """Pull facts, optionally filtered by profile and/or fact type."""
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    init_profile_facts(conn)
+    
+    query = """
+        SELECT pf.*, p.display_name, p.type_name, pt.trust_level
+        FROM profile_facts pf
+        JOIN profiles p ON pf.profile_id = p.profile_id
+        JOIN profile_types pt ON p.type_name = pt.type_name
+        WHERE pf.weight >= ?
+    """
+    params = [min_weight]
+    
+    if profile_id:
+        query += " AND pf.profile_id = ?"
+        params.append(profile_id)
+    
+    if fact_type:
+        query += " AND pf.fact_type = ?"
+        params.append(fact_type)
+    
+    query += " ORDER BY pf.weight DESC, pf.key LIMIT ?"
+    params.append(limit)
+    
+    cur.execute(query, params)
+    return [dict(row) for row in cur.fetchall()]
+
+
+def update_fact_weight(profile_id: str, key: str, weight: float) -> None:
+    """Update the weight of a specific fact."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE profile_facts 
+        SET weight = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE profile_id = ? AND key = ?
+    """, (weight, profile_id, key))
+    conn.commit()
+
+
+def get_value_by_weight(fact: Dict, weight: float = None) -> str:
+    """Get the appropriate verbosity level (L1/L2/L3) based on weight.
+    
+    Args:
+        fact: Fact dict with l1_value, l2_value, l3_value fields
+        weight: Optional weight override (uses fact['weight'] if None)
+    
+    Returns:
+        l3_value if weight >= 0.7 (full ~200 tokens)
+        l2_value if weight >= 0.4 (standard ~50 tokens)
+        l1_value if weight < 0.4 (brief ~10 tokens)
+    """
+    w = weight if weight is not None else fact.get('weight', 0.5)
+    
+    if w >= 0.7:
+        return fact.get('l3_value', '') or fact.get('l2_value', '') or fact.get('l1_value', '')
+    elif w >= 0.4:
+        return fact.get('l2_value', '') or fact.get('l1_value', '')
+    else:
+        return fact.get('l1_value', '') or fact.get('l2_value', '')
+
+
+def delete_profile_fact(profile_id: str, key: str) -> bool:
+    """Delete a specific fact."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
+    conn.commit()
+    return True
+
+
+def delete_all_profile_facts() -> int:
+    """Delete ALL facts from all profiles. Returns count deleted."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM profile_facts")
+    count = cur.fetchone()[0]
+    
+    cur.execute("DELETE FROM profile_facts")
+    conn.commit()
+    return count
+
+
+def delete_all_profiles() -> int:
+    """Delete ALL profiles and their facts. Returns count deleted."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM profile_facts")
+    cur.execute("SELECT COUNT(*) FROM profiles")
+    count = cur.fetchone()[0]
+    cur.execute("DELETE FROM profiles")
+    conn.commit()
+    return count
+
+
+def get_profile_context(profile_id: str, token_budget: int = 500) -> str:
+    """Build context string for a specific profile within token budget."""
+    facts = pull_profile_facts(profile_id=profile_id)
+    
+    char_budget = token_budget * 4
+    lines = []
+    total_chars = 0
+    
+    for fact in facts:
+        line = f"- {fact['key']}: {fact['value']}"
+        if total_chars + len(line) > char_budget:
+            break
+        lines.append(line)
+        total_chars += len(line) + 1
+    
+    return "\n".join(lines)
+
+
+def migrate_identity_to_profiles() -> int:
+    """Migrate data from identity_flat to profile_facts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    init_profile_facts(conn)
+    
+    cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='identity_flat'")
+    if not cur.fetchone():
+        return 0
+    
+    type_map = {
+        "user": "admin.user",
+        "nola": "self.nola",
+        "agent": "self.nola",
+        "machine": "self.nola",
+        "fact": "admin.user",
+    }
+    
+    create_profile("admin.user", "admin", "User")
+    
+    cur.execute("SELECT * FROM identity_flat")
+    rows = cur.fetchall()
+    
+    migrated = 0
+    for row in rows:
+        row = dict(row)
+        old_type = row.get('metadata_type', 'fact')
+        profile_id = type_map.get(old_type, 'admin.user')
+        value = row.get('l2') or row.get('l1') or row.get('l3') or ''
+        
+        push_profile_fact(
+            profile_id=profile_id,
+            key=row['key'],
+            fact_type="note",
+            value=value,
+            weight=row.get('weight', 0.5)
+        )
+        migrated += 1
+    
+    print(f"✓ Migrated {migrated} rows from identity_flat to profile_facts")
+    return migrated
+

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { useNolaMode } from '../hooks/useNolaMode';
 import './Dashboard.css';
 
 interface AgentStatus {
@@ -24,6 +25,7 @@ interface IntrospectionData {
 
 export const Dashboard = () => {
   const navigate = useNavigate();
+  const { is_dev } = useNolaMode();
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
   const [threads, setThreads] = useState<Record<string, ThreadHealth>>({});
   const [introspection, setIntrospection] = useState<IntrospectionData | null>(null);
@@ -100,6 +102,14 @@ export const Dashboard = () => {
           <span className="nav-desc">Your files</span>
         </Link>
         
+        {is_dev && (
+          <Link to="/dev" className="nav-card dev-card" style={{ border: '1px solid var(--primary)', background: 'rgba(var(--primary-rgb), 0.1)' }}>
+            <span className="nav-icon">🛠️</span>
+            <span className="nav-label">Dev Tools</span>
+            <span className="nav-desc">Fine-tuning & Config</span>
+          </Link>
+        )}
+
         <Link to="/docs" className="nav-card">
           <span className="nav-icon">📖</span>
           <span className="nav-label">Docs</span>

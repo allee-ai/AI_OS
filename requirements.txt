@@ -12,6 +12,10 @@ starlette>=0.27.0
 python-dotenv>=1.0.0
 aiofiles>=23.2.1
 
+# HTML/JSON parsing for imports
+beautifulsoup4>=4.12.0
+lxml>=4.9.0
+
 # Ollama client (local LLM)
 ollama>=0.1.0
 
