@@ -1,7 +1,7 @@
 # Brain Structure to Thread Mapping
 ## Why 5 Threads is Neuroanatomically Complete
 
-**Author:** Cade  
+**Author:** Allee  
 **Date:** January 7, 2026  
 **Status:** Architectural Justification Document
 

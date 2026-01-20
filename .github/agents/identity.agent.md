@@ -25,7 +25,7 @@ def get_metadata(self) -> dict:
 
 def get_data(self, level: int = 2) -> list:
     """Thread content - actual stored facts."""
-    return [{"key": "name", "data": "Cade", "level": 1, "weight": 1.0}, ...]
+    return [{"key": "name", "data": "Nola", "level": 1, "weight": 1.0}, ...]
 ```
 
 ## Level System: L1/L2/L3 Per Key

@@ -29,7 +29,7 @@ Your VS Code GitHub Copilot conversations are stored at:
 If you prefer to bulk import all conversations at once:
 
 ```bash
-cd /Users/cade/Desktop/AI_OS
+cd ~/AI_OS
 python3 import_vscode_conversations.py
 ```
 

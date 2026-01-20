@@ -1,6 +1,6 @@
 # Structure Beats Scale: A Cognitive Architecture for Persistent AI Identity
 
-**Cade Allee**  
+**Allee**  
 *Independent Researcher*  
 January 2026
 

@@ -134,9 +134,9 @@ systemctl status nola
 
 From your **local machine**, copy your personal database:
 ```bash
-scp ~/Desktop/AI_OS/data/db/state.db root@YOUR_VM_IP:/root/AI_OS/data/db/
-scp ~/Desktop/AI_OS/Nola/Nola.json root@YOUR_VM_IP:/root/AI_OS/Nola/
-scp -r ~/Desktop/AI_OS/Nola/workspace/ root@YOUR_VM_IP:/root/AI_OS/Nola/
+scp ./data/db/state.db root@YOUR_VM_IP:/root/AI_OS/data/db/
+scp ./Nola/Nola.json root@YOUR_VM_IP:/root/AI_OS/Nola/
+scp -r ./Nola/workspace/ root@YOUR_VM_IP:/root/AI_OS/Nola/
 ```
 
 Restart service to pick up new data:

@@ -1,7 +1,7 @@
 # Neuroscience & Psychology Validation
 ## Mapping AI_OS Architecture to Established Cognitive Science
 
-**Author:** Cade  
+**Author:** Allee  
 **Date:** January 7, 2026  
 **Status:** Living Document - Mathematical Validation in Progress
 

@@ -158,5 +158,5 @@ Small, focused PRs are easier to review. If you're doing something big, open an 
 
 ---
 
-*If you're here, you care about the future of AI being human-centered. That's enough qualification for me.* — Cade
+*If you're here, you care about the future of AI being human-centered. That's enough qualification for me.*
 

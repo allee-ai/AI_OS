@@ -1,6 +1,6 @@
 # AI_OS: A Self-Improving Cognitive Architecture with Learned Focus and Persistent Memory
 
-**Authors:** Cade Allen (Independent Researcher)  
+**Authors:** Allee (Independent Researcher)  
 **Status:** Working Implementation + Research Draft  
 **Date:** January 2026  
 **Code:** [github.com/allee-ai/AI_OS](https://github.com/allee-ai/AI_OS)
