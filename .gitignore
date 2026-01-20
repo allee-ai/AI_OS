@@ -41,6 +41,7 @@ create_vm_desktop_app.sh
 *.log
 LOG.txt
 logs/
+!docs/logs/CHANGELOG.md
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
