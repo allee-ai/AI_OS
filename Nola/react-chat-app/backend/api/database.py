@@ -1,17 +1,29 @@
 from fastapi import APIRouter, HTTPException
 import sqlite3
 import json
+import os
 from pathlib import Path
 
 router = APIRouter(prefix="/api/database", tags=["database"])
 
-# Database path - adjust based on your structure
-DB_PATH = Path(__file__).parent.parent.parent.parent.parent / "data" / "db" / "state.db"
+# Database path - dynamically determined based on mode
+_PROJECT_ROOT = Path(__file__).parent.parent.parent.parent.parent
+_MODE_FILE = _PROJECT_ROOT / "data" / ".nola_mode"
+
+def _get_db_path() -> Path:
+    """Get database path based on current mode. Supports runtime switching."""
+    if _MODE_FILE.exists():
+        mode = _MODE_FILE.read_text().strip().lower()
+    else:
+        mode = os.getenv("NOLA_MODE", "personal").lower()
+    db_file = "state_demo.db" if mode == "demo" else "state.db"
+    return _PROJECT_ROOT / "data" / "db" / db_file
 
 def get_db_connection():
     """Create database connection"""
     try:
-        conn = sqlite3.connect(str(DB_PATH))
+        db_path = _get_db_path()
+        conn = sqlite3.connect(str(db_path))
         conn.row_factory = sqlite3.Row
         return conn
     except Exception as e:

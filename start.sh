@@ -342,7 +342,14 @@ export PYTHONDONTWRITEBYTECODE=1
 export NOLA_MODE="${NOLA_MODE}"
 export DEV_MODE="${DEV_MODE}"
 export BUILD_METHOD="${BUILD_METHOD}"
-"$VENV_DIR/bin/python" -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+
+# Use uv run if available (ensures correct venv), otherwise fallback to direct venv python
+if command -v uv >/dev/null 2>&1; then
+    cd "$REPO_ROOT"
+    uv run --directory "$CHAT_APP/backend" python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+else
+    "$VENV_DIR/bin/python" -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+fi
 BACKEND_PID=$!
 cd "$REPO_ROOT"
 

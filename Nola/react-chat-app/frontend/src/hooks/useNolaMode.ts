@@ -2,31 +2,30 @@ import { useState, useEffect } from 'react';
 
 interface NolaMode {
   mode: 'personal' | 'demo';
-  mode_set: boolean;
-  dev_mode: boolean;
   is_demo: boolean;
   is_dev: boolean;
-  build_method: 'local' | 'docker';
 }
 
 export const useNolaMode = () => {
   const [modeInfo, setModeInfo] = useState<NolaMode>({
     mode: 'personal',
-    mode_set: false,
-    dev_mode: false,
     is_demo: false,
-    is_dev: false,
-    build_method: 'local'
+    is_dev: false
   });
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
     const fetchMode = async () => {
       try {
-        const res = await fetch('/api/services/mode');
+        // Use the db-mode endpoint for mode info
+        const res = await fetch('/api/db-mode/mode');
         if (res.ok) {
           const data = await res.json();
-          setModeInfo(data);
+          setModeInfo({
+            mode: data.mode,
+            is_demo: data.mode === 'demo',
+            is_dev: false // Can be extended later
+          });
         }
       } catch (err) {
         console.error('Failed to fetch mode:', err);

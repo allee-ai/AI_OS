@@ -26,38 +26,41 @@ _PROJECT_ROOT = _THIS_FILE.parent.parent.parent  # AI_OS/
 # NOLA_MODE="demo" -> uses data/db/state_demo.db
 # NOLA_MODE="personal" (default) -> uses data/db/state.db
 
-_MODE = os.getenv("NOLA_MODE", "personal").lower()
+_MODE_FILE = _PROJECT_ROOT / "data" / ".nola_mode"
 
-if _MODE == "demo":
-    DEFAULT_DB_FILE = "state_demo.db"
-else:
-    DEFAULT_DB_FILE = "state.db"
+def _get_current_mode() -> str:
+    """Get current mode - checks file first (for runtime switching), then env var."""
+    if _MODE_FILE.exists():
+        return _MODE_FILE.read_text().strip().lower()
+    return os.getenv("NOLA_MODE", "personal").lower()
 
-DEFAULT_DB_PATH = _PROJECT_ROOT / "data" / "db" / DEFAULT_DB_FILE
-DB_PATH = Path(os.getenv("STATE_DB_PATH", str(DEFAULT_DB_PATH)))
+def _get_db_path() -> Path:
+    """Get database path based on current mode. Called dynamically to support runtime switching."""
+    mode = _get_current_mode()
+    db_file = "state_demo.db" if mode == "demo" else "state.db"
+    default_path = _PROJECT_ROOT / "data" / "db" / db_file
+    return Path(os.getenv("STATE_DB_PATH", str(default_path)))
 
-# Debug info
-if _MODE == "demo":
-    print(f"🎮 RUNNING IN DEMO MODE ({DEFAULT_DB_FILE})")
-elif _MODE == "personal":
-    pass # Silent for normal mode
-else:
-    print(f"ℹ️  Running in {_MODE} mode ({DEFAULT_DB_FILE})")
+# For backwards compatibility, expose DB_PATH as a property-like call
+# Code using DB_PATH directly will still work but won't get runtime switching
+# Code should use _get_db_path() for dynamic switching
+DB_PATH = _get_db_path()
+
+# Print mode on startup
+_startup_mode = _get_current_mode()
+if _startup_mode == "demo":
+    print(f"🎮 RUNNING IN DEMO MODE (state_demo.db)")
 # -----------------------------
-
-# Debug: print on first import
-if not DEFAULT_DB_PATH.exists() and _MODE != "demo": # Don't warn for missing demo, might be auto-created
-    print(f"⚠️ WARNING: Database not found at {DEFAULT_DB_PATH}")
-    print(f"   __file__ resolved to: {_THIS_FILE}")
 
 
 def get_connection(readonly: bool = False) -> sqlite3.Connection:
-    """Get a SQLite connection."""
+    """Get a SQLite connection. Uses dynamic DB path to support runtime mode switching."""
+    db_path = _get_db_path()  # Dynamic - reads mode file each time
     if not readonly:
-        DB_PATH.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(DB_PATH), check_same_thread=False)
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+        conn = sqlite3.connect(str(db_path), check_same_thread=False)
     else:
-        uri = f"file:{DB_PATH}?mode=ro"
+        uri = f"file:{db_path}?mode=ro"
         conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")

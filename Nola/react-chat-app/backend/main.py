@@ -17,6 +17,7 @@ from api.services import router as services_router
 from api.finetune import router as finetune_router
 from api.profiles import router as profiles_router
 from api.import_routes import router as import_router
+from api.db_mode import router as db_mode_router
 from api.websockets import websocket_manager
 from core.config import settings
 import json
@@ -66,6 +67,7 @@ app.include_router(services_router)
 app.include_router(finetune_router, prefix="/api/finetune", tags=["finetune"])
 app.include_router(profiles_router)
 app.include_router(import_router)
+app.include_router(db_mode_router)
 
 
 @app.on_event("startup")

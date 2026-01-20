@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Dashboard } from './pages/Dashboard'
 import { ChatPage } from './pages/ChatPage'
 import { StimuliPage } from './pages/StimuliPage'
@@ -7,14 +7,14 @@ import { WorkspacePage } from './pages/WorkspacePage'
 import { DocsPage } from './pages/DocsPage'
 import { ContactPage } from './pages/ContactPage'
 import { SettingsPage } from './pages/SettingsPage'
-import { StartupPage } from './pages/StartupPage'
 import { DevDashboard } from './pages/DevDashboard'
 import { ProfilesPage } from './pages/ProfilesPage'
+import { DatabaseToggle } from './components/Chat/DatabaseToggle'
 import { useNolaMode } from './hooks/useNolaMode'
 import './App.css'
 
 function App() {
-  const { mode_set, loading, is_demo } = useNolaMode();
+  const { loading, is_demo } = useNolaMode();
   
   if (loading) {
     return (
@@ -29,6 +29,16 @@ function App() {
 
   return (
     <BrowserRouter>
+      {/* Global Database Toggle - Top Right Corner */}
+      <div style={{
+        position: 'fixed',
+        top: '16px',
+        right: '16px',
+        zIndex: 10000
+      }}>
+        <DatabaseToggle />
+      </div>
+      
       {is_demo && (
         <div style={{
           backgroundColor: '#ff9800',
@@ -48,8 +58,7 @@ function App() {
       )}
       <div className="app" style={is_demo ? { marginTop: '24px' } : {}}>
         <Routes>
-          <Route path="/startup" element={<StartupPage />} />
-          <Route path="/" element={mode_set ? <Dashboard /> : <Navigate to="/startup" replace />} />
+          <Route path="/" element={<Dashboard />} />
           <Route path="/chat" element={<ChatPage />} />
           <Route path="/stimuli" element={<StimuliPage />} />
           <Route path="/threads" element={<ThreadsPage />} />
@@ -61,12 +70,9 @@ function App() {
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />
         </Routes>
-        
-        {mode_set && (
-          <footer className="app-footer">
-            <p>Local-first • Your data stays on your machine • Powered by Ollama</p>
-          </footer>
-        )}
+        <footer className="app-footer">
+          <p>Local-first • Your data stays on your machine • Powered by Ollama</p>
+        </footer>
       </div>
     </BrowserRouter>
   )

@@ -83,3 +83,11 @@ docs/checklist.md
 # Eval transcripts (generated at runtime)
 eval/transcripts/*.json
 eval/transcripts/*.md
+# Build artifacts and generated files
+*.dmg
+*.icns
+.nola_installed
+vscode_import_log.json
+
+# Development utility scripts (not needed for users)
+stringify/
