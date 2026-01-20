@@ -8,6 +8,7 @@ import os
 import sys
 import asyncio
 from pathlib import Path
+import pytest
 
 # Add Nola to path
 nola_path = Path(__file__).parent.parent / "Nola"
@@ -65,6 +66,7 @@ def check_dependencies():
     return True
 
 
+@pytest.mark.asyncio
 async def test_kernel_connection():
     """Test basic Kernel API connectivity"""
     print("\n🔍 Testing Kernel API connection...")
@@ -97,6 +99,7 @@ async def test_kernel_connection():
         return False
 
 
+@pytest.mark.asyncio
 async def test_browser_launch():
     """Test browser launch and immediate close"""
     print("\n🔍 Testing browser launch...")
@@ -122,6 +125,7 @@ async def test_browser_launch():
         return False
 
 
+@pytest.mark.asyncio
 async def test_agent_integration():
     """Test agent service integration"""
     print("\n🔍 Testing agent integration...")

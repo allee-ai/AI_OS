@@ -5,6 +5,19 @@
 
 ---
 
+## TL;DR — Current State
+
+| Layer | Status | What's Working |
+|-------|--------|----------------|
+| **Core** | ✅ | Threads, HEA, SQLite backend, stateless agent |
+| **UI** | ✅ | React app, chat, thread visualization |
+| **Integrations** | 🔄 | Stimuli system built, needs OAuth + polling daemon |
+| **Advanced** | 🔮 | Philosophy, Dreams, Reflex Builder (designed, not implemented) |
+
+**To contribute:** See [GitHub Issues](https://github.com/allee-ai/AI_OS/issues) for tagged tasks.
+
+---
+
 ## The Vision
 
 Nola isn't a chatbot. It's a **Cognitive Operating System** — an open-source framework that gives any LLM a persistent identity, hierarchical memory, and the ability to *grow* through experience rather than retraining.
