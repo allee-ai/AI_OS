@@ -25,11 +25,13 @@ _PROJECT_ROOT = _THIS_FILE.parents[4]  # Up to AI_OS/
 if str(_PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(_PROJECT_ROOT))
 
-# Import DB path from central schema (respects demo/personal mode)
+# Import DB path from central location (respects demo/personal mode)
 try:
-    from Nola.threads.schema import get_db_path, _get_current_mode
+    from data.db import get_db_path, is_demo_mode
+    def _get_current_mode() -> str:
+        return "demo" if is_demo_mode() else "personal"
 except ImportError:
-    # Fallback if schema not available - must still respect mode!
+    # Fallback if data.db not available - must still respect mode!
     import os
     _MODE_FILE = _PROJECT_ROOT / "data" / ".nola_mode"
     

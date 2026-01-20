@@ -24,10 +24,10 @@ from datetime import datetime, timezone
 
 try:
     from Nola.threads.base import BaseThreadAdapter, HealthReport, IntrospectionResult
-    from Nola.threads.schema import pull_log_events
+    from Nola.threads.log.schema import pull_log_events
 except ImportError:
     from ..base import BaseThreadAdapter, HealthReport, IntrospectionResult
-    from ..schema import pull_log_events
+    from .schema import pull_log_events
 
 # Recency limits per context level
 LOG_LIMITS = {1: 10, 2: 100, 3: 1000}
@@ -155,7 +155,7 @@ class LogThreadAdapter(BaseThreadAdapter):
         except Exception as e:
             return HealthReport.error(f"Log health check failed: {e}")
     
-    def introspect(self, context_level: int = 2) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
         """
         Log introspection with temporal awareness.
         

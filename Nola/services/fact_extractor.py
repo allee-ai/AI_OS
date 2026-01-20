@@ -230,25 +230,24 @@ def store_fact(extracted: Dict[str, Any], weight: float = 0.5) -> bool:
     
     try:
         if thread == "identity":
-            from Nola.threads.schema import push_identity_row
-            push_identity_row(
+            from Nola.threads.identity.schema import push_profile_fact
+            push_profile_fact(
+                profile_id="user.primary",  # Default user profile
                 key=extracted["key"],
-                metadata_type=extracted["metadata_type"],
-                metadata_desc=extracted.get("original", "")[:100],
-                l1=extracted["l1"],
-                l2=extracted["l2"],
-                l3=extracted["l3"],
+                fact_type=extracted["metadata_type"],
+                l1_value=extracted["l1"],
+                l2_value=extracted["l2"],
+                l3_value=extracted["l3"],
                 weight=weight
             )
         elif thread == "philosophy":
-            from Nola.threads.schema import push_philosophy_row
-            push_philosophy_row(
+            from Nola.threads.philosophy.schema import push_philosophy_profile_fact
+            push_philosophy_profile_fact(
+                profile_id="nola.core",  # Default philosophy profile
                 key=extracted["key"],
-                metadata_type=extracted["metadata_type"],
-                metadata_desc=extracted.get("original", "")[:100],
-                l1=extracted["l1"],
-                l2=extracted["l2"],
-                l3=extracted["l3"],
+                l1_value=extracted["l1"],
+                l2_value=extracted["l2"],
+                l3_value=extracted["l3"],
                 weight=weight
             )
         else:
@@ -297,7 +296,7 @@ def extract_and_store_fact(
     
     # Log the extraction
     try:
-        from Nola.threads.schema import log_event
+        from Nola.threads.log import log_event
         log_event(
             "memory",
             f"Stored fact: {extracted['full_path']}",

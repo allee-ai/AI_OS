@@ -1,14 +1,25 @@
 /**
  * ProfilesPage - Profile Manager with sidebar and main view.
  * User-defined profile types, profiles, and facts with visible weights.
+ * Can operate in 'identity' or 'philosophy' mode.
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
 import SelectWithAdd from '../components/SelectWithAdd';
 import './ProfilesPage.css';
 
-// API base
-const API = '/api/profiles';
+// Mode determines which API endpoint to use
+type ProfileMode = 'identity' | 'philosophy';
+
+interface ProfilesPageProps {
+  mode?: ProfileMode;
+}
+
+const ProfilesPage: React.FC<ProfilesPageProps> = ({ mode = 'identity' }) => {
+  // API base changes based on mode
+  const API = mode === 'philosophy' ? '/api/philosophy' : '/api/profiles';
+  const entityName = mode === 'philosophy' ? 'Stance' : 'Fact';
+  const pageName = mode === 'philosophy' ? 'Philosophy' : 'Identity';
 
 // Types
 interface ProfileType {
@@ -62,6 +73,7 @@ interface ProfileSidebarProps {
   onAddProfile: () => void;
   onDeleteAllFacts: () => void;
   onDeleteAllProfiles: () => void;
+  entityName: string;
 }
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
@@ -75,6 +87,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   onAddProfile,
   onDeleteAllFacts,
   onDeleteAllProfiles,
+  entityName,
 }) => {
   const filteredProfiles = selectedType
     ? profiles.filter((p) => p.type_name === selectedType)
@@ -135,7 +148,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
         <label>Danger Zone</label>
         <div className="profile-danger-buttons">
           <button onClick={onDeleteAllFacts}>
-            🗑️ Clear All Facts
+            🗑️ Clear All {entityName}s
           </button>
           <button onClick={onDeleteAllProfiles}>
             ⚠️ Delete All Profiles
@@ -158,6 +171,7 @@ interface ProfileViewProps {
   onUpdateFact: (profileId: string, key: string, updates: Partial<Fact>) => Promise<void>;
   onDeleteFact: (profileId: string, key: string) => Promise<void>;
   onAddFactType: (name: string) => Promise<void>;
+  entityName: string;
 }
 
 const ProfileView: React.FC<ProfileViewProps> = ({
@@ -168,6 +182,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
   onUpdateFact,
   onDeleteFact,
   onAddFactType,
+  entityName,
 }) => {
   const [newFact, setNewFact] = useState({ 
     key: '', 
@@ -185,7 +200,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
       <div className="profile-view-empty">
         <div className="profile-view-empty-content">
           <div className="profile-view-empty-icon">👤</div>
-          <div>Select a profile to view and edit facts</div>
+          <div>Select a profile to view and edit {entityName.toLowerCase()}s</div>
         </div>
       </div>
     );
@@ -215,7 +230,7 @@ const ProfileView: React.FC<ProfileViewProps> = ({
       {/* Add New Fact Form */}
       <div className="add-fact-form">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h3>Add New Fact</h3>
+          <h3>Add New {entityName}</h3>
           <div className="level-toggle">
             <button 
               className={contextLevel === 1 ? 'active' : ''}
@@ -495,7 +510,6 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
 // MAIN PAGE
 // ============================================================================
 
-export const ProfilesPage: React.FC = () => {
   // State
   const [profileTypes, setProfileTypes] = useState<ProfileType[]>([]);
   const [profiles, setProfiles] = useState<Profile[]>([]);
@@ -657,6 +671,7 @@ export const ProfilesPage: React.FC = () => {
         onAddProfile={() => setShowAddModal(true)}
         onDeleteAllFacts={handleDeleteAllFacts}
         onDeleteAllProfiles={handleDeleteAllProfiles}
+        entityName={entityName}
       />
       <ProfileView
         profile={currentProfile}
@@ -666,6 +681,7 @@ export const ProfilesPage: React.FC = () => {
         onUpdateFact={handleUpdateFact}
         onDeleteFact={handleDeleteFact}
         onAddFactType={handleAddFactType}
+        entityName={entityName}
       />
       <AddProfileModal
         isOpen={showAddModal}

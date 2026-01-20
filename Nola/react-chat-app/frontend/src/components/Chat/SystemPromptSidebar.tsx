@@ -30,7 +30,7 @@ export const SystemPromptSidebar: React.FC<SystemPromptSidebarProps> = ({
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/introspection/system-prompt?level=${level}`);
+      const response = await fetch(`${API_BASE}/api/subconscious/context?level=${level}`);
       if (!response.ok) throw new Error('Failed to fetch');
       const result = await response.json();
       setData(result);

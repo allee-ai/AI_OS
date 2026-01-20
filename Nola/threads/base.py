@@ -11,7 +11,8 @@ from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from enum import Enum
 
-# Import schema functions
+# Generic module functions - these will be refactored later
+# Each thread should eventually have its own specific functions
 try:
     from Nola.threads.schema import (
         pull_from_module,
@@ -20,7 +21,7 @@ try:
         get_registered_modules,
     )
 except ImportError:
-    from ..schema import (
+    from .schema import (
         pull_from_module,
         pull_all_thread_data,
         push_to_module,
@@ -72,10 +73,27 @@ class HealthReport:
 
 @dataclass
 class IntrospectionResult:
-    """Result of introspecting a thread."""
+    """
+    Result of introspecting a thread.
+    
+    Each thread builds its own contribution to the STATE block.
+    """
     facts: List[str] = field(default_factory=list)
     state: Dict[str, Any] = field(default_factory=dict)
     context_level: int = 2
+    health: Optional[Dict[str, Any]] = None
+    relevant_concepts: List[str] = field(default_factory=list)
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dict for JSON/aggregation."""
+        return {
+            "facts": self.facts,
+            "state": self.state,
+            "context_level": self.context_level,
+            "health": self.health,
+            "relevant_concepts": self.relevant_concepts,
+            "fact_count": len(self.facts),
+        }
 
 
 class BaseThreadAdapter:
@@ -190,16 +208,32 @@ class BaseThreadAdapter:
         except Exception as e:
             return HealthReport.error(f"Health check failed: {e}")
     
-    def introspect(self, context_level: int = 2) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
         """
         Introspect this thread for context assembly.
         
-        Returns facts as strings for the system prompt.
+        Each thread is responsible for building its own STATE block contribution.
+        If query is provided, uses LinkingCore to filter to relevant facts.
+        
+        Args:
+            context_level: HEA level (1=minimal, 2=moderate, 3=full)
+            query: Optional input text to filter relevance
+        
+        Returns:
+            IntrospectionResult with facts, state, health, and relevant concepts
         """
         facts = []
+        relevant_concepts = []
         
         try:
+            # Get raw items from this thread
             items = self.get_data(level=context_level)
+            
+            # If query provided, filter by relevance using LinkingCore
+            if query:
+                items, relevant_concepts = self._filter_by_relevance(items, query, context_level)
+            
+            # Convert to fact strings
             for item in items:
                 key = item.get("key", "")
                 data = item.get("data", {})
@@ -207,18 +241,80 @@ class BaseThreadAdapter:
                 
                 if key and value:
                     facts.append(f"{key}: {value}")
+                    
         except Exception as e:
             facts.append(f"[{self._name} error: {e}]")
+        
+        # Include health in the result
+        health_report = self.health()
         
         return IntrospectionResult(
             facts=facts,
             state=self.get_metadata(),
-            context_level=context_level
+            context_level=context_level,
+            health=health_report.to_dict(),
+            relevant_concepts=relevant_concepts,
         )
     
-    def get_context(self, level: int = 2) -> List[str]:
+    def _filter_by_relevance(
+        self, 
+        items: List[Dict], 
+        query: str, 
+        level: int
+    ) -> tuple[List[Dict], List[str]]:
+        """
+        Filter items by relevance to query using LinkingCore.
+        
+        Returns (filtered_items, relevant_concepts)
+        """
+        try:
+            from Nola.threads.linking_core.schema import (
+                spread_activate, 
+                extract_concepts_from_text
+            )
+            
+            # Extract concepts from query
+            query_concepts = extract_concepts_from_text(query)
+            if not query_concepts:
+                return items, []
+            
+            # Spread activation to find related concepts
+            activated = spread_activate(
+                input_concepts=query_concepts,
+                activation_threshold=0.1,
+                max_hops=1,
+                limit=20
+            )
+            
+            # Build set of relevant concepts
+            relevant = set(query_concepts)
+            for a in activated:
+                relevant.add(a.get("concept", ""))
+            
+            # Filter items that match relevant concepts
+            filtered = []
+            for item in items:
+                key = item.get("key", "").lower()
+                data = item.get("data", {})
+                value = str(data.get("value", data)).lower() if isinstance(data, dict) else str(data).lower()
+                
+                # Check if any relevant concept appears in the item
+                item_text = f"{key} {value}"
+                for concept in relevant:
+                    if concept.lower() in item_text:
+                        filtered.append(item)
+                        break
+            
+            # Return filtered (or all if no matches) + the concepts found
+            return (filtered if filtered else items[:10], list(relevant))
+            
+        except Exception:
+            # If linking_core unavailable, return all items
+            return items, []
+    
+    def get_context(self, level: int = 2, query: str = None) -> List[str]:
         """Get facts as strings for context assembly."""
-        result = self.introspect(level)
+        result = self.introspect(level, query=query)
         return result.facts
     
     # =========================================================================

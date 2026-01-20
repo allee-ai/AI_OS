@@ -1,0 +1,444 @@
+"""
+Identity Thread Schema
+======================
+Database functions for identity profiles, types, and facts.
+
+Tables:
+    profile_types - Categories of profiles (self, admin, family, etc.)
+    profiles - Individual identity profiles
+    fact_types - Types of facts (name, preference, belief, etc.)
+    profile_facts - The actual identity facts
+"""
+
+import sqlite3
+from typing import List, Dict, Optional
+
+# Database connection from central location
+from data.db import get_connection
+
+
+# ============================================================================
+# Table Initialization
+# ============================================================================
+
+def init_profile_types(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Initialize profile types table with defaults."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profile_types (
+            type_name TEXT PRIMARY KEY,
+            trust_level INTEGER DEFAULT 1,
+            context_priority INTEGER DEFAULT 2,
+            can_edit BOOLEAN DEFAULT FALSE,
+            description TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Seed defaults if empty
+    cur.execute("SELECT COUNT(*) FROM profile_types")
+    if cur.fetchone()[0] == 0:
+        defaults = [
+            ("self", 10, 3, True, "The AI itself"),
+            ("admin", 9, 3, True, "Primary user with full control"),
+            ("family", 7, 2, False, "Close family members"),
+            ("friend", 5, 2, False, "Friends and trusted contacts"),
+            ("acquaintance", 2, 1, False, "People you know casually"),
+        ]
+        cur.executemany("""
+            INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
+            VALUES (?, ?, ?, ?, ?)
+        """, defaults)
+    
+    if own_conn:
+        conn.commit()
+
+
+def init_profiles(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Initialize profiles table."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    init_profile_types(conn)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profiles (
+            profile_id TEXT PRIMARY KEY,
+            type_name TEXT NOT NULL,
+            display_name TEXT,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY (type_name) REFERENCES profile_types(type_name)
+        )
+    """)
+    
+    # Seed default self profile
+    cur.execute("SELECT COUNT(*) FROM profiles WHERE profile_id = 'self.nola'")
+    if cur.fetchone()[0] == 0:
+        cur.execute("""
+            INSERT INTO profiles (profile_id, type_name, display_name)
+            VALUES ('self.nola', 'self', 'Nola')
+        """)
+    
+    if own_conn:
+        conn.commit()
+
+
+def init_fact_types(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Initialize fact types table."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS fact_types (
+            fact_type TEXT PRIMARY KEY,
+            description TEXT,
+            default_weight REAL DEFAULT 0.5,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    
+    # Seed defaults
+    cur.execute("SELECT COUNT(*) FROM fact_types")
+    if cur.fetchone()[0] == 0:
+        defaults = [
+            ("name", "Display name or identifier", 0.9),
+            ("birthday", "Date of birth", 0.5),
+            ("occupation", "Job or profession", 0.6),
+            ("location", "Where they live or work", 0.5),
+            ("preference", "Likes, dislikes, preferences", 0.4),
+            ("belief", "Values, opinions, worldview", 0.5),
+            ("relationship", "Connection to other profiles", 0.7),
+            ("note", "Freeform notes", 0.3),
+        ]
+        cur.executemany("""
+            INSERT INTO fact_types (fact_type, description, default_weight)
+            VALUES (?, ?, ?)
+        """, defaults)
+    
+    if own_conn:
+        conn.commit()
+
+
+def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Initialize profile facts table."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    init_profiles(conn)
+    init_fact_types(conn)
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS profile_facts (
+            profile_id TEXT NOT NULL,
+            key TEXT NOT NULL,
+            fact_type TEXT NOT NULL,
+            l1_value TEXT,
+            l2_value TEXT,
+            l3_value TEXT,
+            weight REAL DEFAULT 0.5,
+            access_count INTEGER DEFAULT 0,
+            last_accessed TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            PRIMARY KEY (profile_id, key),
+            FOREIGN KEY (profile_id) REFERENCES profiles(profile_id),
+            FOREIGN KEY (fact_type) REFERENCES fact_types(fact_type)
+        )
+    """)
+    
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_profile_facts_weight ON profile_facts(weight DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_profile_facts_type ON profile_facts(fact_type)")
+    
+    if own_conn:
+        conn.commit()
+
+
+# ============================================================================
+# Profile Types CRUD
+# ============================================================================
+
+def create_profile_type(
+    type_name: str,
+    trust_level: int = 1,
+    context_priority: int = 2,
+    can_edit: bool = False,
+    description: str = ""
+) -> None:
+    """Create or update a profile type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_profile_types(conn)
+    
+    cur.execute("""
+        INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
+        VALUES (?, ?, ?, ?, ?)
+        ON CONFLICT(type_name) DO UPDATE SET
+            trust_level = excluded.trust_level,
+            context_priority = excluded.context_priority,
+            can_edit = excluded.can_edit,
+            description = excluded.description
+    """, (type_name, trust_level, context_priority, can_edit, description))
+    conn.commit()
+
+
+def get_profile_types() -> List[Dict]:
+    """Get all profile types."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_profile_types(conn)
+    
+    cur.execute("SELECT * FROM profile_types ORDER BY trust_level DESC")
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_profile_type(type_name: str) -> bool:
+    """Delete a profile type (only if no profiles use it)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM profiles WHERE type_name = ?", (type_name,))
+    if cur.fetchone()[0] > 0:
+        return False
+    
+    cur.execute("DELETE FROM profile_types WHERE type_name = ?", (type_name,))
+    conn.commit()
+    return True
+
+
+# ============================================================================
+# Profiles CRUD
+# ============================================================================
+
+def create_profile(profile_id: str, type_name: str, display_name: str = "") -> None:
+    """Create or update a profile."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_profiles(conn)
+    
+    cur.execute("""
+        INSERT INTO profiles (profile_id, type_name, display_name)
+        VALUES (?, ?, ?)
+        ON CONFLICT(profile_id) DO UPDATE SET
+            type_name = excluded.type_name,
+            display_name = excluded.display_name
+    """, (profile_id, type_name, display_name or profile_id.split('.')[-1]))
+    conn.commit()
+
+
+def get_profiles(type_name: str = None) -> List[Dict]:
+    """Get all profiles, optionally filtered by type."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_profiles(conn)
+    
+    if type_name:
+        cur.execute("""
+            SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
+            FROM profiles p
+            JOIN profile_types pt ON p.type_name = pt.type_name
+            WHERE p.type_name = ?
+            ORDER BY p.created_at
+        """, (type_name,))
+    else:
+        cur.execute("""
+            SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
+            FROM profiles p
+            JOIN profile_types pt ON p.type_name = pt.type_name
+            ORDER BY pt.trust_level DESC, p.created_at
+        """)
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_profile(profile_id: str) -> bool:
+    """Delete a profile and all its facts."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM profile_facts WHERE profile_id = ?", (profile_id,))
+    cur.execute("DELETE FROM profiles WHERE profile_id = ?", (profile_id,))
+    conn.commit()
+    return True
+
+
+# ============================================================================
+# Fact Types CRUD
+# ============================================================================
+
+def create_fact_type(fact_type: str, description: str = "", default_weight: float = 0.5) -> None:
+    """Create or update a fact type."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_fact_types(conn)
+    
+    cur.execute("""
+        INSERT INTO fact_types (fact_type, description, default_weight)
+        VALUES (?, ?, ?)
+        ON CONFLICT(fact_type) DO UPDATE SET
+            description = excluded.description,
+            default_weight = excluded.default_weight
+    """, (fact_type, description, default_weight))
+    conn.commit()
+
+
+def get_fact_types() -> List[Dict]:
+    """Get all fact types."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_fact_types(conn)
+    
+    cur.execute("SELECT * FROM fact_types ORDER BY fact_type")
+    return [dict(row) for row in cur.fetchall()]
+
+
+def delete_fact_type(fact_type: str) -> bool:
+    """Delete a fact type (only if no facts use it)."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("SELECT COUNT(*) FROM profile_facts WHERE fact_type = ?", (fact_type,))
+    if cur.fetchone()[0] > 0:
+        return False
+    
+    cur.execute("DELETE FROM fact_types WHERE fact_type = ?", (fact_type,))
+    conn.commit()
+    return True
+
+
+# ============================================================================
+# Profile Facts CRUD
+# ============================================================================
+
+def push_profile_fact(
+    profile_id: str,
+    key: str,
+    fact_type: str,
+    l1_value: str = None,
+    l2_value: str = None,
+    l3_value: str = None,
+    weight: float = None
+) -> None:
+    """Push a fact to a profile with L1/L2/L3 verbosity levels."""
+    conn = get_connection()
+    cur = conn.cursor()
+    init_profile_facts(conn)
+    
+    if weight is None:
+        cur.execute("SELECT default_weight FROM fact_types WHERE fact_type = ?", (fact_type,))
+        row = cur.fetchone()
+        weight = row[0] if row else 0.5
+    
+    cur.execute("""
+        INSERT INTO profile_facts (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+        ON CONFLICT(profile_id, key) DO UPDATE SET
+            fact_type = excluded.fact_type,
+            l1_value = excluded.l1_value,
+            l2_value = excluded.l2_value,
+            l3_value = excluded.l3_value,
+            weight = excluded.weight,
+            access_count = access_count + 1,
+            last_accessed = CURRENT_TIMESTAMP,
+            updated_at = CURRENT_TIMESTAMP
+    """, (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight))
+    conn.commit()
+
+
+def pull_profile_facts(
+    profile_id: str = None,
+    fact_type: str = None,
+    min_weight: float = 0.0,
+    limit: int = 100
+) -> List[Dict]:
+    """Pull facts, optionally filtered by profile and/or fact type."""
+    conn = get_connection(readonly=False)
+    cur = conn.cursor()
+    init_profile_facts(conn)
+    
+    query = """
+        SELECT pf.*, p.display_name, p.type_name, pt.trust_level
+        FROM profile_facts pf
+        JOIN profiles p ON pf.profile_id = p.profile_id
+        JOIN profile_types pt ON p.type_name = pt.type_name
+        WHERE pf.weight >= ?
+    """
+    params = [min_weight]
+    
+    if profile_id:
+        query += " AND pf.profile_id = ?"
+        params.append(profile_id)
+    
+    if fact_type:
+        query += " AND pf.fact_type = ?"
+        params.append(fact_type)
+    
+    query += " ORDER BY pf.weight DESC, pf.key LIMIT ?"
+    params.append(limit)
+    
+    cur.execute(query, params)
+    return [dict(row) for row in cur.fetchall()]
+
+
+def update_fact_weight(profile_id: str, key: str, weight: float) -> None:
+    """Update the weight of a specific fact."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        UPDATE profile_facts 
+        SET weight = ?, updated_at = CURRENT_TIMESTAMP
+        WHERE profile_id = ? AND key = ?
+    """, (weight, profile_id, key))
+    conn.commit()
+
+
+def delete_profile_fact(profile_id: str, key: str) -> bool:
+    """Delete a specific fact."""
+    conn = get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("DELETE FROM profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
+    conn.commit()
+    return cur.rowcount > 0
+
+
+# ============================================================================
+# Utility
+# ============================================================================
+
+def get_value_by_weight(fact: Dict, weight: float = None) -> str:
+    """Get appropriate verbosity level based on weight."""
+    w = weight if weight is not None else fact.get('weight', 0.5)
+    if w >= 0.7:
+        return fact.get('l3_value', '') or fact.get('l2_value', '') or fact.get('l1_value', '')
+    elif w >= 0.4:
+        return fact.get('l2_value', '') or fact.get('l1_value', '')
+    else:
+        return fact.get('l1_value', '') or fact.get('l2_value', '')
+
+
+__all__ = [
+    'init_profile_types',
+    'init_profiles',
+    'init_fact_types',
+    'init_profile_facts',
+    'create_profile_type',
+    'get_profile_types',
+    'delete_profile_type',
+    'create_profile',
+    'get_profiles',
+    'delete_profile',
+    'create_fact_type',
+    'get_fact_types',
+    'delete_fact_type',
+    'push_profile_fact',
+    'pull_profile_facts',
+    'update_fact_weight',
+    'delete_profile_fact',
+    'get_value_by_weight',
+]

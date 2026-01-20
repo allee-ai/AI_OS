@@ -39,7 +39,7 @@ export const Dashboard = () => {
       .catch(() => setAgentStatus({ status: 'offline', name: 'Nola' }));
 
     // Fetch real thread health
-    fetch('http://localhost:8000/api/introspection/threads/health')
+    fetch('http://localhost:8000/api/subconscious/health')
       .then(res => res.json())
       .then(data => {
         setThreads(data.threads || {});
@@ -47,8 +47,8 @@ export const Dashboard = () => {
       })
       .catch(() => setLoading(false));
 
-    // Fetch introspection for recent events
-    fetch('http://localhost:8000/api/introspection/')
+    // Fetch introspection state
+    fetch('http://localhost:8000/api/subconscious/state?level=2')
       .then(res => res.json())
       .then(data => setIntrospection(data))
       .catch(() => {});

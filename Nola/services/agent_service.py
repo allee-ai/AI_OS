@@ -43,9 +43,9 @@ try:
 except ImportError:
     _HAS_LOG_THREAD = False
 
-# Import unified event log from schema
+# Import unified event log from log thread
 try:
-    from Nola.threads.schema import log_event as unified_log
+    from Nola.threads.log import log_event as unified_log
     _HAS_UNIFIED_LOG = True
 except ImportError:
     _HAS_UNIFIED_LOG = False
@@ -477,7 +477,7 @@ class AgentService:
         
         # Get graph stats
         try:
-            from Nola.threads.schema import get_connection
+            from data.db import get_connection
             conn = get_connection(readonly=True)
             cur = conn.cursor()
             
@@ -513,7 +513,7 @@ class AgentService:
         
         # Get recent conversation topics from log
         try:
-            from Nola.threads.schema import get_events
+            from Nola.threads.log import get_events
             recent = get_events(event_type="convo", limit=3)
             if recent:
                 intro_parts.append("Recently we've been talking. ")

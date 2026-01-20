@@ -35,12 +35,17 @@ from typing import List, Dict, Any, Tuple, Optional
 # Import dependencies
 from Nola.temp_memory import get_all_pending, mark_consolidated, get_stats
 from Nola.services.memory_service import MemoryService
-from Nola.threads.schema import (
-    get_connection, 
+from data.db import get_connection
+from Nola.threads.linking_core.schema import (
     extract_concepts_from_text,
     record_concept_cooccurrence,
-    upsert_fact_relevance
 )
+
+# upsert_fact_relevance may not exist yet - make optional
+try:
+    from Nola.threads.schema import upsert_fact_relevance
+except ImportError:
+    def upsert_fact_relevance(*args, **kwargs): pass
 
 # Import linking_core for modern scoring
 try:

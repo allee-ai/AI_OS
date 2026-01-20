@@ -5,6 +5,35 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-20 (Evening) — Thread Architecture: Self-Contained APIs & Frontend Migration
+
+### Architecture: Per-Thread API Consolidation
+- **Self-Contained Threads**: Each thread now owns its own `/api/{thread}/` router with introspect, health, and table endpoints
+- **Subconscious Aggregator**: `/api/subconscious/` endpoints aggregate all thread introspections at runtime
+- **Deprecated Legacy**: `introspection.py` scheduled for deletion — all threads now use new per-thread APIs
+
+### API Fixes
+- **`/api/subconscious/threads`**: Fixed response format — returns object with `status` (was `health`), `message`, `has_data` fields
+- **`/api/linking_core/`**: Changed router prefix from `/api/linking/` to match thread name
+- **`/api/linking_core/graph`**: Fixed `get_graph_data()` to return `links` array (was `edges`) with `concept_a/concept_b/strength/fire_count` format and `stats` object
+- **`/api/form/table`**: Added new endpoint returning 21 tools with column metadata
+
+### Frontend Fixes
+- **ConceptGraph3D.tsx**: Updated all fetch URLs to use `/api/linking_core/` prefix — graph now loads with 100 links, 50 nodes
+- **ThreadsPage.tsx**: Added `form`, `reflex`, `linking_core` to skip generic introspect fetch (they have custom dashboards)
+- **ThreadsPage.tsx**: Fixed "No data" condition — added `form` and `reflex` to exclusion list so ToolDashboard renders
+- **ToolDashboard.css**: Added `min-height: 500px` to ensure visibility
+
+### Thread Status (All 6 Working)
+- ✅ **Identity**: ProfilesPage with L1/L2/L3 facts
+- ✅ **Philosophy**: ProfilesPage (mode="philosophy")  
+- ✅ **Log**: Custom log viewer with filtering
+- ✅ **Form**: ToolDashboard with 21 tools, 6 categories
+- ✅ **Reflex**: ReflexDashboard
+- ✅ **Linking Core**: ConceptGraph3D with spread activation
+
+---
+
 ## 2026-01-20 — Legacy Cleanup, Security Audit, Conversation DB Migration
 
 ### Refactoring: Remove IDv2 Legacy System

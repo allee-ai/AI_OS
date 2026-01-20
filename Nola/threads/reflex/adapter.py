@@ -161,7 +161,7 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         
         return None
     
-    def introspect(self, context_level: int = 2) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
         """
         Reflex introspection with pattern awareness.
         

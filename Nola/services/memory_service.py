@@ -34,9 +34,9 @@ except ImportError:
     log_event = None
     set_session = None
 
-# Import unified event log
+# unified_log is same as log_event from log thread
 try:
-    from Nola.threads.schema import log_event as unified_log
+    from Nola.threads.log import log_event as unified_log
 except ImportError:
     def unified_log(*args, **kwargs): pass
 
@@ -185,7 +185,7 @@ class MemoryService:
         
         Uses LLM-based fact_extractor for clean key generation.
         """
-        from Nola.threads.schema import (
+        from Nola.threads.linking_core.schema import (
             extract_concepts_from_text,
             record_concept_cooccurrence,
         )
@@ -265,7 +265,7 @@ class MemoryService:
         'Neurons that fire together, wire together.'
         """
         try:
-            from Nola.threads.schema import record_cooccurrence
+            from Nola.threads.linking_core.schema import record_cooccurrence
             # Use first 50 chars of each fact as key
             keys = [f[:50].strip() for f in facts if f.strip()]
             with MEMORY_WRITE_LOCK:

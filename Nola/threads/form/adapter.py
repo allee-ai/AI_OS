@@ -211,7 +211,7 @@ class FormThreadAdapter(BaseThreadAdapter):
             weight=0.4
         )
     
-    def introspect(self, context_level: int = 2) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
         """
         Form introspection with capability awareness.
         

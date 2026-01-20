@@ -12,12 +12,12 @@ import os
 BASE_DIR = Path(__file__).resolve().parent
 STATE_FILE = BASE_DIR / "Nola.json"
 
-# Import DB path from central schema to support demo/personal mode switching
+# Import DB path from central location to support demo/personal mode switching
 try:
-    from Nola.threads.schema import get_db_path
+    from data.db import get_db_path
     DEFAULT_STATE_DB = get_db_path()
 except ImportError:
-    # Fallback if schema module issue
+    # Fallback if data.db module issue
     DEFAULT_STATE_DB = BASE_DIR.parent / "data" / "db" / "state.db"
 
 # Import log functions from new thread system

@@ -59,6 +59,9 @@ from .orchestrator import (
     record_interaction,
 )
 
+# API router
+from .api import router as subconscious_router
+
 # Thread interface (from Nola.threads, not local subdir)
 from Nola.threads.base import (
     ThreadInterface,

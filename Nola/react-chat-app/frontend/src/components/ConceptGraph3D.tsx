@@ -801,7 +801,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
   // Fetch graph data
   const fetchGraph = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/introspection/concept-links?limit=200');
+      const res = await fetch('http://localhost:8000/api/linking_core/graph?max_nodes=200');
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setGraphData(data);
@@ -819,7 +819,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     setReindexing(true);
     setReindexResult(null);
     try {
-      const res = await fetch('http://localhost:8000/api/introspection/concept-links/reindex', {
+      const res = await fetch('http://localhost:8000/api/linking_core/reindex', {
         method: 'POST'
       });
       if (!res.ok) throw new Error('Reindex failed');
@@ -844,7 +844,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     }
     
     try {
-      const res = await fetch(`http://localhost:8000/api/introspection/spread-activate?q=${encodeURIComponent(query)}`);
+      const res = await fetch(`http://localhost:8000/api/linking_core/activate/${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error('Activation failed');
       const data = await res.json();
       

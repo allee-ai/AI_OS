@@ -35,8 +35,8 @@ from datetime import datetime, timezone
 from typing import List, Optional
 import sqlite3
 
-# Import DB connection from thread schema
-from Nola.threads.schema import get_connection
+# Import DB connection from central location
+from data.db import get_connection
 
 
 # Thread lock for DB operations

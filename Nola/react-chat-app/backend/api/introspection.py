@@ -670,10 +670,7 @@ async def delete_identity_row(key: str):
     Delete an identity row.
     """
     try:
-        try:
-            from Nola.threads.schema import get_connection
-        except ImportError:
-            from threads.schema import get_connection
+        from data.db import get_connection
         
         conn = get_connection()
         cur = conn.cursor()
@@ -710,15 +707,27 @@ async def get_philosophy_table():
     """
     try:
         try:
-            from Nola.threads.schema import get_philosophy_table_data
+            from Nola.threads.philosophy.schema import pull_philosophy_profile_facts
         except ImportError:
-            from threads.schema import get_philosophy_table_data
+            from threads.philosophy.schema import pull_philosophy_profile_facts
         
-        rows = get_philosophy_table_data()
+        rows = pull_philosophy_profile_facts()
+        # Transform to expected format
+        table_rows = []
+        for r in rows:
+            table_rows.append({
+                "key": r.get("key", ""),
+                "metadata_type": r.get("type_name", "value"),
+                "metadata_desc": r.get("display_name", ""),
+                "l1": r.get("l1_value", ""),
+                "l2": r.get("l2_value", ""),
+                "l3": r.get("l3_value", ""),
+                "weight": r.get("weight", 0.5),
+            })
         return {
             "columns": ["key", "metadata_type", "metadata_desc", "l1", "l2", "l3", "weight"],
-            "rows": rows,
-            "row_count": len(rows)
+            "rows": table_rows,
+            "row_count": len(table_rows)
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Could not get philosophy table: {str(e)}")
@@ -793,10 +802,7 @@ async def delete_philosophy_row(key: str):
     Delete a philosophy row.
     """
     try:
-        try:
-            from Nola.threads.schema import get_connection
-        except ImportError:
-            from threads.schema import get_connection
+        from data.db import get_connection
         
         conn = get_connection()
         cur = conn.cursor()
@@ -1102,7 +1108,8 @@ async def get_concept_links(min_strength: float = 0.05, limit: int = 500):
         limit: Maximum links to return (default 500)
     """
     try:
-        from Nola.threads.schema import get_connection, init_concept_links_table
+        from data.db import get_connection
+        from Nola.threads.linking_core.schema import init_concept_links_table
         
         conn = get_connection(readonly=True)
         cur = conn.cursor()
@@ -1240,7 +1247,8 @@ async def strengthen_concept_link(req: StrengthUpdateRequest):
         strength: New strength value (0.0 - 1.0)
     """
     try:
-        from Nola.threads.schema import get_connection, init_concept_links_table
+        from data.db import get_connection
+        from Nola.threads.linking_core.schema import init_concept_links_table
         
         if req.strength < 0 or req.strength > 1:
             raise HTTPException(status_code=400, detail="Strength must be between 0 and 1")
@@ -1281,7 +1289,7 @@ async def delete_concept_link(concept_a: str, concept_b: str):
     Delete a concept link entirely.
     """
     try:
-        from Nola.threads.schema import get_connection
+        from data.db import get_connection
         
         conn = get_connection()
         cur = conn.cursor()

@@ -11,8 +11,6 @@ from api.docs import router as docs_router
 from api.conversations import router as conversations_router
 from api.ratings import router as ratings_router
 from api.stimuli import router as stimuli_router
-from api.form import router as form_router
-from api.reflex import router as reflex_router
 from api.services import router as services_router
 from api.finetune import router as finetune_router
 from api.profiles import router as profiles_router
@@ -21,9 +19,19 @@ from api.db_mode import router as db_mode_router
 from api.websockets import websocket_manager
 from core.config import settings
 import json
-import uuid
-from pathlib import Path
 import sys
+from pathlib import Path
+import uuid
+
+# Add Nola to path for thread imports
+sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+from Nola.threads.philosophy import router as philosophy_router
+from Nola.threads.identity import router as identity_router
+from Nola.threads.reflex import router as reflex_router
+from Nola.threads.form import router as form_router
+from Nola.threads.linking_core import router as linking_router
+from Nola.threads.log import router as log_router
+from Nola.subconscious import subconscious_router
 
 # Ensure project root is on path before importing Nola.*
 project_root_bootstrap = Path(__file__).resolve().parents[4]
@@ -61,11 +69,16 @@ app.include_router(docs_router)
 app.include_router(conversations_router)
 app.include_router(ratings_router)
 app.include_router(stimuli_router)
-app.include_router(form_router, prefix="/api/form", tags=["form"])
+app.include_router(form_router)
 app.include_router(reflex_router)
 app.include_router(services_router)
 app.include_router(finetune_router, prefix="/api/finetune", tags=["finetune"])
 app.include_router(profiles_router)
+app.include_router(philosophy_router)
+app.include_router(identity_router)
+app.include_router(linking_router)
+app.include_router(log_router)
+app.include_router(subconscious_router)
 app.include_router(import_router)
 app.include_router(db_mode_router)
 
@@ -81,7 +94,7 @@ async def startup_event():
             print(f"⚠️  {venv_warning}")
         
         # Verify database path before waking
-        from Nola.threads.schema import DB_PATH
+        from data.db import get_db_path, DB_PATH
         print(f"[Startup] DB_PATH: {DB_PATH}")
         print(f"[Startup] DB exists: {DB_PATH.exists()}")
         
@@ -90,13 +103,13 @@ async def startup_event():
         core.wake()
         print(f"[Startup] Subconscious awakened with {core.registry.count()} threads")
         
-        # Verify identity_flat is accessible
-        from Nola.threads.schema import pull_identity_flat
+        # Verify identity data is accessible
+        from Nola.threads.identity.schema import pull_profile_facts
         try:
-            rows = pull_identity_flat(level=2, limit=3)
-            print(f"[Startup] identity_flat check: {len(rows)} rows")
+            rows = pull_profile_facts(limit=3)
+            print(f"[Startup] identity check: {len(rows)} rows")
         except Exception as e:
-            print(f"[Startup] identity_flat ERROR: {e}")
+            print(f"[Startup] identity ERROR: {e}")
             
     except Exception as e:
         import traceback

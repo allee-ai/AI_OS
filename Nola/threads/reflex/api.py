@@ -1,20 +1,20 @@
 """
 Reflex Thread API
 =================
-
 CRUD endpoints for managing reflexes (greetings, shortcuts, system triggers).
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from typing import Optional, List, Dict, Any
-from pathlib import Path
-import sys
+from typing import Optional, List
 
-# Add Nola to path
-nola_path = Path(__file__).resolve().parent.parent.parent.parent
-if str(nola_path) not in sys.path:
-    sys.path.insert(0, str(nola_path))
+# Import from local schema and adapter
+from .schema import (
+    get_greetings, get_shortcuts, get_system_reflexes,
+    add_greeting, add_shortcut, add_system_reflex,
+    delete_greeting, delete_shortcut, delete_system_reflex,
+)
+from .adapter import ReflexThreadAdapter
 
 router = APIRouter(prefix="/api/reflex", tags=["reflex"])
 
@@ -23,18 +23,7 @@ router = APIRouter(prefix="/api/reflex", tags=["reflex"])
 # Models
 # ─────────────────────────────────────────────────────────────
 
-class ReflexBase(BaseModel):
-    """Base reflex model."""
-    key: str
-    pattern: str  # What triggers this reflex
-    response: str  # What to respond with
-    description: Optional[str] = ""
-    weight: float = 0.5
-    enabled: bool = True
-
-
 class GreetingCreate(BaseModel):
-    """Create a greeting reflex."""
     key: str
     pattern: str
     response: str
@@ -43,41 +32,17 @@ class GreetingCreate(BaseModel):
 
 
 class ShortcutCreate(BaseModel):
-    """Create a shortcut."""
-    trigger: str  # e.g., "/help", "/status"
+    trigger: str
     response: str
     description: Optional[str] = ""
 
 
 class SystemReflexCreate(BaseModel):
-    """Create a system reflex."""
     key: str
-    trigger_type: str  # e.g., "error", "timeout", "resource"
-    action: str  # e.g., "log_and_notify", "retry", "escalate"
+    trigger_type: str
+    action: str
     description: Optional[str] = ""
     weight: float = 0.9
-
-
-class ReflexUpdate(BaseModel):
-    """Update a reflex."""
-    pattern: Optional[str] = None
-    response: Optional[str] = None
-    description: Optional[str] = None
-    weight: Optional[float] = None
-    enabled: Optional[bool] = None
-
-
-# ─────────────────────────────────────────────────────────────
-# Helper to get adapter
-# ─────────────────────────────────────────────────────────────
-
-def get_reflex_adapter():
-    """Get reflex thread adapter."""
-    try:
-        from Nola.threads.reflex.adapter import ReflexThreadAdapter
-        return ReflexThreadAdapter()
-    except ImportError as e:
-        raise HTTPException(status_code=500, detail=f"Failed to import adapter: {e}")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -87,14 +52,13 @@ def get_reflex_adapter():
 @router.get("/greetings")
 async def list_greetings():
     """List all greeting reflexes."""
-    adapter = get_reflex_adapter()
-    greetings = adapter.get_greetings(level=3)
+    greetings = get_greetings(level=3)
     
     result = []
     for g in greetings:
         result.append({
             "key": g.get("key", ""),
-            "pattern": g.get("key", ""),  # Pattern is the key for greetings
+            "pattern": g.get("key", ""),
             "response": g.get("data", {}).get("value", ""),
             "description": g.get("metadata", {}).get("description", ""),
             "weight": g.get("weight", 0.5),
@@ -108,10 +72,8 @@ async def list_greetings():
 @router.post("/greetings")
 async def create_greeting(greeting: GreetingCreate):
     """Create a new greeting reflex."""
-    adapter = get_reflex_adapter()
-    
     try:
-        adapter.add_greeting(
+        add_greeting(
             key=greeting.key,
             response=greeting.response,
             weight=greeting.weight
@@ -122,19 +84,11 @@ async def create_greeting(greeting: GreetingCreate):
 
 
 @router.delete("/greetings/{key}")
-async def delete_greeting(key: str):
+async def remove_greeting(key: str):
     """Delete a greeting reflex."""
-    try:
-        from Nola.threads.schema import delete_from_module
-        deleted = delete_from_module("reflex", "greetings", key)
-        if deleted:
-            return {"status": "deleted", "key": key}
-        else:
-            raise HTTPException(status_code=404, detail=f"Greeting '{key}' not found")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if delete_greeting(key):
+        return {"status": "deleted", "key": key}
+    raise HTTPException(status_code=404, detail=f"Greeting '{key}' not found")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -144,8 +98,7 @@ async def delete_greeting(key: str):
 @router.get("/shortcuts")
 async def list_shortcuts():
     """List all shortcuts."""
-    adapter = get_reflex_adapter()
-    shortcuts = adapter.get_shortcuts(level=3)
+    shortcuts = get_shortcuts(level=3)
     
     result = []
     for s in shortcuts:
@@ -166,10 +119,8 @@ async def list_shortcuts():
 @router.post("/shortcuts")
 async def create_shortcut(shortcut: ShortcutCreate):
     """Create a new shortcut."""
-    adapter = get_reflex_adapter()
-    
     try:
-        adapter.add_shortcut(
+        add_shortcut(
             trigger=shortcut.trigger,
             response=shortcut.response,
             description=shortcut.description or ""
@@ -180,19 +131,11 @@ async def create_shortcut(shortcut: ShortcutCreate):
 
 
 @router.delete("/shortcuts/{key}")
-async def delete_shortcut(key: str):
+async def remove_shortcut(key: str):
     """Delete a shortcut."""
-    try:
-        from Nola.threads.schema import delete_from_module
-        deleted = delete_from_module("reflex", "shortcuts", key)
-        if deleted:
-            return {"status": "deleted", "key": key}
-        else:
-            raise HTTPException(status_code=404, detail=f"Shortcut '{key}' not found")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if delete_shortcut(key):
+        return {"status": "deleted", "key": key}
+    raise HTTPException(status_code=404, detail=f"Shortcut '{key}' not found")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -202,8 +145,7 @@ async def delete_shortcut(key: str):
 @router.get("/system")
 async def list_system_reflexes():
     """List all system reflexes."""
-    adapter = get_reflex_adapter()
-    system = adapter.get_system_reflexes(level=3)
+    system = get_system_reflexes(level=3)
     
     result = []
     for s in system:
@@ -224,15 +166,12 @@ async def list_system_reflexes():
 @router.post("/system")
 async def create_system_reflex(reflex: SystemReflexCreate):
     """Create a new system reflex."""
-    adapter = get_reflex_adapter()
-    
     try:
-        adapter.push(
-            module="system",
+        add_system_reflex(
             key=reflex.key,
-            metadata={"type": "system", "description": reflex.description or f"System: {reflex.key}"},
-            data={"trigger_type": reflex.trigger_type, "action": reflex.action},
-            level=1,
+            trigger_type=reflex.trigger_type,
+            action=reflex.action,
+            description=reflex.description or "",
             weight=reflex.weight
         )
         return {"status": "created", "key": reflex.key}
@@ -241,19 +180,11 @@ async def create_system_reflex(reflex: SystemReflexCreate):
 
 
 @router.delete("/system/{key}")
-async def delete_system_reflex(key: str):
+async def remove_system_reflex(key: str):
     """Delete a system reflex."""
-    try:
-        from Nola.threads.schema import delete_from_module
-        deleted = delete_from_module("reflex", "system", key)
-        if deleted:
-            return {"status": "deleted", "key": key}
-        else:
-            raise HTTPException(status_code=404, detail=f"System reflex '{key}' not found")
-    except HTTPException:
-        raise
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    if delete_system_reflex(key):
+        return {"status": "deleted", "key": key}
+    raise HTTPException(status_code=404, detail=f"System reflex '{key}' not found")
 
 
 # ─────────────────────────────────────────────────────────────
@@ -263,15 +194,12 @@ async def delete_system_reflex(key: str):
 @router.get("/all")
 async def list_all_reflexes():
     """List all reflexes across all modules."""
-    adapter = get_reflex_adapter()
-    
-    greetings = adapter.get_greetings(level=3)
-    shortcuts = adapter.get_shortcuts(level=3)
-    system = adapter.get_system_reflexes(level=3)
+    greetings = get_greetings(level=3)
+    shortcuts = get_shortcuts(level=3)
+    system = get_system_reflexes(level=3)
     
     all_reflexes = []
     
-    # Format greetings
     for g in greetings:
         all_reflexes.append({
             "key": g.get("key", ""),
@@ -283,7 +211,6 @@ async def list_all_reflexes():
             "icon": "👋"
         })
     
-    # Format shortcuts
     for s in shortcuts:
         data = s.get("data", {})
         all_reflexes.append({
@@ -296,7 +223,6 @@ async def list_all_reflexes():
             "icon": "⚡"
         })
     
-    # Format system
     for s in system:
         data = s.get("data", {})
         all_reflexes.append({
@@ -309,7 +235,6 @@ async def list_all_reflexes():
             "icon": "🔧"
         })
     
-    # Sort by weight (highest first)
     all_reflexes.sort(key=lambda x: x.get("weight", 0), reverse=True)
     
     return {
@@ -326,36 +251,25 @@ async def list_all_reflexes():
 @router.post("/test")
 async def test_reflex(text: str):
     """Test if text triggers a reflex."""
-    adapter = get_reflex_adapter()
-    
+    adapter = ReflexThreadAdapter()
     response = adapter.try_quick_response(text)
     
-    if response:
-        return {
-            "matched": True,
-            "response": response,
-            "input": text
-        }
-    else:
-        return {
-            "matched": False,
-            "response": None,
-            "input": text
-        }
+    return {
+        "matched": response is not None,
+        "response": response,
+        "input": text
+    }
 
 
 @router.get("/stats")
 async def get_reflex_stats():
     """Get reflex statistics."""
-    adapter = get_reflex_adapter()
-    
-    greetings = adapter.get_greetings(level=3)
-    shortcuts = adapter.get_shortcuts(level=3)
-    system = adapter.get_system_reflexes(level=3)
+    greetings = get_greetings(level=3)
+    shortcuts = get_shortcuts(level=3)
+    system = get_system_reflexes(level=3)
     
     total = len(greetings) + len(shortcuts) + len(system)
     
-    # Calculate average weights
     all_weights = (
         [g.get("weight", 0.5) for g in greetings] +
         [s.get("weight", 0.5) for s in shortcuts] +
@@ -373,3 +287,27 @@ async def get_reflex_stats():
         "average_weight": round(avg_weight, 2),
         "modules": ["greetings", "shortcuts", "system"]
     }
+
+
+# ─────────────────────────────────────────────────────────────
+# Introspection (Thread owns its state block)
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/introspect")
+async def introspect_reflex(level: int = 2, query: Optional[str] = None):
+    """
+    Get reflex thread's contribution to STATE block.
+    
+    Each thread is responsible for building its own state.
+    If query provided, filters to relevant reflexes via LinkingCore.
+    """
+    adapter = ReflexThreadAdapter()
+    result = adapter.introspect(context_level=level, query=query)
+    return result.to_dict()
+
+
+@router.get("/health")
+async def get_reflex_health():
+    """Get reflex thread health status."""
+    adapter = ReflexThreadAdapter()
+    return adapter.health().to_dict()

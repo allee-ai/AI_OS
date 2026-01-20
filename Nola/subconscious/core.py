@@ -293,7 +293,7 @@ class SubconsciousCore:
             
             # Include graph stats if available
             try:
-                from Nola.threads.schema import get_connection
+                from data.db import get_connection
                 conn = get_connection(readonly=True)
                 cur = conn.cursor()
                 cur.execute("SELECT COUNT(*) FROM concept_links")

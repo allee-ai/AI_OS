@@ -118,7 +118,7 @@ def _get_service_status(service_id: str, definition: dict) -> ServiceStatus:
 def _get_service_config(service_id: str) -> Optional[Dict[str, Any]]:
     """Get service config from database."""
     try:
-        from Nola.threads.schema import get_connection
+        from data.db import get_connection
         conn = get_connection(readonly=True)
         cursor = conn.cursor()
         
@@ -151,7 +151,7 @@ def _get_service_config(service_id: str) -> Optional[Dict[str, Any]]:
 def _save_service_config(service_id: str, config: ServiceConfig) -> bool:
     """Save service config to database."""
     try:
-        from Nola.threads.schema import get_connection
+        from data.db import get_connection
         conn = get_connection()
         cursor = conn.cursor()
         

@@ -130,14 +130,27 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             details={"readme": False}
         )
     
-    def introspect(self, context_level: int = 2) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
         """Return linking/relevance facts for context assembly."""
         facts = self.get_context(context_level)
+        
+        # If query provided, add relevant concepts
+        relevant_concepts = []
+        if query:
+            try:
+                from .schema import extract_concepts_from_text, spread_activate
+                query_concepts = extract_concepts_from_text(query)
+                if query_concepts:
+                    activated = spread_activate(query_concepts, activation_threshold=0.1, max_hops=1, limit=10)
+                    relevant_concepts = [a.get('concept', '') for a in activated]
+            except Exception:
+                pass
         
         return IntrospectionResult(
             facts=facts,
             state=self._get_state_summary(),
-            context_level=context_level
+            context_level=context_level,
+            relevant_concepts=relevant_concepts,
         )
     
     def get_context(self, level: int) -> List[str]:
@@ -234,7 +247,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             return 0.0
         
         try:
-            from Nola.threads.schema import get_cooccurrence_score
+            from Nola.threads.linking_core.schema import get_cooccurrence_score
             # Use first 50 chars as key (matching recording)
             fact_key = fact[:50].strip()
             return get_cooccurrence_score(fact_key, context_keys)
@@ -266,12 +279,12 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             List of {fact_key, fact_text, final_score, combined_score, activated_by}
         """
         try:
-            from Nola.threads.schema import (
+            from Nola.threads.linking_core.schema import (
                 extract_concepts_from_text,
                 spread_activate,
                 get_keys_for_concepts,
-                log_event
             )
+            from Nola.threads.log import log_event
             
             # Step 1: Extract concepts from input
             concepts = extract_concepts_from_text(input_text)
@@ -367,7 +380,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         if existing_facts:
             # Extract concept keys for co-occurrence boost
             try:
-                from Nola.threads.schema import extract_concepts_from_text
+                from Nola.threads.linking_core.schema import extract_concepts_from_text
                 context_keys = extract_concepts_from_text(input_text)
             except:
                 context_keys = []
@@ -523,7 +536,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         
         # Extract concepts from stimuli for mapping
         try:
-            from Nola.threads.schema import extract_concepts_from_text, get_cooccurrence_score
+            from Nola.threads.linking_core.schema import extract_concepts_from_text, get_cooccurrence_score
             input_concepts = extract_concepts_from_text(stimuli)
         except:
             input_concepts = []
@@ -571,7 +584,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             # 3. Spread activation (concept graph)
             if use_spread_activation and input_concepts:
                 try:
-                    from Nola.threads.schema import spread_activate
+                    from Nola.threads.linking_core.schema import spread_activate
                     # Activate concepts from input
                     activated = spread_activate(input_concepts, activation_threshold=0.1, max_hops=1, limit=20)
                     activated_concepts = {a['concept']: a['activation'] for a in activated}

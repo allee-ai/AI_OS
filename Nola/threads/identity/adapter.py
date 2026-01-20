@@ -6,7 +6,7 @@ Provides self-awareness and user recognition to Nola.
 
 This thread answers: "Who am I? Who are you?"
 
-Now uses identity_flat table with L1/L2/L3 columns for HEA-native storage.
+Uses profile-based identity system with fact types.
 """
 
 from typing import List, Dict, Any, Optional
@@ -15,19 +15,19 @@ from datetime import datetime, timezone
 # Import base adapter
 try:
     from Nola.threads.base import BaseThreadAdapter, HealthReport, IntrospectionResult
-    from Nola.threads.schema import (
-        pull_identity_flat,
-        push_identity_row,
-        get_identity_context,
-        get_identity_table_data,
+    from Nola.threads.identity.schema import (
+        pull_profile_facts,
+        push_profile_fact,
+        get_profiles,
+        get_value_by_weight,
     )
 except ImportError:
     from ..base import BaseThreadAdapter, HealthReport, IntrospectionResult
-    from ..schema import (
-        pull_identity_flat,
-        push_identity_row,
-        get_identity_context,
-        get_identity_table_data,
+    from .schema import (
+        pull_profile_facts,
+        push_profile_fact,
+        get_profiles,
+        get_value_by_weight,
     )
 
 # Training data logging (append-only learning)
@@ -43,8 +43,7 @@ class IdentityThreadAdapter(BaseThreadAdapter):
     """
     Thread adapter for identity — who am I, who are you.
     
-    Uses identity_flat table with L1/L2/L3 columns.
-    Each row has different detail levels built-in.
+    Uses profile-based fact storage with L1/L2/L3 value tiers.
     """
     
     _name = "identity"
@@ -54,19 +53,27 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         """
         Get identity data at specified HEA level.
         
-        Returns list of {key, metadata_type, metadata_desc, value, weight}
-        where 'value' is L1, L2, or L3 content based on level.
+        Returns list of facts across all profiles.
         """
-        rows = pull_identity_flat(level=level, min_weight=min_weight, limit=limit)
-        return rows
-    
-    def get_table_data(self) -> List[Dict]:
-        """
-        Get all identity rows with full L1/L2/L3 for table display.
+        # Get all profiles and collect their facts
+        profiles = get_profiles()
+        all_facts = []
         
-        Returns list of {key, metadata_type, metadata_desc, l1, l2, l3, weight}
-        """
-        return get_identity_table_data()
+        for profile in profiles:
+            profile_id = profile.get("profile_id", "")
+            facts = pull_profile_facts(profile_id=profile_id, min_weight=min_weight, limit=limit)
+            for fact in facts[:limit]:
+                # Get the appropriate value based on level
+                value = get_value_by_weight(fact, fact.get("weight", 0.5))
+                all_facts.append({
+                    "key": fact.get("key", ""),
+                    "value": value,
+                    "weight": fact.get("weight", 0.5),
+                    "profile_id": profile_id,
+                    "fact_type": fact.get("fact_type", ""),
+                })
+        
+        return all_facts[:limit]
     
     def get_context_string(self, level: int = 2, token_budget: int = 500) -> str:
         """
@@ -77,48 +84,109 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         - user_name: Jordan
         - ...
         """
-        return get_identity_context(level=level, token_budget=token_budget)
+        facts = self.get_data(level=level)
+        lines = [f"- {f['key']}: {f['value']}" for f in facts]
+        return "\n".join(lines[:20])  # Cap at 20 facts
     
     def set_fact(
         self,
+        profile_id: str,
         key: str,
-        l1: str,
-        l2: str,
-        l3: str,
-        metadata_type: str = "fact",
-        metadata_desc: str = "",
+        l1_value: str = None,
+        l2_value: str = None,
+        l3_value: str = None,
+        fact_type: str = "preference",
         weight: float = 0.5
     ) -> None:
-        """Set an identity fact with all three HEA levels."""
-        push_identity_row(
+        """Set an identity fact."""
+        push_profile_fact(
+            profile_id=profile_id,
             key=key,
-            l1=l1,
-            l2=l2,
-            l3=l3,
-            metadata_type=metadata_type,
-            metadata_desc=metadata_desc,
+            fact_type=fact_type,
+            l1_value=l1_value,
+            l2_value=l2_value,
+            l3_value=l3_value,
             weight=weight
         )
     
-    def introspect(self, context_level: int = 2) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
         """
         Identity introspection with structured output.
         
         Returns facts at the requested HEA level.
+        If query provided, filters by relevance using LinkingCore.
         """
+        relevant_concepts = []
+        
+        # Get raw data
         rows = self.get_data(level=context_level)
+        
+        # If query provided, filter by relevance
+        if query:
+            rows, relevant_concepts = self._filter_by_relevance(rows, query, context_level)
+        
         facts = [f"{row['key']}: {row['value']}" for row in rows]
+        
+        # Get health
+        health_report = self.health()
         
         return IntrospectionResult(
             facts=facts,
             state=self.get_metadata(),
-            context_level=context_level
+            context_level=context_level,
+            health=health_report.to_dict(),
+            relevant_concepts=relevant_concepts,
         )
+    
+    def _filter_by_relevance(
+        self, 
+        items: List[Dict], 
+        query: str, 
+        level: int
+    ) -> tuple:
+        """Filter items by relevance to query using LinkingCore."""
+        try:
+            from Nola.threads.linking_core.schema import (
+                spread_activate, 
+                extract_concepts_from_text
+            )
+            
+            query_concepts = extract_concepts_from_text(query)
+            if not query_concepts:
+                return items, []
+            
+            activated = spread_activate(
+                input_concepts=query_concepts,
+                activation_threshold=0.1,
+                max_hops=1,
+                limit=20
+            )
+            
+            relevant = set(query_concepts)
+            for a in activated:
+                relevant.add(a.get("concept", ""))
+            
+            # Filter items
+            filtered = []
+            for item in items:
+                key = item.get("key", "").lower()
+                value = str(item.get("value", "")).lower()
+                item_text = f"{key} {value}"
+                
+                for concept in relevant:
+                    if concept.lower() in item_text:
+                        filtered.append(item)
+                        break
+            
+            return (filtered if filtered else items[:10], list(relevant))
+            
+        except Exception:
+            return items, []
     
     def health(self) -> HealthReport:
         """Check identity thread health."""
         try:
-            rows = pull_identity_flat(level=2)
+            rows = self.get_data(level=2)
             row_count = len(rows)
             
             if row_count == 0:

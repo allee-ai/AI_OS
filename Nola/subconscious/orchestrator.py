@@ -3,7 +3,7 @@ Subconscious Orchestrator
 =========================
 
 The orchestrator that builds STATE + CONTEXT blocks from all threads.
-Uses the new schema.py for data access and LinkingCore for scoring.
+Each thread owns its introspection - Subconscious just aggregates.
 
 Usage:
     from Nola.subconscious.orchestrator import Subconscious
@@ -12,72 +12,63 @@ Usage:
     context = sub.build_context(level=2, query="Tell me about yourself")
     # Returns: {"state": {...}, "context": [...]}
 
-This replaces:
-- Nola.json for runtime state
-- identity.sync_for_stimuli()
-- ContextManager in agent_service.py
+Architecture:
+    - Each thread has .introspect(level, query) method
+    - Subconscious calls all threads and aggregates results
+    - LinkingCore filtering happens INSIDE each thread
 """
 
 from typing import Dict, List, Any, Optional
 from datetime import datetime, timezone
 import json
 
-# Import schema functions
-try:
-    from Nola.threads.schema import (
-        pull_from_module,
-        pull_all_thread_data,
-        push_to_module,
-        get_registered_modules,
-        get_thread_summary,
-        bootstrap_threads,
-    )
-except ImportError:
-    # Fallback for relative imports
-    import sys
-    from pathlib import Path
-    sys.path.insert(0, str(Path(__file__).parent.parent))
-    from threads.schema import (
-        pull_from_module,
-        pull_all_thread_data,
-        push_to_module,
-        get_registered_modules,
-        get_thread_summary,
-        bootstrap_threads,
-    )
-
-# Import LinkingCore
-try:
-    from Nola.threads.linking_core import score_relevance, rank_items
-except ImportError:
-    from threads.linking_core import score_relevance, rank_items
-
-
-# HEA Level limits: items per module
-LEVEL_LIMITS = {
-    1: 2,   # L1: top 2 per module
-    2: 5,   # L2: top 5 per module
-    3: 10,  # L3: top 10 per module
-}
 
 # Thread list
-THREADS = ["identity", "log", "form", "philosophy", "reflex"]
+THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
 
 
 class Subconscious:
     """
-    The orchestrator that builds context from all threads.
+    The orchestrator that aggregates context from all threads.
     
-    Responsibilities:
-    - Pull data from all threads at given level
-    - Score and rank items using LinkingCore
-    - Build STATE block (metadata) + CONTEXT block (facts)
-    - Record interactions to log thread
+    Key insight: Each thread owns its own introspection.
+    Subconscious just:
+    - Calls each thread.introspect(level, query)
+    - Aggregates results into STATE block
+    - Returns combined context
     """
     
     def __init__(self):
         self._last_context_time: Optional[str] = None
         self._last_query: Optional[str] = None
+        self._adapters: Dict[str, Any] = {}
+    
+    def _get_adapter(self, thread_name: str):
+        """Lazy-load thread adapters."""
+        if thread_name not in self._adapters:
+            try:
+                if thread_name == "identity":
+                    from Nola.threads.identity.adapter import IdentityThreadAdapter
+                    self._adapters[thread_name] = IdentityThreadAdapter()
+                elif thread_name == "philosophy":
+                    from Nola.threads.philosophy.adapter import PhilosophyThreadAdapter
+                    self._adapters[thread_name] = PhilosophyThreadAdapter()
+                elif thread_name == "log":
+                    from Nola.threads.log.adapter import LogThreadAdapter
+                    self._adapters[thread_name] = LogThreadAdapter()
+                elif thread_name == "form":
+                    from Nola.threads.form.adapter import FormThreadAdapter
+                    self._adapters[thread_name] = FormThreadAdapter()
+                elif thread_name == "reflex":
+                    from Nola.threads.reflex.adapter import ReflexThreadAdapter
+                    self._adapters[thread_name] = ReflexThreadAdapter()
+                elif thread_name == "linking_core":
+                    from Nola.threads.linking_core.adapter import LinkingCoreThreadAdapter
+                    self._adapters[thread_name] = LinkingCoreThreadAdapter()
+            except Exception as e:
+                print(f"⚠️ Failed to load {thread_name} adapter: {e}")
+                return None
+        return self._adapters.get(thread_name)
     
     def build_context(
         self,
@@ -86,46 +77,62 @@ class Subconscious:
         threads: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """
-        Build STATE + CONTEXT blocks from all threads.
+        Build STATE + CONTEXT blocks by calling each thread's introspect().
         
         Args:
             level: Context level (1=minimal, 2=standard, 3=full)
-            query: User's message for relevance scoring
-            threads: Which threads to pull from (default: all)
+            query: User's message - passed to threads for relevance filtering
+            threads: Which threads to query (default: all)
         
         Returns:
             {
-                "state": {thread: metadata...},
+                "state": {thread: {health, state, ...}},
                 "context": [{"key": ..., "value": ..., "source": ...}, ...],
-                "meta": {"level": N, "total_items": N, ...}
+                "meta": {"level": N, "total_facts": N, ...}
             }
         """
-        level = max(1, min(3, level))  # Clamp to 1-3
+        level = max(1, min(3, level))
         threads = threads or THREADS
-        limit_per_module = LEVEL_LIMITS.get(level, 5)
         
-        # Pull data from all threads
-        all_data = {}
-        for thread in threads:
-            thread_data = pull_all_thread_data(thread, level)
-            if thread_data:
-                all_data[thread] = thread_data
+        state = {}
+        all_facts = []
+        all_concepts = set()
         
-        # Build STATE block (metadata from each thread)
-        state = self._build_state_block(all_data)
-        
-        # Flatten all items for scoring
-        flat_items = self._flatten_items(all_data)
-        
-        # Score and rank
-        if query and flat_items:
-            ranked = rank_items(flat_items, query, threshold=0.0, limit=limit_per_module * len(THREADS) * 3)
-        else:
-            # No query = use weights only
-            ranked = sorted(flat_items, key=lambda x: x.get("weight", 0.5), reverse=True)
-        
-        # Build CONTEXT block (top items per thread)
-        context = self._build_context_block(ranked, limit_per_module)
+        # Call each thread's introspect
+        for thread_name in threads:
+            adapter = self._get_adapter(thread_name)
+            if not adapter:
+                state[thread_name] = {"health": {"status": "error", "message": "Adapter not found"}}
+                continue
+            
+            try:
+                result = adapter.introspect(context_level=level, query=query)
+                result_dict = result.to_dict()
+                
+                # Add to state
+                state[thread_name] = {
+                    "health": result_dict.get("health", {}),
+                    "state": result_dict.get("state", {}),
+                    "fact_count": result_dict.get("fact_count", 0),
+                }
+                
+                # Collect facts with source
+                for fact in result_dict.get("facts", []):
+                    all_facts.append({
+                        "fact": fact,
+                        "source": thread_name,
+                    })
+                
+                # Collect relevant concepts
+                for concept in result_dict.get("relevant_concepts", []):
+                    all_concepts.add(concept)
+                    
+            except Exception as e:
+                state[thread_name] = {
+                    "health": {"status": "error", "message": str(e)[:100]},
+                    "state": {},
+                    "fact_count": 0,
+                }
         
         # Track timing
         self._last_context_time = datetime.now(timezone.utc).isoformat()
@@ -133,102 +140,31 @@ class Subconscious:
         
         return {
             "state": state,
-            "context": context,
+            "context": all_facts,
+            "relevant_concepts": list(all_concepts),
             "meta": {
                 "level": level,
-                "total_items": len(flat_items),
-                "context_items": len(context),
+                "total_facts": len(all_facts),
                 "threads_queried": threads,
                 "timestamp": self._last_context_time,
+                "query": query[:100] if query else None,
             }
         }
     
-    def _build_state_block(self, all_data: Dict[str, Dict]) -> Dict[str, Any]:
-        """
-        Build the STATE block from thread metadata.
-        
-        STATE tells the agent what threads exist and their status.
-        """
-        state = {}
-        
-        for thread, modules in all_data.items():
-            module_summaries = {}
-            for module_name, rows in modules.items():
-                module_summaries[module_name] = {
-                    "count": len(rows),
-                    "keys": [r.get("key") for r in rows[:5]],  # First 5 keys
-                }
-            
-            state[thread] = {
-                "modules": list(modules.keys()),
-                "module_details": module_summaries,
-                "total_items": sum(len(rows) for rows in modules.values()),
-            }
-        
-        return state
-    
-    def _flatten_items(self, all_data: Dict[str, Dict]) -> List[Dict]:
-        """
-        Flatten nested thread→module→rows structure into flat list.
-        
-        Adds thread/module source info to each item.
-        """
-        flat = []
-        
-        for thread, modules in all_data.items():
-            for module_name, rows in modules.items():
-                for row in rows:
-                    flat.append({
-                        **row,
-                        "thread": thread,
-                        "module": module_name,
-                    })
-        
-        return flat
-    
-    def _build_context_block(
-        self,
-        ranked_items: List[Dict],
-        limit_per_module: int
-    ) -> List[Dict[str, Any]]:
-        """
-        Build the CONTEXT block from ranked items.
-        
-        CONTEXT is the actual facts the agent can use.
-        Respects per-module limits for balance.
-        """
-        # Track counts per thread/module
-        counts: Dict[str, int] = {}
-        context = []
-        
-        for item in ranked_items:
-            thread = item.get("thread", "unknown")
-            module = item.get("module", "unknown")
-            source_key = f"{thread}.{module}"
-            
-            # Check limit
-            current_count = counts.get(source_key, 0)
-            if current_count >= limit_per_module:
-                continue
-            
-            # Extract value
-            data = item.get("data", {})
-            if isinstance(data, dict):
-                value = data.get("value", data.get("fact", str(data)))
+    def get_all_health(self) -> Dict[str, Dict]:
+        """Get health status from all threads."""
+        health = {}
+        for thread_name in THREADS:
+            adapter = self._get_adapter(thread_name)
+            if adapter:
+                try:
+                    report = adapter.health()
+                    health[thread_name] = report.to_dict()
+                except Exception as e:
+                    health[thread_name] = {"status": "error", "message": str(e)[:100]}
             else:
-                value = str(data)
-            
-            context.append({
-                "key": item.get("key", ""),
-                "value": value,
-                "source": source_key,
-                "weight": item.get("weight", 0.5),
-                "score": item.get("score", item.get("weight", 0.5)),
-            })
-            
-            counts[source_key] = current_count + 1
-        
-        return context
+                health[thread_name] = {"status": "error", "message": "Adapter not loaded"}
+        return health
     
     def record_interaction(
         self,
@@ -236,61 +172,37 @@ class Subconscious:
         agent_response: str,
         metadata: Optional[Dict] = None
     ) -> None:
-        """
-        Record an interaction to the log thread.
-        
-        Args:
-            user_message: What the user said
-            agent_response: What the agent replied
-            metadata: Optional extra data (stimuli_type, etc.)
-        """
-        timestamp = datetime.now(timezone.utc).isoformat()
-        
-        # Push to log.sessions
-        push_to_module(
-            thread_name="log",
-            module_name="sessions",
-            key=f"msg_{timestamp}",
-            metadata={
-                "type": "interaction",
-                "timestamp": timestamp,
-                **(metadata or {}),
-            },
-            data={
-                "user": user_message[:500],  # Truncate long messages
-                "agent": agent_response[:500],
-            },
-            level=3,  # Full context only
-            weight=0.3,
-        )
+        """Record an interaction to the log thread."""
+        try:
+            from Nola.threads.log.schema import log_event
+            log_event(
+                event_type="convo",
+                data=json.dumps({
+                    "user": user_message[:500],
+                    "agent": agent_response[:500],
+                }),
+                metadata=metadata,
+                source="agent",
+            )
+        except Exception as e:
+            print(f"⚠️ Failed to record interaction: {e}")
     
     def get_identity_facts(self, level: int = 2) -> List[str]:
-        """
-        Get identity facts as simple strings.
-        
-        Convenience method for backwards compatibility.
-        """
+        """Get identity facts as simple strings (backwards compatibility)."""
         ctx = self.build_context(level=level, threads=["identity"])
-        facts = []
-        for item in ctx.get("context", []):
-            key = item.get("key", "")
-            value = item.get("value", "")
-            if key and value:
-                facts.append(f"{key}: {value}")
-        return facts
+        return [item["fact"] for item in ctx.get("context", [])]
     
-    def consolidate(self) -> Dict[str, int]:
-        """
-        Run consolidation: analyze access patterns and adjust levels/weights.
+    def get_context_string(self, level: int = 2, query: str = "") -> str:
+        """Get context as a formatted string for system prompt."""
+        ctx = self.build_context(level=level, query=query)
         
-        Frequently accessed L3 items → promote to L2
-        Stale L2 items → demote to L3
+        lines = []
+        for item in ctx.get("context", []):
+            fact = item.get("fact", "")
+            source = item.get("source", "")
+            lines.append(f"[{source}] {fact}")
         
-        Returns counts of promotions/demotions.
-        """
-        # TODO: Implement consolidation logic
-        # For now, just return stats
-        return {"promoted": 0, "demoted": 0, "analyzed": 0}
+        return "\n".join(lines)
 
 
 # Singleton instance

@@ -108,7 +108,7 @@ export const ThreadsPage = () => {
   const [addRowResult, setAddRowResult] = useState<string | null>(null);
 
   const fetchIdentityData = () => {
-    fetch('http://localhost:8000/api/introspection/identity/table')
+    fetch('http://localhost:8000/api/identity/table')
       .then(res => res.json())
       .then(data => {
         setIdentityRows(data.rows || []);
@@ -122,7 +122,7 @@ export const ThreadsPage = () => {
   };
 
   const fetchPhilosophyData = () => {
-    fetch('http://localhost:8000/api/introspection/philosophy/table')
+    fetch('http://localhost:8000/api/philosophy/table')
       .then(res => res.json())
       .then(data => {
         setPhilosophyRows(data.rows || []);
@@ -141,9 +141,10 @@ export const ThreadsPage = () => {
     if (logTypeFilter) params.set('event_type', logTypeFilter);
     if (logSourceFilter) params.set('source', logSourceFilter);
 
-    fetch(`http://localhost:8000/api/introspection/events?${params}`)
+    fetch(`http://localhost:8000/api/log/events?${params}`)
       .then(res => res.json())
-      .then((data: LogEvent[]) => {
+      .then((response) => {
+        const data: LogEvent[] = response.events || [];
         // Sort client-side
         const sorted = [...data].sort((a, b) => {
           let cmp = 0;
@@ -173,7 +174,7 @@ export const ThreadsPage = () => {
     setAddingEvent(true);
     setAddEventResult(null);
     try {
-      const res = await fetch('http://localhost:8000/api/introspection/events', {
+      const res = await fetch('http://localhost:8000/api/log/events', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -198,7 +199,7 @@ export const ThreadsPage = () => {
   };
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/introspection/threads/health')
+    fetch('http://localhost:8000/api/subconscious/threads')
       .then(res => res.json())
       .then(data => {
         setThreads(data.threads || {});
@@ -220,7 +221,7 @@ export const ThreadsPage = () => {
     
     // Documentation threads - fetch README
     if (DOC_THREADS.has(activeThread)) {
-      fetch(`http://localhost:8000/api/introspection/threads/${activeThread}/readme`)
+      fetch(`http://localhost:8000/api/${activeThread}/readme`)
         .then(res => res.json())
         .then(data => {
           setReadmeContent(data.content || '');
@@ -243,8 +244,11 @@ export const ThreadsPage = () => {
     } else if (activeThread === 'log') {
       fetchLogEvents();
       setDataLoading(false);
+    } else if (activeThread === 'form' || activeThread === 'reflex' || activeThread === 'linking_core') {
+      // These threads have their own dashboards that fetch their own data
+      setDataLoading(false);
     } else {
-      fetch(`http://localhost:8000/api/introspection/threads/${activeThread}?level=2`)
+      fetch(`http://localhost:8000/api/${activeThread}/introspect?level=2`)
         .then(res => res.json())
         .then(data => {
           setGenericModules(data.modules || {});
@@ -274,8 +278,8 @@ export const ThreadsPage = () => {
     
     // Determine which thread we're editing
     const endpoint = activeThread === 'philosophy' 
-      ? `http://localhost:8000/api/introspection/philosophy/${editingKey}`
-      : `http://localhost:8000/api/introspection/identity/${editingKey}`;
+      ? `http://localhost:8000/api/philosophy/facts/${editingKey}`
+      : `http://localhost:8000/api/identity/facts/${editingKey}`;
     
     setSaving(true);
     try {
@@ -326,8 +330,8 @@ export const ThreadsPage = () => {
     }
     
     const endpoint = activeThread === 'philosophy'
-      ? `http://localhost:8000/api/introspection/philosophy?key=${encodeURIComponent(newRowKey.trim())}`
-      : `http://localhost:8000/api/introspection/identity?key=${encodeURIComponent(newRowKey.trim())}`;
+      ? `http://localhost:8000/api/philosophy/facts`
+      : `http://localhost:8000/api/identity/facts`;
     
     setAddingRow(true);
     setAddRowResult(null);
@@ -337,12 +341,13 @@ export const ThreadsPage = () => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          l1: newRowL1.trim(),
-          l2: newRowL2.trim(),
-          l3: newRowL3.trim(),
+          profile_id: activeThread === 'philosophy' ? 'core.values' : 'user.primary',
+          key: newRowKey.trim(),
+          l1_value: newRowL1.trim(),
+          l2_value: newRowL2.trim(),
+          l3_value: newRowL3.trim(),
           weight: newRowWeight,
-          metadata_type: newRowType,
-          metadata_desc: newRowDesc.trim(),
+          fact_type: newRowType,
         }),
       });
       
@@ -785,7 +790,7 @@ export const ThreadsPage = () => {
               </div>
               {renderReadme()}
             </>
-          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'linking_core' ? (
+          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'linking_core' && activeThread !== 'form' && activeThread !== 'reflex' ? (
             <div className="empty-state">
               <p>No data in {activeThread}</p>
               <p className="muted">{threads[activeThread]?.message}</p>
@@ -808,7 +813,7 @@ export const ThreadsPage = () => {
                   </div>
                   
                   {activeThread === 'philosophy'
-                    ? renderPhilosophyTable()
+                    ? <ProfilesPage mode="philosophy" />
                     : activeThread === 'log' 
                     ? renderLogView() 
                     : activeThread === 'form'
