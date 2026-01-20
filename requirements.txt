@@ -16,6 +16,9 @@ aiofiles>=23.2.1
 beautifulsoup4>=4.12.0
 lxml>=4.9.0
 
+# Numerical (for subconscious/embeddings)
+numpy>=1.24.0
+
 # Ollama client (local LLM)
 ollama>=0.1.0
 
