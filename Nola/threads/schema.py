@@ -56,6 +56,8 @@ if _startup_mode == "demo":
 def get_connection(readonly: bool = False) -> sqlite3.Connection:
     """Get a SQLite connection. Uses dynamic DB path to support runtime mode switching."""
     db_path = get_db_path()  # Dynamic - reads mode file each time
+    # Debug: log which DB we're connecting to (uncomment for debugging)
+    # print(f"📀 schema.py connecting to: {db_path.name}")
     if not readonly:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(db_path), check_same_thread=False)

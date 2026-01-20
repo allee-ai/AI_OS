@@ -156,7 +156,9 @@ class AgentService:
         if self.agent:
             print(f"🧠 Nola agent initialized: {self.agent.name}")
             if _HAS_CHAT_SCHEMA:
-                print(f"📁 Conversations stored in database (state.db)")
+                from api.chatschema import get_db_path
+                db_name = get_db_path().name
+                print(f"📁 Conversations stored in database ({db_name})")
         
     async def send_message(self, user_message: str, session_id: Optional[str] = None) -> ChatMessage:
         """Send message to Nola and manage context automatically"""

@@ -27,16 +27,30 @@ if str(_PROJECT_ROOT) not in sys.path:
 
 # Import DB path from central schema (respects demo/personal mode)
 try:
-    from Nola.threads.schema import get_db_path
+    from Nola.threads.schema import get_db_path, _get_current_mode
 except ImportError:
-    # Fallback if schema not available
+    # Fallback if schema not available - must still respect mode!
+    import os
+    _MODE_FILE = _PROJECT_ROOT / "data" / ".nola_mode"
+    
+    def _get_current_mode() -> str:
+        """Get current mode - checks file first, then env var."""
+        if _MODE_FILE.exists():
+            return _MODE_FILE.read_text().strip().lower()
+        return os.getenv("NOLA_MODE", "personal").lower()
+    
     def get_db_path() -> Path:
-        return _PROJECT_ROOT / "data" / "db" / "state.db"
+        """Get database path based on current mode."""
+        mode = _get_current_mode()
+        db_file = "state_demo.db" if mode == "demo" else "state.db"
+        return _PROJECT_ROOT / "data" / "db" / db_file
 
 
 def get_connection(readonly: bool = False) -> sqlite3.Connection:
     """Get SQLite connection using central DB path."""
     db_path = get_db_path()
+    # Debug: log which DB we're connecting to
+    print(f"📀 chatschema connecting to: {db_path.name}")
     if not readonly:
         db_path.parent.mkdir(parents=True, exist_ok=True)
     conn = sqlite3.connect(str(db_path), check_same_thread=False)
@@ -45,9 +59,19 @@ def get_connection(readonly: bool = False) -> sqlite3.Connection:
     return conn
 
 
-def init_convos_tables():
-    """Create convos and convo_turns tables if they don't exist."""
-    conn = get_connection()
+def _get_connection_for_db(db_path: Path, readonly: bool = False) -> sqlite3.Connection:
+    """Get SQLite connection for a specific database path."""
+    if not readonly:
+        db_path.parent.mkdir(parents=True, exist_ok=True)
+    conn = sqlite3.connect(str(db_path), check_same_thread=False)
+    conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    return conn
+
+
+def _init_convos_tables_for_db(db_path: Path):
+    """Create convos and convo_turns tables in a specific database."""
+    conn = _get_connection_for_db(db_path)
     cur = conn.cursor()
     
     # Main conversations table
@@ -95,6 +119,25 @@ def init_convos_tables():
     
     conn.commit()
     conn.close()
+
+
+def init_convos_tables():
+    """
+    Create convos and convo_turns tables in BOTH databases.
+    
+    This ensures tables exist regardless of which mode is active,
+    preventing crossover issues when switching modes.
+    """
+    db_dir = _PROJECT_ROOT / "data" / "db"
+    db_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Initialize in both databases
+    for db_file in ["state.db", "state_demo.db"]:
+        db_path = db_dir / db_file
+        try:
+            _init_convos_tables_for_db(db_path)
+        except Exception as e:
+            print(f"⚠️ Could not init convos tables in {db_file}: {e}")
 
 
 # =============================================================================
