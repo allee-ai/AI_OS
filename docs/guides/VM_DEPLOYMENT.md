@@ -21,7 +21,7 @@ Deploy Nola AI OS to a cloud VM for 24/7 always-on operation.
 - **SSH Key**: Add your existing SSH key
 
 ### After Creation
-Note your VM's IP address (e.g., `159.203.95.51`)
+Note your VM's IP address (e.g., `YOUR_VM_IP`)
 
 ---
 
