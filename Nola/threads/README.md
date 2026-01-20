@@ -94,7 +94,7 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### Identity Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ idv2 SQLite backend working, pulls facts by level, user/machine separation |
+| **Current** | ✅ SQLite backend working, pulls facts by level, user/machine separation |
 | **Future** | Memory permanence logic, weight decay, consolidation daemon, "tomorrow queue" for deferred decisions |
 
 ### Log Thread  
@@ -196,7 +196,6 @@ Files to move:
 | `subconscious/threads/identity_adapter.py` | `threads/identity/adapter.py` | Identity |
 | `subconscious/threads/log_adapter.py` | `threads/log/adapter.py` | Log |
 | `subconscious/threads/memory_adapter.py` | `threads/identity/modules/temp_memory.py` | Identity |
-| `Nola/idv2/` | `threads/identity/modules/idv2/` | Identity |
 | `Nola/identity_thread/` | `threads/identity/data/legacy/` | Identity |
 | `Nola/relevance.py` | `threads/linking_core/modules/relevance.py` | LinkingCore |
 | `Nola/log_thread/` | `threads/log/modules/` | Log |

@@ -5,6 +5,31 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-20 — Legacy Code Removal & Database Path Consolidation
+
+### Refactoring: Remove IDv2 Legacy System
+- **Deleted Module References**: Removed all `idv2` references from codebase (already deleted in Phase 7, now cleaned docs)
+- **Updated Documentation**: Fixed `Nola/threads/linking_core/README.md` and `Nola/threads/REBUILD_CHECKLIST.md` to reference new `schema.py` instead of deleted `idv2.py`
+- **Code Archaeology**: Confirmed no functional code imports or uses `idv2` — only historical comments remain
+
+### Architecture: Centralized Database Path Logic
+- **Single Source of Truth**: Refactored `Nola/threads/schema.py` to expose `get_db_path()` as public function
+- **Dynamic Mode Switching**: `get_db_path()` reads `NOLA_MODE` env var or `.nola_mode` file at runtime to select `state.db` vs `state_demo.db`
+- **Agent Integration**: Updated `Nola/agent.py` to import `get_db_path()` instead of hardcoding `DEFAULT_STATE_DB`
+- **Eliminated Scatter**: No more hardcoded DB paths — all modules now reference central function
+
+### Testing
+- **Test Suite Validation**: All 17 tests pass after refactoring (Agent singleton, thread safety, identity, HEA context levels)
+- **No Regressions**: Agent initialization, state loading, and DB connection work correctly with new path system
+
+### GitHub Issues
+- Created 3 new issues for UI/UX improvements:
+  - **#10**: Cannot add facts from Thread Browser UI (bug, frontend)
+  - **#11**: UI cleanup - weight sliders positioned weirdly, color mismatches (frontend)
+  - **#12**: Philosophy thread has no demo data (backend)
+
+---
+
 ## 2026-01-19 (Late Night) — Database Toggle & Profile Seeding
 
 ### Feature: Database Mode Toggle

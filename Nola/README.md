@@ -56,7 +56,7 @@ See [ARCHITECTURE.md](ARCHITECTURE.md) for technical details.
 |--------|---------|
 | `agent.py` | LLM interface, response generation |
 | `subconscious/` | Context assembly from all threads |
-| `idv2/` | SQLite-backed identity storage |
+| `threads/` | Identity and state management system |
 | `temp_memory/` | Session facts before consolidation |
 | `log_thread/` | Event timeline |
 | `services/` | FastAPI integration, HEA routing |

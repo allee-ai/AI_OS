@@ -40,7 +40,7 @@ AI_OS now uses a **focus-based architecture** where the database learns key sequ
 | Module | What it does | README |
 |--------|--------------|--------|
 | **subconscious** | Builds context before each response | [Nola/subconscious/README.md](Nola/subconscious/README.md) |
-| **idv2** | SQLite identity storage | [Nola/idv2/README.md](Nola/idv2/README.md) |
+| **threads/identity** | SQLite identity storage | [Nola/threads/identity/README.md](Nola/threads/identity/README.md) |
 | **temp_memory** | Session facts before consolidation | [Nola/temp_memory/README.md](Nola/temp_memory/README.md) |
 | **log_thread** | Event timeline | [Nola/log_thread/README.md](Nola/log_thread/README.md) |
 | **services** | FastAPI integration, HEA routing | [Nola/services/README.md](Nola/services/README.md) |
@@ -129,9 +129,6 @@ AI_OS/
 │   │       ├── memory_adapter.py
 │   │       └── log_adapter.py
 │   │
-│   ├── idv2/                # SQLite-backed identity
-│   │   └── idv2.py          # push/pull sections, level filtering
-│   │
 │   ├── identity_thread/     # JSON-based identity (legacy, still used)
 │   │   ├── identity.py      # Aggregator
 │   │   ├── machineID/       # Machine context
@@ -168,7 +165,6 @@ AI_OS/
 │
 ├── tests/                   # 🧪 pytest suite
 │   ├── test_agent.py        # Singleton, thread safety
-│   ├── test_idv2.py         # DB operations
 │   └── test_hea.py          # Context levels
 │
 ├── eval/                    # 📊 Evaluation harness

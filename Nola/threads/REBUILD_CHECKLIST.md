@@ -128,7 +128,6 @@ class ThreadAdapter:
 - [x] Added `GET /api/introspection/threads/summary` - list all threads
 - [x] Added `GET /api/introspection/threads/{thread}` - get thread data
 - [x] Added `GET /api/introspection/threads/{thread}/{module}` - get module data
-- [x] Fallback to old idv2 system if new system fails
 
 ---
 

@@ -54,12 +54,7 @@ subconscious/
 ├── core.py             # ThreadRegistry, SubconsciousCore singleton
 ├── contract.py         # Metadata protocol for sync decisions
 ├── loops.py            # Background: ConsolidationLoop, SyncLoop, HealthLoop
-├── triggers.py         # Event-driven: TimeTrigger, EventTrigger, ThresholdTrigger
-└── threads/
-    ├── base.py         # ThreadInterface protocol
-    ├── log_adapter.py  # Wraps Nola/log_thread
-    ├── memory_adapter.py   # Wraps Nola/temp_memory
-    └── identity_adapter.py # Wraps Nola/idv2
+└── triggers.py         # Event-driven: TimeTrigger, EventTrigger, ThresholdTrigger
 ```
 
 ### API Reference

@@ -90,19 +90,11 @@ context = get_consciousness_context(level=2)  # Assemble L2 context
 
 See [subconscious/README.md](subconscious/README.md) for details.
 
-### idv2/ — Identity Database
+### threads/identity/ — Identity Database
 
 SQLite-backed identity with level-aware storage.
 
-```python
-from idv2.idv2 import push_section, pull_identity
-
-# Store identity data
-push_section("userID", user_data, level=2)
-
-# Retrieve at specific level
-identity = pull_identity(level=2)
-```
+**Location:** `Nola/threads/identity`
 
 **Tables:**
 - `identity_sections` — machineID, userID with L1/L2/L3 variants
@@ -285,7 +277,6 @@ pytest tests/ -v
 
 # Specific
 pytest tests/test_agent.py -v      # Agent singleton
-pytest tests/test_idv2.py -v       # Database ops
 pytest tests/test_hea.py -v        # Context levels
 ```
 

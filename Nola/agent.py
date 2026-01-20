@@ -11,7 +11,14 @@ import os
 # Resolve paths relative to the Nola module so CWD does not break identity loading
 BASE_DIR = Path(__file__).resolve().parent
 STATE_FILE = BASE_DIR / "Nola.json"
-DEFAULT_STATE_DB = BASE_DIR.parent / "data" / "db" / "state.db"
+
+# Import DB path from central schema to support demo/personal mode switching
+try:
+    from Nola.threads.schema import get_db_path
+    DEFAULT_STATE_DB = get_db_path()
+except ImportError:
+    # Fallback if schema module issue
+    DEFAULT_STATE_DB = BASE_DIR.parent / "data" / "db" / "state.db"
 
 # Import log functions from new thread system
 try:

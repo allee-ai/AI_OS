@@ -26,7 +26,7 @@ Architecture:
     Triggers ← event-driven execution
 
 Threads (built-in adapters):
-    - identity: Core identity and user preferences (Nola.idv2)
+    - identity: Core identity and user preferences (Nola.threads.identity)
     - temp_memory: Session facts and learned info (Nola.temp_memory)
     - log_thread: Event timeline (Nola.log_thread)
 """

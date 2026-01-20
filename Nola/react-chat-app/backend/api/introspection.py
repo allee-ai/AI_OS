@@ -2,7 +2,7 @@
 Introspection API - Exposes Subconscious State to Frontend
 ==========================================================
 FastAPI router providing visibility into Nola's internal state:
-- Identity facts (idv2)
+- Identity facts (threads/identity)
 - Log thread events
 - Thread health status
 - Context level assembly

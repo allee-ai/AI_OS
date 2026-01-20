@@ -103,10 +103,10 @@ Higher weight = retrieved more often = stays in working memory.
 
 # Database Integration Plan
 
-**Status:** ✅ IMPLEMENTED (see `Nola/idv2/idv2.py`)  
-**Last Updated:** 2025-12-23
+**Status:** ✅ IMPLEMENTED  
+**Last Updated:** 2026-01-20
 
-> **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See `Nola/idv2/idreadme.md` for implementation details.
+> **Note:** This plan has been implemented. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and persistent storage. See `Nola/threads/schema.py` for implementation details.
 
 ## Overview
 

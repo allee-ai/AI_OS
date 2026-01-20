@@ -558,8 +558,8 @@ RESPONSE
 - [x] Create indexes on weight columns for fast attention queries
 
 **Files to modify:**
-- `Nola/idv2/idv2.py` - Update `init_db()` schema
-- Add migration script: `Nola/idv2/migrations/001_add_weights.sql`
+- `Nola/threads/schema.py` - Update `init_db()` schema
+- Add migration script: `migrations/001_add_weights.sql`
 
 ### 1.2 Create Key Sequence Learning Table
 - [ ] Create `key_sequences` table

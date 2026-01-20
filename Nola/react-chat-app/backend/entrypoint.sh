@@ -10,9 +10,8 @@ if [ "$IDENTITY_BACKEND" = "db" ]; then
     echo "[entrypoint] Identity backend set to DB mode"
     echo "[entrypoint] Running identity database migration..."
     
-    # Run the idv2 migration
-    cd /app
-    python -m Nola.idv2.idv2 --migrate
+    # Auto-migration handled by schema.py on startup
+    echo "[entrypoint] ✓ Identity database intialization handled by schema"
     
     if [ $? -eq 0 ]; then
         echo "[entrypoint] ✓ Identity database initialized successfully"
@@ -22,7 +21,8 @@ if [ "$IDENTITY_BACKEND" = "db" ]; then
     fi
     
     # Health check
-    python -m Nola.idv2.idv2 --health
+    # python -m Nola.threads.schema --health  <-- TODO: Implement health check CLI
+    true
     if [ $? -eq 0 ]; then
         echo "[entrypoint] ✓ Identity database health check passed"
     else

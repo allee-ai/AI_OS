@@ -33,15 +33,13 @@ Thread README notes (where found)
 
 Suggested file-level TODOs (short, actionable)
 - `docs/DEV_NOTES.md`: Extract a short `docs/DEV_QUICKSTART.md` (3 steps: setup venv, run tests, start app). Mark: `Needs action`.
-- `tests/test_idv2.py`: Either reinstate a compatibility module `Nola/idv2/idv2.py` or update tests to import the new thread schema. Mark: `Blocker for CI`.
 - `CONTRIBUTING.md`: Add a one-paragraph "Run tests" section with the exact commands used in CI. Mark: `High priority`.
 - `docs/README.md`: Add a one-line table cell: "Run tests" with exact commands. Mark: `Quick win`.
 
 How to proceed (recommended execution plan)
 1. Create `docs/DEV_QUICKSTART.md` with 3 commands: `./install.sh`, `./runtests.sh --unit`, `./start.sh`.
-2. Add `docs/REPO_HEALTH.md` with CI status, last green commit hash, and top 3 blockers (tests failing, idv2 drift, path quirks).
-3. Add compatibility shim: `Nola/idv2/__init__.py` that imports/forwards new schema functions (if you want tests to keep referencing `idv2`).
-4. Split `DEV_NOTES.md` into `DEV_QUICKSTART.md` + `DEV_DETAILED.md` (archive the long file or move to `docs/archive/` once trimmed).
+2. Add `docs/REPO_HEALTH.md` with CI status, last green commit hash, and top 3 blockers (tests failing, path quirks).
+3. Split `DEV_NOTES.md` into `docs/guides/QUICKSTART.md` + `DEV_DETAILED.md` (archive the long file or move to `docs/archive/` once trimmed).
 
 Notes and caveats
 - This consolidation used the repository `CHANGELOG.md` to infer recency. Manual review is still required for semantic accuracy (for example, you mentioned `idv2` was deleted — tests still reference it). Where code and docs disagree, pick a canonical implementation and update tests/docs accordingly.

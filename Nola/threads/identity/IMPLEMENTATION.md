@@ -13,4 +13,4 @@ Recommended consolidation steps:
 3. Add examples for `push_identity`, `pull_identity`, and `sync_for_stimuli` (small code snippets).
 
 Notes:
-- Tests in `tests/test_idv2.py` reference legacy `idv2` APIs; consider adding a small compatibility shim that forwards to `Nola/threads/identity` adapter while you update tests.
+- Use `Nola/threads/identity/adapter.py` for new development.

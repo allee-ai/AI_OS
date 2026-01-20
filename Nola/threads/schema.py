@@ -34,7 +34,7 @@ def _get_current_mode() -> str:
         return _MODE_FILE.read_text().strip().lower()
     return os.getenv("NOLA_MODE", "personal").lower()
 
-def _get_db_path() -> Path:
+def get_db_path() -> Path:
     """Get database path based on current mode. Called dynamically to support runtime switching."""
     mode = _get_current_mode()
     db_file = "state_demo.db" if mode == "demo" else "state.db"
@@ -43,8 +43,8 @@ def _get_db_path() -> Path:
 
 # For backwards compatibility, expose DB_PATH as a property-like call
 # Code using DB_PATH directly will still work but won't get runtime switching
-# Code should use _get_db_path() for dynamic switching
-DB_PATH = _get_db_path()
+# Code should use get_db_path() for dynamic switching
+DB_PATH = get_db_path()
 
 # Print mode on startup
 _startup_mode = _get_current_mode()
@@ -55,7 +55,7 @@ if _startup_mode == "demo":
 
 def get_connection(readonly: bool = False) -> sqlite3.Connection:
     """Get a SQLite connection. Uses dynamic DB path to support runtime mode switching."""
-    db_path = _get_db_path()  # Dynamic - reads mode file each time
+    db_path = get_db_path()  # Dynamic - reads mode file each time
     if not readonly:
         db_path.parent.mkdir(parents=True, exist_ok=True)
         conn = sqlite3.connect(str(db_path), check_same_thread=False)
