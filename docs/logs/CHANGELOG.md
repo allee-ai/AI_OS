@@ -5,7 +5,7 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
-## 2026-01-20 — Legacy Code Removal & Database Path Consolidation
+## 2026-01-20 — Legacy Cleanup, Security Audit, Conversation DB Migration
 
 ### Refactoring: Remove IDv2 Legacy System
 - **Deleted Module References**: Removed all `idv2` references from codebase (already deleted in Phase 7, now cleaned docs)
@@ -17,6 +17,23 @@ All notable changes to this repository are documented below. Entries are grouped
 - **Dynamic Mode Switching**: `get_db_path()` reads `NOLA_MODE` env var or `.nola_mode` file at runtime to select `state.db` vs `state_demo.db`
 - **Agent Integration**: Updated `Nola/agent.py` to import `get_db_path()` instead of hardcoding `DEFAULT_STATE_DB`
 - **Eliminated Scatter**: No more hardcoded DB paths — all modules now reference central function
+
+### Security: Pre-Public Audit
+- **API Keys**: Cleared Kernel API key from `.env` file
+- **Personal Identifiers**: Replaced "Cade Roden" with "Allee" in all tracked files
+- **VM IP Addresses**: Replaced hardcoded 159.203.95.51 with `YOUR_VM_IP` placeholder in docs
+- **Local Paths**: Converted `/Users/cade/Desktop` to relative paths throughout codebase
+
+### Architecture: Conversation Storage Migration (JSON → SQLite)
+- **New Module**: Created `Nola/react-chat-app/backend/api/chatschema.py` with:
+  - `convos` table: session_id, name, channel, weight (0.0-1.0), indexed flag, timestamps
+  - `convo_turns` table: FK to convos, user/assistant messages, stimuli_type, context_level
+  - Full CRUD: `save_conversation()`, `add_turn()`, `get_conversation()`, `list_conversations()`
+  - Weight system: `increment_conversation_weight()` for linking_core integration prep
+  - Auto-index tracking: `get_unindexed_high_weight_convos()` for future semantic indexing
+- **Refactored**: `Nola/react-chat-app/backend/api/conversations.py` now uses chatschema instead of JSON files
+- **Refactored**: `Nola/services/agent_service.py` uses `add_turn()` instead of writing to `Stimuli/conversations/*.json`
+- **Backward Compatible**: API endpoints unchanged — frontend works without modification
 
 ### Testing
 - **Test Suite Validation**: All 17 tests pass after refactoring (Agent singleton, thread safety, identity, HEA context levels)

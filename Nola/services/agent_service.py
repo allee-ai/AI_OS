@@ -98,8 +98,14 @@ except ImportError as e:
     get_agent = None
     NOLA_AVAILABLE = False
 
-# Conversation storage path (Stimuli channel) - simplified path
-CONVERSATIONS_PATH = Path(nola_path) / "Stimuli" / "conversations"
+# Conversation storage - now uses SQLite via chatschema
+try:
+    from api.chatschema import save_conversation, add_turn, get_conversation
+    _HAS_CHAT_SCHEMA = True
+    print("✅ Chat schema enabled - conversations stored in DB")
+except ImportError:
+    _HAS_CHAT_SCHEMA = False
+    print("⚠️ Chat schema not available - conversations disabled")
 
 # DB-backed identity - use new thread system
 try:
@@ -129,9 +135,6 @@ class AgentService:
         self.message_history: List[ChatMessage] = []
         self.session_id = f"react_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
         
-        # Ensure conversations directory exists
-        CONVERSATIONS_PATH.mkdir(parents=True, exist_ok=True)
-        
         # Log conversation start (lightweight event)
         if _HAS_LOG_THREAD:
             set_session(self.session_id)
@@ -152,7 +155,8 @@ class AgentService:
         
         if self.agent:
             print(f"🧠 Nola agent initialized: {self.agent.name}")
-            print(f"📁 Conversations will be stored in: {CONVERSATIONS_PATH}")
+            if _HAS_CHAT_SCHEMA:
+                print(f"📁 Conversations stored in database (state.db)")
         
     async def send_message(self, user_message: str, session_id: Optional[str] = None) -> ChatMessage:
         """Send message to Nola and manage context automatically"""
@@ -321,44 +325,39 @@ class AgentService:
 
     
     async def _save_conversation_turn(self, user_msg: str, assistant_msg: str, stimuli_type: str):
-        """Persist conversation to Stimuli/conversations/ for Nola's memory"""
+        """Persist conversation turn to database."""
+        if not _HAS_CHAT_SCHEMA:
+            return
+        
         try:
-            convo_file = CONVERSATIONS_PATH / f"{self.session_id}.json"
-            is_first_turn = not convo_file.exists()
+            # Check if this is first turn (for auto-naming)
+            existing = get_conversation(self.session_id)
+            is_first_turn = existing is None or len(existing.get("turns", [])) == 0
             
-            # Load existing or create new
-            if convo_file.exists():
-                with open(convo_file) as f:
-                    convo_data = json.load(f)
-            else:
+            # If first turn, create conversation with state snapshot
+            if is_first_turn:
                 state_snapshot = {}
                 if self.agent:
                     state_snapshot = self._capture_state_snapshot(stimuli_type)
-
-                convo_data = {
-                    "session_id": self.session_id,
-                    "channel": "react-chat",
-                    "started": datetime.now().isoformat(),
-                    "state_snapshot": state_snapshot,
-                    "turns": []
-                }
+                
+                save_conversation(
+                    session_id=self.session_id,
+                    channel="react-chat",
+                    started=datetime.now(),
+                    state_snapshot=state_snapshot
+                )
             
-            # Add turn
-            convo_data["turns"].append({
-                "timestamp": datetime.now().isoformat(),
-                "user": user_msg,
-                "assistant": assistant_msg,
-                "stimuli_type": stimuli_type,
-                "context_level": self.context_manager.current_level
-            })
-            convo_data["last_updated"] = datetime.now().isoformat()
-            
-            # Save
-            with open(convo_file, "w") as f:
-                json.dump(convo_data, f, indent=2)
+            # Add the turn
+            add_turn(
+                session_id=self.session_id,
+                user_message=user_msg,
+                assistant_message=assistant_msg,
+                stimuli_type=stimuli_type,
+                context_level=self.context_manager.current_level
+            )
             
             # Auto-name conversation after first turn (background task)
-            if is_first_turn or len(convo_data["turns"]) == 1:
+            if is_first_turn:
                 asyncio.create_task(self._auto_name_conversation(user_msg, assistant_msg))
                 
         except Exception as e:

@@ -3,21 +3,30 @@ Conversations API
 
 List, load, and manage saved conversations.
 Auto-generates conversation names using a small LLM after first turn.
+
+Now uses SQLite database (via chatschema) instead of JSON files.
 """
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from typing import List, Optional
-from pathlib import Path
 from datetime import datetime
-import json
 import asyncio
 import os
 
-router = APIRouter(prefix="/api/conversations", tags=["conversations"])
+# Import database functions
+from .chatschema import (
+    save_conversation,
+    add_turn,
+    get_conversation,
+    list_conversations as db_list_conversations,
+    rename_conversation as db_rename_conversation,
+    archive_conversation as db_archive_conversation,
+    delete_conversation as db_delete_conversation,
+    increment_conversation_weight,
+)
 
-# Path to conversations (same as agent_service)
-CONVERSATIONS_PATH = Path(__file__).resolve().parents[4] / "Nola" / "Stimuli" / "conversations"
+router = APIRouter(prefix="/api/conversations", tags=["conversations"])
 
 # Small model for naming - fast background task
 NAMING_MODEL = os.getenv("NOLA_NAMING_MODEL", "llama3.2:1b")
@@ -31,6 +40,7 @@ class ConversationSummary(BaseModel):
     last_message: Optional[str] = None
     preview: Optional[str] = None
     archived: bool = False
+    weight: Optional[float] = None
 
 
 class ConversationDetail(BaseModel):
@@ -39,6 +49,7 @@ class ConversationDetail(BaseModel):
     started: str
     turns: List[dict]
     state_snapshot: Optional[dict] = None
+    weight: Optional[float] = None
 
 
 class RenameRequest(BaseModel):
@@ -82,144 +93,80 @@ async def generate_conversation_name(first_user_msg: str, first_assistant_msg: s
 async def auto_name_conversation(session_id: str):
     """Background task to name a conversation after first turn."""
     try:
-        convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
-        if not convo_file.exists():
+        convo = get_conversation(session_id)
+        if not convo:
             return
-        
-        with open(convo_file) as f:
-            data = json.load(f)
         
         # Only name if no name yet and has at least one turn
-        if data.get("name") or not data.get("turns"):
+        if convo.get("name") and not convo["name"].startswith("Chat "):
+            return  # Already has a real name
+        
+        turns = convo.get("turns", [])
+        if not turns:
             return
         
-        first_turn = data["turns"][0]
+        first_turn = turns[0]
         name = await generate_conversation_name(
             first_turn.get("user", ""),
             first_turn.get("assistant", "")
         )
         
-        # Update file with name
-        data["name"] = name
-        with open(convo_file, "w") as f:
-            json.dump(data, f, indent=2)
-        
+        # Update in database
+        db_rename_conversation(session_id, name)
         print(f"📝 Named conversation {session_id}: {name}")
         
     except Exception as e:
         print(f"Auto-naming failed for {session_id}: {e}")
 
 
-def _get_conversation_preview(data: dict) -> str:
-    """Get a preview of the conversation."""
-    turns = data.get("turns", [])
-    if not turns:
-        return ""
-    
-    first_msg = turns[0].get("user", "")
-    return first_msg[:100] + "..." if len(first_msg) > 100 else first_msg
-
-
-def _get_conversation_name(data: dict, session_id: str) -> str:
-    """Get conversation name, with fallback."""
-    if data.get("name"):
-        return data["name"]
-    
-    # Fallback: use timestamp from session_id
-    try:
-        # Format: react_20260109_123456
-        parts = session_id.split("_")
-        if len(parts) >= 2:
-            date_str = parts[1]
-            return f"Chat from {date_str[:4]}-{date_str[4:6]}-{date_str[6:]}"
-    except:
-        pass
-    
-    return "Unnamed Conversation"
-
-
 @router.get("", response_model=List[ConversationSummary])
-async def list_conversations(limit: int = 50, archived: bool = False):
+async def list_conversations_endpoint(limit: int = 50, archived: bool = False):
     """List all saved conversations, newest first. Filter by archived status."""
-    conversations = []
+    conversations = db_list_conversations(limit=limit, archived=archived)
     
-    if not CONVERSATIONS_PATH.exists():
-        return []
-    
-    # Get all conversation files
-    files = list(CONVERSATIONS_PATH.glob("*.json"))
-    
-    # Sort by modification time, newest first
-    files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
-    
-    for file in files[:limit * 2]:  # Read more to account for filtering
-        try:
-            with open(file) as f:
-                data = json.load(f)
-            
-            # Filter by archived status
-            is_archived = data.get("archived", False)
-            if is_archived != archived:
-                continue
-            
-            session_id = data.get("session_id", file.stem)
-            turns = data.get("turns", [])
-            
-            conversations.append(ConversationSummary(
-                session_id=session_id,
-                name=_get_conversation_name(data, session_id),
-                started=data.get("started", ""),
-                turn_count=len(turns),
-                last_message=turns[-1].get("assistant", "")[:100] if turns else None,
-                preview=_get_conversation_preview(data),
-                archived=is_archived
-            ))
-            
-            if len(conversations) >= limit:
-                break
-                
-        except Exception as e:
-            print(f"Error loading {file}: {e}")
-            continue
-    
-    return conversations
+    return [
+        ConversationSummary(
+            session_id=c["session_id"],
+            name=c["name"],
+            started=c["started"] or "",
+            turn_count=c["turn_count"],
+            last_message=c.get("last_message"),
+            preview=c.get("preview"),
+            archived=c["archived"],
+            weight=c.get("weight"),
+        )
+        for c in conversations
+    ]
 
 
 @router.get("/{session_id}", response_model=ConversationDetail)
-async def get_conversation(session_id: str):
+async def get_conversation_endpoint(session_id: str):
     """Get full conversation by session ID."""
-    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    convo = get_conversation(session_id)
     
-    if not convo_file.exists():
+    if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
     
-    with open(convo_file) as f:
-        data = json.load(f)
+    # Increment weight when user views conversation (shows it's important)
+    increment_conversation_weight(session_id, 0.02)
     
     return ConversationDetail(
-        session_id=session_id,
-        name=_get_conversation_name(data, session_id),
-        started=data.get("started", ""),
-        turns=data.get("turns", []),
-        state_snapshot=data.get("state_snapshot")
+        session_id=convo["session_id"],
+        name=convo["name"],
+        started=convo["started"] or "",
+        turns=convo["turns"],
+        state_snapshot=convo.get("state_snapshot"),
+        weight=convo.get("weight"),
     )
 
 
 @router.post("/{session_id}/rename")
 async def rename_conversation(session_id: str, request: RenameRequest):
     """Manually rename a conversation."""
-    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    success = db_rename_conversation(session_id, request.name)
     
-    if not convo_file.exists():
+    if not success:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    with open(convo_file) as f:
-        data = json.load(f)
-    
-    data["name"] = request.name
-    
-    with open(convo_file, "w") as f:
-        json.dump(data, f, indent=2)
     
     return {"success": True, "name": request.name}
 
@@ -227,12 +174,10 @@ async def rename_conversation(session_id: str, request: RenameRequest):
 @router.delete("/{session_id}")
 async def delete_conversation(session_id: str):
     """Delete a conversation."""
-    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    success = db_delete_conversation(session_id)
     
-    if not convo_file.exists():
+    if not success:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    convo_file.unlink()
     
     return {"success": True, "deleted": session_id}
 
@@ -240,18 +185,10 @@ async def delete_conversation(session_id: str):
 @router.post("/{session_id}/archive")
 async def archive_conversation(session_id: str):
     """Archive a conversation (hide from main list)."""
-    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    success = db_archive_conversation(session_id, archived=True)
     
-    if not convo_file.exists():
+    if not success:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    with open(convo_file) as f:
-        data = json.load(f)
-    
-    data["archived"] = True
-    
-    with open(convo_file, "w") as f:
-        json.dump(data, f, indent=2)
     
     return {"success": True, "archived": True}
 
@@ -259,18 +196,10 @@ async def archive_conversation(session_id: str):
 @router.post("/{session_id}/unarchive")
 async def unarchive_conversation(session_id: str):
     """Unarchive a conversation (restore to main list)."""
-    convo_file = CONVERSATIONS_PATH / f"{session_id}.json"
+    success = db_archive_conversation(session_id, archived=False)
     
-    if not convo_file.exists():
+    if not success:
         raise HTTPException(status_code=404, detail="Conversation not found")
-    
-    with open(convo_file) as f:
-        data = json.load(f)
-    
-    data["archived"] = False
-    
-    with open(convo_file, "w") as f:
-        json.dump(data, f, indent=2)
     
     return {"success": True, "archived": False}
 
@@ -279,5 +208,8 @@ async def unarchive_conversation(session_id: str):
 async def create_new_conversation():
     """Create a new conversation session (clears current and starts fresh)."""
     session_id = f"react_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    
+    # Pre-create in database
+    save_conversation(session_id=session_id, started=datetime.now())
     
     return {"session_id": session_id}
