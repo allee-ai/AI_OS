@@ -3,30 +3,13 @@ Base Thread Adapter
 ===================
 
 Universal base class for all thread adapters.
-All adapters inherit from this and use schema.py for data access.
+Each thread has its own schema.py with dedicated tables/storage.
 """
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
 from dataclasses import dataclass, field
 from enum import Enum
-
-# Generic module functions - these will be refactored later
-# Each thread should eventually have its own specific functions
-try:
-    from Nola.threads.schema import (
-        pull_from_module,
-        pull_all_thread_data,
-        push_to_module,
-        get_registered_modules,
-    )
-except ImportError:
-    from .schema import (
-        pull_from_module,
-        pull_all_thread_data,
-        push_to_module,
-        get_registered_modules,
-    )
 
 
 class ThreadStatus(Enum):
@@ -129,35 +112,25 @@ class BaseThreadAdapter:
         return self._description
     
     # =========================================================================
-    # UNIVERSAL INTERFACE - use schema.py
+    # UNIVERSAL INTERFACE - override in subclass with thread-specific schema
     # =========================================================================
     
     def get_modules(self) -> List[str]:
-        """List modules in this thread from DB."""
-        modules = get_registered_modules(self._name)
-        return [m["module_name"] for m in modules]
+        """List modules in this thread. Override in subclass."""
+        return []
     
     def get_data(self, level: int = 2, limit: int = 50) -> List[Dict]:
         """
         Pull all data from this thread at given level.
+        Override in subclass with thread-specific implementation.
         
         Returns flat list of items from all modules.
         """
-        all_data = pull_all_thread_data(self._name, level)
-        
-        flat = []
-        for module_name, rows in all_data.items():
-            for row in rows[:limit]:
-                flat.append({
-                    **row,
-                    "module": module_name,
-                })
-        
-        return flat
+        return []
     
     def get_module_data(self, module: str, level: int = 2, limit: int = 50) -> List[Dict]:
-        """Pull data from a specific module."""
-        return pull_from_module(self._name, module, level, limit)
+        """Pull data from a specific module. Override in subclass."""
+        return []
     
     def push(
         self,
@@ -168,8 +141,7 @@ class BaseThreadAdapter:
         level: int = 2,
         weight: float = 0.5
     ) -> None:
-        """Push a row to a module."""
-        push_to_module(self._name, module, key, metadata, data, level, weight)
+        """Push a row to a module. Override in subclass."""
         self._last_sync = datetime.now(timezone.utc).isoformat()
     
     def get_metadata(self) -> Dict[str, Any]:

@@ -1,79 +1,35 @@
 """
-Chat Schema - Database tables for conversation storage
-
-Stores conversations in state.db instead of JSON files.
-Respects NOLA_MODE for demo vs personal database switching.
+Chat Schema - Conversation & Turn storage
+-----------------------------------------
+SQLite tables for conversation history.
 
 Tables:
-- convos: Conversation metadata (session_id, name, timestamps, weight)
+- convos: Conversation metadata
 - convo_turns: Individual turns within conversations
-
-TODO: Wire into linking_core for concept graph indexing
-      High-weight convos (>0.3) should be indexed for spread activation
 """
 
 import sqlite3
 import json
-from datetime import datetime, timezone
-from typing import Optional, List, Dict, Any
+from datetime import datetime
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 import sys
 
-# Ensure project root is on path for Nola imports
-_THIS_FILE = Path(__file__).resolve()
-_PROJECT_ROOT = _THIS_FILE.parents[4]  # Up to AI_OS/
-if str(_PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(_PROJECT_ROOT))
+# Ensure project root is on path for data imports
+project_root = Path(__file__).resolve().parents[2]
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
 
-# Import DB path from central location (respects demo/personal mode)
-try:
-    from data.db import get_db_path, is_demo_mode
-    def _get_current_mode() -> str:
-        return "demo" if is_demo_mode() else "personal"
-except ImportError:
-    # Fallback if data.db not available - must still respect mode!
-    import os
-    _MODE_FILE = _PROJECT_ROOT / "data" / ".nola_mode"
-    
-    def _get_current_mode() -> str:
-        """Get current mode - checks file first, then env var."""
-        if _MODE_FILE.exists():
-            return _MODE_FILE.read_text().strip().lower()
-        return os.getenv("NOLA_MODE", "personal").lower()
-    
-    def get_db_path() -> Path:
-        """Get database path based on current mode."""
-        mode = _get_current_mode()
-        db_file = "state_demo.db" if mode == "demo" else "state.db"
-        return _PROJECT_ROOT / "data" / "db" / db_file
+from data.db import get_connection
 
 
-def get_connection(readonly: bool = False) -> sqlite3.Connection:
-    """Get SQLite connection using central DB path."""
-    db_path = get_db_path()
-    # Debug: log which DB we're connecting to
-    print(f"📀 chatschema connecting to: {db_path.name}")
-    if not readonly:
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
+# =============================================================================
+# Table Initialization
+# =============================================================================
 
-
-def _get_connection_for_db(db_path: Path, readonly: bool = False) -> sqlite3.Connection:
-    """Get SQLite connection for a specific database path."""
-    if not readonly:
-        db_path.parent.mkdir(parents=True, exist_ok=True)
-    conn = sqlite3.connect(str(db_path), check_same_thread=False)
-    conn.row_factory = sqlite3.Row
-    conn.execute("PRAGMA foreign_keys = ON")
-    return conn
-
-
-def _init_convos_tables_for_db(db_path: Path):
-    """Create convos and convo_turns tables in a specific database."""
-    conn = _get_connection_for_db(db_path)
+def init_convos_tables():
+    """Initialize conversation tables."""
+    conn = get_connection()
     cur = conn.cursor()
     
     # Main conversations table
@@ -81,17 +37,22 @@ def _init_convos_tables_for_db(db_path: Path):
         CREATE TABLE IF NOT EXISTS convos (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             session_id TEXT UNIQUE NOT NULL,
-            channel TEXT DEFAULT 'react-chat',
+            channel TEXT DEFAULT 'react',
             name TEXT,
-            started TIMESTAMP NOT NULL,
-            last_updated TIMESTAMP,
+            started TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             archived BOOLEAN DEFAULT FALSE,
             weight REAL DEFAULT 0.5,
-            indexed BOOLEAN DEFAULT FALSE,
             turn_count INTEGER DEFAULT 0,
-            state_snapshot_json TEXT,
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            indexed BOOLEAN DEFAULT FALSE,
+            state_snapshot_json TEXT
         )
+    """)
+    
+    # Index for listing
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_convos_updated 
+        ON convos(last_updated DESC)
     """)
     
     # Conversation turns table
@@ -100,92 +61,64 @@ def _init_convos_tables_for_db(db_path: Path):
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             convo_id INTEGER NOT NULL,
             turn_index INTEGER NOT NULL,
-            timestamp TIMESTAMP NOT NULL,
+            timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             user_message TEXT,
             assistant_message TEXT,
             stimuli_type TEXT,
-            context_level INTEGER,
+            context_level INTEGER DEFAULT 0,
             metadata_json TEXT,
             FOREIGN KEY (convo_id) REFERENCES convos(id) ON DELETE CASCADE
         )
     """)
     
-    # Indexes for common queries
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_convos_session ON convos(session_id)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_convos_archived ON convos(archived)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_convos_started ON convos(started DESC)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_convos_weight ON convos(weight)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_convos_indexed ON convos(indexed)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_turns_convo ON convo_turns(convo_id)")
-    cur.execute("CREATE INDEX IF NOT EXISTS idx_turns_timestamp ON convo_turns(timestamp)")
+    # Index for turn lookups
+    cur.execute("""
+        CREATE INDEX IF NOT EXISTS idx_turns_convo 
+        ON convo_turns(convo_id, turn_index)
+    """)
     
     conn.commit()
     conn.close()
 
 
-def init_convos_tables():
-    """
-    Create convos and convo_turns tables in BOTH databases.
-    
-    This ensures tables exist regardless of which mode is active,
-    preventing crossover issues when switching modes.
-    """
-    db_dir = _PROJECT_ROOT / "data" / "db"
-    db_dir.mkdir(parents=True, exist_ok=True)
-    
-    # Initialize in both databases
-    for db_file in ["state.db", "state_demo.db"]:
-        db_path = db_dir / db_file
-        try:
-            _init_convos_tables_for_db(db_path)
-        except Exception as e:
-            print(f"⚠️ Could not init convos tables in {db_file}: {e}")
-
-
 # =============================================================================
-# CRUD Operations
+# Conversation CRUD
 # =============================================================================
 
 def save_conversation(
     session_id: str,
-    channel: str = "react-chat",
     name: Optional[str] = None,
-    started: Optional[datetime] = None,
+    channel: str = "react",
     state_snapshot: Optional[Dict] = None,
-    weight: float = 0.5
-) -> Optional[int]:
+) -> bool:
     """
-    Create or update a conversation.
+    Create or update a conversation record.
+    
+    Args:
+        session_id: Unique identifier for the conversation
+        name: Human-readable name (optional)
+        channel: Source channel (react, cli, etc.)
+        state_snapshot: Optional snapshot of agent state at conversation start
     
     Returns:
-        convo_id (primary key)
+        True if created/updated successfully
     """
     conn = get_connection()
     cur = conn.cursor()
     
-    now = datetime.now(timezone.utc).isoformat()
-    started_str = started.isoformat() if started else now
-    snapshot_json = json.dumps(state_snapshot) if state_snapshot else None
+    state_json = json.dumps(state_snapshot) if state_snapshot else None
     
-    # Upsert - update if exists, insert if not
     cur.execute("""
-        INSERT INTO convos (session_id, channel, name, started, last_updated, state_snapshot_json, weight)
-        VALUES (?, ?, ?, ?, ?, ?, ?)
+        INSERT INTO convos (session_id, name, channel, state_snapshot_json)
+        VALUES (?, ?, ?, ?)
         ON CONFLICT(session_id) DO UPDATE SET
             name = COALESCE(excluded.name, convos.name),
-            last_updated = excluded.last_updated,
-            state_snapshot_json = COALESCE(excluded.state_snapshot_json, convos.state_snapshot_json)
-    """, (session_id, channel, name, started_str, now, snapshot_json, weight))
-    
-    # Get the convo_id
-    cur.execute("SELECT id FROM convos WHERE session_id = ?", (session_id,))
-    row = cur.fetchone()
-    convo_id = row[0] if row else cur.lastrowid
+            last_updated = CURRENT_TIMESTAMP
+    """, (session_id, name, channel, state_json))
     
     conn.commit()
     conn.close()
-    
-    return convo_id
+    return True
 
 
 def add_turn(
@@ -193,23 +126,28 @@ def add_turn(
     user_message: str,
     assistant_message: str,
     stimuli_type: Optional[str] = None,
-    context_level: Optional[int] = None,
-    metadata: Optional[Dict] = None
-) -> Optional[int]:
+    context_level: int = 0,
+    metadata: Optional[Dict] = None,
+) -> int:
     """
     Add a turn to a conversation.
-    
     Creates the conversation if it doesn't exist.
     
+    Args:
+        session_id: Conversation identifier
+        user_message: What the user said
+        assistant_message: What the assistant responded
+        stimuli_type: Type of stimulus (user, scheduled, system, etc.)
+        context_level: 0=none, 1=recent, 2=full
+        metadata: Optional metadata dict
+    
     Returns:
-        turn_id
+        Turn index (0-based)
     """
     conn = get_connection()
     cur = conn.cursor()
     
-    now = datetime.now(timezone.utc).isoformat()
-    
-    # Ensure conversation exists
+    # Get or create conversation
     cur.execute("SELECT id, turn_count FROM convos WHERE session_id = ?", (session_id,))
     row = cur.fetchone()
     
@@ -217,33 +155,31 @@ def add_turn(
         convo_id = row[0]
         turn_index = row[1]
     else:
-        # Create conversation
+        # Create new conversation
         cur.execute("""
-            INSERT INTO convos (session_id, started, last_updated, turn_count)
-            VALUES (?, ?, ?, 0)
-        """, (session_id, now, now))
+            INSERT INTO convos (session_id, channel) VALUES (?, 'react')
+        """, (session_id,))
         convo_id = cur.lastrowid
         turn_index = 0
     
     # Add the turn
     metadata_json = json.dumps(metadata) if metadata else None
     cur.execute("""
-        INSERT INTO convo_turns (convo_id, turn_index, timestamp, user_message, assistant_message, stimuli_type, context_level, metadata_json)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-    """, (convo_id, turn_index, now, user_message, assistant_message, stimuli_type, context_level, metadata_json))
-    turn_id = cur.lastrowid
+        INSERT INTO convo_turns (convo_id, turn_index, user_message, assistant_message, stimuli_type, context_level, metadata_json)
+        VALUES (?, ?, ?, ?, ?, ?, ?)
+    """, (convo_id, turn_index, user_message, assistant_message, stimuli_type, context_level, metadata_json))
     
     # Update conversation metadata
     cur.execute("""
-        UPDATE convos 
-        SET turn_count = turn_count + 1, last_updated = ?
+        UPDATE convos SET 
+            turn_count = turn_count + 1,
+            last_updated = CURRENT_TIMESTAMP
         WHERE id = ?
-    """, (now, convo_id))
+    """, (convo_id,))
     
     conn.commit()
     conn.close()
-    
-    return turn_id
+    return turn_index
 
 
 def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:

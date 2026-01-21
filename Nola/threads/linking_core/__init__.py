@@ -55,6 +55,9 @@ from .schema import (
     get_concepts, get_all_links, get_links_for_concept,
     create_link, delete_link, update_link_strength,
     get_graph_data, get_activation_path, get_stats,
+    # Conversation processing
+    extract_and_link_concepts,
+    process_conversation_turn,
 )
 
 __all__ = [
@@ -86,5 +89,8 @@ __all__ = [
     "get_concepts", "get_all_links", "get_links_for_concept",
     "create_link", "delete_link", "update_link_strength",
     "get_graph_data", "get_activation_path", "get_stats",
+    # Conversation processing
+    "extract_and_link_concepts",
+    "process_conversation_turn",
 ]
 

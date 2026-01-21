@@ -760,3 +760,79 @@ def get_stats() -> Dict[str, Any]:
         "link_count": link_count,
         "average_strength": round(avg_strength, 3) if avg_strength else 0,
     }
+
+
+# ============================================================================
+# Concept Extraction & Linking (from conversation)
+# ============================================================================
+
+def extract_and_link_concepts(text: str, learning_rate: float = 0.1) -> Dict[str, Any]:
+    """
+    Extract concepts from text and create/strengthen links between them.
+    
+    This is the main entry point for the linking_core to process new text.
+    
+    Returns:
+        {"concepts": [...], "links_created": int, "links_strengthened": int}
+    """
+    concepts = extract_concepts_from_text(text)
+    
+    if len(concepts) < 2:
+        return {"concepts": concepts, "links_created": 0, "links_strengthened": 0}
+    
+    links_created = 0
+    links_strengthened = 0
+    
+    # Link all concept pairs
+    for i, c1 in enumerate(concepts):
+        for c2 in concepts[i+1:]:
+            # Check if link exists
+            conn = get_connection(readonly=True)
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT strength FROM concept_links 
+                WHERE (concept_a = ? AND concept_b = ?) OR (concept_a = ? AND concept_b = ?)
+            """, (c1, c2, c2, c1))
+            existing = cur.fetchone()
+            conn.close()
+            
+            if existing:
+                links_strengthened += 1
+            else:
+                links_created += 1
+            
+            # Create or strengthen link
+            link_concepts(c1, c2, learning_rate)
+    
+    return {
+        "concepts": concepts,
+        "links_created": links_created,
+        "links_strengthened": links_strengthened
+    }
+
+
+def process_conversation_turn(user_input: str, agent_response: str, learning_rate: float = 0.1) -> Dict[str, Any]:
+    """
+    Process a conversation turn for concept linking.
+    
+    Extracts concepts from both user input and agent response,
+    creates links between co-occurring concepts.
+    """
+    # Combine both sides of conversation
+    combined = f"{user_input} {agent_response}"
+    
+    result = extract_and_link_concepts(combined, learning_rate)
+    
+    # Also index significant phrases
+    from Nola.threads.log import log_event
+    try:
+        log_event(
+            event_type="linking",
+            data=f"Processed {len(result['concepts'])} concepts",
+            source="linking_core",
+            metadata={"concepts": result["concepts"][:10]}  # Limit for logging
+        )
+    except Exception:
+        pass
+    
+    return result

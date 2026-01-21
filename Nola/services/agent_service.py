@@ -11,9 +11,18 @@ import os
 import json
 from datetime import datetime
 from pathlib import Path
-from typing import Optional, List
-from models.chat_models import ChatMessage
+from typing import Optional, List, Literal
+from pydantic import BaseModel
 import asyncio
+
+
+# Local ChatMessage model to avoid circular imports with Nola.chat
+class ChatMessage(BaseModel):
+    id: str
+    content: str
+    role: Literal["user", "assistant"]
+    timestamp: datetime
+
 
 # Shared path bootstrap
 from Nola.path_utils import (
@@ -63,18 +72,8 @@ except ImportError as e:
     get_consciousness_context = None
     print(f"⚠️ Subconscious not available: {e}")
 
-# Import Memory Service
-try:
-    from services.memory_service import MemoryService
-    MEMORY_AVAILABLE = True
-except ImportError:
-    # Fallback if running directly or path issues
-    try:
-        from memory_service import MemoryService
-        MEMORY_AVAILABLE = True
-    except ImportError:
-        print("⚠️ MemoryService not found. Learning disabled.")
-        MEMORY_AVAILABLE = False
+# Memory extraction now handled by subconscious orchestrator
+MEMORY_AVAILABLE = False
 
 # Import Kernel Service for browser automation
 try:
@@ -98,9 +97,9 @@ except ImportError as e:
     get_agent = None
     NOLA_AVAILABLE = False
 
-# Conversation storage - now uses SQLite via chatschema
+# Conversation storage - now uses Nola.chat module
 try:
-    from api.chatschema import save_conversation, add_turn, get_conversation
+    from Nola.chat.schema import save_conversation, add_turn, get_conversation
     _HAS_CHAT_SCHEMA = True
     print("✅ Chat schema enabled - conversations stored in DB")
 except ImportError:
@@ -151,12 +150,12 @@ class AgentService:
             )
         
         # Initialize Memory Service with session_id for proper fact attribution
-        self.memory_service = MemoryService(session_id=self.session_id) if MEMORY_AVAILABLE else None
+        self.memory_service = None  # Memory extraction moved to subconscious
         
         if self.agent:
             print(f"🧠 Nola agent initialized: {self.agent.name}")
             if _HAS_CHAT_SCHEMA:
-                from api.chatschema import get_db_path
+                from data.db import get_db_path
                 db_name = get_db_path().name
                 print(f"📁 Conversations stored in database ({db_name})")
         

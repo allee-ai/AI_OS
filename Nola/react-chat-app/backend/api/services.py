@@ -1,5 +1,17 @@
 """
-Services API - Manage Nola's background services
+Services API - Manage Nola's background services and loops
+
+Architecture:
+- Background Loops (subconscious/loops.py):
+  - MemoryLoop: Extracts facts from conversations → temp_memory
+  - ConsolidationLoop: Promotes approved facts → identity/philosophy
+  - SyncLoop: Keeps threads in sync
+  - HealthLoop: Monitors thread health
+
+- Standalone Services:
+  - FactExtractor: LLM-based fact extraction
+  - KernelService: Browser automation
+  - AgentService: Core chat agent
 """
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
@@ -12,20 +24,6 @@ router = APIRouter(prefix="/api/services", tags=["services"])
 
 # Service definitions with their module paths
 SERVICE_DEFINITIONS = {
-    "memory": {
-        "name": "Memory Service",
-        "description": "Extracts and manages facts from conversations",
-        "module": "Nola.services.memory_service",
-        "class": "MemoryService",
-        "icon": "🧠"
-    },
-    "consolidation": {
-        "name": "Consolidation Daemon",
-        "description": "Promotes facts from short-term to long-term memory",
-        "module": "Nola.services.consolidation_daemon",
-        "class": "ConsolidationDaemon",
-        "icon": "📦"
-    },
     "fact-extractor": {
         "name": "Fact Extractor",
         "description": "LLM-based fact extraction with detail levels",
@@ -254,6 +252,33 @@ async def list_services():
     return services
 
 
+# === Background Loops ===
+
+@router.get("/loops/status")
+async def get_loops_status():
+    """Get status of all background loops (memory, consolidation, sync, health)."""
+    try:
+        from Nola.subconscious.core import get_core
+        core = get_core()
+        
+        if hasattr(core, '_loops') and core._loops:
+            return {
+                "loops": core._loops.get_stats(),
+                "count": len(core._loops._loops)
+            }
+        return {
+            "loops": [],
+            "count": 0,
+            "message": "Loop manager not initialized"
+        }
+    except Exception as e:
+        return {
+            "loops": [],
+            "count": 0,
+            "error": str(e)
+        }
+
+
 @router.get("/{service_id}", response_model=ServiceStatus)
 async def get_service(service_id: str):
     """Get status of a specific service."""
@@ -355,23 +380,12 @@ async def get_pending_facts():
 
 @router.post("/consolidation/run")
 async def run_consolidation():
-    """Manually trigger consolidation daemon."""
-    try:
-        from Nola.services.consolidation_daemon import ConsolidationDaemon
-        
-        daemon = ConsolidationDaemon()
-        result = daemon.run()
-        
-        return {
-            "success": True,
-            "facts_processed": result.get("facts_processed", 0),
-            "promoted_l2": result.get("promoted_l2", 0),
-            "promoted_l3": result.get("promoted_l3", 0),
-            "discarded": result.get("discarded", 0),
-            "errors": result.get("errors", [])
-        }
-    except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+    """Manually trigger consolidation - TODO: implement in subconscious."""
+    return {
+        "success": False,
+        "message": "Consolidation moved to subconscious orchestrator - not yet implemented",
+        "facts_processed": 0
+    }
 
 
 # === Fact Extractor Endpoints ===

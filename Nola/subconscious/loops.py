@@ -154,6 +154,33 @@ class BackgroundLoop:
                     break
 
 
+class MemoryLoop(BackgroundLoop):
+    """
+    Periodically extracts facts from recent conversations.
+    
+    Processes new conversation turns and extracts identity/philosophy facts
+    into temp_memory for user review before consolidation.
+    """
+    
+    def __init__(self, interval: float = 60.0):  # 1 minute
+        config = LoopConfig(
+            interval_seconds=interval,
+            name="memory",
+            enabled=True
+        )
+        super().__init__(config, self._extract)
+        self._last_processed_turn_id: Optional[int] = None
+    
+    def _extract(self) -> None:
+        """Extract facts from recent conversation turns."""
+        # TODO: Implement extraction logic
+        # 1. Get recent conversation turns since last_processed_turn_id
+        # 2. For each turn, extract facts using LLM
+        # 3. Store in temp_memory for user approval
+        # 4. Update last_processed_turn_id
+        pass
+
+
 class ConsolidationLoop(BackgroundLoop):
     """
     Periodically runs the consolidation daemon.
@@ -170,22 +197,13 @@ class ConsolidationLoop(BackgroundLoop):
         super().__init__(config, self._consolidate)
     
     def _consolidate(self) -> None:
-        """Run consolidation daemon."""
-        try:
-            from Nola.services.consolidation_daemon import run_consolidation
-            
-            result = run_consolidation(dry_run=False)
-            
-            # Log if any facts were processed
-            if result and result.get("processed", 0) > 0:
-                from Nola.threads.log import log_event
-                log_event(
-                    "memory:consolidate",
-                    "consolidation_loop",
-                    f"Processed {result['processed']} facts, promoted {result.get('promoted', 0)}"
-                )
-        except ImportError:
-            pass  # Daemon not available yet
+        """Run consolidation - promotes approved facts to identity/philosophy."""
+        # TODO: Consolidation logic will be implemented here
+        # 1. Get approved facts from temp_memory
+        # 2. Score them for relevance/importance
+        # 3. Promote high-scoring facts to identity or philosophy thread
+        # 4. Mark as consolidated in temp_memory
+        pass
 
 
 class SyncLoop(BackgroundLoop):
@@ -319,9 +337,10 @@ def create_default_loops() -> LoopManager:
         Configured LoopManager ready to start
     """
     manager = LoopManager()
-    manager.add(ConsolidationLoop())
-    manager.add(SyncLoop())
-    manager.add(HealthLoop())
+    manager.add(MemoryLoop())       # Extract facts from conversations
+    manager.add(ConsolidationLoop()) # Promote approved facts
+    manager.add(SyncLoop())          # Sync state across threads
+    manager.add(HealthLoop())        # Monitor thread health
     return manager
 
 
@@ -329,6 +348,7 @@ __all__ = [
     "BackgroundLoop",
     "LoopConfig",
     "LoopStatus",
+    "MemoryLoop",
     "ConsolidationLoop",
     "SyncLoop",
     "HealthLoop",

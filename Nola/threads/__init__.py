@@ -109,18 +109,8 @@ def get_thread_names() -> List[str]:
 
 
 # =============================================================================
-# NEW: Schema-based API (use this instead of old adapters)
+# LinkingCore scoring utilities
 # =============================================================================
-from .schema import (
-    bootstrap_threads,
-    push_to_module,
-    pull_from_module,
-    pull_all_thread_data,
-    get_thread_summary,
-    get_registered_modules,
-    register_module,
-)
-
 from .linking_core import (
     score_relevance,
     rank_items,
@@ -135,7 +125,7 @@ __all__ = [
     "HealthReport",
     "IntrospectionResult",
     
-    # Thread adapters (v2 - use schema.py)
+    # Thread adapters
     "get_all_threads",
     "get_thread",
     "get_thread_names",
@@ -146,16 +136,7 @@ __all__ = [
     "PhilosophyThreadAdapter",
     "ReflexThreadAdapter",
     
-    # Schema API
-    "bootstrap_threads",
-    "push_to_module",
-    "pull_from_module",
-    "pull_all_thread_data",
-    "get_thread_summary",
-    "get_registered_modules",
-    "register_module",
-    
-    # NEW: LinkingCore scoring
+    # LinkingCore scoring
     "score_relevance",
     "rank_items",
 ]

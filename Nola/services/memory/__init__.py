@@ -1,14 +1,7 @@
 """Memory service facade.
 
-Provides unified imports for memory extraction and consolidation without
-exposing internal file layout.
+DEPRECATED: Memory extraction and consolidation have been moved to the subconscious orchestrator.
+This module is kept for backwards compatibility but exports nothing.
 """
 
-from Nola.services.memory_service import MemoryService
-from Nola.services.consolidation_daemon import ConsolidationDaemon, ConsolidationConfig
-
-__all__ = [
-    "MemoryService",
-    "ConsolidationDaemon",
-    "ConsolidationConfig",
-]
+__all__ = []

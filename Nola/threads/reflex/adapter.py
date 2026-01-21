@@ -18,18 +18,26 @@ import re
 
 try:
     from Nola.threads.base import BaseThreadAdapter, HealthReport, IntrospectionResult
+    from Nola.threads.reflex.schema import (
+        get_greetings, get_shortcuts, get_system_reflexes,
+        add_greeting, add_shortcut, add_system_reflex,
+    )
 except ImportError:
     from ..base import BaseThreadAdapter, HealthReport, IntrospectionResult
+    from .schema import (
+        get_greetings, get_shortcuts, get_system_reflexes,
+        add_greeting, add_shortcut, add_system_reflex,
+    )
 
 
 class ReflexThreadAdapter(BaseThreadAdapter):
     """
     Thread adapter for quick patterns and automatic responses.
     
-    Uses schema.py for all data access:
-    - reflex_greetings: Greeting responses
-    - reflex_shortcuts: User shortcuts
-    - reflex_system: System reflexes
+    Uses local schema.py for in-memory pattern storage.
+    - greetings: Greeting responses
+    - shortcuts: User shortcuts
+    - system: System reflexes
     """
     
     _name = "reflex"
@@ -38,10 +46,8 @@ class ReflexThreadAdapter(BaseThreadAdapter):
     def health(self) -> HealthReport:
         """Check reflex thread health."""
         try:
-            # Reflex works even without data - it's ready to learn
-            modules = self.get_modules()
-            greetings = self.get_greetings(level=1)
-            shortcuts = self.get_shortcuts(level=1)
+            greetings = get_greetings(level=1)
+            shortcuts = get_shortcuts(level=1)
             
             total_patterns = len(greetings) + len(shortcuts)
             
@@ -61,15 +67,30 @@ class ReflexThreadAdapter(BaseThreadAdapter):
     
     def get_greetings(self, level: int = 2) -> List[Dict]:
         """Get greeting patterns."""
-        return self.get_module_data("greetings", level)
+        return get_greetings(level)
     
     def get_shortcuts(self, level: int = 2) -> List[Dict]:
         """Get user shortcuts."""
-        return self.get_module_data("shortcuts", level)
+        return get_shortcuts(level)
     
     def get_system_reflexes(self, level: int = 2) -> List[Dict]:
         """Get system reflexes."""
-        return self.get_module_data("system", level)
+        return get_system_reflexes(level)
+    
+    def get_modules(self) -> List[str]:
+        """List modules in this thread."""
+        return ["greetings", "shortcuts", "system"]
+    
+    def get_data(self, level: int = 2, limit: int = 50) -> List[Dict]:
+        """Pull all data from this thread."""
+        all_data = []
+        for g in get_greetings(level)[:limit]:
+            all_data.append({**g, "module": "greetings"})
+        for s in get_shortcuts(level)[:limit]:
+            all_data.append({**s, "module": "shortcuts"})
+        for r in get_system_reflexes(level)[:limit]:
+            all_data.append({**r, "module": "system"})
+        return all_data[:limit]
     
     def add_greeting(
         self,
@@ -78,14 +99,7 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         weight: float = 0.8
     ) -> None:
         """Add a greeting response."""
-        self.push(
-            module="greetings",
-            key=key,
-            metadata={"type": "pattern", "description": f"Greeting: {key}"},
-            data={"value": response},
-            level=1,
-            weight=weight
-        )
+        add_greeting(key, response, weight)
     
     def add_shortcut(
         self,
@@ -94,14 +108,7 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         description: str = ""
     ) -> None:
         """Add a user shortcut."""
-        self.push(
-            module="shortcuts",
-            key=f"shortcut_{trigger.lower().replace(' ', '_')}",
-            metadata={"type": "shortcut", "description": description or f"Shortcut: {trigger}"},
-            data={"trigger": trigger, "response": response},
-            level=1,
-            weight=0.7
-        )
+        add_shortcut(trigger, response, description)
     
     def match_greeting(self, text: str) -> Optional[str]:
         """
@@ -204,21 +211,7 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         High score if fact has been accessed many times.
         This is habit/procedural memory - things we do often.
         """
-        # Try to get access count from fact_relevance table
-        try:
-            from Nola.threads.schema import get_fact_relevance
-            fact_key = fact[:50].strip()
-            relevance = get_fact_relevance(fact_key)
-            
-            if relevance:
-                access_count = relevance.get('access_count', 0)
-                # Log scale: 1 access = 0.3, 10 = 0.6, 50 = 0.8, 100+ = 0.9
-                import math
-                if access_count > 0:
-                    return min(0.3 + math.log(access_count + 1) * 0.15, 0.95)
-        except Exception:
-            pass
-        
+        # TODO: Wire up to actual access tracking when designed
         return 0.3  # Low default - new facts haven't formed habits yet
     
     def get_score_explanation(self, fact: str, score: float, context: Dict[str, Any] = None) -> str:

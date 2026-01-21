@@ -1,107 +1,95 @@
 """
 Reflex Thread Schema
 ====================
-Database functions for reflex patterns (greetings, shortcuts, system triggers).
+Quick patterns, shortcuts, and triggers.
 
-This thread uses the generic module system from the main schema.
-Tables are dynamically created per module:
-    - thread_reflex_greetings
-    - thread_reflex_shortcuts  
-    - thread_reflex_system
+This thread is a dashboard for reflexive responses - like Form, it's tool-like
+rather than data-heavy. Currently uses in-memory storage as it's minimally designed.
+
+Future: Could store patterns in a simple JSON config or minimal DB table.
 """
 
-# Database connection from central location
-from data.db import get_connection
-
-# Generic module functions - these will be refactored later
-try:
-    from Nola.threads.schema import (
-        push_to_module,
-        pull_from_module,
-        delete_from_module,
-        get_registered_modules,
-    )
-except ImportError:
-    from ..schema import (
-        push_to_module,
-        pull_from_module,
-        delete_from_module,
-        get_registered_modules,
-    )
+from typing import List, Dict, Any
 
 
-def get_greetings(level: int = 2):
+# In-memory storage for now (patterns are lightweight)
+_GREETINGS: Dict[str, Dict] = {}
+_SHORTCUTS: Dict[str, Dict] = {}
+_SYSTEM_REFLEXES: Dict[str, Dict] = {}
+
+
+def get_greetings(level: int = 2) -> List[Dict]:
     """Get greeting patterns."""
-    return pull_from_module("reflex", "greetings", level=level)
+    return [
+        {"key": k, "data": v, "metadata": {"type": "pattern"}, "level": 1, "weight": v.get("weight", 0.8)}
+        for k, v in _GREETINGS.items()
+    ]
 
 
-def get_shortcuts(level: int = 2):
+def get_shortcuts(level: int = 2) -> List[Dict]:
     """Get user shortcuts."""
-    return pull_from_module("reflex", "shortcuts", level=level)
+    return [
+        {"key": k, "data": v, "metadata": {"type": "shortcut"}, "level": 1, "weight": 0.7}
+        for k, v in _SHORTCUTS.items()
+    ]
 
 
-def get_system_reflexes(level: int = 2):
+def get_system_reflexes(level: int = 2) -> List[Dict]:
     """Get system reflexes."""
-    return pull_from_module("reflex", "system", level=level)
+    return [
+        {"key": k, "data": v, "metadata": {"type": "system"}, "level": 1, "weight": v.get("weight", 0.9)}
+        for k, v in _SYSTEM_REFLEXES.items()
+    ]
 
 
-def add_greeting(key: str, response: str, weight: float = 0.8):
+def add_greeting(key: str, response: str, weight: float = 0.8) -> None:
     """Add a greeting response."""
-    push_to_module(
-        thread="reflex",
-        module="greetings",
-        key=key,
-        metadata={"type": "pattern", "description": f"Greeting: {key}"},
-        data={"value": response},
-        level=1,
-        weight=weight
-    )
+    _GREETINGS[key] = {"value": response, "weight": weight}
 
 
-def add_shortcut(trigger: str, response: str, description: str = ""):
+def add_shortcut(trigger: str, response: str, description: str = "") -> None:
     """Add a user shortcut."""
-    push_to_module(
-        thread="reflex",
-        module="shortcuts",
-        key=f"shortcut_{trigger.lower().replace(' ', '_')}",
-        metadata={"type": "shortcut", "description": description or f"Shortcut: {trigger}"},
-        data={"trigger": trigger, "response": response},
-        level=1,
-        weight=0.7
-    )
+    key = f"shortcut_{trigger.lower().replace(' ', '_')}"
+    _SHORTCUTS[key] = {"trigger": trigger, "response": response, "description": description}
 
 
-def add_system_reflex(key: str, trigger_type: str, action: str, description: str = "", weight: float = 0.9):
+def add_system_reflex(key: str, trigger_type: str, action: str, description: str = "", weight: float = 0.9) -> None:
     """Add a system reflex."""
-    push_to_module(
-        thread="reflex",
-        module="system",
-        key=key,
-        metadata={"type": "system", "description": description or f"System: {key}"},
-        data={"trigger_type": trigger_type, "action": action},
-        level=1,
-        weight=weight
-    )
+    _SYSTEM_REFLEXES[key] = {
+        "trigger_type": trigger_type,
+        "action": action,
+        "description": description,
+        "weight": weight
+    }
 
 
 def delete_greeting(key: str) -> bool:
     """Delete a greeting."""
-    return delete_from_module("reflex", "greetings", key)
+    if key in _GREETINGS:
+        del _GREETINGS[key]
+        return True
+    return False
 
 
 def delete_shortcut(key: str) -> bool:
     """Delete a shortcut."""
-    return delete_from_module("reflex", "shortcuts", key)
+    if key in _SHORTCUTS:
+        del _SHORTCUTS[key]
+        return True
+    return False
 
 
 def delete_system_reflex(key: str) -> bool:
     """Delete a system reflex."""
-    return delete_from_module("reflex", "system", key)
+    if key in _SYSTEM_REFLEXES:
+        del _SYSTEM_REFLEXES[key]
+        return True
+    return False
 
 
 __all__ = [
     'get_greetings',
-    'get_shortcuts', 
+    'get_shortcuts',
     'get_system_reflexes',
     'add_greeting',
     'add_shortcut',

@@ -3,6 +3,14 @@ Workspace API - File management endpoints for the Nola workspace.
 
 SECURITY: All file operations are sandboxed to WORKSPACE_ROOT.
 No operations can escape this directory.
+
+Endpoints:
+  GET    /api/workspace/files      - List files/folders
+  GET    /api/workspace/info       - Workspace info
+  POST   /api/workspace/folder     - Create folder
+  POST   /api/workspace/upload     - Upload file
+  GET    /api/workspace/download/  - Download file
+  DELETE /api/workspace/files/     - Delete file/folder
 """
 
 from fastapi import APIRouter, UploadFile, File, HTTPException, Form
@@ -18,8 +26,9 @@ import uuid
 router = APIRouter(prefix="/api/workspace", tags=["workspace"])
 
 # Dedicated workspace directory - completely isolated from Nola core
+# Nola/workspace/api.py -> Nola -> AI_OS -> workspace
 WORKSPACE_ROOT = Path(os.getenv("NOLA_WORKSPACE_PATH", 
-    Path(__file__).parent.parent.parent.parent / "workspace"))
+    Path(__file__).parent.parent.parent / "workspace"))
 
 # Welcome file content
 WELCOME_CONTENT = """# Welcome to Nola Workspace! 🧠
@@ -45,6 +54,10 @@ This is your personal file storage area. Everything here is:
 """
 
 
+# =============================================================================
+# Pydantic Models
+# =============================================================================
+
 class FileItem(BaseModel):
     id: str
     name: str
@@ -62,6 +75,10 @@ class CreateFolderRequest(BaseModel):
     parentPath: str
 
 
+# =============================================================================
+# Helpers
+# =============================================================================
+
 def ensure_workspace():
     """Ensure workspace directory exists with welcome file."""
     WORKSPACE_ROOT.mkdir(parents=True, exist_ok=True)
@@ -78,11 +95,8 @@ def is_path_safe(path: Path) -> bool:
     This is the CRITICAL security check that prevents directory traversal.
     """
     try:
-        # Resolve both paths to absolute, following symlinks
         resolved_path = path.resolve()
         resolved_root = WORKSPACE_ROOT.resolve()
-        
-        # Check if the resolved path starts with workspace root
         resolved_path.relative_to(resolved_root)
         return True
     except ValueError:
@@ -139,26 +153,23 @@ def validate_path(rel_path: str) -> Path:
     """Validate and resolve a path, preventing directory traversal.
     
     SECURITY: This function ensures all paths stay within WORKSPACE_ROOT.
-    It blocks:
-    - Path traversal attempts (../)
-    - Symlink escapes
-    - Absolute paths outside workspace
     """
-    # Normalize and check for obvious traversal
     clean_path = os.path.normpath(rel_path).lstrip("/")
     
-    # Block any path containing ..
     if ".." in rel_path or ".." in clean_path:
         raise HTTPException(status_code=403, detail="Access denied: path traversal not allowed")
     
     full_path = WORKSPACE_ROOT / clean_path
     
-    # Double-check with resolved paths (catches symlink escapes)
     if not is_path_safe(full_path):
         raise HTTPException(status_code=403, detail="Access denied: path outside workspace")
     
     return full_path
 
+
+# =============================================================================
+# Endpoints
+# =============================================================================
 
 @router.get("/files")
 async def list_files(path: str = "/"):
@@ -173,24 +184,20 @@ async def list_files(path: str = "/"):
         parent = path
     
     if not target.exists():
-        # Return empty list for non-existent paths
         return []
     
     if not target.is_dir():
         raise HTTPException(status_code=400, detail="Path is not a directory")
     
     files = []
-    # Sort: folders first, then files, alphabetically
     items = sorted(target.iterdir(), key=lambda x: (not x.is_dir(), x.name.lower()))
     
     for item in items:
-        # Skip hidden files and __pycache__
         if item.name.startswith('.') or item.name == '__pycache__':
             continue
         try:
             files.append(path_to_file_item(item, parent))
         except Exception:
-            # Skip files we can't read
             continue
     
     return files
@@ -213,14 +220,12 @@ async def create_folder(request: CreateFolderRequest):
     """Create a new folder."""
     ensure_workspace()
     
-    # Validate folder name (no path separators or traversal)
     if "/" in request.name or "\\" in request.name or ".." in request.name:
         raise HTTPException(status_code=400, detail="Invalid folder name")
     
     parent = validate_path(request.parentPath) if request.parentPath != "/" else WORKSPACE_ROOT
     new_folder = parent / request.name
     
-    # Double-check the resulting path is safe
     if not is_path_safe(new_folder):
         raise HTTPException(status_code=403, detail="Access denied")
     
@@ -240,8 +245,7 @@ async def upload_file(
     """Upload a file to the workspace."""
     ensure_workspace()
     
-    # Validate filename (no path separators or traversal)
-    filename = os.path.basename(file.filename)  # Strip any path components
+    filename = os.path.basename(file.filename)
     if ".." in filename or not filename:
         raise HTTPException(status_code=400, detail="Invalid filename")
     
@@ -250,7 +254,6 @@ async def upload_file(
     
     file_path = target_dir / filename
     
-    # Double-check the resulting path is safe
     if not is_path_safe(file_path):
         raise HTTPException(status_code=403, detail="Access denied")
     
@@ -285,7 +288,6 @@ async def download_file(file_id: str, path: str = None):
 async def delete_item(file_id: str, path: str = None):
     """Delete a file or folder."""
     if not path:
-        # Try to find by walking workspace - fallback for ID-only calls
         raise HTTPException(status_code=400, detail="Path parameter required")
     
     target = validate_path(path)
@@ -299,7 +301,3 @@ async def delete_item(file_id: str, path: str = None):
         target.unlink()
     
     return {"message": "Deleted", "id": file_id}
-
-
-# Note: /move endpoint removed - not implemented
-# If needed later, implement with source_path and target_path params

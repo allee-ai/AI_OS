@@ -2,29 +2,21 @@ from fastapi import FastAPI, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.responses import JSONResponse
-from api.chat import router as chat_router
-from api.database import router as database_router
-from api.workspace import router as workspace_router
-from api.models import router as models_router
-from api.introspection import router as introspection_router
-from api.docs import router as docs_router
-from api.conversations import router as conversations_router
-from api.ratings import router as ratings_router
-from api.stimuli import router as stimuli_router
-from api.services import router as services_router
-from api.finetune import router as finetune_router
-from api.profiles import router as profiles_router
-from api.import_routes import router as import_router
-from api.db_mode import router as db_mode_router
-from api.websockets import websocket_manager
-from core.config import settings
 import json
 import sys
 from pathlib import Path
 import uuid
 
-# Add Nola to path for thread imports
-sys.path.insert(0, str(Path(__file__).parent.parent.parent))
+# Add AI_OS root to path for Nola.* imports
+# backend -> react-chat-app -> Nola -> AI_OS (4 parents up from __file__)
+_ai_os_root = Path(__file__).resolve().parents[3]
+if str(_ai_os_root) not in sys.path:
+    sys.path.insert(0, str(_ai_os_root))
+
+# Self-contained modules (new pattern)
+from Nola.chat import router as chat_router
+from Nola.workspace import router as workspace_router
+from Nola.core import settings
 from Nola.threads.philosophy import router as philosophy_router
 from Nola.threads.identity import router as identity_router
 from Nola.threads.reflex import router as reflex_router
@@ -33,10 +25,14 @@ from Nola.threads.linking_core import router as linking_router
 from Nola.threads.log import router as log_router
 from Nola.subconscious import subconscious_router
 
-# Ensure project root is on path before importing Nola.*
-project_root_bootstrap = Path(__file__).resolve().parents[4]
-if str(project_root_bootstrap) not in sys.path:
-    sys.path.insert(0, str(project_root_bootstrap))
+# API routes (still in backend/api/)
+from api.models import router as models_router
+from api.docs import router as docs_router
+from api.stimuli import router as stimuli_router
+from api.services import router as services_router
+from api.finetune import router as finetune_router
+from api.import_routes import router as import_router
+from api.websockets import websocket_manager
 
 from Nola.path_utils import ensure_project_root_on_path, ensure_nola_root_on_path, warn_if_not_venv
 
@@ -59,28 +55,22 @@ app.add_middleware(
 
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 
-# Include routers
+# Include routers - chat module has chat + conversations + ratings combined
 app.include_router(chat_router)
-app.include_router(database_router)
 app.include_router(workspace_router)
 app.include_router(models_router)
-app.include_router(introspection_router)
 app.include_router(docs_router)
-app.include_router(conversations_router)
-app.include_router(ratings_router)
 app.include_router(stimuli_router)
 app.include_router(form_router)
 app.include_router(reflex_router)
 app.include_router(services_router)
 app.include_router(finetune_router, prefix="/api/finetune", tags=["finetune"])
-app.include_router(profiles_router)
 app.include_router(philosophy_router)
 app.include_router(identity_router)
 app.include_router(linking_router)
 app.include_router(log_router)
 app.include_router(subconscious_router)
 app.include_router(import_router)
-app.include_router(db_mode_router)
 
 
 @app.on_event("startup")
