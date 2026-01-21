@@ -81,6 +81,9 @@ Nola*/Stimuli/conversations/*.json
 # Local evaluator checklist
 docs/checklist.md
 
+# Local archives (developer notes, old docs)
+docs/_archive/
+
 # Eval transcripts (generated at runtime)
 eval/transcripts/*.json
 eval/transcripts/*.md

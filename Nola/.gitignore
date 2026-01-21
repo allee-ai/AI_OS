@@ -1,8 +1,0 @@
-# Ignore Python cache files
-__pycache__/
-
-# Ignore GitHub configuration directory
-.github/
-
-#ignore LOG files
-*.LOG

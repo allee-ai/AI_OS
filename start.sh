@@ -149,14 +149,8 @@ else
     exit 1
 fi
 
-# Resolve chat app location: prefer top-level, otherwise nested under Nola/Nola 
-if [ -d "$REPO_ROOT/react-chat-app" ]; then
-    CHAT_APP="$REPO_ROOT/react-chat-app"
-elif [ -d "$NOLA_DIR/react-chat-app" ]; then
-    CHAT_APP="$NOLA_DIR/react-chat-app"
-else
-    CHAT_APP="$REPO_ROOT/react-chat-app"
-fi
+# Frontend location (now at project root)
+FRONTEND_DIR="$REPO_ROOT/frontend"
 VENV_DIR="$REPO_ROOT/.venv"
 
 # Helper functions
@@ -308,8 +302,7 @@ fi
 
 # Install frontend deps
 echo -e "${YELLOW}  → Installing frontend dependencies...${NC}"
-echo -e "${YELLOW}  → Installing frontend dependencies...${NC}"
-cd "$CHAT_APP/frontend"
+cd "$FRONTEND_DIR"
 npm install --silent 2>/dev/null
 cd "$REPO_ROOT"
 
@@ -336,8 +329,7 @@ if port_in_use 5173; then
 fi
 
 # Start backend with mode env vars already set
-echo -e "${YELLOW}  → Starting backend (FastAPI + Nola)...${NC}"
-cd "$CHAT_APP/backend"
+echo -e "${YELLOW}  → Starting backend (Nola.server)...${NC}"
 export PYTHONDONTWRITEBYTECODE=1
 export NOLA_MODE="${NOLA_MODE}"
 export DEV_MODE="${DEV_MODE}"
@@ -345,17 +337,15 @@ export BUILD_METHOD="${BUILD_METHOD}"
 
 # Use uv run if available (ensures correct venv), otherwise fallback to direct venv python
 if command -v uv >/dev/null 2>&1; then
-    cd "$REPO_ROOT"
-    uv run --directory "$CHAT_APP/backend" python -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+    uv run python -m uvicorn Nola.server:app --host 0.0.0.0 --port 8000 &
 else
-    "$VENV_DIR/bin/python" -m uvicorn main:app --host 0.0.0.0 --port 8000 &
+    "$VENV_DIR/bin/python" -m uvicorn Nola.server:app --host 0.0.0.0 --port 8000 &
 fi
 BACKEND_PID=$!
-cd "$REPO_ROOT"
 
 # Start frontend
 echo -e "${YELLOW}  → Starting frontend (React + Vite)...${NC}"
-cd "$CHAT_APP/frontend"
+cd "$FRONTEND_DIR"
 npm run dev &>/dev/null &
 FRONTEND_PID=$!
 cd "$REPO_ROOT"

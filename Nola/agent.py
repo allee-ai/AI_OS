@@ -276,9 +276,6 @@ class Agent:
 		
 		messages.append({"role": "user", "content": user_input})
 		
-		# Log system prompt for inspection (with rotation)
-		self._log_system_prompt(system_prompt, stimuli_type)
-		
 		if provider == "mock":
 			return "[Mock Nola] This is a placeholder response (configure NOLA_MODEL_PROVIDER=ollama for real output)."
 
@@ -337,55 +334,6 @@ class Agent:
 		except Exception as e:
 			return f"[Error generating response: {e}]"
 
-	def _load_identity_for_stimuli(self, stimuli_type: str) -> dict:
-		"""Load identity from thread system for stimulus processing.
-
-		Maps stimuli_type → context level to keep responses scoped.
-		"""
-		level_map = {"realtime": 1, "conversational": 2, "analytical": 3}
-		context_level = level_map.get(stimuli_type, 2)
-
-		# Use new thread system
-		try:
-			from Nola.subconscious.orchestrator import get_subconscious
-			sub = get_subconscious()
-			ctx = sub.build_context(level=context_level)
-			return ctx
-		except Exception:
-			pass
-
-		# Fallback to JSON-backed state (legacy)
-		state = self.get_state(reload=True)
-		identity_section = state.get("IdentityConfig", {})
-		return identity_section.get("data", identity_section) if identity_section else {}
-
-	def _log_system_prompt(self, prompt: str, stimuli_type: str):
-		"""Log system prompt to logs/nola.system.log with rotation.
-		
-		Rotates log when it exceeds 1MB (keeps last 5 rotations).
-		"""
-		log_dir = BASE_DIR / "logs"
-		log_dir.mkdir(exist_ok=True)
-		log_file = log_dir / "nola.system.log"
-		
-		# Rotate if file > 1MB
-		if log_file.exists() and log_file.stat().st_size > 1_000_000:
-			for i in range(4, 0, -1):
-				old_file = log_dir / f"nola.system.log.{i}"
-				new_file = log_dir / f"nola.system.log.{i+1}"
-				if old_file.exists():
-					old_file.rename(new_file)
-			log_file.rename(log_dir / "nola.system.log.1")
-		
-		# Append log entry
-		from datetime import datetime
-		timestamp = datetime.now().isoformat()
-		with open(log_file, "a", encoding="utf-8") as f:
-			f.write(f"\n{'='*80}\n")
-			f.write(f"[{timestamp}] stimuli_type={stimuli_type}\n")
-			f.write(f"{'='*80}\n")
-			f.write(prompt)
-			f.write(f"\n{'='*80}\n\n")
 
 # Module-level singleton instance
 agent = Agent()

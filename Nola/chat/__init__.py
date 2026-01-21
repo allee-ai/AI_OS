@@ -5,10 +5,11 @@ Self-contained module for conversation management.
 
 Exports:
 - router: FastAPI router with all chat endpoints
+- websocket_manager: WebSocket connection manager
 - Schema functions for DB operations
 """
 
-from .api import router
+from .api import router, websocket_manager
 from .schema import (
     init_convos_tables,
     save_conversation,
@@ -26,6 +27,7 @@ from .schema import (
 
 __all__ = [
     "router",
+    "websocket_manager",
     "init_convos_tables",
     "save_conversation", 
     "add_turn",
