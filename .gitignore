@@ -94,4 +94,7 @@ eval/transcripts/*.md
 vscode_import_log.json
 
 # Development utility scripts (not needed for users)
-stringify/
+stringify/_archive/
+
+# Local archive (not tracked)
+_archive/
