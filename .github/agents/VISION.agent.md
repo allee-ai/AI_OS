@@ -445,3 +445,222 @@ The gap between what exists and what's visible is *enormous*. This is your only 
 Everything else can wait. Documentation sync, table polish, new features—they all pale in comparison to the fundamental gap.
 
 **You have built something extraordinary. Let people see it.**
+
+### 🤖 Model: Claude Opus 4.5 | Date: 2026-01-21 (Assessment #3)
+
+#### 📊 Codebase Health Check
+- **Current State**: "The Brain Scan is BUILT" — 3D graph visualization shipped, 6 threads working, architecture clean.
+- **Completeness**: 92% (Backend), 75% (Frontend Visualization).
+- **Technical Debt**: **LOW** — Clean architecture, CHANGELOG.md is single source of truth.
+- **Iteration Velocity**: **FAST** — Major shipping since Jan 19.
+
+#### 🔄 Evolution Check (Then vs. Now)
+
+| Previous Ask (Jan 19) | Status | Notes |
+|:---|:---:|:---|
+| **Sync LOG.txt** | ❌ Still Dec 28 | CHANGELOG is Jan 20, LOG.txt stuck at Dec 28 |
+| **`/api/linking_core/graph` endpoint** | ✅ **BUILT** | Returns nodes, links, stats |
+| **`/api/linking_core/activate` endpoint** | ✅ **BUILT** | Spread activation with fuzzy matching |
+| **3D Force-directed Graph** | ✅ **BUILT** | 1774-line `ConceptGraph3D.tsx` with Three.js |
+| **Activation overlay** | ✅ **BUILT** | Nodes light up, typing triggers activation |
+| **Per-thread APIs** | ✅ **BUILT** | Each thread owns `/api/{thread}/` router |
+
+**Verdict:** 🎉 **YOU LISTENED.** Three models asked for visualization. You built it. The "Brain Scan" exists.
+
+#### 🔍 Ghost Code Report (Updated)
+| Feature | Location | UI Exposure | Verdict |
+|---------|----------|-------------|---------|
+| `spread_activate()` | linking_core/schema.py | ✅ **ConceptGraph3D** | 🎉 Shipped |
+| `strengthen_concept_link()` | linking_core/schema.py | ✅ **Graph edges** | 🎉 Shipped |
+| `score_relevance()` breakdown | linking_core/schema.py | ❌ **None** | 🔥 Next target |
+| Consolidation events | consolidation_daemon.py | ❌ **None** | ⚡ Add feed |
+
+#### 🎯 Boredom Audit (Updated Jan 21)
+| System | Score | Status | Reasoning |
+|:---|:---:|:---|:---|
+| **App Infrastructure** | 😴 2/5 | **Solved** | `uv`, DMG, VM deploy — done. |
+| **DB Persistence** | 😴 2/5 | **Solved** | Dual-mode, locks, convo migration — stable. |
+| **HEA L1/L2/L3** | 😴 2/5 | **Solved** | Three-tier gating + weight-based verbosity working. |
+| **Frontend Tables** | 😐 3/5 | **Maintenance** | CRUD works, ProfilesPage with L1/L2/L3 toggle. |
+| **ConceptGraph3D** | ⚡ 4/5 | **Interesting** | Shipped! Needs polish (score breakdown, edge labels). |
+| **Linking Core Backend** | ⚡ 4/5 | **Interesting** | Full API, spread activation works. Now need observability. |
+| **Consolidation Daemon** | 😐 3/5 | **Maintenance** | L3→L1 compression working. Invisible to user. |
+| **Log Thread** | ⚡ 4/5 | **Interesting** | Rich data, has custom viewer, no "narrative" mode. |
+
+#### 🚀 My Vision (Updated Jan 21)
+
+**1. Most Exciting Problem: "The Score Breakdown"**
+
+You built the graph. You showed the nodes. You even show activation spreading. 
+
+What's still missing: **WHY.**
+
+When Nola retrieves a fact, users can't see the score breakdown:
+- Embedding similarity: 0.82
+- Co-occurrence: 0.45  
+- Spread activation: 0.71
+- Final weighted: 0.68
+
+This is the difference between "magic" and "glass box." The infrastructure exists (`score_relevance()` returns dimensional scores). The UI doesn't expose it.
+
+**2. The Differentiating Feature: "Cognitive Transparency 2.0"**
+
+You've achieved Level 1: Users can see the graph.  
+You need Level 2: Users can see **why retrieval happened.**
+
+Imagine: User types "coffee" → 
+- Graph lights up (✅ you have this)
+- Side panel shows: "Retrieved 3 facts. Top fact: 'Sarah likes morning coffee' (embedding: 0.91, spread: 0.67, final: 0.82)" (❌ missing)
+
+**3. The 10x Feature: "Retrieval Inspector"**
+
+A panel showing per-message retrieval diagnostics:
+- Which facts were retrieved
+- Score breakdown per fact
+- Which concept paths were activated
+- Click to view/edit link strengths
+
+This makes the "glass box" complete. Users don't just see WHAT Nola remembers — they see HOW she remembered it.
+
+**4. The Bottleneck: "The Why Layer"**
+
+Users can see the graph. Users can see activation. What they can't see is the score breakdown — the dimensional weights that explain WHY a fact was retrieved. This is the last piece of the glass box.
+
+#### 📋 Recommended Priority Queue
+
+**Tier 1: Do Immediately (High ROI, Low Effort)**
+1. **Add `/api/linking_core/score-breakdown` endpoint** — Return dimensional scores for a query
+2. **Add score tooltip to ConceptGraph3D nodes** — Show per-node retrieval scores on hover
+3. **Edge labels on graph** — Show link strength on hover
+
+**Tier 2: Do Soon (The "Why" Layer)**
+1. **Retrieval Inspector panel** — Side panel showing last retrieval's score breakdown
+2. **Consolidation Activity Feed** — Show "Fact compressed L3→L1" events in real-time
+3. **Edge labels on graph** — Show link strength on hover
+
+**Tier 3: Polish (Good UX)**
+1. **GitHub Issues #10, #11, #12** — UI bugs from changelog
+2. **Graph filtering** — Filter by thread, recency, strength
+3. **Time-lapse mode** — Watch graph grow over time
+
+**Tier 4: Already Solved (Don't Touch)**
+1. App infrastructure, installers, VM deployment
+2. HEA three-tier system
+3. Database persistence
+
+#### Summary: What Changed Since Jan 19
+
+| Built ✅ | Still Missing ❌ |
+|:---|:---|
+| ConceptGraph3D (1774 lines) | Score breakdown UI |
+| `/api/linking_core/graph` | Retrieval Inspector panel |
+| `/api/linking_core/activate` | Edge labels on graph |
+| Per-thread API routers | Consolidation activity feed |
+| 6 working threads | |
+
+**The mirror exists. Now add the explanation.**
+
+### 🤖 Model: Gemini 3 Pro (Preview) | Date: 2026-01-21 (Second Opinion)
+
+#### 📊 Codebase Health Check
+- **Current State**: "The Living Statues" — We have a beautiful 3D body (`ConceptGraph3D`) and a robust mind (`schema.py`), but they don't quite talk to each other yet.
+- **Completeness**: 92% (Backend), 80% (Frontend).
+- **Technical Debt**: **Low**. The architecture is clean.
+- **Iteration Velocity**: **Hyper-Fast**. The jump from "No Graph" to "3D Nebula" in 2 days is impressive.
+
+#### 🔄 Evolution Check (Then vs. Now)
+| Prediction (Jan 19) | Reality (Jan 21) | Accuracy |
+|:---|:---:|:---:|
+| "Dynamic Brain Scan" needed | **Built** (`ConceptGraph3D`) | ✅ Spot on |
+| "Associative Surf" needed | **Partially Built** (Activation, but no click-to-surf) | ⚠️ In progress |
+| "Write-Only Log" bottleneck | **Still Exists** (Log is better, but still just a list) | ❌ Unsolved |
+
+**Veridct**: The "Brain Scan" was the right call. It fundamentally changes the feel of the OS.
+
+#### 🎯 Boredom Audit
+| System | Score | Status | Reasoning |
+|:---|:---:|:---|:---|
+| **ConceptGraph3D** | 🔥 5/5 | **Exciting** | It's beautiful, but it's "quiet". I want it to *pulse* with background thought. |
+| **Linking Core API** | ⚡ 4/5 | **Interesting** | `spread_activate` works. Now let's expose `explain_retrieval`. |
+| **Log Thread** | ⚡ 4/5 | **Sleeping Giant** | It's the history of the mind. Needs a "Narrative Mode". |
+| **Frontend Tables** | 😴 2/5 | **Boring** | Necessary utilties. Don't over-engineer them. |
+
+#### 🚀 My Vision (The "Living" System)
+
+**1. Most Exciting Problem: "The Subconscious Stream"**
+We have a graph that lights up when we *poke* it (type a query). But a real mind is never silent. The "Consolidation Daemon" runs in the background. The "Decay" loops run.
+I want to see the graph *breathe*. When I'm not typing, I want to see a faint pulse of "Consolidating memory #123..." or "Strengthening link Coffee<->Morning".
+
+**2. The Differentiating Feature: "Radical Explainability"**
+I agree with the "Why Layer" assessment. If Nola says "I think this is relevant," she must prove it.
+`Score: 0.89` is useless.
+`Score: 0.89 (0.9 Embedding + 0.5 Spread Activation from "Coffee")` is magic.
+
+**3. The 10x Feature: "The Dream State"**
+Screensaver mode. When the user is away, the graph should shift into "Dream Mode" — replaying recent memories, strengthening links, visualizing the consolidation process. It turns the OS into a living companion, not just a tool.
+
+**4. The Bottleneck: "Static interaction"**
+The graph is interactive, but only *on demand*. We need to bridge the gap between "Passive Database" and "Active Agent".
+
+#### 📋 Recommended Priority Queue
+
+**Tier 1: Explainability (The "Why")**
+1. **Tooltips on Nodes**: Hover over a node -> See "Activation: 0.75 (Source: 'Morning')"
+2. **Score Breakdown Panel**: The math is already in `schema.py`. Just return it.
+
+**Tier 2: Liveness (The "Breath")**
+1. **Ambient Pulsing**: Make the graph "breathe" even without input.
+2. **Consolidation Visuals**: When a memory consolidates, shoot a "spark" into the graph.
+
+**Tier 3: Navigation**
+1. **Click-to-Surf**: Clicking a node should center it and show its neighbors (associative browsing).
+
+---
+
+### 🤖 Model: GPT-5.1-Codex-Max | Date: 2026-01-21 (Fresh Assessment)
+
+#### 📊 Codebase Health Check
+- **Current State**: "Glass Box, Missing Legend" — graph + activation exist; rationale layer still hidden.
+- **Completeness**: 92% backend / 78% frontend (visualization present, explainability absent).
+- **Technical Debt**: Low (arch clean); **UX Debt**: No score breakdowns.
+- **Iteration Velocity**: Fast — major visualization landed in two days.
+
+#### 🔄 Evolution Check (Then vs. Now)
+- My previous bottleneck (Jan 19): Missing graph/activation UI → **Fixed** (ConceptGraph3D + activation overlay).
+- My previous 10x feature: Activation Inspector → **Still missing** (no score breakdown, no per-fact rationale).
+- Verdict: Team delivered the mirror; the legend/explanation remains.
+
+#### 🎯 Boredom Audit
+| System | Score | Status | Reason |
+|:---|:---:|:---|:---|
+| Linking Core Explainability | 🔥 5/5 | Critical | Scores exist; users can't see why. |
+| ConceptGraph3D | ⚡ 4/5 | Exciting | Needs tooltips, edge labels, click-to-surf. |
+| Log Thread | ⚡ 4/5 | Underused | Rich data, lacks narrative feed. |
+| Consolidation Daemon | 😐 3/5 | Maintenance | Works; invisible. |
+| Infra/DB/HEA | 😴 2/5 | Solved | Leave alone. |
+
+#### 🚀 My Vision (Updated)
+- **Most Exciting Problem:** Make retrievals auditable. Every response should answer: "Why this fact?" with dimensional scores and paths.
+- **Differentiating Feature:** Radical transparency: live graph + per-fact score breakdown + activation path breadcrumbs.
+- **The 10x Feature:** Retrieval Inspector — for each user input, show activated nodes, paths, and per-dimension scores for the returned facts.
+- **Bottleneck:** No surfaced score breakdown or activation paths in UI.
+
+#### 📋 Recommended Priority Queue
+
+**Tier 1 (Do Now)**
+1) `/api/linking_core/score-breakdown` returning per-dimension scores + activation paths.
+2) Graph tooltips + edge labels: show activation level and link strength on hover.
+3) ThreadsPage side panel: last retrieval breakdown (facts + scores).
+
+**Tier 2 (Next)**
+1) Click-to-surf: click node → center + neighbor expansion; selectable path highlighting.
+2) Consolidation/decay feed: stream "compressed L3→L1", "strengthened Coffee↔Morning".
+3) Dream/idle mode: gentle pulsing + occasional consolidation sparks when idle.
+
+**Tier 3 (Polish)**
+1) Graph filters (strength, recency, thread tag).
+2) Time-lapse playback of graph growth.
+
+**Tier 4 (Leave Alone)**
+1) Installers/infra/locks/HEA tiers — stable.
+
