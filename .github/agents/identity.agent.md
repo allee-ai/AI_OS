@@ -97,7 +97,7 @@ health = adapter.health()  # Returns HealthReport
 | `Nola/threads/identity/adapter.py` | Core adapter - `get_data()`, `push_identity()`, `health()` |
 | `Nola/threads/identity/__init__.py` | Public API - `get_identity()`, `set_identity()` |
 | `Nola/threads/identity/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 530-645) |
+| `Nola/services/api.py # introspection.py` | REST endpoints (lines 530-645) |
 | `Nola/threads/schema.py` | DB schema - `pull_from_module()`, `push_to_module()` |
 
 ### Backend Endpoints
@@ -113,9 +113,9 @@ health = adapter.health()  # Returns HealthReport
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Main UI - identity table, editing |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client - `getIdentityFacts()` |
+| `frontend/src/pages/ThreadsPage.tsx` | Main UI - identity table, editing |
+| `frontend/src/pages/ThreadsPage.css` | Styles |
+| `frontend/src/services/introspectionService.ts` | API client - `getIdentityFacts()` |
 
 ### Frontend Functions (ThreadsPage.tsx)
 

@@ -12,9 +12,136 @@
  */
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
-import { Canvas, useFrame } from '@react-three/fiber';
-import { OrbitControls, Text, Sphere } from '@react-three/drei';
+import { Canvas, useFrame, useThree } from '@react-three/fiber';
+import { Text, Sphere } from '@react-three/drei';
 import * as THREE from 'three';
+
+// ============================================================================
+// Fly Controls - WASD + Mouse for spaceship-style navigation
+// ============================================================================
+
+interface FlyControlsProps {
+  moveSpeed?: number;
+  lookSpeed?: number;
+}
+
+function FlyControls({ moveSpeed = 3, lookSpeed = 0.002 }: FlyControlsProps) {
+  const { camera, gl } = useThree();
+  const keysPressed = useRef<Set<string>>(new Set());
+  const isMouseDown = useRef(false);
+  const euler = useRef(new THREE.Euler(0, 0, 0, 'YXZ'));
+  
+  useEffect(() => {
+    // Initialize euler from camera
+    euler.current.setFromQuaternion(camera.quaternion);
+    
+    const handleKeyDown = (e: KeyboardEvent) => {
+      keysPressed.current.add(e.code.toLowerCase());
+    };
+    const handleKeyUp = (e: KeyboardEvent) => {
+      keysPressed.current.delete(e.code.toLowerCase());
+    };
+    const handleMouseDown = (e: MouseEvent) => {
+      if (e.button === 0 || e.button === 2) {
+        isMouseDown.current = true;
+      }
+    };
+    const handleMouseUp = () => {
+      isMouseDown.current = false;
+    };
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isMouseDown.current) return;
+      
+      euler.current.y -= e.movementX * lookSpeed;
+      euler.current.x -= e.movementY * lookSpeed;
+      euler.current.x = Math.max(-Math.PI / 2, Math.min(Math.PI / 2, euler.current.x));
+      
+      camera.quaternion.setFromEuler(euler.current);
+    };
+    const handleWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      // Zoom moves camera forward/backward in look direction
+      // Much faster zoom for deep exploration
+      const direction = new THREE.Vector3();
+      camera.getWorldDirection(direction);
+      // Use deltaY for scroll wheel, also handle pinch zoom (deltaY on trackpad)
+      const delta = e.deltaY !== 0 ? e.deltaY : e.deltaX;
+      camera.position.addScaledVector(direction, -delta * 0.05);
+    };
+    const handleContextMenu = (e: Event) => e.preventDefault();
+    
+    const domElement = gl.domElement;
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('keyup', handleKeyUp);
+    domElement.addEventListener('mousedown', handleMouseDown);
+    window.addEventListener('mouseup', handleMouseUp);
+    domElement.addEventListener('mousemove', handleMouseMove);
+    // Use passive: false to allow preventDefault on wheel
+    domElement.addEventListener('wheel', handleWheel, { passive: false });
+    domElement.addEventListener('contextmenu', handleContextMenu);
+    
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('keyup', handleKeyUp);
+      domElement.removeEventListener('mousedown', handleMouseDown);
+      window.removeEventListener('mouseup', handleMouseUp);
+      domElement.removeEventListener('mousemove', handleMouseMove);
+      domElement.removeEventListener('wheel', handleWheel);
+      domElement.removeEventListener('contextmenu', handleContextMenu);
+    };
+  }, [camera, gl, lookSpeed]);
+  
+  useFrame((_, delta) => {
+    const keys = keysPressed.current;
+    // Hold shift for slow/precision movement when close to nodes
+    const speedMultiplier = keys.has('shiftleft') || keys.has('shiftright') ? 0.2 : 1;
+    const speed = moveSpeed * delta * speedMultiplier;
+    const turnSpeed = 1.5 * delta * speedMultiplier;
+    
+    // Get camera directions
+    const forward = new THREE.Vector3();
+    const right = new THREE.Vector3();
+    camera.getWorldDirection(forward);
+    right.crossVectors(forward, camera.up).normalize();
+    
+    // W/S or Up/Down arrows: move forward/back
+    if (keys.has('keyw') || keys.has('arrowup')) {
+      camera.position.addScaledVector(forward, speed);
+    }
+    if (keys.has('keys') || keys.has('arrowdown')) {
+      camera.position.addScaledVector(forward, -speed);
+    }
+    
+    // A/D: strafe left/right
+    if (keys.has('keya')) {
+      camera.position.addScaledVector(right, -speed);
+    }
+    if (keys.has('keyd')) {
+      camera.position.addScaledVector(right, speed);
+    }
+    
+    // Left/Right arrows: turn/rotate camera
+    if (keys.has('arrowleft')) {
+      euler.current.y += turnSpeed;
+      camera.quaternion.setFromEuler(euler.current);
+    }
+    if (keys.has('arrowright')) {
+      euler.current.y -= turnSpeed;
+      camera.quaternion.setFromEuler(euler.current);
+    }
+    
+    // Q/E for up/down
+    if (keys.has('keyq')) {
+      camera.position.y += speed;
+    }
+    if (keys.has('keye')) {
+      camera.position.y -= speed;
+    }
+    
+  });
+  
+  return null;
+}
 
 // ============================================================================
 // Types
@@ -96,21 +223,56 @@ function NebulaShell({ nodePositions, nodeConnections }: NebulaShellProps) {
   // Create circle texture once
   const circleTexture = useMemo(() => createCircleTexture(), []);
   
-  // Outer swirling shell
+  // Outer swirling shell - follows the shape of the graph
   const outerParticles = useMemo(() => {
     const count = 4000;
     const positions = new Float32Array(count * 3);
     const colors = new Float32Array(count * 3);
     
+    // Get node positions array for sampling
+    const nodePositionsArray = nodePositions ? Array.from(nodePositions.values()) : [];
+    
     for (let i = 0; i < count; i++) {
-      // Spherical shell distribution
-      const phi = Math.acos(2 * Math.random() - 1);
-      const theta = Math.random() * Math.PI * 2;
-      const radius = 3.5 + Math.random() * 0.5; // Shell between 3.5-4.0
+      let x, y, z;
       
-      positions[i * 3] = radius * Math.sin(phi) * Math.cos(theta);
-      positions[i * 3 + 1] = radius * Math.sin(phi) * Math.sin(theta);
-      positions[i * 3 + 2] = radius * Math.cos(phi);
+      if (nodePositionsArray.length > 0 && Math.random() < 0.85) {
+        // 85% of particles cluster around actual node positions
+        const nodePos = nodePositionsArray[Math.floor(Math.random() * nodePositionsArray.length)];
+        const nodeDist = Math.sqrt(nodePos[0] ** 2 + nodePos[1] ** 2 + nodePos[2] ** 2);
+        
+        // Place particles in a shell around/beyond the node
+        const offsetRadius = 0.3 + Math.random() * 0.8; // Shell offset from node
+        const phi = Math.acos(2 * Math.random() - 1);
+        const theta = Math.random() * Math.PI * 2;
+        
+        // Direction from center through node, then add offset
+        const nodeDir = new THREE.Vector3(nodePos[0], nodePos[1], nodePos[2]).normalize();
+        const shellDist = nodeDist + offsetRadius;
+        
+        // Add some tangential spread
+        const tangentOffset = new THREE.Vector3(
+          (Math.random() - 0.5) * 0.6,
+          (Math.random() - 0.5) * 0.6,
+          (Math.random() - 0.5) * 0.6
+        );
+        
+        x = nodeDir.x * shellDist + tangentOffset.x;
+        y = nodeDir.y * shellDist + tangentOffset.y;
+        z = nodeDir.z * shellDist + tangentOffset.z;
+      } else {
+        // 15% random spherical distribution for fill
+        const phi = Math.acos(2 * Math.random() - 1);
+        const theta = Math.random() * Math.PI * 2;
+        const radius = 2.5 + Math.random() * 2.5; // Varied radius
+        
+        x = radius * Math.sin(phi) * Math.cos(theta);
+        y = radius * Math.sin(phi) * Math.sin(theta);
+        z = radius * Math.cos(phi);
+      }
+      
+      positions[i * 3] = x;
+      positions[i * 3 + 1] = y;
+      positions[i * 3 + 2] = z;
       
       // Purple/magenta gradient
       const hue = 0.75 + Math.random() * 0.15; // Purple range
@@ -123,7 +285,7 @@ function NebulaShell({ nodePositions, nodeConnections }: NebulaShellProps) {
     }
     
     return { positions, colors };
-  }, []);
+  }, [nodePositions]);
   
   // Wispy gas that concentrates near high-density areas (nodes with many connections)
   const gasParticles = useMemo(() => {
@@ -312,8 +474,8 @@ function ConceptNodeMesh({ position, node, isActivated, activationLevel, onClick
   // Size based on connections - logarithmic scaling for dramatic difference
   // Origin node is always larger
   const logConnections = Math.log10(Math.max(node.connections, 1) + 1);
-  const baseSize = isOrigin ? 0.2 : 0.04 + logConnections * 0.1;
-  const size = hovered ? baseSize * 1.5 : baseSize;
+  const baseSize = isOrigin ? 0.12 : 0.02 + logConnections * 0.04;
+  const size = hovered ? baseSize * 1.8 : baseSize;
   
   useFrame((state) => {
     if (meshRef.current) {
@@ -565,6 +727,514 @@ function ResonancePoints({ links, nodePositions }: ResonancePointsProps) {
 }
 
 // ============================================================================
+// Storm Lightning - Small ambient lightning around the nebula edges
+// ============================================================================
+
+interface LightningBolt {
+  id: number;
+  points: THREE.Vector3[];
+  startTime: number;
+  duration: number;
+  opacity: number;
+  color: THREE.Color;
+}
+
+function StormLightning({ radius = 4 }: { radius?: number }) {
+  const [bolts, setBolts] = useState<LightningBolt[]>([]);
+  const boltIdRef = useRef(0);
+  
+  // Generate a jagged lightning bolt path
+  const generateBoltPath = useCallback((start: THREE.Vector3, direction: THREE.Vector3, length: number): THREE.Vector3[] => {
+    const points: THREE.Vector3[] = [start.clone()];
+    const segments = 4 + Math.floor(Math.random() * 4); // 4-7 segments
+    const segmentLength = length / segments;
+    
+    let current = start.clone();
+    const dir = direction.clone().normalize();
+    
+    for (let i = 0; i < segments; i++) {
+      // Move in general direction with random jitter
+      const jitter = new THREE.Vector3(
+        (Math.random() - 0.5) * segmentLength * 0.8,
+        (Math.random() - 0.5) * segmentLength * 0.8,
+        (Math.random() - 0.5) * segmentLength * 0.8
+      );
+      
+      current = current.clone().add(dir.clone().multiplyScalar(segmentLength)).add(jitter);
+      points.push(current.clone());
+    }
+    
+    return points;
+  }, []);
+  
+  // Spawn lightning bolts randomly
+  useEffect(() => {
+    const spawnBolt = () => {
+      // Random position on sphere surface (outer edge of nebula)
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = radius * (0.8 + Math.random() * 0.4); // Slightly varied radius
+      
+      const x = r * Math.sin(phi) * Math.cos(theta);
+      const y = r * Math.sin(phi) * Math.sin(theta);
+      const z = r * Math.cos(phi);
+      
+      const start = new THREE.Vector3(x, y, z);
+      
+      // Direction: mostly tangent to sphere surface with some inward/outward
+      const radial = start.clone().normalize();
+      const tangent1 = new THREE.Vector3(-radial.y, radial.x, 0).normalize();
+      const tangent2 = radial.clone().cross(tangent1).normalize();
+      
+      const direction = tangent1.clone()
+        .multiplyScalar(Math.random() - 0.5)
+        .add(tangent2.clone().multiplyScalar(Math.random() - 0.5))
+        .add(radial.clone().multiplyScalar((Math.random() - 0.5) * 0.3))
+        .normalize();
+      
+      const length = 0.3 + Math.random() * 0.5; // Small bolts
+      const points = generateBoltPath(start, direction, length);
+      
+      const newBolt: LightningBolt = {
+        id: boltIdRef.current++,
+        points,
+        startTime: Date.now(),
+        duration: 80 + Math.random() * 120, // 80-200ms flash
+        opacity: 0.3 + Math.random() * 0.4, // Subtle
+        color: new THREE.Color().setHSL(
+          0.7 + Math.random() * 0.15, // Blue to purple
+          0.4 + Math.random() * 0.3,
+          0.7 + Math.random() * 0.3
+        ),
+      };
+      
+      setBolts(prev => [...prev, newBolt]);
+    };
+    
+    // Random spawning - every 100-400ms
+    const scheduleNext = () => {
+      const delay = 100 + Math.random() * 300;
+      return setTimeout(() => {
+        spawnBolt();
+        scheduleNext();
+      }, delay);
+    };
+    
+    const timeout = scheduleNext();
+    return () => clearTimeout(timeout);
+  }, [radius, generateBoltPath]);
+  
+  // Clean up expired bolts
+  useFrame(() => {
+    const now = Date.now();
+    setBolts(prev => prev.filter(bolt => now - bolt.startTime < bolt.duration));
+  });
+  
+  return (
+    <group>
+      {bolts.map(bolt => (
+        <LightningBoltMesh key={bolt.id} bolt={bolt} />
+      ))}
+    </group>
+  );
+}
+
+function LightningBoltMesh({ bolt }: { bolt: LightningBolt }) {
+  const lineRef = useRef<THREE.Line>(null);
+  
+  // Animate opacity
+  useFrame(() => {
+    if (!lineRef.current) return;
+    
+    const elapsed = Date.now() - bolt.startTime;
+    const progress = elapsed / bolt.duration;
+    
+    // Flash in fast, fade out
+    let opacity: number;
+    if (progress < 0.1) {
+      opacity = progress * 10 * bolt.opacity; // Quick flash in
+    } else {
+      opacity = (1 - progress) * bolt.opacity; // Fade out
+    }
+    
+    const material = lineRef.current.material as THREE.LineBasicMaterial;
+    material.opacity = opacity;
+  });
+  
+  const positions = useMemo(() => {
+    const arr = new Float32Array(bolt.points.length * 3);
+    bolt.points.forEach((p, i) => {
+      arr[i * 3] = p.x;
+      arr[i * 3 + 1] = p.y;
+      arr[i * 3 + 2] = p.z;
+    });
+    return arr;
+  }, [bolt.points]);
+  
+  return (
+    <line ref={lineRef as any}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <lineBasicMaterial
+        color={bolt.color}
+        transparent
+        opacity={bolt.opacity}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        linewidth={1}
+      />
+    </line>
+  );
+}
+
+// ============================================================================
+// Data Stream Pulse - Flows through connected nodes like data packets
+// ============================================================================
+
+// Create a circular dot texture for round particles
+const createDotTexture = (): THREE.Texture => {
+  const canvas = document.createElement('canvas');
+  canvas.width = 32;
+  canvas.height = 32;
+  const ctx = canvas.getContext('2d')!;
+  
+  // Draw a soft circular gradient
+  const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
+  gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
+  gradient.addColorStop(0.3, 'rgba(255, 255, 255, 0.8)');
+  gradient.addColorStop(0.7, 'rgba(255, 255, 255, 0.3)');
+  gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
+  
+  ctx.fillStyle = gradient;
+  ctx.fillRect(0, 0, 32, 32);
+  
+  const texture = new THREE.CanvasTexture(canvas);
+  return texture;
+};
+
+// Shared dot texture for all pulses
+const dotTexture = createDotTexture();
+
+interface DataPulse {
+  id: number;
+  nodeIds: string[];  // Path of node IDs
+  startTime: number;
+  duration: number;   // Total duration for the pulse to traverse all nodes
+  color: THREE.Color;
+}
+
+function DataStreamPulse({ nodePositions, graphData, pulseSpeed = 1 }: { 
+  nodePositions: Map<string, [number, number, number]>;
+  graphData: GraphData | null;
+  pulseSpeed?: number;
+}) {
+  const [pulses, setPulses] = useState<DataPulse[]>([]);
+  const pulseIdRef = useRef(0);
+  
+  // Build adjacency list for finding connected paths
+  const adjacency = useMemo(() => {
+    if (!graphData) return new Map<string, string[]>();
+    const adj = new Map<string, string[]>();
+    
+    for (const link of graphData.links) {
+      if (!adj.has(link.concept_a)) adj.set(link.concept_a, []);
+      if (!adj.has(link.concept_b)) adj.set(link.concept_b, []);
+      adj.get(link.concept_a)!.push(link.concept_b);
+      adj.get(link.concept_b)!.push(link.concept_a);
+    }
+    
+    return adj;
+  }, [graphData]);
+  
+  // Get distance from center for a node
+  const getDistanceFromCenter = useCallback((nodeId: string): number => {
+    const pos = nodePositions.get(nodeId);
+    if (!pos) return Infinity;
+    return Math.sqrt(pos[0] * pos[0] + pos[1] * pos[1] + pos[2] * pos[2]);
+  }, [nodePositions]);
+  
+  // Find a spiral path - either outward from center or inward from edge
+  const findSpiralPath = useCallback((targetLength: number, outward: boolean): string[] => {
+    const nodeIds = Array.from(nodePositions.keys());
+    if (nodeIds.length < 2) return [];
+    
+    // Sort nodes by distance from center
+    const sortedByDist = [...nodeIds].sort((a, b) => 
+      getDistanceFromCenter(a) - getDistanceFromCenter(b)
+    );
+    
+    // Pick starting node - center for outward, edge for inward
+    let startCandidates: string[];
+    if (outward) {
+      // Start from inner 20% of nodes
+      startCandidates = sortedByDist.slice(0, Math.max(3, Math.floor(nodeIds.length * 0.2)));
+    } else {
+      // Start from outer 30% of nodes  
+      startCandidates = sortedByDist.slice(Math.floor(nodeIds.length * 0.7));
+    }
+    
+    // Fallback if candidates empty
+    if (startCandidates.length === 0) {
+      startCandidates = sortedByDist;
+    }
+    if (startCandidates.length === 0) return [];
+    
+    // Pick random from candidates
+    const startNode = startCandidates[Math.floor(Math.random() * startCandidates.length)];
+    const path: string[] = [startNode];
+    const visited = new Set<string>([startNode]);
+    
+    // Walk through nodes, preferring to move outward/inward with slight spiral
+    while (path.length < targetLength) {
+      const current = path[path.length - 1];
+      const currentDist = getDistanceFromCenter(current);
+      const currentPos = nodePositions.get(current);
+      
+      const neighbors = adjacency.get(current) || [];
+      const unvisited = neighbors.filter(n => !visited.has(n) && nodePositions.has(n));
+      
+      let candidates: string[];
+      
+      if (unvisited.length === 0) {
+        // Dead end - find unvisited nodes in the right direction
+        candidates = nodeIds.filter(n => !visited.has(n));
+        if (candidates.length === 0) break;
+      } else {
+        candidates = unvisited;
+      }
+      
+      // Score candidates by how well they fit the spiral direction
+      const scored = candidates.map(n => {
+        const dist = getDistanceFromCenter(n);
+        const pos = nodePositions.get(n);
+        
+        // Direction score: prefer moving outward/inward
+        const directionScore = outward 
+          ? (dist > currentDist ? 1 : 0.3)
+          : (dist < currentDist ? 1 : 0.3);
+        
+        // Angle score: prefer slight rotation (spiral feel)
+        let angleScore = 1;
+        if (currentPos && pos) {
+          const currentAngle = Math.atan2(currentPos[1], currentPos[0]);
+          const nextAngle = Math.atan2(pos[1], pos[0]);
+          let angleDiff = Math.abs(nextAngle - currentAngle);
+          if (angleDiff > Math.PI) angleDiff = 2 * Math.PI - angleDiff;
+          // Prefer 30-90 degree turns for spiral feel
+          angleScore = angleDiff > 0.5 && angleDiff < 1.5 ? 1.5 : 1;
+        }
+        
+        // Add randomness
+        const randomScore = 0.5 + Math.random();
+        
+        return { node: n, score: directionScore * angleScore * randomScore };
+      });
+      
+      // Sort by score and pick from top candidates with some randomness
+      scored.sort((a, b) => b.score - a.score);
+      const topCount = Math.min(3, scored.length);
+      const next = scored[Math.floor(Math.random() * topCount)].node;
+      
+      path.push(next);
+      visited.add(next);
+    }
+    
+    return path;
+  }, [nodePositions, adjacency, getDistanceFromCenter]);
+  
+  // Spawn new pulses
+  useEffect(() => {
+    const totalNodes = nodePositions.size;
+    if (totalNodes < 3) return;
+    
+    const spawnPulse = () => {
+      // Target ~40% of nodes, minimum 5, maximum 50
+      const pathLength = Math.max(5, Math.min(50, Math.floor(totalNodes * 0.4)));
+      
+      // Randomly choose outward or inward spiral
+      const outward = Math.random() < 0.5;
+      const path = findSpiralPath(pathLength, outward);
+      
+      if (path.length < 2) return;
+      
+      const newPulse: DataPulse = {
+        id: pulseIdRef.current++,
+        nodeIds: path,
+        startTime: Date.now(),
+        duration: path.length * (250 / pulseSpeed), // Adjust by speed
+        color: new THREE.Color().setHSL(
+          0.5 + Math.random() * 0.3, // Cyan to purple to pink
+          0.6 + Math.random() * 0.3,
+          0.5 + Math.random() * 0.3
+        ),
+      };
+      
+      setPulses(prev => [...prev, newPulse]);
+    };
+    
+    // Spawn pulses much more frequently - every 200-600ms
+    const scheduleNext = () => {
+      const delay = 200 + Math.random() * 400;
+      return setTimeout(() => {
+        spawnPulse();
+        scheduleNext();
+      }, delay);
+    };
+    
+    // Initial bursts
+    for (let i = 0; i < 5; i++) {
+      setTimeout(spawnPulse, i * 100);
+    }
+    const timeout = scheduleNext();
+    return () => clearTimeout(timeout);
+  }, [nodePositions, findSpiralPath, pulseSpeed]);
+  
+  // Clean up expired pulses
+  useFrame(() => {
+    const now = Date.now();
+    setPulses(prev => prev.filter(pulse => now - pulse.startTime < pulse.duration + 500));
+  });
+  
+  return (
+    <group>
+      {pulses.map(pulse => (
+        <DataPulseMesh 
+          key={pulse.id} 
+          pulse={pulse} 
+          nodePositions={nodePositions}
+        />
+      ))}
+    </group>
+  );
+}
+
+function DataPulseMesh({ pulse, nodePositions }: { 
+  pulse: DataPulse; 
+  nodePositions: Map<string, [number, number, number]>;
+}) {
+  const trailRef = useRef<THREE.Points>(null);
+  const headRef = useRef<THREE.Points>(null);
+  
+  // Get positions for all nodes in path
+  const pathPositions = useMemo(() => {
+    return pulse.nodeIds
+      .map(id => nodePositions.get(id))
+      .filter((p): p is [number, number, number] => p !== undefined)
+      .map(p => new THREE.Vector3(...p));
+  }, [pulse.nodeIds, nodePositions]);
+  
+  // Create smooth curve through all points
+  const curve = useMemo(() => {
+    if (pathPositions.length < 2) return null;
+    return new THREE.CatmullRomCurve3(pathPositions, false, 'centripetal', 0.5);
+  }, [pathPositions]);
+  
+  // Animate the pulse traveling along the path
+  useFrame(() => {
+    if (!trailRef.current || !curve) return;
+    
+    const elapsed = Date.now() - pulse.startTime;
+    const progress = Math.min(elapsed / pulse.duration, 1);
+    
+    // The "head" of the pulse
+    const headT = progress;
+    // The "tail" trails behind
+    const tailT = Math.max(0, progress - 0.2);
+    
+    // Create scattered dots along the trail (not continuous)
+    const numDots = 12; // Sparse dots
+    const positions: number[] = [];
+    const sizes: number[] = [];
+    
+    for (let i = 0; i < numDots; i++) {
+      // Irregular spacing - some clustered, some spread
+      const baseT = i / numDots;
+      const jitter = (Math.sin(i * 7.3) * 0.5 + 0.5) * 0.15; // Pseudo-random jitter
+      const t = tailT + (headT - tailT) * (baseT + jitter * (1 - baseT));
+      
+      if (t >= 0 && t <= 1) {
+        const point = curve.getPoint(t);
+        positions.push(point.x, point.y, point.z);
+        
+        // Size varies - smaller toward tail, bigger toward head
+        const sizeT = (t - tailT) / (headT - tailT + 0.001);
+        sizes.push(0.02 + sizeT * 0.04); // 0.02 to 0.06
+      }
+    }
+    
+    if (positions.length > 0) {
+      const geometry = trailRef.current.geometry;
+      geometry.setAttribute('position', new THREE.Float32BufferAttribute(positions, 3));
+      geometry.setAttribute('size', new THREE.Float32BufferAttribute(sizes, 1));
+      geometry.attributes.position.needsUpdate = true;
+      
+      // Fade based on progress
+      const material = trailRef.current.material as THREE.PointsMaterial;
+      material.opacity = progress < 0.9 ? 0.7 : (1 - progress) * 7;
+    }
+    
+    // Update head position
+    if (headRef.current && progress < 1) {
+      const headPos = curve.getPoint(headT);
+      const headGeom = headRef.current.geometry;
+      headGeom.setAttribute('position', new THREE.Float32BufferAttribute([headPos.x, headPos.y, headPos.z], 3));
+      headGeom.attributes.position.needsUpdate = true;
+      
+      // Pulse the head
+      const headMaterial = headRef.current.material as THREE.PointsMaterial;
+      headMaterial.opacity = 0.8 + Math.sin(elapsed * 0.03) * 0.2;
+    }
+  });
+  
+  if (!curve || pathPositions.length < 2) return null;
+  
+  return (
+    <group>
+      {/* Trail dots - scattered */}
+      <points ref={trailRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array(36), 3]} // 12 dots * 3
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color={pulse.color}
+          size={0.08}
+          map={dotTexture}
+          transparent
+          opacity={0.7}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation
+          depthWrite={false}
+        />
+      </points>
+      
+      {/* Head dot - slightly bigger */}
+      <points ref={headRef}>
+        <bufferGeometry>
+          <bufferAttribute
+            attach="attributes-position"
+            args={[new Float32Array([0, 0, 0]), 3]}
+          />
+        </bufferGeometry>
+        <pointsMaterial
+          color={pulse.color}
+          size={0.14}
+          map={dotTexture}
+          transparent
+          opacity={0.9}
+          blending={THREE.AdditiveBlending}
+          sizeAttenuation
+          depthWrite={false}
+        />
+      </points>
+    </group>
+  );
+}
+
+// ============================================================================
 // Main Scene
 // ============================================================================
 
@@ -572,9 +1242,23 @@ interface SceneProps {
   graphData: GraphData | null;
   activatedConcepts: Map<string, number>;
   onNodeClick?: (nodeId: string) => void;
+  pulseSpeed?: number;
 }
 
-function Scene({ graphData, activatedConcepts, onNodeClick }: SceneProps) {
+// Rotating container for the whole graph
+function RotatingGroup({ children, speed = 0.05 }: { children: React.ReactNode; speed?: number }) {
+  const groupRef = useRef<THREE.Group>(null);
+  
+  useFrame((_, delta) => {
+    if (groupRef.current) {
+      groupRef.current.rotation.y += speed * delta;
+    }
+  });
+  
+  return <group ref={groupRef}>{children}</group>;
+}
+
+function Scene({ graphData, activatedConcepts, onNodeClick, pulseSpeed = 1 }: SceneProps) {
   // Calculate 3D positions for nodes - with identity at origin (0,0,0,0)
   const nodeLayout = useMemo(() => {
     if (!graphData) return { positions: new Map<string, [number, number, number]>(), originId: null as string | null };
@@ -635,8 +1319,8 @@ function Scene({ graphData, activatedConcepts, onNodeClick }: SceneProps) {
       const normalizedDist = graphDist / maxDist;
       
       // Radius: close to identity = near center, far = near edge
-      // But contained within sphere (max 2.8)
-      const radius = 0.3 + normalizedDist * 2.5;
+      // But contained within sphere (max ~5)
+      const radius = 0.5 + normalizedDist * 4.5;
       
       // Angular position from golden ratio for even distribution
       const phi = Math.acos(1 - 2 * (i + 0.5) / otherNodes.length);
@@ -719,7 +1403,7 @@ function Scene({ graphData, activatedConcepts, onNodeClick }: SceneProps) {
   }
   
   return (
-    <>
+    <RotatingGroup speed={0.03}>
       {/* Nebula containment shell with density-aware gas */}
       <NebulaShell nodePositions={nodePositions} nodeConnections={nodeConnections} />
       
@@ -775,12 +1459,18 @@ function Scene({ graphData, activatedConcepts, onNodeClick }: SceneProps) {
       {/* Resonance points - where strings intersect in space */}
       <ResonancePoints links={graphData.links} nodePositions={nodePositions} />
       
+      {/* Data stream pulses flowing through nodes */}
+      <DataStreamPulse nodePositions={nodePositions} graphData={graphData} pulseSpeed={pulseSpeed} />
+      
+      {/* Storm lightning around the nebula edges */}
+      <StormLightning radius={5} />
+      
       {/* Lighting */}
       <ambientLight intensity={0.4} />
       <pointLight position={[0, 0, 0]} intensity={1} color="#cc88ff" distance={10} />
       <pointLight position={[5, 5, 5]} intensity={0.5} color="#ffffff" />
       <pointLight position={[-5, -5, 5]} intensity={0.3} color="#8844cc" />
-    </>
+    </RotatingGroup>
   );
 }
 
@@ -797,6 +1487,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
   const [reindexing, setReindexing] = useState(false);
   const [reindexResult, setReindexResult] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
+  const [pulseSpeed, setPulseSpeed] = useState(1);
   
   // Fetch graph data
   const fetchGraph = useCallback(async () => {
@@ -852,17 +1543,17 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
       const newActivations = new Map<string, number>();
       
       // Input concepts get full activation
-      for (const concept of data.input_concepts) {
+      for (const concept of data.concepts || []) {
         newActivations.set(concept, 1.0);
       }
       
       // Activated concepts get their activation level
-      for (const item of data.activated) {
+      for (const item of data.activated || []) {
         newActivations.set(item.concept, item.activation);
       }
       
       setActivatedConcepts(newActivations);
-      setDebugInfo(`Input: [${data.input_concepts.join(', ')}] → ${data.total_activated} activated`);
+      setDebugInfo(`Input: [${(data.concepts || []).join(', ')}] → ${data.count || 0} activated`);
     } catch (e) {
       console.error('Activation failed:', e);
       setDebugInfo('Activation error');
@@ -890,27 +1581,38 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
   }, [queryInput, runActivation]);
   
   return (
-    <div style={{ width: '100%', height: '100%', position: 'relative', background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #0a0612 100%)' }}>
+    <div 
+      style={{ width: '100%', height: '100%', position: 'relative', background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #0a0612 100%)' }}
+      onWheel={(e) => e.preventDefault()}
+    >
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 8], fov: 50 }}
-        style={{ width: '100%', height: '100%' }}
+        camera={{ position: [0, 0, 12], fov: 50 }}
+        style={{ width: '100%', height: '100%', touchAction: 'none' }}
       >
         <Scene
           graphData={graphData}
           activatedConcepts={activatedConcepts}
           onNodeClick={onNodeClick}
+          pulseSpeed={pulseSpeed}
         />
-        <OrbitControls
-          enablePan={true}
-          enableZoom={true}
-          enableRotate={true}
-          autoRotate={mode === 'ambient'}
-          autoRotateSpeed={0.3}
-          minDistance={4}
-          maxDistance={15}
+        <FlyControls
+          moveSpeed={8}
+          lookSpeed={0.002}
         />
       </Canvas>
+      
+      {/* Controls hint */}
+      <div style={{
+        position: 'absolute',
+        top: 12,
+        left: 12,
+        fontSize: '0.7rem',
+        color: 'rgba(180, 160, 220, 0.6)',
+        pointerEvents: 'none',
+      }}>
+        ↑↓ forward/back • ←→ turn • WASD move • Q/E up/down • Drag look
+      </div>
       
       {/* Query input overlay */}
       <div style={{
@@ -1048,6 +1750,23 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
         <div>⚙️ Scroll to zoom</div>
         <div>⌨️ Type to activate</div>
         <div>💡 Click nodes</div>
+        
+        <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
+          <div style={{ marginBottom: 4 }}>⚡ Pulse Speed: {pulseSpeed.toFixed(1)}x</div>
+          <input
+            type="range"
+            min="0.2"
+            max="3"
+            step="0.1"
+            value={pulseSpeed}
+            onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
+            style={{
+              width: '100%',
+              accentColor: '#aa66ff',
+              cursor: 'pointer',
+            }}
+          />
+        </div>
       </div>
     </div>
   );

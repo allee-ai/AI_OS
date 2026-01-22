@@ -83,7 +83,7 @@ System-level reflexes:
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| `ReflexDashboard.tsx` | `react-chat-app/frontend/src/components/ReflexDashboard.tsx` | ✅ Done |
+| `ReflexDashboard.tsx` | `frontend/src/components/ReflexDashboard.tsx` | ✅ Done |
 | Reflex tab in ThreadsPage | `ThreadsPage.tsx` | ✅ Done |
 
 **Features**:

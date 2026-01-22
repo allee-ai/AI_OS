@@ -123,7 +123,7 @@ def spread(concept, initial_activation=1.0, decay=0.5, max_depth=3):
 | `Nola/threads/linking_core/adapter.py` | Core adapter - `health()` (README-based) |
 | `Nola/threads/linking_core/__init__.py` | Public API |
 | `Nola/threads/linking_core/README.md` | **THE DATA** - algorithms documented here |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
+| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
 | `Nola/threads/schema.py` | DB schema (future: concept_links table) |
 
 ### Backend Endpoints
@@ -137,9 +137,9 @@ def spread(concept, initial_activation=1.0, decay=0.5, max_depth=3):
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
+| `frontend/src/pages/ThreadsPage.tsx` | Thread viewer |
+| `frontend/src/pages/ThreadsPage.css` | Styles |
+| `frontend/src/services/introspectionService.ts` | API client |
 
 ### Frontend Functions (ThreadsPage.tsx)
 

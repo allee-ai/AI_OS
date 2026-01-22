@@ -17,9 +17,8 @@ interface ProfilesPageProps {
 
 const ProfilesPage: React.FC<ProfilesPageProps> = ({ mode = 'identity' }) => {
   // API base changes based on mode
-  const API = mode === 'philosophy' ? '/api/philosophy' : '/api/profiles';
+  const API = mode === 'philosophy' ? '/api/philosophy' : '/api/identity';
   const entityName = mode === 'philosophy' ? 'Stance' : 'Fact';
-  const pageName = mode === 'philosophy' ? 'Philosophy' : 'Identity';
 
 // Types
 interface ProfileType {

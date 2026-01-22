@@ -30,15 +30,6 @@ except ImportError:
     log_error = None
     set_session = None
 
-# Import training logger for append-only learning
-try:
-    from Nola.training import log_conversation_example, TrainingCategory
-    _HAS_TRAINING_LOGGER = True
-except ImportError:
-    _HAS_TRAINING_LOGGER = False
-    log_conversation_example = None
-    TrainingCategory = None
-
 
 class Agent:
 	"""Thread-safe state manager for Nola.json.
@@ -312,24 +303,6 @@ class Agent:
 				messages=messages
 			)
 			response_text = response['message']['content']
-			
-			# Log confident identity-maintaining responses for training (append-only learning)
-			# Only log if we have consciousness context (structured response)
-			if _HAS_TRAINING_LOGGER and consciousness_context and response_text:
-				# Heuristic: log identity-related exchanges
-				identity_keywords = ['nola', 'name', 'who are you', 'who am i', 'my name']
-				is_identity_relevant = any(kw in user_input.lower() for kw in identity_keywords)
-				
-				# Log identity maintenance with high confidence
-				if is_identity_relevant:
-					log_conversation_example(
-						system_prompt=system_prompt,
-						user_message=user_input,
-						assistant_response=response_text,
-						category=TrainingCategory.IDENTITY_RETRIEVAL,
-						confidence=0.85  # High confidence for structured identity responses
-					)
-			
 			return response_text
 		except Exception as e:
 			return f"[Error generating response: {e}]"

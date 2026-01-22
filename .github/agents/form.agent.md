@@ -127,7 +127,7 @@ adapter.record_action(
 | `Nola/threads/form/adapter.py` | Core adapter - `get_tools()`, `register_tool()`, `record_action()` |
 | `Nola/threads/form/__init__.py` | Public API |
 | `Nola/threads/form/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
+| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
 | `Nola/services/kernel_service.py` | Browser/Kernel integration |
 | `Nola/threads/schema.py` | DB schema - `pull_from_module()` |
 
@@ -143,9 +143,9 @@ adapter.record_action(
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
+| `frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
+| `frontend/src/pages/ThreadsPage.css` | Styles |
+| `frontend/src/services/introspectionService.ts` | API client |
 
 ### Frontend Functions (ThreadsPage.tsx)
 

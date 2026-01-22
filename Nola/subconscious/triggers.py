@@ -404,7 +404,7 @@ def create_pending_facts_trigger(
     """
     def get_pending_count() -> float:
         try:
-            from Nola.temp_memory import get_all_pending
+            from Nola.subconscious.temp_memory import get_all_pending
             pending = get_all_pending()
             return float(len(pending) if pending else 0)
         except Exception:

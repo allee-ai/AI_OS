@@ -31,7 +31,6 @@ fi
 
 # Check if dependencies are installed
 echo "🔍 Checking dependencies..."
-cd Nola/react-chat-app/backend
 
 if ! python3 -c "import kernel" 2>/dev/null; then
     echo "📦 Installing Kernel SDK and Playwright..."
@@ -48,4 +47,4 @@ echo "   (Press Ctrl+C to stop)"
 echo ""
 
 # Start the backend
-python3 main.py
+python3 -m scripts.server

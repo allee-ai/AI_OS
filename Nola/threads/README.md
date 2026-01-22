@@ -203,8 +203,8 @@ Files to move:
 | `Nola/services/kernel_service.py` | `threads/form/modules/kernel.py` | Form |
 
 ### Phase 4: Update Imports (PENDING)
-- [ ] Update all imports in `services/agent_service.py`
-- [ ] Update all imports in `react-chat-app/backend/`
+- [x] Update all imports in `services/agent_service.py`
+- [x] Removed `react-chat-app/` (consolidated to `scripts/server.py`)
 - [ ] Run tests to verify nothing broke
 
 ### Phase 5: Cleanup (PENDING)

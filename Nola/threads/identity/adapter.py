@@ -30,14 +30,6 @@ except ImportError:
         get_value_by_weight,
     )
 
-# Training data logging (append-only learning)
-try:
-    from Nola.training import log_identity_decision
-    HAS_TRAINING_LOGGER = True
-except ImportError:
-    HAS_TRAINING_LOGGER = False
-    def log_identity_decision(*args, **kwargs): return False
-
 
 class IdentityThreadAdapter(BaseThreadAdapter):
     """
@@ -240,18 +232,6 @@ class IdentityThreadAdapter(BaseThreadAdapter):
                 score += 0.15
         
         final_score = min(score, 1.0)
-        
-        # Log confident retrieval decisions for training
-        if HAS_TRAINING_LOGGER and final_score >= 0.7 and query:
-            log_identity_decision(
-                input_text=query,
-                output_text=fact,
-                decision_type="retrieval",
-                confidence=final_score,
-                active_project=active_project,
-                overlap_words=overlap if query else 0
-            )
-        
         return final_score
     
     # Legacy compatibility - map old module-based calls to flat table

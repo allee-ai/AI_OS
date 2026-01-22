@@ -89,7 +89,7 @@ Form uses a unique architecture:
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| `ToolDashboard.tsx` | `react-chat-app/frontend/src/components/ToolDashboard.tsx` | ✅ Done |
+| `ToolDashboard.tsx` | `frontend/src/components/ToolDashboard.tsx` | ✅ Done |
 | Form tab in ThreadsPage | `ThreadsPage.tsx` | ✅ Done |
 
 **Features**:

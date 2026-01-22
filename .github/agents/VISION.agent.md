@@ -42,7 +42,7 @@ Look for "Ghost Code" — complex logic in backend files (e.g., `schema.py`, `co
 - 🏗 `docs/specs/` (The intended architecture)
 - 🧠 `docs/vision/` (The core philosophy—are we still aligned?)
 - 📂 `Nola/threads/schema.py` (The database source of truth)
-- 🖥️ `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` (The current UI implementation)
+- 🖥️ `frontend/src/pages/ThreadsPage.tsx` (The current UI implementation)
 
 **Key Questions:**
 - ✅ **What's complete?** (e.g., L3->L1 consolidation, Portable Installer, HEA levels)

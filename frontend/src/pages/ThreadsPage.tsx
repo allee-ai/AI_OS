@@ -61,10 +61,6 @@ const DOC_THREADS = new Set<string>([]);  // linking_core now has 3D viz
 const EVENT_TYPES = ['convo', 'system', 'user_action', 'memory', 'activation', 'file'];
 const EVENT_SOURCES = ['local', 'agent', 'daemon', 'web_public'];
 
-// Type options for identity and philosophy
-const IDENTITY_TYPES = ['user', 'nola', 'machine', 'relationship'];
-const PHILOSOPHY_TYPES = ['value', 'constraint', 'style'];
-
 export const ThreadsPage = () => {
   const [threads, setThreads] = useState<Record<string, ThreadHealth>>({});
   const [activeThread, setActiveThread] = useState<string | null>(null);
@@ -74,10 +70,6 @@ export const ThreadsPage = () => {
   const [readmeContent, setReadmeContent] = useState<string>('');
   const [loading, setLoading] = useState(true);
   const [dataLoading, setDataLoading] = useState(false);
-  const [activeLevel, setActiveLevel] = useState<1 | 2 | 3>(2);
-  const [editingKey, setEditingKey] = useState<string | null>(null);
-  const [editForm, setEditForm] = useState<Partial<IdentityRow>>({});
-  const [saving, setSaving] = useState(false);
 
   // Log thread state
   const [logEvents, setLogEvents] = useState<LogEvent[]>([]);
@@ -95,24 +87,11 @@ export const ThreadsPage = () => {
   const [addingEvent, setAddingEvent] = useState<boolean>(false);
   const [addEventResult, setAddEventResult] = useState<string | null>(null);
 
-  // Add row form state (shared for identity/philosophy)
-  const [showAddRow, setShowAddRow] = useState<boolean>(false);
-  const [newRowKey, setNewRowKey] = useState<string>('');
-  const [newRowType, setNewRowType] = useState<string>('user');
-  const [newRowDesc, setNewRowDesc] = useState<string>('');
-  const [newRowL1, setNewRowL1] = useState<string>('');
-  const [newRowL2, setNewRowL2] = useState<string>('');
-  const [newRowL3, setNewRowL3] = useState<string>('');
-  const [newRowWeight, setNewRowWeight] = useState<number>(0.5);
-  const [addingRow, setAddingRow] = useState<boolean>(false);
-  const [addRowResult, setAddRowResult] = useState<string | null>(null);
-
-  const fetchIdentityData = () => {
+  const fetchIdentityCount = () => {
     fetch('http://localhost:8000/api/identity/table')
       .then(res => res.json())
       .then(data => {
         setIdentityRows(data.rows || []);
-        setGenericModules({});
         setDataLoading(false);
       })
       .catch(() => {
@@ -216,7 +195,6 @@ export const ThreadsPage = () => {
     if (!activeThread) return;
     
     setDataLoading(true);
-    setEditingKey(null);
     setReadmeContent('');
     
     // Documentation threads - fetch README
@@ -237,8 +215,7 @@ export const ThreadsPage = () => {
     }
     
     if (activeThread === 'identity') {
-      // fetchIdentityData(); // Replaced by ProfilesPage component
-      setDataLoading(false);
+      fetchIdentityCount();
     } else if (activeThread === 'philosophy') {
       fetchPhilosophyData();
     } else if (activeThread === 'log') {
@@ -263,115 +240,6 @@ export const ThreadsPage = () => {
     }
   }, [activeThread, fetchLogEvents]);
 
-  const startEditing = (row: IdentityRow | PhilosophyRow) => {
-    setEditingKey(row.key);
-    setEditForm({ ...row });
-  };
-
-  const cancelEditing = () => {
-    setEditingKey(null);
-    setEditForm({});
-  };
-
-  const saveEdit = async () => {
-    if (!editingKey || !editForm.l1 || !editForm.l2 || !editForm.l3) return;
-    
-    // Determine which thread we're editing
-    const endpoint = activeThread === 'philosophy' 
-      ? `http://localhost:8000/api/philosophy/facts/${editingKey}`
-      : `http://localhost:8000/api/identity/facts/${editingKey}`;
-    
-    setSaving(true);
-    try {
-      const res = await fetch(endpoint, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          l1: editForm.l1,
-          l2: editForm.l2,
-          l3: editForm.l3,
-          weight: editForm.weight,
-          metadata_type: editForm.metadata_type,
-          metadata_desc: editForm.metadata_desc,
-        }),
-      });
-      
-      if (res.ok) {
-        if (activeThread === 'philosophy') {
-          fetchPhilosophyData();
-        } else {
-          fetchIdentityData();
-        }
-        setEditingKey(null);
-        setEditForm({});
-      }
-    } catch (e) {
-      console.error('Save failed:', e);
-    }
-    setSaving(false);
-  };
-
-  const resetAddRowForm = () => {
-    setNewRowKey('');
-    setNewRowType(activeThread === 'philosophy' ? 'value' : 'user');
-    setNewRowDesc('');
-    setNewRowL1('');
-    setNewRowL2('');
-    setNewRowL3('');
-    setNewRowWeight(0.5);
-    setShowAddRow(false);
-    setAddRowResult(null);
-  };
-
-  const handleAddRow = async () => {
-    if (!newRowKey.trim() || !newRowL1.trim() || !newRowL2.trim() || !newRowL3.trim()) {
-      setAddRowResult('⚠ Fill in key and all L1/L2/L3 fields');
-      return;
-    }
-    
-    const endpoint = activeThread === 'philosophy'
-      ? `http://localhost:8000/api/philosophy/facts`
-      : `http://localhost:8000/api/identity/facts`;
-    
-    setAddingRow(true);
-    setAddRowResult(null);
-    
-    try {
-      const res = await fetch(endpoint, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          profile_id: activeThread === 'philosophy' ? 'core.values' : 'user.primary',
-          key: newRowKey.trim(),
-          l1_value: newRowL1.trim(),
-          l2_value: newRowL2.trim(),
-          l3_value: newRowL3.trim(),
-          weight: newRowWeight,
-          fact_type: newRowType,
-        }),
-      });
-      
-      if (res.ok) {
-        setAddRowResult('✓ Added');
-        if (activeThread === 'philosophy') {
-          fetchPhilosophyData();
-        } else {
-          fetchIdentityData();
-        }
-        setTimeout(() => {
-          resetAddRowForm();
-        }, 1000);
-      } else {
-        const err = await res.json();
-        setAddRowResult(`⚠ ${err.detail || 'Failed'}`);
-      }
-    } catch {
-      setAddRowResult('⚠ Error');
-    } finally {
-      setAddingRow(false);
-    }
-  };
-
   const formatValue = (value: any): string => {
     if (typeof value === 'string') return value;
     if (typeof value === 'number' || typeof value === 'boolean') return String(value);
@@ -390,245 +258,6 @@ export const ThreadsPage = () => {
     : activeThread === 'log'
     ? logEvents.length
     : Object.values(genericModules).reduce((sum, arr) => sum + arr.length, 0);
-
-  // Generic flat table renderer for identity-like threads
-  const renderFlatTable = (rows: IdentityRow[], threadType: 'identity' | 'philosophy') => (
-    <div className="identity-table-container">
-      <div className="level-tabs">
-        <button 
-          className={`level-tab ${activeLevel === 1 ? 'active' : ''}`}
-          onClick={() => setActiveLevel(1)}
-        >
-          L1 Quick
-        </button>
-        <button 
-          className={`level-tab ${activeLevel === 2 ? 'active' : ''}`}
-          onClick={() => setActiveLevel(2)}
-        >
-          L2 Standard
-        </button>
-        <button 
-          className={`level-tab ${activeLevel === 3 ? 'active' : ''}`}
-          onClick={() => setActiveLevel(3)}
-        >
-          L3 Full
-        </button>
-      </div>
-      
-      <table className="identity-table">
-        <thead>
-          <tr>
-            <th className="col-key">Key</th>
-            <th className="col-type">Type</th>
-            <th className="col-value">
-              {activeLevel === 1 ? 'L1 (Quick)' : activeLevel === 2 ? 'L2 (Standard)' : 'L3 (Full)'}
-            </th>
-            <th className="col-weight">Weight</th>
-            <th className="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {rows.map(row => (
-            editingKey === row.key ? (
-              <tr key={row.key} className="editing-row">
-                <td colSpan={5}>
-                  <div className="edit-panel">
-                    <div className="edit-header">
-                      <span className="key-name">{row.key}</span>
-                      <span className="key-desc">{row.metadata_desc}</span>
-                    </div>
-                    
-                    <div className="edit-fields">
-                      <label className="edit-field">
-                        <span className="field-label">L1 (Quick)</span>
-                        <input
-                          type="text"
-                          value={editForm.l1 || ''}
-                          onChange={e => setEditForm({ ...editForm, l1: e.target.value })}
-                          placeholder="Brief, ~10 tokens"
-                        />
-                      </label>
-                      
-                      <label className="edit-field">
-                        <span className="field-label">L2 (Standard)</span>
-                        <textarea
-                          value={editForm.l2 || ''}
-                          onChange={e => setEditForm({ ...editForm, l2: e.target.value })}
-                          rows={2}
-                          placeholder="Standard detail, ~30 tokens"
-                        />
-                      </label>
-                      
-                      <label className="edit-field">
-                        <span className="field-label">L3 (Full)</span>
-                        <textarea
-                          value={editForm.l3 || ''}
-                          onChange={e => setEditForm({ ...editForm, l3: e.target.value })}
-                          rows={3}
-                          placeholder="Full context, ~100 tokens"
-                        />
-                      </label>
-                      
-                      <label className="edit-field weight-field">
-                        <span className="field-label">Weight: {((editForm.weight || 0.5) * 100).toFixed(0)}%</span>
-                        <input
-                          type="range"
-                          min="0"
-                          max="1"
-                          step="0.05"
-                          value={editForm.weight || 0.5}
-                          onChange={e => setEditForm({ ...editForm, weight: parseFloat(e.target.value) })}
-                        />
-                      </label>
-                    </div>
-                    
-                    <div className="edit-actions">
-                      <button className="btn-cancel" onClick={cancelEditing} disabled={saving}>
-                        Cancel
-                      </button>
-                      <button className="btn-save" onClick={saveEdit} disabled={saving}>
-                        {saving ? 'Saving...' : 'Save'}
-                      </button>
-                    </div>
-                  </div>
-                </td>
-              </tr>
-            ) : (
-              <tr key={row.key}>
-                <td className="col-key">
-                  <span className="key-name">{row.key}</span>
-                  <span className="key-desc">{row.metadata_desc}</span>
-                </td>
-                <td className="col-type">
-                  <span className={`type-badge ${row.metadata_type}`}>{row.metadata_type}</span>
-                </td>
-                <td className="col-value">
-                  {activeLevel === 1 ? row.l1 : activeLevel === 2 ? row.l2 : row.l3}
-                </td>
-                <td className="col-weight">
-                  <div className="weight-bar">
-                    <div className="weight-fill" style={{ width: `${row.weight * 100}%` }} />
-                  </div>
-                  <span className="weight-num">{(row.weight * 100).toFixed(0)}%</span>
-                </td>
-                <td className="col-actions">
-                  <button className="btn-edit" onClick={() => startEditing(row)}>✏️</button>
-                </td>
-              </tr>
-            )
-          ))}
-        </tbody>
-      </table>
-
-      {/* Add Row Section */}
-      <div className="add-row-section">
-        {!showAddRow ? (
-          <button 
-            className="btn-add-row" 
-            onClick={() => {
-              setNewRowType(threadType === 'philosophy' ? 'value' : 'user');
-              setShowAddRow(true);
-            }}
-          >
-            ➕ Add {threadType === 'philosophy' ? 'Value' : 'Fact'}
-          </button>
-        ) : (
-          <div className="add-row-form">
-            <div className="add-row-header">
-              <h4>➕ New {threadType === 'philosophy' ? 'Philosophy Entry' : 'Identity Fact'}</h4>
-              <button className="btn-close" onClick={resetAddRowForm}>✕</button>
-            </div>
-            
-            <div className="add-row-fields">
-              <div className="add-row-top">
-                <label className="add-field">
-                  <span>Key</span>
-                  <input
-                    type="text"
-                    value={newRowKey}
-                    onChange={e => setNewRowKey(e.target.value)}
-                    placeholder="unique_key_name"
-                  />
-                </label>
-                
-                <label className="add-field">
-                  <span>Type</span>
-                  <select value={newRowType} onChange={e => setNewRowType(e.target.value)}>
-                    {(threadType === 'philosophy' ? PHILOSOPHY_TYPES : IDENTITY_TYPES).map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </label>
-                
-                <label className="add-field">
-                  <span>Description</span>
-                  <input
-                    type="text"
-                    value={newRowDesc}
-                    onChange={e => setNewRowDesc(e.target.value)}
-                    placeholder="Optional description"
-                  />
-                </label>
-              </div>
-              
-              <label className="add-field">
-                <span>L1 (Quick)</span>
-                <input
-                  type="text"
-                  value={newRowL1}
-                  onChange={e => setNewRowL1(e.target.value)}
-                  placeholder="Brief version (~10 tokens)"
-                />
-              </label>
-              
-              <label className="add-field">
-                <span>L2 (Standard)</span>
-                <textarea
-                  value={newRowL2}
-                  onChange={e => setNewRowL2(e.target.value)}
-                  rows={2}
-                  placeholder="Standard version (~30 tokens)"
-                />
-              </label>
-              
-              <label className="add-field">
-                <span>L3 (Full)</span>
-                <textarea
-                  value={newRowL3}
-                  onChange={e => setNewRowL3(e.target.value)}
-                  rows={3}
-                  placeholder="Full version (~100 tokens)"
-                />
-              </label>
-              
-              <label className="add-field weight-field">
-                <span>Weight: {(newRowWeight * 100).toFixed(0)}%</span>
-                <input
-                  type="range"
-                  min="0"
-                  max="1"
-                  step="0.05"
-                  value={newRowWeight}
-                  onChange={e => setNewRowWeight(parseFloat(e.target.value))}
-                />
-              </label>
-            </div>
-            
-            <div className="add-row-actions">
-              <button className="btn-cancel" onClick={resetAddRowForm}>Cancel</button>
-              <button className="btn-save" onClick={handleAddRow} disabled={addingRow}>
-                {addingRow ? 'Adding...' : 'Add'}
-              </button>
-              {addRowResult && <span className="add-row-result">{addRowResult}</span>}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-
-  // renderIdentityTable is now handled by ProfilesPage component
-  const renderPhilosophyTable = () => renderFlatTable(philosophyRows, 'philosophy');
 
   const renderGenericView = () => (
     <div className="thread-data">

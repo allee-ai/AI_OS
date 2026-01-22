@@ -351,7 +351,7 @@ async def restart_services():
 async def get_memory_stats():
     """Get memory service statistics."""
     try:
-        from Nola.temp_memory import get_stats
+        from Nola.subconscious.temp_memory import get_stats
         stats = get_stats()
         return {
             "pending": stats.get("pending", 0),
@@ -366,7 +366,7 @@ async def get_memory_stats():
 async def get_pending_facts():
     """Get list of facts pending consolidation."""
     try:
-        from Nola.temp_memory import get_all_pending
+        from Nola.subconscious.temp_memory import get_all_pending
         pending = get_all_pending()
         return {
             "facts": [
@@ -386,29 +386,6 @@ async def run_consolidation():
         "message": "Consolidation moved to subconscious orchestrator - not yet implemented",
         "facts_processed": 0
     }
-
-
-# =============================================================================
-# Fact Extractor Endpoints
-# =============================================================================
-
-@router.post("/fact-extractor/test")
-async def test_fact_extraction(body: Dict[str, Any]):
-    """Test fact extraction without storing."""
-    fact = body.get("fact", "")
-    if not fact:
-        raise HTTPException(status_code=400, detail="No fact provided")
-    
-    try:
-        from Nola.services.fact_extractor import extract_key, extract_value_levels, classify_thread
-        
-        key = extract_key(fact)
-        l1, l2, l3 = extract_value_levels(fact)
-        thread, meta_type = classify_thread(fact)
-        
-        return {"key": key, "thread": thread, "meta_type": meta_type, "l1": l1, "l2": l2, "l3": l3}
-    except Exception as e:
-        return {"error": str(e)}
 
 
 # =============================================================================
@@ -476,22 +453,21 @@ async def parse_export(upload_id: str = Form(...), platform: Optional[str] = For
         raise HTTPException(status_code=400, detail="No files found in upload")
     
     try:
-        from Nola.services.import_service import ImportService
-        from Nola.path_utils import ensure_project_root_on_path
+        from chat.import_convos import ImportConvos
         
-        project_root = ensure_project_root_on_path(Path(__file__).resolve())
-        workspace_path = project_root / "Nola" / "workspace"
-        stimuli_path = project_root / "Nola" / "Stimuli"
+        project_root = Path(__file__).resolve().parents[2]
+        workspace_path = project_root / "workspace"
+        stimuli_path = project_root / "Stimuli"
         
-        import_service = ImportService(workspace_path, stimuli_path)
+        import_convos = ImportConvos(workspace_path, stimuli_path)
         
         if not platform:
-            parser = import_service.detect_platform(export_path)
+            parser = import_convos.detect_platform(export_path)
             if not parser:
                 raise HTTPException(status_code=400, detail="Could not detect platform")
             platform = parser.get_platform_name()
         
-        parser = next(p for p in import_service.parsers if p.get_platform_name().lower() == platform.lower())
+        parser = next(p for p in import_convos.parsers if p.get_platform_name().lower() == platform.lower())
         conversations = await parser.parse(export_path)
         
         preview = {
@@ -532,15 +508,14 @@ async def commit_import(
         raise HTTPException(status_code=400, detail="No files found in upload")
     
     try:
-        from Nola.services.import_service import ImportService
-        from Nola.path_utils import ensure_project_root_on_path
+        from chat.import_convos import ImportConvos
         
-        project_root = ensure_project_root_on_path(Path(__file__).resolve())
-        workspace_path = project_root / "Nola" / "workspace"
-        stimuli_path = project_root / "Nola" / "Stimuli"
+        project_root = Path(__file__).resolve().parents[2]
+        workspace_path = project_root / "workspace"
+        stimuli_path = project_root / "Stimuli"
         
-        import_service = ImportService(workspace_path, stimuli_path)
-        result = await import_service.import_conversations(
+        import_convos = ImportConvos(workspace_path, stimuli_path)
+        result = await import_convos.import_conversations(
             export_path=export_path,
             platform=platform,
             organize_by_project=organize_by_project

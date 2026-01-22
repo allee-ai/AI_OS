@@ -89,6 +89,14 @@
   margin-bottom: 8px;
 }
 
+.nav-icon-img {
+  width: 36px;
+  height: 36px;
+  object-fit: contain;
+  margin-bottom: 8px;
+  filter: saturate(1.1) contrast(1.05);
+}
+
 .nav-label {
   font-size: 0.9rem;
   font-weight: 600;
@@ -172,4 +180,21 @@
   .dashboard-nav {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* Subtle dev tools link */
+.dev-link {
+  display: inline-block;
+  margin-top: 16px;
+  padding: 4px 8px;
+  font-size: 1.3rem;
+  color: var(--text-muted);
+  text-decoration: none;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+}
+
+.dev-link:hover {
+  opacity: 1;
+  color: var(--text);
 }

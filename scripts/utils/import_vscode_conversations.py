@@ -17,8 +17,8 @@ from datetime import datetime
 # Add parent directory to path to import Nola modules
 sys.path.insert(0, str(Path(__file__).parent))
 
-from Nola.services.import_service import ImportService
-from Nola.services.parsers import VSCodeExportParser
+from chat.import_convos import ImportConvos
+from chat.parsers import VSCodeExportParser
 
 
 def find_vscode_chat_sessions() -> list[Path]:
@@ -77,8 +77,8 @@ async def main():
     print(f"Total conversation files: {total_files}")
     
     # Create import service
-    import_service = ImportService(workspace_path, stimuli_path)
-    
+    import_convos = ImportConvos(workspace_path, stimuli_path)
+
     # Import from each directory
     all_results = []
     total_imported = 0
@@ -93,7 +93,7 @@ async def main():
         print(f"  Path: {chat_dir}")
         
         try:
-            result = await import_service.import_conversations(
+            result = await import_convos.import_conversations(
                 export_path=chat_dir,
                 platform="vscode-copilot",
                 organize_by_project=True

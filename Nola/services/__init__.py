@@ -8,7 +8,6 @@ Exports:
 - AgentService: Core agent connecting chat to HEA system
 - FactExtractor: LLM-based fact extraction
 - KernelService: Browser automation
-- ImportService: Conversation imports
 """
 
 from .api import router

@@ -20,14 +20,6 @@ except ImportError:
     def score_topic_relevance(*args, **kwargs): return {}
     def embed_text(*args, **kwargs): return []
 
-# Training data logging (append-only learning)
-try:
-    from Nola.training import log_linking_decision
-    HAS_TRAINING_LOGGER = True
-except ImportError:
-    HAS_TRAINING_LOGGER = False
-    def log_linking_decision(*args, **kwargs): return False
-
 try:
     from Nola.threads.base import (
         ThreadInterface,
@@ -317,21 +309,6 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
                         "top_keys": [f.get("fact_key", "") for f in facts[:3]]
                     }
                 )
-                
-                # Log confident spread activation for training (append-only learning)
-                if HAS_TRAINING_LOGGER and activated:
-                    top_activation = activated[0]["activation"] if activated else 0
-                    if top_activation >= 0.5:  # Only log confident activations
-                        activated_concepts = [a["concept"] for a in activated[:5]]
-                        log_linking_decision(
-                            input_text=input_text,
-                            output_text=f"Activated: {', '.join(activated_concepts)}",
-                            decision_type="activation",
-                            confidence=top_activation,
-                            source_concepts=concepts,
-                            activated_count=len(activated),
-                            facts_retrieved=len(facts)
-                        )
             
             return facts
             

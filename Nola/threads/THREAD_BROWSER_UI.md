@@ -7,7 +7,7 @@
 
 ## Implementation ✅
 
-The thread browser is implemented as `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
+The thread browser is implemented as `frontend/src/pages/ThreadsPage.tsx`:
 
 - ✅ Thread tabs (identity, log, form, philosophy, reflex, linking_core)
 - ✅ Thread health display with status indicators
@@ -87,7 +87,7 @@ components/ThreadBrowser/
 
 ## Service Layer
 
-The front-end calls backend endpoints for thread summaries, module lists, and key-level CRUD. See `react-chat-app/backend` endpoints for `introspection/threads/*`.
+The front-end calls backend endpoints for thread summaries, module lists, and key-level CRUD. See `Nola/services/api.py` endpoints for `introspection/threads/*`.
 
 ---
 

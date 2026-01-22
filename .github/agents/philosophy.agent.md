@@ -95,7 +95,7 @@ health = adapter.health()
 | `Nola/threads/philosophy/adapter.py` | Core adapter - `get_data()`, `get_module_data()`, `health()` |
 | `Nola/threads/philosophy/__init__.py` | Public API |
 | `Nola/threads/philosophy/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-770) |
+| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-770) |
 | `Nola/threads/schema.py` | DB helpers - `push_philosophy_row()`, `get_philosophy_table_data()`, `migrate_philosophy_to_flat()` |
 
 ### Backend Endpoints
@@ -112,8 +112,8 @@ health = adapter.health()
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Philosophy table with L1/L2/L3 tabs + editing |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles (including `.type-badge.value/.constraint/.style`) |
+| `frontend/src/pages/ThreadsPage.tsx` | Philosophy table with L1/L2/L3 tabs + editing |
+| `frontend/src/pages/ThreadsPage.css` | Styles (including `.type-badge.value/.constraint/.style`) |
 
 ### Frontend Functions (ThreadsPage.tsx)
 

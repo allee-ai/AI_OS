@@ -100,7 +100,7 @@ adapter.register_shortcut(
 | `Nola/threads/reflex/adapter.py` | Core adapter - `match_pattern()`, `get_data()`, `register_shortcut()` |
 | `Nola/threads/reflex/__init__.py` | Public API |
 | `Nola/threads/reflex/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
+| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
 | `Nola/threads/schema.py` | DB schema - `pull_from_module()` |
 
 ### Backend Endpoints
@@ -115,9 +115,9 @@ adapter.register_shortcut(
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
+| `frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
+| `frontend/src/pages/ThreadsPage.css` | Styles |
+| `frontend/src/services/introspectionService.ts` | API client |
 
 ### Frontend Functions (ThreadsPage.tsx)
 

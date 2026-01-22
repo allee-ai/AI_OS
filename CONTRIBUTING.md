@@ -80,7 +80,7 @@ Maintain and extend the API layer.
 - Work on the Stimuli system (integrations)
 - Optimize performance
 
-**Start here:** `Nola/react-chat-app/backend/`, `Nola/threads/`
+**Start here:** `scripts/server.py`, `Nola/threads/`, `chat/`
 
 **Good issues:** [label:backend](https://github.com/allee-ai/AI_OS/issues?q=is%3Aissue+is%3Aopen+label%3Abackend)
 
@@ -95,7 +95,7 @@ Improve the chat interface and visualization tools.
 - Add thread visualizations
 - Implement the Reflex Builder UI
 
-**Start here:** `Nola/react-chat-app/frontend/src/`
+**Start here:** `frontend/src/`
 
 **Good issues:** [label:frontend](https://github.com/allee-ai/AI_OS/issues?q=is%3Aissue+is%3Aopen+label%3Afrontend)
 

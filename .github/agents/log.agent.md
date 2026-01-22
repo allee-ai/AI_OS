@@ -114,7 +114,7 @@ events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
 | `Nola/threads/log/adapter.py` | Core adapter - `log_event()`, `get_recent_events()`, `start_session()` |
 | `Nola/threads/log/__init__.py` | Public API - `log_event()`, `log_error()`, `read_log()` |
 | `Nola/threads/log/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 413, 780-850) |
+| `Nola/services/api.py # introspection.py` | REST endpoints (lines 413, 780-850) |
 | `Nola/threads/schema.py` | DB helpers - `pull_log_events()` (line 1228) |
 
 ### Backend Endpoints
@@ -138,9 +138,9 @@ events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Log viewer UI |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Log styles (`.log-view`, `.log-event`) |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API - `getRecentEvents()`, `addEvent()` |
+| `frontend/src/pages/ThreadsPage.tsx` | Log viewer UI |
+| `frontend/src/pages/ThreadsPage.css` | Log styles (`.log-view`, `.log-event`) |
+| `frontend/src/services/introspectionService.ts` | API - `getRecentEvents()`, `addEvent()` |
 
 ### Frontend Functions (ThreadsPage.tsx)
 

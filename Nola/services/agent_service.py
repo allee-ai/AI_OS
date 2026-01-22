@@ -24,20 +24,7 @@ class ChatMessage(BaseModel):
     timestamp: datetime
 
 
-# Shared path bootstrap
-from Nola.path_utils import (
-    ensure_project_root_on_path,
-    ensure_nola_root_on_path,
-    warn_if_not_venv,
-)
-
-project_root = ensure_project_root_on_path(Path(__file__).resolve())
-nola_path = ensure_nola_root_on_path(Path(__file__).resolve())
-_venv_warning = warn_if_not_venv(project_root)
-if _venv_warning:
-    print(f"⚠️  {_venv_warning}")
-
-# NOW import Nola modules after paths are set
+# NOW import Nola modules
 # Relevance scoring utilities - use new LinkingCore
 try:
     from Nola.threads.linking_core.scoring import score_relevance, rank_items
@@ -88,18 +75,18 @@ except ImportError:
     KERNEL_AVAILABLE = False
 
 try:
-    from agent import get_agent
-    print(f"✅ Successfully imported Nola agent from {nola_path}")
+    from Nola.agent import get_agent
+    print("✅ Successfully imported Nola agent")
     NOLA_AVAILABLE = True
 except ImportError as e:
-    print(f"❌ Warning: Nola agent not found at {nola_path}: {e}")
+    print(f"❌ Warning: Nola agent not found: {e}")
     print("Using mock implementation.")
     get_agent = None
     NOLA_AVAILABLE = False
 
-# Conversation storage - now uses Nola.chat module
+# Conversation storage - now uses chat module
 try:
-    from Nola.chat.schema import save_conversation, add_turn, get_conversation
+    from chat.schema import save_conversation, add_turn, get_conversation
     _HAS_CHAT_SCHEMA = True
     print("✅ Chat schema enabled - conversations stored in DB")
 except ImportError:

@@ -27,7 +27,7 @@ Architecture:
 
 Threads (built-in adapters):
     - identity: Core identity and user preferences (Nola.threads.identity)
-    - temp_memory: Session facts and learned info (Nola.temp_memory)
+    - temp_memory: Session facts pending consolidation (Nola.subconscious.temp_memory)
     - log_thread: Event timeline (Nola.log_thread)
 """
 

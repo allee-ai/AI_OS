@@ -6,8 +6,8 @@ All thread agents share this context. Read this first.
 
 | Layer | Technology | Location |
 |-------|------------|----------|
-| **Backend** | FastAPI + Uvicorn | `Nola/react-chat-app/backend/` |
-| **Frontend** | React + Vite + React Router | `Nola/react-chat-app/frontend/` |
+| **Backend** | FastAPI + Uvicorn | `scripts/server.py` |
+| **Frontend** | React + Vite + React Router | `frontend/` |
 | **Database** | SQLite | `data/db/state.db` |
 | **LLM** | Ollama (local) | System service |
 | **Embeddings** | nomic-embed-text | Via Ollama |
@@ -67,9 +67,9 @@ class XxxThreadAdapter(BaseThreadAdapter):
 |---------|----------|
 | Thread schema | `Nola/threads/schema.py` |
 | Base adapter | `Nola/threads/base.py` |
-| API introspection | `Nola/react-chat-app/backend/api/introspection.py` |
-| Frontend threads page | `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` |
-| Frontend styles | `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` |
+| API introspection | `Nola/services/api.py # introspection.py` |
+| Frontend threads page | `frontend/src/pages/ThreadsPage.tsx` |
+| Frontend styles | `frontend/src/pages/ThreadsPage.css` |
 
 ## Context Levels (HEA)
 
@@ -90,10 +90,10 @@ class XxxThreadAdapter(BaseThreadAdapter):
 
 ```bash
 # Start backend
-cd Nola/react-chat-app/backend && python -m uvicorn main:app --reload --port 8000
+python -m scripts.server
 
 # Start frontend
-cd Nola/react-chat-app/frontend && npm run dev
+cd frontend && npm run dev
 
 # Check health
 curl http://localhost:8000/api/introspection/threads/health
