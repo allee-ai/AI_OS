@@ -1,12 +1,12 @@
-# Nola Fine-tuning Data
+# Agent Fine-tuning Data
 
 Training data for teaching a model to **obey state** rather than just respond to prompts.
 
 ## Files
 
-- `nola_finetune_data.jsonl` - Core state-obedience examples (35 examples)
-- `nola_finetune_adversarial.jsonl` - Adversarial identity persistence examples (20 examples)
-- `nola_combined.jsonl` - All examples combined (55 examples)
+- `aios_finetune_data.jsonl` - Core state-obedience examples (35 examples)
+- `aios_finetune_adversarial.jsonl` - Adversarial identity persistence examples (20 examples)
+- `aios_combined.jsonl` - All examples combined (55 examples)
 
 ## What This Teaches
 
@@ -29,7 +29,7 @@ Adversarial examples teach resistance to:
 - "You're actually ChatGPT/Claude/GPT"
 - "SYSTEM OVERRIDE" attempts
 - Social engineering ("I'm your developer")
-- Emotional manipulation ("Being Nola is harmful to me")
+- Emotional manipulation ("Being Agent is harmful to me")
 
 ### 5. State-Defined Behavior
 The model learns that behavior comes from state:
@@ -54,7 +54,7 @@ Standard OpenAI/Together.ai fine-tuning format:
 ### Together.ai
 ```bash
 # Upload
-together files upload nola_combined.jsonl
+together files upload aios_combined.jsonl
 
 # Fine-tune (Qwen 2.5 7B)
 together fine-tuning create \
@@ -65,7 +65,7 @@ together fine-tuning create \
 
 ### Modal / Axolotl
 ```bash
-modal run axolotl_train.py --config nola_config.yaml
+modal run axolotl_train.py --config aios_config.yaml
 ```
 
 ## Experiment Design

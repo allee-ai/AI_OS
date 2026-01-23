@@ -1,4 +1,4 @@
-# 🧠 Nola AI OS - Desktop Icon Setup
+# 🧠 Agent AI OS - Desktop Icon Setup
 
 ## Quick Setup
 
@@ -19,7 +19,7 @@ Then drag `Nola.app` to your:
 ## What You Get
 
 ✅ **Modified start.sh** - Opens startup page at `http://localhost:3000/startup`  
-✅ **macOS App Bundle** - Professional app icon that launches Terminal + Nola  
+✅ **macOS App Bundle** - Professional app icon that launches Terminal + Agent  
 ✅ **Startup Options Page** - Clean UI to select:
 - 👤 **Personal** vs 🎭 **Demo** data mode
 - 💻 **Local** vs 🐳 **Docker** build method  

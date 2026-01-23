@@ -66,12 +66,12 @@ CREATE TABLE philosophy_flat (
 
 ## Adapter
 
-**Location:** `Nola/threads/philosophy/adapter.py`
+**Location:** `agent/threads/philosophy/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.philosophy.adapter import PhilosophyThreadAdapter
+from agent.threads.philosophy.adapter import PhilosophyThreadAdapter
 
 adapter = PhilosophyThreadAdapter()
 
@@ -92,11 +92,11 @@ health = adapter.health()
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/philosophy/adapter.py` | Core adapter - `get_data()`, `get_module_data()`, `health()` |
-| `Nola/threads/philosophy/__init__.py` | Public API |
-| `Nola/threads/philosophy/README.md` | Documentation |
-| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-770) |
-| `Nola/threads/schema.py` | DB helpers - `push_philosophy_row()`, `get_philosophy_table_data()`, `migrate_philosophy_to_flat()` |
+| `agent/threads/philosophy/adapter.py` | Core adapter - `get_data()`, `get_module_data()`, `health()` |
+| `agent/threads/philosophy/__init__.py` | Public API |
+| `agent/threads/philosophy/README.md` | Documentation |
+| `agent/services/api.py # introspection.py` | REST endpoints (lines 647-770) |
+| `agent/threads/schema.py` | DB helpers - `push_philosophy_row()`, `get_philosophy_table_data()`, `migrate_philosophy_to_flat()` |
 
 ### Backend Endpoints
 
@@ -150,4 +150,4 @@ health = adapter.health()
 
 ## README
 
-Full documentation: `Nola/threads/philosophy/README.md`
+Full documentation: `agent/threads/philosophy/README.md`

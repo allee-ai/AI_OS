@@ -1,21 +1,24 @@
-# Nola — Your Personal AI That Actually Remembers You
+# AI OS — A Control Layer for Your LLM
 
-**A private AI assistant that runs on your computer. No cloud. No subscriptions. Your data stays yours.**
+**Turn any local model into a personal AI that remembers, learns, and stays consistent. Private. Free. Yours.**
 
 ![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
 ---
 
-## What is Nola?
+## What is AI OS?
 
-Nola is a personal AI that:
-- **Remembers your conversations** — She learns what you like, your projects, your preferences
-- **Runs 100% on your computer** — Nothing goes to the cloud
-- **Gets smarter over time** — The more you chat, the better she understands you
-- **Is completely free** — Open source, no subscriptions
+LLMs are powerful but unreliable. They hallucinate, forget, lose track of who they are, and treat every conversation like it's the first.
 
-Think of it like having a personal assistant who actually pays attention and remembers what you've talked about.
+AI OS fixes that. It's a management layer that wraps your local LLM and handles everything the model is bad at:
+
+- **Memory** — Persistent across sessions, organized by relevance
+- **Identity** — Consistent personality that can't be prompt-injected away  
+- **Learning** — Gets smarter from experience, not retraining
+- **Control** — LLM only handles language; the OS handles logic
+
+The LLM is the voice. The OS is the brain.
 
 ---
 
@@ -27,7 +30,7 @@ Think of it like having a personal assistant who actually pays attention and rem
 - About 8GB of free disk space
 - Internet connection (just for the initial setup)
 
-### Step 1: Download Nola
+### Step 1: Download AI OS
 
 Open your terminal (on Mac: search "Terminal" in Spotlight) and run:
 
@@ -48,7 +51,7 @@ cp .env.example .env
 
 > **Note:** The default settings work out of the box. Only edit `.env` if you want to add API keys for extended features (Kernel browser automation, Linear integration, etc.)
 
-### Step 3: Start Nola
+### Step 3: Start AI OS
 
 **Mac/Linux:**
 ```bash
@@ -61,52 +64,54 @@ start.bat
 ```
 
 That's it! The script handles everything:
-- ✅ Installs the AI brain (Ollama)
-- ✅ Sets up the chat interface
+- ✅ Installs the LLM runtime (Ollama)
+- ✅ Starts the OS backend and chat interface
 - ✅ Opens your browser automatically
 
 > **First time?** The first launch downloads the AI model (~4GB). This only happens once.
 
 ### Step 3: Start Chatting!
 
-Your browser will open to `http://localhost:5173` — just start talking to Nola!
+Your browser will open to `http://localhost:5173` — start talking to your AI.
 
 ---
 
-## How Nola Remembers Things
+## How Memory Works
 
 ```
 You: "I'm working on a Python project called TaskMaster"
      ↓
-Nola saves this fact about you
+OS stores this in your profile (not in the LLM)
      ↓
-Later...
+Later... (even days later, even after restarts)
      ↓
 You: "How's my project going?"
-Nola: "How's TaskMaster coming along? Need any Python help?"
+AI: "TaskMaster? Or, one of your other projects {list}"
 ```
 
-**The more you chat, the more she learns.** Mention your job, hobbies, preferences — she'll remember and use that in future conversations.
+**The LLM didn't remember that. The OS did.** Your facts live in a database, organized by relevance, retrieved when needed. The LLM just turns that context into natural language.
 
 ---
 
-## Customizing Nola
+## Make It Yours
 
-### Change Her Name or Personality
+### Name Your AI
 
-Edit `Nola/Nola.json`:
+Edit `agent/Agent.json`:
 
 ```json
 {
-  "name": "Aria",
-  "personality": "friendly and enthusiastic",
-  "greeting": "Hey there! What's on your mind?"
+  "name": "Friday",
+  "personality": "dry wit, competent, anticipates needs",
+  "greeting": "What do you need?"
 }
 ```
 
-### Tell Her About Yourself
+The name is just a key. Call it Jarvis, Friday, whatever. The OS doesn't care.
 
-Edit `Nola/identity_thread/userID/user.json`:
+### Tell It About Yourself
+
+Edit `agent/identity_thread/userID/user.json`:
 
 ```json
 {
@@ -114,10 +119,12 @@ Edit `Nola/identity_thread/userID/user.json`:
   "occupation": "software developer",
   "interests": ["gaming", "cooking", "hiking"],
   "preferences": {
-    "communication_style": "casual"
+    "communication_style": "direct, no fluff"
   }
 }
 ```
+
+It's still prompting — just organized. **Hybrid human/program prompting.** You define who you are, the OS decides what's relevant right now, and together they build context the LLM can actually use. Easier for you to manage. Easier for the LLM to understand.
 
 ---
 
@@ -125,15 +132,15 @@ Edit `Nola/identity_thread/userID/user.json`:
 
 ### Is my data really private?
 
-**Yes.** Everything runs on your computer. Your conversations are stored in a folder on your machine (`Nola/Stimuli/conversations/`), not on any server.
+**Yes.** Everything runs on your computer. Your conversations, memories, and profile are stored locally in SQLite, not on any server.
 
 ### Do I need internet after setup?
 
-**No.** Once installed, Nola works completely offline.
+**No.** Once installed, AI OS works completely offline.
 
 ### How much does it cost?
 
-**$0.** Nola is open source and free forever.
+**$0.** Open source, MIT licensed, free forever.
 
 ### What computer specs do I need?
 
@@ -156,43 +163,33 @@ Yes! Edit `.env` and change `OLLAMA_MODEL` to any model Ollama supports. Try `ll
 
 ---
 
-## What Can You Do With Nola?
+## What Can You Do With It?
 
-| Use Case | Example |
-|----------|---------|
-| **Daily assistant** | "Remind me what we discussed yesterday" |
-| **Project helper** | "Help me brainstorm features for TaskMaster" |
-| **Learning buddy** | "Quiz me on the Python concepts we covered" |
-| **Writing partner** | "Help me draft an email to my team" |
-
----
-
-## Using Docker (Alternative Setup)
-
-If you prefer containers:
-
-```bash
-# Make sure Ollama is running on your host machine first
-ollama serve
-
-# Then start the Docker containers
-./start-docker.sh
-```
+| Use Case | Without OS | With AI OS |
+|----------|-----------|------------|
+| **Context** | "Who am I talking to?" | Knows your name, job, projects, preferences |
+| **Continuity** | Every conversation starts fresh | Picks up where you left off, even weeks later |
+| **Consistency** | Personality drifts with prompting | Identity is structural, can't be manipulated |
+| **Learning** | Same quality forever | Gets better as it learns your patterns |
 
 ---
 
-## The Bigger Picture
+## The Architecture
 
-Nola isn't just a chatbot — it's a **Cognitive Operating System** in development.
+This isn't a chatbot wrapper. It's a cognitive operating system.
 
-### What Makes This Different
+### LLM vs OS Responsibilities
 
-| Standard AI | Nola |
-|-------------|------|
-| Stateless (forgets everything) | Persistent identity across sessions |
-| Flat context (O(N²) noise) | Hierarchical attention (O(k·c²) signal) |
-| Requires retraining to "learn" | Learns through experience, not weights |
-| One-size-fits-all | Adapts to YOU over time |
+| Task | Who Handles It |
+|------|----------------|
+| Generating natural language | LLM |
+| Remembering facts about you | OS (SQLite) |
+| Maintaining consistent identity | OS (identity thread) |
+| Connecting related concepts | OS (Hebbian linking) |
+| Deciding what context is relevant | OS (HEA attention) |
+| Learning from experience | OS (pattern consolidation) |
+
+The LLM is stateless and dumb. The OS makes it smart.
 
 ### The Roadmap
 
@@ -205,15 +202,15 @@ See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
 
 ## Looking for Collaborators
 
-This is a solo project built since April 2025. The foundation is solid, the theory is proven, but with help it could move 10x faster.
+Built solo since April 2025. The architecture works. Now it needs to scale.
 
-**I'm looking for:**
-- Python developers (async, state management)
-- React developers (UI/UX improvements)
-- AI researchers (cognitive architecture feedback)
-- Backing (funding, partnerships, or just belief)
+**Looking for:**
+- **Python devs** — async, SQLite, state management
+- **React devs** — dashboard UI, visualizations
+- **AI researchers** — cognitive architecture, memory systems
+- **Anyone frustrated with raw LLMs** — use it, break it, tell me what's missing
 
-**Interested?** Open an issue, start a discussion, or reach out directly.
+**Interested?** Open an issue, start a discussion, or just start using it.
 
 ---
 
@@ -224,8 +221,8 @@ This is a solo project built since April 2025. The foundation is solid, the theo
 | [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
 | [**Developer Guide**](DEVELOPERS.md) | Build features, understand the code |
 | [**All Documentation**](docs/README.md) | Full documentation index |
-| [**Architecture**](Nola/ARCHITECTURE.md) | Technical deep-dive |
-| [**Contributing**](CONTRIBUTING.md) | Help make Nola better |
+| [**Architecture**](agent/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, Hebbian linking) |
+| [**Contributing**](CONTRIBUTING.md) | Help build it |
 
 ---
 
@@ -236,4 +233,4 @@ This is a solo project built since April 2025. The foundation is solid, the theo
 
 ---
 
-*Built with ❤️ by someone who believes AI should grow with you, not reset every conversation.*
+*Your LLM is powerful. It just needs a brain.*

@@ -14,7 +14,7 @@ Yes, consolidation should be **separate** from memory and linking_core. Each ser
 
 ## Service Responsibilities
 
-### 1. Linking Core (Nola/threads/linking_core/)
+### 1. Linking Core (agent/threads/linking_core/)
 
 **Role**: Relevance Scoring Engine
 
@@ -35,7 +35,7 @@ Yes, consolidation should be **separate** from memory and linking_core. Each ser
 
 ---
 
-### 2. Memory Service (Nola/services/memory_service.py)
+### 2. Memory Service (agent/services/memory_service.py)
 
 **Role**: Memory CRUD Operations + Fact Extraction
 
@@ -60,7 +60,7 @@ Yes, consolidation should be **separate** from memory and linking_core. Each ser
 
 ---
 
-### 3. Consolidation Daemon (Nola/services/consolidation_daemon.py)
+### 3. Consolidation Daemon (agent/services/consolidation_daemon.py)
 
 **Role**: Memory Compression Orchestration
 
@@ -111,7 +111,7 @@ def run():
 └──────────────────────────────────────────────────────────────┘
                             ↓
 ┌──────────────────────────────────────────────────────────────┐
-│  AGENT (Nola/agent.py)                                       │
+│  AGENT (agent/agent.py)                                       │
 │  - Receives user message                                     │
 │  - Calls context builder                                     │
 └──────────────────────────────────────────────────────────────┘

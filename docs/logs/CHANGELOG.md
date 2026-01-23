@@ -5,6 +5,60 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-23 — Architecture Hardening + Doc Consolidation
+
+### Documentation: Consolidation (9 files → 4 active)
+- **Created**: `docs/RESEARCH_PAPER.md` - Single canonical research paper merging best of `write_up.md` and `AI_OS_RESEARCH_PAPER.md`
+- **Archived**: 5 redundant vision docs moved to `_archive/docs_old/`:
+  - `AI_OS_RESEARCH_PAPER.md` (superseded by new RESEARCH_PAPER.md)
+  - `CONCEPT_ATTENTION.md` (merged into paper)
+  - `CORE_CONTRIBUTIONS.md` (merged into paper)
+  - `LIVING_BODY.md` (merged into paper)
+  - `NEUROSCIENCE_VALIDATION.md` (preserved in archive for reference)
+- **Updated**: `Nola/ARCHITECTURE.md` - Current implementation with protected profiles, fault isolation
+- **Kept Active**: `docs/vision/AUTHOR_NOTE.md` - Human voice, stays separate
+
+### Architecture: Agent Singleton Pattern
+- **Minimal agent.py**: Stripped from ~400 lines to ~150 lines - now just LLM interface
+- **State Delegation**: All state management delegated to subconscious → threads → state.db
+- **Module Singleton**: `get_agent()` returns same instance everywhere - one identity, one history
+- **Clean Separation**: "Subconscious builds state, agent just reads and talks"
+
+### Architecture: Fault-Isolated Threads
+- **Independent Thread Loading**: Each thread adapter loads in its own try/catch - one failure doesn't crash others
+- **Resilient Health Checks**: `get_all_health()` catches errors per-thread, returns partial results
+- **Bulletproof API**: `/api/subconscious/threads` endpoint always returns valid response even if subconscious fails
+- **Graceful Degradation**: Broken threads show "error" status in UI, others continue working
+
+### Feature: Protected Core Profiles
+- **Core Profiles in Schema**: `self.agent` and `user.primary` created on DB init (no seed files)
+- **Protected Flag**: `protected` column on `profiles` and `profile_facts` tables
+- **Deletion Protection**: Cannot delete protected profiles or fact keys from UI (backend enforced)
+- **Empty by Default**: Core structure exists but values are blank - user fills them in
+- **Quick Accessors**: New functions `get_agent_name()`, `get_user_name()`, `get_core_identity()`
+
+### Removed: Seed Data Anti-Pattern
+- **Deleted**: `agent/threads/seed_data.py` - no more seeding scripts
+- **Schema-Driven**: Core profiles and fact keys defined in `init_profiles()` and `init_profile_facts()`
+- **Values vs Structure**: Structure is permanent, values are user-controlled
+
+### API: Identity Quick Access
+```python
+from agent.threads.identity import get_agent_name, get_user_name, get_core_identity
+
+# Direct DB read - perfect for reflexes
+name = get_agent_name()  # Returns L1 value or "Agent"
+user = get_user_name()   # Returns L1 value or "User"
+core = get_core_identity()  # {'agent_name': '...', 'agent_role': '...', 'user_name': '...'}
+```
+
+### Documentation: Stale Reference Audit
+- **Completed**: All active docs now reference generic patterns, not "Nola" hardcoding
+- **Pattern**: `{identity.name}` instead of "Nola", `state.db` instead of `*.json`, `Nola/` for module path
+- **Archive**: Original verbose docs preserved in `_archive/` for reference
+
+---
+
 ## 2026-01-20 (Evening) — Thread Architecture: Self-Contained APIs & Frontend Migration
 
 ### Architecture: Per-Thread API Consolidation
@@ -38,13 +92,13 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ### Refactoring: Remove IDv2 Legacy System
 - **Deleted Module References**: Removed all `idv2` references from codebase (already deleted in Phase 7, now cleaned docs)
-- **Updated Documentation**: Fixed `Nola/threads/linking_core/README.md` and `Nola/threads/REBUILD_CHECKLIST.md` to reference new `schema.py` instead of deleted `idv2.py`
+- **Updated Documentation**: Fixed `agent/threads/linking_core/README.md` and `agent/threads/REBUILD_CHECKLIST.md` to reference new `schema.py` instead of deleted `idv2.py`
 - **Code Archaeology**: Confirmed no functional code imports or uses `idv2` — only historical comments remain
 
 ### Architecture: Centralized Database Path Logic
-- **Single Source of Truth**: Refactored `Nola/threads/schema.py` to expose `get_db_path()` as public function
-- **Dynamic Mode Switching**: `get_db_path()` reads `NOLA_MODE` env var or `.nola_mode` file at runtime to select `state.db` vs `state_demo.db`
-- **Agent Integration**: Updated `Nola/agent.py` to import `get_db_path()` instead of hardcoding `DEFAULT_STATE_DB`
+- **Single Source of Truth**: Refactored `agent/threads/schema.py` to expose `get_db_path()` as public function
+- **Dynamic Mode Switching**: `get_db_path()` reads `AIOS_MODE` env var or `.aios_mode` file at runtime to select `state.db` vs `state_demo.db`
+- **Agent Integration**: Updated `agent/agent.py` to import `get_db_path()` instead of hardcoding `DEFAULT_STATE_DB`
 - **Eliminated Scatter**: No more hardcoded DB paths — all modules now reference central function
 
 ### Security: Pre-Public Audit
@@ -54,14 +108,14 @@ All notable changes to this repository are documented below. Entries are grouped
 - **Local Paths**: Converted `/Users/cade/Desktop` to relative paths throughout codebase
 
 ### Architecture: Conversation Storage Migration (JSON → SQLite)
-- **New Module**: Created `Nola/react-chat-app/backend/api/chatschema.py` with:
+- **New Module**: Created `agent/react-chat-app/backend/api/chatschema.py` with:
   - `convos` table: session_id, name, channel, weight (0.0-1.0), indexed flag, timestamps
   - `convo_turns` table: FK to convos, user/assistant messages, stimuli_type, context_level
   - Full CRUD: `save_conversation()`, `add_turn()`, `get_conversation()`, `list_conversations()`
   - Weight system: `increment_conversation_weight()` for linking_core integration prep
   - Auto-index tracking: `get_unindexed_high_weight_convos()` for future semantic indexing
-- **Refactored**: `Nola/react-chat-app/backend/api/conversations.py` now uses chatschema instead of JSON files
-- **Refactored**: `Nola/services/agent_service.py` uses `add_turn()` instead of writing to `Stimuli/conversations/*.json`
+- **Refactored**: `agent/react-chat-app/backend/api/conversations.py` now uses chatschema instead of JSON files
+- **Refactored**: `agent/services/agent_service.py` uses `add_turn()` instead of writing to `Stimuli/conversations/*.json`
 - **Backward Compatible**: API endpoints unchanged — frontend works without modification
 
 ### Testing
@@ -106,19 +160,19 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ### Desktop Integration
 - **SSH Tunnel Connection**: `connect_vm_nola.sh` script for seamless local access via port forwarding
-- **Desktop Shortcuts**: `Connect to Nola VM.command` for one-click VM access + browser launch
+- **Desktop Shortcuts**: `Connect to Agent VM.command` for one-click VM access + browser launch
 - **App Bundle**: `Nola VM.app` macOS application for desktop integration
 
 ### Technical Implementation
 - **Static File Serving**: Modified FastAPI backend to serve React frontend from `../frontend/dist/`
 - **Frontend Build**: npm build process on VM with Node.js v18 compatibility  
 - **Database Migration**: Production mode using `state.db` instead of demo database
-- **Network Architecture**: Local port 8000 → SSH tunnel → VM port 8000 → Nola interface
+- **Network Architecture**: Local port 8000 → SSH tunnel → VM port 8000 → Agent interface
 
 ### Cloud-First Architecture Benefits
 - ✅ **True 24/7 Operation**: No local machine dependency
 - ✅ **Universal Access**: SSH tunnel from any device with SSH key
-- ✅ **Consolidated Service**: Single VM runs all Nola components
+- ✅ **Consolidated Service**: Single VM runs all Agent components
 - ✅ **Auto-Recovery**: Systemd ensures service restoration after VM restarts
 - ✅ **Scalable Foundation**: Ready for multi-tenant Nola-as-a-Service expansion
 
@@ -127,7 +181,7 @@ All notable changes to this repository are documented below. Entries are grouped
 ## 2026-01-19 (Evening) — Linking Core 3D Visualization & Concept Graph Engine
 
 ### Feature: 3D Concept Graph Visualization
-- **ConceptGraph3D.tsx**: Full 3D visualization of Nola's concept graph using Three.js + React Three Fiber
+- **ConceptGraph3D.tsx**: Full 3D visualization of the agent's concept graph using Three.js + React Three Fiber
 - **Purple Nebula Containment**: Swirling particle shell (4000 outer + 1200 inner particles) representing the cognitive boundary
 - **Circular Particle Sprites**: Replaced square pixels with soft radial gradient dots
 - **Density-Aware Gas Layer**: 2000 gas particles cluster near high-connection nodes, visualizing information density in real-time
@@ -167,7 +221,7 @@ All notable changes to this repository are documented below. Entries are grouped
 ## 2026-01-19 (Morning) — Readiness: Installers, Demo Mode & Stability
 
 ### Installer & Infrastructure Overhaul
-- **Portable App Bundle**: Rebuilt `Nola AI OS.app` to use relative paths. The entire OS folder can now be moved anywhere, and the app will auto-locate `run.command`.
+- **Portable App Bundle**: Rebuilt `AI OS.app` to use relative paths. The entire OS folder can now be moved anywhere, and the app will auto-locate `run.command`.
 - **Fast Dependency Management**: Integrated `uv` for 10-100x faster package installation, with robust fallbacks to standard `pip` and `venv`.
 - **Cross-Platform Launchers**: Unification of `start.sh` and `install.sh` to handle macOS (bundle), Linux (script), and environment checks automatically.
 
@@ -176,7 +230,7 @@ All notable changes to this repository are documented below. Entries are grouped
 - **Mode Selection UI**: Added native dialog prompts at startup to choose between "Demo Mode" (safe for showing off) and "Personal Mode" (private data).
 
 ### Stability & Performance
-- **Concurrency Safety**: Implemented global `RLock` system (`Nola/core/locks.py`) to prevent SQLite "database is locked" errors during background subconscious ops.
+- **Concurrency Safety**: Implemented global `RLock` system (`agent/core/locks.py`) to prevent SQLite "database is locked" errors during background subconscious ops.
 - **Frontend Fixes**: Corrected API endpoint mismatches (`/agent-status`) and fixed missing dependency crashing the React app.
 - **Disk Optimization**: Cleaned up massive redundant model caches (~50GB) and added checks for embedding model availability (`nomic-embed-text`) during startup.
 
@@ -342,7 +396,7 @@ All notable changes to this repository are documented below. Entries are grouped
 ### Removed
 - **Elaris Directory**: Removed entire `Elaris/` directory (legacy prototype)
   - Contained exposed OpenAI API key (`openai_key.txt`) — **key should be revoked**
-  - Nola is the active system; Elaris references remain in docs for historical context
+  - Agent is the active system; Elaris references remain in docs for historical context
 
 ### Added
 - **Root `requirements.txt`**: Consolidated Python dependencies for easier setup
@@ -358,7 +412,7 @@ All notable changes to this repository are documented below. Entries are grouped
   - `OPENAI_API_KEY` (for fallback/Elaris)
   - `KERNEL_API_KEY` (browser automation)
   - `LINEAR_API_KEY` (task management)
-- **`Nola/Nola.json`**: Fixed hardcoded `/Users/cade/...` path → relative `./identity_thread/identity.json`
+- **`agent/identity.json`**: Fixed hardcoded `/Users/cade/...` path → relative `./identity_thread/identity.json`
 - **`README.md`**: Added Step 2 for copying `.env.example` before first run
 
 ### Clone & Run Instructions
@@ -375,7 +429,7 @@ start.bat             # Windows
 ## 2026-01-10 — Thread Dashboards & Tool Registry
 
 ### Added
-- **Form Thread Tool System** (`Nola/threads/form/`)
+- **Form Thread Tool System** (`agent/threads/form/`)
   - **Tool Registry** (`tools.py`): 21 tool definitions across 6 categories
     - Communication: `send_email`, `send_sms`, `post_slack`, `send_discord`
     - Browser: `browse_url`, `search_web`, `take_screenshot`, `fill_form`
@@ -428,7 +482,7 @@ start.bat             # Windows
 ## 2026-01-10 — Stimuli System & Universal API Router
 
 ### Added
-- **Stimuli Router Architecture** (`Nola/Stimuli/router.py`)
+- **Stimuli Router Architecture** (`agent/Stimuli/router.py`)
   - **Universal API Adapter**: Config-driven integrations via YAML files
   - **Core Data Classes**:
     - `NormalizedMessage`: Converts any platform → standardized format
@@ -436,7 +490,7 @@ start.bat             # Windows
     - `SourceConfig`: Parses YAML configs with auth, pull, push sections
   - **JSONPath Extraction**: Maps nested API responses to normalized fields
   - **Template Rendering**: `{{slot}}` placeholders filled by LLM
-- **20+ YAML Source Configs** (`Nola/Stimuli/sources/*.yaml`)
+- **20+ YAML Source Configs** (`agent/Stimuli/sources/*.yaml`)
   - Communication: Gmail, Slack, SMS (Twilio), Discord, Telegram, Twitter/X, WhatsApp, Microsoft Teams
   - Project Management: GitHub, Linear, Jira, Todoist
   - Databases: Notion, Airtable
@@ -458,10 +512,10 @@ start.bat             # Windows
   - `POST /api/stimuli/sources/{name}/toggle` — Enable/disable
   - `POST /api/stimuli/sources/{name}/test` — Test connection
   - `GET /api/stimuli/templates` — List available templates
-- **LLM Fact Extraction** (`Nola/services/fact_extractor.py`)
+- **LLM Fact Extraction** (`agent/services/fact_extractor.py`)
   - Replaces regex parsing with LLM-based extraction
   - LLM generates: key, L3 (full), L2 (summary), L1 (essence)
-  - Uses `llama3.2:3b` by default, configurable via `NOLA_EXTRACT_MODEL`
+  - Uses `llama3.2:3b` by default, configurable via `AIOS_EXTRACT_MODEL`
 
 ### Changed
 - `main.py`: Added stimuli router import and `/api/stimuli` route prefix
@@ -520,17 +574,17 @@ start.bat             # Windows
   - `PUT /api/introspection/identity/{key}` — Update identity values
   - `DELETE /api/introspection/identity/{key}` — Delete identity entries
   - `GET /api/introspection/threads/health` — Health status for all threads
-- **Spread Activation System** (`Nola/threads/schema.py`)
+- **Spread Activation System** (`agent/threads/schema.py`)
   - `concept_links` table: Hebbian strength/decay between concepts
   - `link_concepts(a, b)`: Strengthens association when concepts co-occur
   - `decay_concept_links()`: Daily decay (0.95×) with pruning
   - `spread_activate(concepts)`: Associative memory retrieval
   - `generate_hierarchical_key(fact)`: Converts facts to dot-notation keys
   - `extract_concepts_from_text(text)`: Pulls concepts from messages
-- **Memory Service Updates** (`Nola/services/memory_service.py`)
+- **Memory Service Updates** (`agent/services/memory_service.py`)
   - `_add_to_temp_memory()` generates hierarchical keys and links concepts
   - Facts pre-populate `fact_relevance` table
-- **LinkingCore Adapter** (`Nola/threads/linking_core/adapter.py`)
+- **LinkingCore Adapter** (`agent/threads/linking_core/adapter.py`)
   - `activate_memories(input_text)`: Uses spread activation
   - `get_associative_context()`: Combines embedding + spread activation
 
@@ -544,7 +598,7 @@ start.bat             # Windows
 ## 2026-01-06 — Thread System Migration Complete
 
 ### Changed
-- **Thread System Architecture**: Migrated from old idv2/log_thread to unified `Nola/threads/`
+- **Thread System Architecture**: Migrated from old idv2/log_thread to unified `agent/threads/`
   - Old: `identity_sections` table with `data_l1_json`, `data_l2_json`, `data_l3_json` columns
   - New: `{thread}_{module}` tables (e.g., `identity_user_profile`, `log_events`)
   - Each row: `key`, `context_level`, `data`, `metadata`, `weight`, `updated_at`
@@ -603,20 +657,20 @@ start.bat             # Windows
 
 ### Added
 - **AI Battle Evaluation** (`eval/ai_battle.py`): AI vs AI identity persistence battle
-- **Coherence Test** (`eval/coherence_test.py`): Nola vs raw LLM comparison
-  - **Result:** Nola (7B+HEA) beat raw 20B model 16.75 vs 14.88
+- **Coherence Test** (`eval/coherence_test.py`): Agent vs raw LLM comparison
+  - **Result:** Agent (7B+HEA) beat raw 20B model 16.75 vs 14.88
 - **Identity Anchor** in agent.py: "You are ALWAYS Nola" — prevents name changes
 - **Reality Anchor** in agent.py: "If information is not in context, it does not exist"
 - **Chinese README** (`README.zh.md`): Full translation
-- **Subconscious Module** (`Nola/subconscious/`)
+- **Subconscious Module** (`agent/subconscious/`)
   - `__init__.py`: Main API — `wake()`, `sleep()`, `get_consciousness_context()`
   - `core.py`: `ThreadRegistry`, `SubconsciousCore` singleton
   - `contract.py`: Metadata protocol for sync
   - `loops.py`: `ConsolidationLoop`, `SyncLoop`, `HealthLoop`
   - `triggers.py`: `TimeTrigger`, `EventTrigger`, `ThresholdTrigger`
-- **Log Thread Module** (`Nola/log_thread/`): Lightweight event tracking
-- **Temp Memory Store** (`Nola/temp_memory/`): Session-scoped fact extraction
-- **Consolidation Daemon** (`Nola/services/consolidation_daemon.py`)
+- **Log Thread Module** (`agent/log_thread/`): Lightweight event tracking
+- **Temp Memory Store** (`agent/temp_memory/`): Session-scoped fact extraction
+- **Consolidation Daemon** (`agent/services/consolidation_daemon.py`)
 - **Events API**: `GET /api/database/events`, `GET /api/database/events/stats`
 
 ### Changed
@@ -638,7 +692,7 @@ start.bat             # Windows
   - `test_hea.py` (10): Stimuli classification, context levels, token budgets
   - `conftest.py` fixtures: temp_db, sample_identity, mock_agent_config
 - **Eval harness** (`eval/`): Adversarial coherence benchmarks
-  - `duel.py`: CLI runner for Nola vs baselines
+  - `duel.py`: CLI runner for Agent vs baselines
   - `judges.py`: Judge model integrations (OpenAI, Anthropic, Mock)
   - `metrics.py`: Scoring functions mapped to neural correlates
 - **Evaluation framework** (`docs/evaluation_framework.md`)
@@ -660,7 +714,7 @@ start.bat             # Windows
 ## 2025-12-19 — Identity Thread v2 (DB Backend)
 
 ### Added
-- SQLite-backed identity pipeline (`Nola/idv2/idv2.py`) with level-scoped storage
+- SQLite-backed identity pipeline (`agent/idv2/idv2.py`) with level-scoped storage
 - Sync mapping: `sync_for_stimuli` translates stimuli types → context levels
 - `pull_identity` returns level-filtered identity for prompts
 - DatabaseAgent helper centralizes `state.db` connections
@@ -692,7 +746,7 @@ start.bat             # Windows
 
 ### Added
 - **React UI as stimuli channel**: Chat app acts as external stimuli source
-- **Backend integration**: `agent_service.py` routes through Nola agent
+- **Backend integration**: `agent_service.py` routes through Agent agent
 - **Conversation persistence**: Persists to `Stimuli/conversations/react_*.json`
 - **Context management**: HEA to classify stimuli and manage L1/L2/L3 levels
 - **Onboarding script**: Root-level `start.sh` for one-click local setup
@@ -703,7 +757,7 @@ start.bat             # Windows
 
 ### Added
 - **Contracts & metadata protocol** (`contract.py`): `create_metadata()`, `should_sync()`, `is_stale()`, `mark_synced()`
-- **Hierarchical state sync**: `machineID.json` → `identity.json` → `Nola.json`
+- **Hierarchical state sync**: `machineID.json` → `identity.json` → `identity.json`
 - **Context levels**: 1 = minimal, 2 = moderate, 3 = full
 
 ### Changed

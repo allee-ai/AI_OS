@@ -11,7 +11,7 @@ All thread agents share this context. Read this first.
 | **Database** | SQLite | `data/db/state.db` |
 | **LLM** | Ollama (local) | System service |
 | **Embeddings** | nomic-embed-text | Via Ollama |
-| **Agent Core** | Python 3.11+ | `Nola/agent.py` |
+| **Agent Core** | Python 3.11+ | `agent/agent.py` |
 
 ## Architecture: 5 Data Threads + 1 Algorithm Thread
 
@@ -65,9 +65,9 @@ class XxxThreadAdapter(BaseThreadAdapter):
 
 | Purpose | Location |
 |---------|----------|
-| Thread schema | `Nola/threads/schema.py` |
-| Base adapter | `Nola/threads/base.py` |
-| API introspection | `Nola/services/api.py # introspection.py` |
+| Thread schema | `agent/threads/schema.py` |
+| Base adapter | `agent/threads/base.py` |
+| API introspection | `agent/services/api.py # introspection.py` |
 | Frontend threads page | `frontend/src/pages/ThreadsPage.tsx` |
 | Frontend styles | `frontend/src/pages/ThreadsPage.css` |
 
@@ -82,7 +82,7 @@ class XxxThreadAdapter(BaseThreadAdapter):
 ## Before Making Changes
 
 1. Check which thread owns this data
-2. Read that thread's README at `Nola/threads/{thread}/README.md`
+2. Read that thread's README at `agent/threads/{thread}/README.md`
 3. Verify no conflicts with other threads
 4. Test with: `curl http://localhost:8000/api/introspection/threads/health`
 

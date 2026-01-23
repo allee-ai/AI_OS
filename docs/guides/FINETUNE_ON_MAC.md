@@ -29,7 +29,7 @@ I have created an automated system for you in `/finetune`.
 ### Files Explained
 *   **`mlx_config.yaml`**: The "syllabus" for the training. I have heavily annotated this file so you can learn what `Rank`, `Alpha`, and `Dropout` mean.
 *   **`train_mac.sh`**: Extensive script that handles the plumbing (virtual environments, data splitting).
-*   **`nola_combined.jsonl`**: Your textbook. The examples the AI will study.
+*   **`aios_combined.jsonl`**: Your textbook. The examples the AI will study.
 
 ---
 

@@ -139,7 +139,7 @@ class RatingResponse(BaseModel):
 
 def _get_agent_service():
     """Lazy import agent service."""
-    from Nola.services.agent_service import get_agent_service
+    from agent.services.agent_service import get_agent_service
     return get_agent_service()
 
 
@@ -159,7 +159,7 @@ async def send_message(request: SendMessageRequest):
     """Send message and get response via HTTP"""
     try:
         if request.model_id:
-            os.environ["NOLA_MODEL_NAME"] = request.model_id
+            os.environ["AIOS_MODEL_NAME"] = request.model_id
         
         agent_service = _get_agent_service()
         response_message = await agent_service.send_message(request.content, request.session_id)
@@ -182,7 +182,7 @@ async def get_agent_status():
         
         return AgentStatus(
             status=status_data.get("status", "ready"),
-            name=status_data.get("name", "Nola"),
+            name=status_data.get("name", "Agent"),
             last_interaction=status_data.get("last_interaction")
         )
     except Exception as e:
@@ -202,7 +202,7 @@ async def clear_chat_history():
 
 @chat_router.post("/start-session", response_model=SendMessageResponse)
 async def start_session():
-    """Start a new session with Nola's proactive intro"""
+    """Start a new session with the agent's proactive intro"""
     try:
         agent_service = _get_agent_service()
         await agent_service.clear_history()
@@ -220,7 +220,7 @@ async def start_session():
 # Conversation Endpoints
 # =============================================================================
 
-NAMING_MODEL = os.getenv("NOLA_NAMING_MODEL", "llama3.2:1b")
+NAMING_MODEL = os.getenv("AIOS_NAMING_MODEL", "llama3.2:1b")
 
 
 def _generate_name_sync(first_user_msg: str, first_assistant_msg: str) -> str:
@@ -396,7 +396,7 @@ def create_finetune_example(
     else:
         messages.append({
             "role": "system",
-            "content": "You are Nola, a helpful AI assistant. Be concise, supportive, and clarifying."
+            "content": "You are an AI assistant, a helpful AI assistant. Be concise, supportive, and clarifying."
         })
     
     messages.append({"role": "user", "content": user_message})
@@ -542,7 +542,7 @@ class WebSocketManager:
         try:
             await self.send_personal_message({"type": "agent_typing_start"}, client_id)
             
-            from Nola.services.agent_service import get_agent_service
+            from agent.services.agent_service import get_agent_service
             agent_service = get_agent_service()
             response_message = await agent_service.send_message(content)
             

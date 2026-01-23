@@ -67,7 +67,7 @@ Create conversations and scenario prompts to generate high-quality training data
 - Annotate intent and expected behavior  
 - Design edge cases and adversarial examples
 
-**Start here:** `finetune/README.md`, `finetune/nola_finetune_data.jsonl`
+**Start here:** `finetune/README.md`, `finetune/aios_finetune_data.jsonl`
 
 ---
 
@@ -80,7 +80,7 @@ Maintain and extend the API layer.
 - Work on the Stimuli system (integrations)
 - Optimize performance
 
-**Start here:** `scripts/server.py`, `Nola/threads/`, `chat/`
+**Start here:** `scripts/server.py`, `agent/threads/`, `chat/`
 
 **Good issues:** [label:backend](https://github.com/allee-ai/AI_OS/issues?q=is%3Aissue+is%3Aopen+label%3Abackend)
 
@@ -110,7 +110,7 @@ Work on model integration and cognitive architecture.
 - Design fine-tuning pipelines
 - Work on spread activation and memory consolidation
 
-**Start here:** `Nola/subconscious/`, `Nola/threads/`, `docs/vision/CORE_CONTRIBUTIONS.md`
+**Start here:** `agent/subconscious/`, `agent/threads/`, `docs/vision/CORE_CONTRIBUTIONS.md`
 
 **Good issues:** [label:architecture](https://github.com/allee-ai/AI_OS/issues?q=is%3Aissue+is%3Aopen+label%3Aarchitecture)
 

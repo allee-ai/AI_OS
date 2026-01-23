@@ -62,12 +62,12 @@ SELECT * FROM identity_flat LIMIT 5;
 
 ## Adapter
 
-**Location:** `Nola/threads/identity/adapter.py`
+**Location:** `agent/threads/identity/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.identity.adapter import IdentityThreadAdapter
+from agent.threads.identity.adapter import IdentityThreadAdapter
 
 adapter = IdentityThreadAdapter()
 
@@ -94,11 +94,11 @@ health = adapter.health()  # Returns HealthReport
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/identity/adapter.py` | Core adapter - `get_data()`, `push_identity()`, `health()` |
-| `Nola/threads/identity/__init__.py` | Public API - `get_identity()`, `set_identity()` |
-| `Nola/threads/identity/README.md` | Documentation |
-| `Nola/services/api.py # introspection.py` | REST endpoints (lines 530-645) |
-| `Nola/threads/schema.py` | DB schema - `pull_from_module()`, `push_to_module()` |
+| `agent/threads/identity/adapter.py` | Core adapter - `get_data()`, `push_identity()`, `health()` |
+| `agent/threads/identity/__init__.py` | Public API - `get_identity()`, `set_identity()` |
+| `agent/threads/identity/README.md` | Documentation |
+| `agent/services/api.py # introspection.py` | REST endpoints (lines 530-645) |
+| `agent/threads/schema.py` | DB schema - `pull_from_module()`, `push_to_module()` |
 
 ### Backend Endpoints
 
@@ -147,4 +147,4 @@ health = adapter.health()  # Returns HealthReport
 
 ## README
 
-Full documentation: `Nola/threads/identity/README.md`
+Full documentation: `agent/threads/identity/README.md`

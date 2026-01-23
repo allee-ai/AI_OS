@@ -1,6 +1,6 @@
 # Stimuli
 
-External inputs that flow into Nola's processing pipeline.
+External inputs that flow into the agent's processing pipeline.
 
 ## Architecture
 
@@ -39,7 +39,7 @@ Responses go to platform's native draft folder (Gmail drafts, Slack scheduled me
 ## Quick Start
 
 ```python
-from Nola.Stimuli.router import get_router, ResponseTemplate
+from agent.Stimuli.router import get_router, ResponseTemplate
 
 router = get_router()
 

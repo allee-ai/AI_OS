@@ -4,7 +4,7 @@
 # Usage: ./train_mac.sh
 # This script automates the messy setup of Python environments and MLX commands.
 
-echo "🍎 Setting up Nola Fine-Tuning for Apple Silicon..."
+echo "🍎 Setting up AI OS Fine-Tuning for Apple Silicon..."
 
 # 1. Check for Python
 # We need Python 3 installed on the system to proceed.
@@ -32,7 +32,7 @@ pip install mlx-lm pandas
 
 # 4. Prepare Data
 # MLX requires two separate files: 'train.jsonl' (to learn from) and 'valid.jsonl' (to test against).
-# You have 'nola_combined.jsonl', so we use this python snippet to split it 90/10.
+# You have 'state_obedience.jsonl', so we use this python snippet to split it 90/10.
 echo "✂️  Splitting data..."
 python3 -c "
 import pandas as pd
@@ -40,7 +40,7 @@ import numpy as np
 
 # Load combined data
 try:
-    df = pd.read_json('nola_combined.jsonl', lines=True)
+    df = pd.read_json('state_obedience.jsonl', lines=True)
     
     # Shuffle the data so we don't learn patterns based on order (e.g. all 'Greetings' first)
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)

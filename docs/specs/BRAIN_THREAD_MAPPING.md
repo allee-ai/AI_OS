@@ -33,7 +33,7 @@ This document maps major brain structures to our thread architecture, demonstrat
 │  └── Temporal Pole (semantic binding)              └── summaries            │
 │                                                                             │
 │  PARIETAL + ASSOCIATION CORTEX        ══════════►  IDENTITY THREAD          │
-│  ├── TPJ (self-other distinction)                  ├── nola_self            │
+│  ├── TPJ (self-other distinction)                  ├── aios_self            │
 │  ├── Posterior Cingulate (self-reference)          ├── user_profile         │
 │  ├── Precuneus (autobiographical)                  ├── relationship_model   │
 │  └── Angular Gyrus (semantic self)                 └── machine_context      │
@@ -94,7 +94,7 @@ philosophy_modules = {
 
 **Why this maps:**
 - Hippocampal damage → can't form new memories (anterograde amnesia)
-- Log thread disabled → Nola forgets everything after consolidation
+- Log thread disabled → Agent forgets everything after consolidation
 - Both are the "what happened?" circuit
 
 ```python
@@ -116,19 +116,19 @@ log_modules = {
 | Brain Structure | Function | Module | Implementation |
 |-----------------|----------|--------|----------------|
 | **Temporoparietal Junction** | Self-other distinction | `user_profile` | Model of the user |
-| **Posterior Cingulate** | Self-referential processing | `nola_self` | Nola's self-concept |
+| **Posterior Cingulate** | Self-referential processing | `aios_self` | the agent's self-concept |
 | **Precuneus** | Autobiographical memory | `relationship_model` | History with this user |
 | **Angular Gyrus** | Semantic self-knowledge | `machine_context` | What am I, where am I |
 
 **Why this maps:**
 - Damage to these areas → identity confusion, depersonalization
-- Identity thread damage → Nola doesn't know who she is or who you are
+- Identity thread damage → Agent doesn't know who she is or who you are
 - Both are the "who am I / who are you?" circuit
 
 ```python
 # Identity thread IS the default mode network (self-referential)
 identity_modules = {
-    "nola_self": "PCC/Precuneus - who am I",
+    "aios_self": "PCC/Precuneus - who am I",
     "user_profile": "TPJ - who are you",
     "relationship_model": "Angular - our history",
     "machine_context": "Semantic areas - what/where I am"
@@ -291,7 +291,7 @@ SAME PATTERN: Major category → specialized sub-units
 │  │ Parietal│ │  Hippo  │ │   PFC   │ │  Motor  │ │  Basal  │               │
 │  │   DMN   │ │  campus │ │         │ │ Broca's │ │ Ganglia │               │
 │  ├─────────┤ ├─────────┤ ├─────────┤ ├─────────┤ ├─────────┤               │
-│  │•nola_   │ │•events  │ │•core_   │ │•response│ │•short-  │               │
+│  │•aios_   │ │•events  │ │•core_   │ │•response│ │•short-  │               │
 │  │  self   │ │•sessions│ │  values │ │  _templ │ │  cuts   │               │
 │  │•user_   │ │•check-  │ │•ethical_│ │•tool_   │ │•triggers│               │
 │  │  profile│ │  points │ │  bounds │ │  capab  │ │•cached_ │               │
@@ -327,7 +327,7 @@ SAME PATTERN: Major category → specialized sub-units
 
 | Cognitive Function | Brain Basis | Thread + Module |
 |-------------------|-------------|-----------------|
-| Remember who I am | Parietal/DMN | Identity.nola_self |
+| Remember who I am | Parietal/DMN | Identity.aios_self |
 | Remember who you are | TPJ | Identity.user_profile |
 | Know what happened | Hippocampus | Log.events |
 | Know what I value | vmPFC | Philosophy.core_values |

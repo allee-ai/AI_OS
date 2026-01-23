@@ -1,5 +1,5 @@
 """
-Nola Stimuli Module
+Agent Stimuli Module
 -------------------
 External stimuli sources and routing.
 

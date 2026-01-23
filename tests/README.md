@@ -1,12 +1,12 @@
 # Tests
 
-Automated test suite for Nola.
+Automated test suite for AI OS.
 
 ---
 
 ## For Users
 
-You don't need to run tests for normal use. These are for developers to verify Nola works correctly.
+You don't need to run tests for normal use. These are for developers to verify AI OS works correctly.
 
 ---
 
@@ -22,7 +22,7 @@ pytest tests/ -v
 pytest tests/test_agent.py -v
 
 # With coverage
-pytest tests/ --cov=Nola --cov-report=html
+pytest tests/ --cov=agent --cov-report=html
 ```
 
 ### Test Files

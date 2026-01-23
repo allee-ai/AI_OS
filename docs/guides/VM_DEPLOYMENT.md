@@ -1,6 +1,6 @@
 # VM Deployment Guide
 
-Deploy Nola AI OS to a cloud VM for 24/7 always-on operation.
+Deploy Agent AI OS to a cloud VM for 24/7 always-on operation.
 
 ---
 
@@ -71,7 +71,7 @@ ollama pull llama2:7b
 ## Step 4: Build Frontend
 
 ```bash
-cd ~/AI_OS/Nola/react-chat-app/frontend
+cd ~/AI_OS/agent/react-chat-app/frontend
 npm install
 npm run build
 ```
@@ -103,8 +103,8 @@ After=network.target
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/AI_OS/Nola/react-chat-app/backend
-Environment=NOLA_MODE=personal
+WorkingDirectory=/root/AI_OS/agent/react-chat-app/backend
+Environment=AIOS_MODE=personal
 Environment=DEV_MODE=true
 Environment=PYTHONPATH=/root/AI_OS
 ExecStart=/root/AI_OS/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
@@ -135,8 +135,8 @@ systemctl status nola
 From your **local machine**, copy your personal database:
 ```bash
 scp ./data/db/state.db root@YOUR_VM_IP:/root/AI_OS/data/db/
-scp ./Nola/Nola.json root@YOUR_VM_IP:/root/AI_OS/Nola/
-scp -r ./Nola/workspace/ root@YOUR_VM_IP:/root/AI_OS/Nola/
+scp ./agent/identity.json root@YOUR_VM_IP:/root/AI_OS/agent/
+scp -r ./agent/workspace/ root@YOUR_VM_IP:/root/AI_OS/agent/
 ```
 
 Restart service to pick up new data:
@@ -148,11 +148,11 @@ ssh root@YOUR_VM_IP "systemctl restart nola"
 
 ## Step 8: Create Local Connection Script
 
-On your **local machine**, create `Connect to Nola VM.command`:
+On your **local machine**, create `Connect to Agent VM.command`:
 ```bash
 #!/bin/bash
 
-echo "🚀 Connecting to Nola VM..."
+echo "🚀 Connecting to Agent VM..."
 
 pkill -f "ssh.*YOUR_VM_IP.*8000" 2>/dev/null
 sleep 1
@@ -179,7 +179,7 @@ fi
 
 Make executable:
 ```bash
-chmod +x "Connect to Nola VM.command"
+chmod +x "Connect to Agent VM.command"
 ```
 
 ---
@@ -188,11 +188,11 @@ chmod +x "Connect to Nola VM.command"
 
 1. **Develop locally** with hot reload
 2. **Push changes**: `git push`
-3. **Deploy + Access**: Double-click `Connect to Nola VM.command`
+3. **Deploy + Access**: Double-click `Connect to Agent VM.command`
 
 The connection script automatically:
 - Pulls latest code from GitHub
-- Restarts the Nola service
+- Restarts the Agent service
 - Creates SSH tunnel
 - Opens browser to your VM Nola
 
@@ -217,7 +217,7 @@ ssh root@YOUR_VM_IP "systemctl restart nola"
 
 ### Switch Modes
 Edit `/etc/systemd/system/nola.service` and change:
-- `NOLA_MODE=demo` or `NOLA_MODE=personal`
+- `AIOS_MODE=demo` or `AIOS_MODE=personal`
 - `DEV_MODE=true` or `DEV_MODE=false`
 
 Then:

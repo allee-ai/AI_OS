@@ -14,9 +14,9 @@ from pathlib import Path
 
 # Add paths for imports
 PROJECT_ROOT = Path(__file__).parent.parent
-sys.path.insert(0, str(PROJECT_ROOT / "Nola"))
-sys.path.insert(0, str(PROJECT_ROOT / "Nola" / "services"))
-sys.path.insert(0, str(PROJECT_ROOT / "Nola" / "react-chat-app" / "backend"))
+sys.path.insert(0, str(PROJECT_ROOT / "Agent"))
+sys.path.insert(0, str(PROJECT_ROOT / "Agent" / "services"))
+sys.path.insert(0, str(PROJECT_ROOT / "Agent" / "react-chat-app" / "backend"))
 
 
 def get_classify_stimuli():

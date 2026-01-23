@@ -91,12 +91,12 @@ data_json TEXT                  -- {"url": "...", "title": "...", "session_id": 
 
 ## Adapter
 
-**Location:** `Nola/threads/form/adapter.py`
+**Location:** `agent/threads/form/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.form.adapter import FormThreadAdapter
+from agent.threads.form.adapter import FormThreadAdapter
 
 adapter = FormThreadAdapter()
 
@@ -133,12 +133,12 @@ adapter.record_action(
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/form/adapter.py` | Core adapter - `get_tools()`, `register_tool()`, `record_action()` |
-| `Nola/threads/form/__init__.py` | Public API |
-| `Nola/threads/form/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
-| `Nola/services/kernel_service.py` | Browser/Kernel integration |
-| `Nola/threads/schema.py` | DB schema - `pull_from_module()` |
+| `agent/threads/form/adapter.py` | Core adapter - `get_tools()`, `register_tool()`, `record_action()` |
+| `agent/threads/form/__init__.py` | Public API |
+| `agent/threads/form/README.md` | Documentation |
+| `agent/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
+| `agent/services/kernel_service.py` | Browser/Kernel integration |
+| `agent/threads/schema.py` | DB schema - `pull_from_module()` |
 
 ### Backend Endpoints
 
@@ -152,9 +152,9 @@ adapter.record_action(
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
+| `agent/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
 
 ### Frontend Functions (ThreadsPage.tsx)
 
@@ -175,8 +175,8 @@ form_browser         - Browser/Kernel state (url, session_id)
 
 | File | Purpose |
 |------|---------|
-| `Nola/services/kernel_service.py` | Browser automation via Kernel |
-| `Nola/agent.py` | Tool execution via `_execute_tool()` |
+| `agent/services/kernel_service.py` | Browser automation via Kernel |
+| `agent/agent.py` | Tool execution via `_execute_tool()` |
 
 ### Future UI (TODO)
 
@@ -229,7 +229,7 @@ def first_run_scan():
 
 ## README
 
-Full documentation: `Nola/threads/form/README.md`
+Full documentation: `agent/threads/form/README.md`
 
 
 ================================================================================
@@ -300,12 +300,12 @@ SELECT * FROM identity_flat LIMIT 5;
 
 ## Adapter
 
-**Location:** `Nola/threads/identity/adapter.py`
+**Location:** `agent/threads/identity/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.identity.adapter import IdentityThreadAdapter
+from agent.threads.identity.adapter import IdentityThreadAdapter
 
 adapter = IdentityThreadAdapter()
 
@@ -332,11 +332,11 @@ health = adapter.health()  # Returns HealthReport
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/identity/adapter.py` | Core adapter - `get_data()`, `push_identity()`, `health()` |
-| `Nola/threads/identity/__init__.py` | Public API - `get_identity()`, `set_identity()` |
-| `Nola/threads/identity/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 530-645) |
-| `Nola/threads/schema.py` | DB schema - `pull_from_module()`, `push_to_module()` |
+| `agent/threads/identity/adapter.py` | Core adapter - `get_data()`, `push_identity()`, `health()` |
+| `agent/threads/identity/__init__.py` | Public API - `get_identity()`, `set_identity()` |
+| `agent/threads/identity/README.md` | Documentation |
+| `agent/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 530-645) |
+| `agent/threads/schema.py` | DB schema - `pull_from_module()`, `push_to_module()` |
 
 ### Backend Endpoints
 
@@ -351,9 +351,9 @@ health = adapter.health()  # Returns HealthReport
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Main UI - identity table, editing |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client - `getIdentityFacts()` |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Main UI - identity table, editing |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
+| `agent/react-chat-app/frontend/src/services/introspectionService.ts` | API client - `getIdentityFacts()` |
 
 ### Frontend Functions (ThreadsPage.tsx)
 
@@ -385,7 +385,7 @@ health = adapter.health()  # Returns HealthReport
 
 ## README
 
-Full documentation: `Nola/threads/identity/README.md`
+Full documentation: `agent/threads/identity/README.md`
 
 
 ================================================================================
@@ -477,12 +477,12 @@ last_updated TEXT               -- timestamp
 
 ## Adapter
 
-**Location:** `Nola/threads/linking_core/adapter.py`
+**Location:** `agent/threads/linking_core/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.linking_core.adapter import LinkingCoreAdapter
+from agent.threads.linking_core.adapter import LinkingCoreAdapter
 
 adapter = LinkingCoreAdapter()
 
@@ -514,11 +514,11 @@ def spread(concept, initial_activation=1.0, decay=0.5, max_depth=3):
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/linking_core/adapter.py` | Core adapter - `health()` (README-based) |
-| `Nola/threads/linking_core/__init__.py` | Public API |
-| `Nola/threads/linking_core/README.md` | **THE DATA** - algorithms documented here |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
-| `Nola/threads/schema.py` | DB schema (future: concept_links table) |
+| `agent/threads/linking_core/adapter.py` | Core adapter - `health()` (README-based) |
+| `agent/threads/linking_core/__init__.py` | Public API |
+| `agent/threads/linking_core/README.md` | **THE DATA** - algorithms documented here |
+| `agent/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
+| `agent/threads/schema.py` | DB schema (future: concept_links table) |
 
 ### Backend Endpoints
 
@@ -531,9 +531,9 @@ def spread(concept, initial_activation=1.0, decay=0.5, max_depth=3):
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
+| `agent/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
 
 ### Frontend Functions (ThreadsPage.tsx)
 
@@ -654,7 +654,7 @@ def hebbian_update(activations, learning_rate=0.01):
 
 ## README
 
-Full documentation: `Nola/threads/linking_core/README.md`
+Full documentation: `agent/threads/linking_core/README.md`
 
 
 ================================================================================
@@ -733,12 +733,12 @@ session_id TEXT
 
 ## Adapter
 
-**Location:** `Nola/threads/log/adapter.py`
+**Location:** `agent/threads/log/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.log.adapter import LogThreadAdapter
+from agent.threads.log.adapter import LogThreadAdapter
 
 adapter = LogThreadAdapter()
 
@@ -762,7 +762,7 @@ recent = adapter.get_recent_events(limit=10)
 
 ### Special: `pull_log_events()`
 ```python
-from Nola.threads.schema import pull_log_events
+from agent.threads.schema import pull_log_events
 
 # Query by recency, not level
 events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
@@ -774,11 +774,11 @@ events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/log/adapter.py` | Core adapter - `log_event()`, `get_recent_events()`, `start_session()` |
-| `Nola/threads/log/__init__.py` | Public API - `log_event()`, `log_error()`, `read_log()` |
-| `Nola/threads/log/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 413, 780-850) |
-| `Nola/threads/schema.py` | DB helpers - `pull_log_events()` (line 1228) |
+| `agent/threads/log/adapter.py` | Core adapter - `log_event()`, `get_recent_events()`, `start_session()` |
+| `agent/threads/log/__init__.py` | Public API - `log_event()`, `log_error()`, `read_log()` |
+| `agent/threads/log/README.md` | Documentation |
+| `agent/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 413, 780-850) |
+| `agent/threads/schema.py` | DB helpers - `pull_log_events()` (line 1228) |
 
 ### Backend Endpoints
 
@@ -801,9 +801,9 @@ events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Log viewer UI |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Log styles (`.log-view`, `.log-event`) |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API - `getRecentEvents()`, `addEvent()` |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Log viewer UI |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` | Log styles (`.log-view`, `.log-event`) |
+| `agent/react-chat-app/frontend/src/services/introspectionService.ts` | API - `getRecentEvents()`, `addEvent()` |
 
 ### Frontend Functions (ThreadsPage.tsx)
 
@@ -859,7 +859,7 @@ error:*          - Errors
 
 ## README
 
-Full documentation: `Nola/threads/log/README.md`
+Full documentation: `agent/threads/log/README.md`
 
 
 ================================================================================
@@ -934,12 +934,12 @@ CREATE TABLE philosophy_flat (
 
 ## Adapter
 
-**Location:** `Nola/threads/philosophy/adapter.py`
+**Location:** `agent/threads/philosophy/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.philosophy.adapter import PhilosophyThreadAdapter
+from agent.threads.philosophy.adapter import PhilosophyThreadAdapter
 
 adapter = PhilosophyThreadAdapter()
 
@@ -960,11 +960,11 @@ health = adapter.health()
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/philosophy/adapter.py` | Core adapter - `get_data()`, `get_module_data()`, `health()` |
-| `Nola/threads/philosophy/__init__.py` | Public API |
-| `Nola/threads/philosophy/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-770) |
-| `Nola/threads/schema.py` | DB helpers - `push_philosophy_row()`, `get_philosophy_table_data()`, `migrate_philosophy_to_flat()` |
+| `agent/threads/philosophy/adapter.py` | Core adapter - `get_data()`, `get_module_data()`, `health()` |
+| `agent/threads/philosophy/__init__.py` | Public API |
+| `agent/threads/philosophy/README.md` | Documentation |
+| `agent/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-770) |
+| `agent/threads/schema.py` | DB helpers - `push_philosophy_row()`, `get_philosophy_table_data()`, `migrate_philosophy_to_flat()` |
 
 ### Backend Endpoints
 
@@ -980,8 +980,8 @@ health = adapter.health()
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Philosophy table with L1/L2/L3 tabs + editing |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles (including `.type-badge.value/.constraint/.style`) |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Philosophy table with L1/L2/L3 tabs + editing |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles (including `.type-badge.value/.constraint/.style`) |
 
 ### Frontend Functions (ThreadsPage.tsx)
 
@@ -1018,7 +1018,7 @@ health = adapter.health()
 
 ## README
 
-Full documentation: `Nola/threads/philosophy/README.md`
+Full documentation: `agent/threads/philosophy/README.md`
 
 
 ================================================================================
@@ -1093,12 +1093,12 @@ data_json TEXT                  -- {"action": "log_and_notify"}
 
 ## Adapter
 
-**Location:** `Nola/threads/reflex/adapter.py`
+**Location:** `agent/threads/reflex/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.reflex.adapter import ReflexThreadAdapter
+from agent.threads.reflex.adapter import ReflexThreadAdapter
 
 adapter = ReflexThreadAdapter()
 
@@ -1124,11 +1124,11 @@ adapter.register_shortcut(
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/reflex/adapter.py` | Core adapter - `match_pattern()`, `get_data()`, `register_shortcut()` |
-| `Nola/threads/reflex/__init__.py` | Public API |
-| `Nola/threads/reflex/README.md` | Documentation |
-| `Nola/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
-| `Nola/threads/schema.py` | DB schema - `pull_from_module()` |
+| `agent/threads/reflex/adapter.py` | Core adapter - `match_pattern()`, `get_data()`, `register_shortcut()` |
+| `agent/threads/reflex/__init__.py` | Public API |
+| `agent/threads/reflex/README.md` | Documentation |
+| `agent/react-chat-app/backend/api/introspection.py` | REST endpoints (lines 647-710) |
+| `agent/threads/schema.py` | DB schema - `pull_from_module()` |
 
 ### Backend Endpoints
 
@@ -1142,9 +1142,9 @@ adapter.register_shortcut(
 
 | File | Purpose |
 |------|---------|
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
-| `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
-| `Nola/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` | Thread viewer (generic module view) |
+| `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` | Styles |
+| `agent/react-chat-app/frontend/src/services/introspectionService.ts` | API client |
 
 ### Frontend Functions (ThreadsPage.tsx)
 
@@ -1204,7 +1204,7 @@ time_trigger = {
 
 ## README
 
-Full documentation: `Nola/threads/reflex/README.md`
+Full documentation: `agent/threads/reflex/README.md`
 
 
 ================================================================================
@@ -1219,12 +1219,12 @@ All thread agents share this context. Read this first.
 
 | Layer | Technology | Location |
 |-------|------------|----------|
-| **Backend** | FastAPI + Uvicorn | `Nola/react-chat-app/backend/` |
-| **Frontend** | React + Vite + React Router | `Nola/react-chat-app/frontend/` |
+| **Backend** | FastAPI + Uvicorn | `agent/react-chat-app/backend/` |
+| **Frontend** | React + Vite + React Router | `agent/react-chat-app/frontend/` |
 | **Database** | SQLite | `data/db/state.db` |
 | **LLM** | Ollama (local) | System service |
 | **Embeddings** | nomic-embed-text | Via Ollama |
-| **Agent Core** | Python 3.11+ | `Nola/agent.py` |
+| **Agent Core** | Python 3.11+ | `agent/agent.py` |
 
 ## Architecture: 5 Data Threads + 1 Algorithm Thread
 
@@ -1278,11 +1278,11 @@ class XxxThreadAdapter(BaseThreadAdapter):
 
 | Purpose | Location |
 |---------|----------|
-| Thread schema | `Nola/threads/schema.py` |
-| Base adapter | `Nola/threads/base.py` |
-| API introspection | `Nola/react-chat-app/backend/api/introspection.py` |
-| Frontend threads page | `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx` |
-| Frontend styles | `Nola/react-chat-app/frontend/src/pages/ThreadsPage.css` |
+| Thread schema | `agent/threads/schema.py` |
+| Base adapter | `agent/threads/base.py` |
+| API introspection | `agent/react-chat-app/backend/api/introspection.py` |
+| Frontend threads page | `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx` |
+| Frontend styles | `agent/react-chat-app/frontend/src/pages/ThreadsPage.css` |
 
 ## Context Levels (HEA)
 
@@ -1295,7 +1295,7 @@ class XxxThreadAdapter(BaseThreadAdapter):
 ## Before Making Changes
 
 1. Check which thread owns this data
-2. Read that thread's README at `Nola/threads/{thread}/README.md`
+2. Read that thread's README at `agent/threads/{thread}/README.md`
 3. Verify no conflicts with other threads
 4. Test with: `curl http://localhost:8000/api/introspection/threads/health`
 
@@ -1303,10 +1303,10 @@ class XxxThreadAdapter(BaseThreadAdapter):
 
 ```bash
 # Start backend
-cd Nola/react-chat-app/backend && python -m uvicorn main:app --reload --port 8000
+cd agent/react-chat-app/backend && python -m uvicorn main:app --reload --port 8000
 
 # Start frontend
-cd Nola/react-chat-app/frontend && npm run dev
+cd agent/react-chat-app/frontend && npm run dev
 
 # Check health
 curl http://localhost:8000/api/introspection/threads/health
@@ -1381,7 +1381,7 @@ Before pushing to main:
 
 - [ ] `./start.sh` runs from repo root without errors
 - [ ] Nola agent responds to messages
-- [ ] Conversations persist to `Nola/Stimuli/conversations/`
+- [ ] Conversations persist to `agent/Stimuli/conversations/`
 - [ ] README quick start is accurate
 - [ ] No hardcoded absolute paths
 - [ ] All agent assessments show READY status
@@ -1542,23 +1542,23 @@ AI_OS now uses a **focus-based architecture** where the database learns key sequ
 
 | Module | What it does | README |
 |--------|--------------|--------|
-| **subconscious** | Builds context before each response | [Nola/subconscious/README.md](Nola/subconscious/README.md) |
-| **idv2** | SQLite identity storage | [Nola/idv2/README.md](Nola/idv2/README.md) |
-| **temp_memory** | Session facts before consolidation | [Nola/temp_memory/README.md](Nola/temp_memory/README.md) |
-| **log_thread** | Event timeline | [Nola/log_thread/README.md](Nola/log_thread/README.md) |
-| **services** | FastAPI integration, HEA routing | [Nola/services/README.md](Nola/services/README.md) |
-| **react-chat-app** | Web UI | [Nola/react-chat-app/README.md](Nola/react-chat-app/README.md) |
-| **Stimuli** | Input channels | [Nola/Stimuli/readme.md](Nola/Stimuli/readme.md) |
+| **subconscious** | Builds context before each response | [agent/subconscious/README.md](agent/subconscious/README.md) |
+| **idv2** | SQLite identity storage | [agent/idv2/README.md](agent/idv2/README.md) |
+| **temp_memory** | Session facts before consolidation | [agent/temp_memory/README.md](agent/temp_memory/README.md) |
+| **log_thread** | Event timeline | [agent/log_thread/README.md](agent/log_thread/README.md) |
+| **services** | FastAPI integration, HEA routing | [agent/services/README.md](agent/services/README.md) |
+| **react-chat-app** | Web UI | [agent/react-chat-app/README.md](agent/react-chat-app/README.md) |
+| **Stimuli** | Input channels | [agent/Stimuli/readme.md](agent/Stimuli/readme.md) |
 
 ### Key Files (When You Need to Change Something)
 
 | Change | File | Line to find |
 |--------|------|--------------|
-| How context is assembled | `Nola/subconscious/core.py` | `get_consciousness_context` |
-| How stimuli are classified | `Nola/services/agent_service.py` | `classify_stimuli` |
-| How agent generates responses | `Nola/agent.py` | `def generate` |
-| How facts are scored | `Nola/services/consolidation_daemon.py` | `score_fact` |
-| Context level token budgets | `Nola/services/agent_service.py` | `L1_TOKENS`, `L2_TOKENS` |
+| How context is assembled | `agent/subconscious/core.py` | `get_consciousness_context` |
+| How stimuli are classified | `agent/services/agent_service.py` | `classify_stimuli` |
+| How agent generates responses | `agent/agent.py` | `def generate` |
+| How facts are scored | `agent/services/consolidation_daemon.py` | `score_fact` |
+| Context level token budgets | `agent/services/agent_service.py` | `L1_TOKENS`, `L2_TOKENS` |
 
 ---
 
@@ -1615,7 +1615,7 @@ AI_OS/
 ├── start.sh                 # Entry point - Local/Docker mode chooser
 ├── DEVELOPERS.md            # ← You are here
 │
-├── Nola/                    # 🧠 Core AI system
+├── agent/                    # 🧠 Core AI system
 │   ├── agent.py             # Thread-safe singleton, LLM calls
 │   ├── contract.py          # Metadata protocol (re-exports from subconscious)
 │   ├── Nola.json            # Runtime identity state
@@ -1656,7 +1656,7 @@ AI_OS/
 │       ├── conversations/   # JSON chat logs
 │       └── comms/           # Future: Matrix, email
 │
-├── Nola/react-chat-app/     # 💻 Web UI
+├── agent/react-chat-app/     # 💻 Web UI
 │   ├── backend/             # FastAPI server
 │   │   ├── main.py          # App entry, WebSocket handler
 │   │   └── api/
@@ -1757,12 +1757,12 @@ class ThreadInterface(Protocol):
 
 ```bash
 # Backend (terminal 1)
-cd Nola/react-chat-app/backend
+cd agent/react-chat-app/backend
 pip install -r requirements.txt
 uvicorn main:app --reload --port 8000
 
 # Frontend (terminal 2)
-cd Nola/react-chat-app/frontend
+cd agent/react-chat-app/frontend
 npm install
 npm run dev
 
@@ -1790,7 +1790,7 @@ With backend running: http://localhost:8000/docs
 
 ### New Thread Adapter
 
-1. Create `Nola/subconscious/threads/my_adapter.py`:
+1. Create `agent/subconscious/threads/my_adapter.py`:
 
 ```python
 from .base import ThreadInterface, HealthReport, IntrospectionResult
@@ -1812,7 +1812,7 @@ class MyAdapter(ThreadInterface):
         )
 ```
 
-2. Register in `Nola/subconscious/core.py`:
+2. Register in `agent/subconscious/core.py`:
 
 ```python
 def _register_default_threads(self):
@@ -1823,7 +1823,7 @@ def _register_default_threads(self):
 
 ### New Stimuli Channel
 
-1. Create handler in `Nola/Stimuli/comms/`
+1. Create handler in `agent/Stimuli/comms/`
 2. Map to existing `agent_service.py` interface:
 
 ```python
@@ -1836,7 +1836,7 @@ response = await agent_service.send_message(
 
 ### New API Endpoint
 
-Add to `Nola/react-chat-app/backend/api/`:
+Add to `agent/react-chat-app/backend/api/`:
 
 ```python
 # api/my_feature.py
@@ -1883,14 +1883,14 @@ pytest tests/ --cov=Nola --cov-report=html
 ### Check Subconscious Status
 
 ```python
-from Nola.subconscious import get_status
+from agent.subconscious import get_status
 print(get_status())
 ```
 
 ### View Context Assembly
 
 ```python
-from Nola.subconscious import wake, get_consciousness_context
+from agent.subconscious import wake, get_consciousness_context
 wake()
 print(get_consciousness_context(level=2))
 ```
@@ -1898,7 +1898,7 @@ print(get_consciousness_context(level=2))
 ### Query Event Log
 
 ```python
-from Nola.log_thread import read_events
+from agent.log_thread import read_events
 events = read_events(event_type="conversation:start", limit=10)
 ```
 
@@ -1921,14 +1921,14 @@ sqlite3 data/db/state.db "SELECT * FROM identity_sections"
 
 ## Related Documentation
 
-- [Subconscious README](Nola/subconscious/README.md) — Thread system details
+- [Subconscious README](agent/subconscious/README.md) — Thread system details
 - [HEA Theory](docs/theory/concept_attention_theory.md) — Context attention theory
 - [All Documentation](docs/README.md) — Full documentation index
 - [Contributing Guide](CONTRIBUTING.md) — PR process
 
 
 ================================================================================
-FILE: Nola/ARCHITECTURE.md
+FILE: agent/ARCHITECTURE.md
 ================================================================================
 
 # Nola Architecture
@@ -2009,7 +2009,7 @@ response = agent.generate(
 Assembles context from all registered threads before each response.
 
 ```python
-from Nola.subconscious import wake, get_consciousness_context
+from agent.subconscious import wake, get_consciousness_context
 
 wake()  # Initialize, register adapters
 context = get_consciousness_context(level=2)  # Assemble L2 context
@@ -2232,7 +2232,7 @@ pytest tests/test_hea.py -v        # Context levels
 
 
 ================================================================================
-FILE: Nola/README.md
+FILE: agent/README.md
 ================================================================================
 
 # Nola — The Brain
@@ -2254,7 +2254,7 @@ When you chat with Nola, she:
 ### Where Your Data Lives
 
 ```
-Nola/
+agent/
 ├── Nola.json                    # Her current "thoughts" about you
 ├── identity_thread/
 │   └── userID/user.json         # What she knows about you
@@ -2314,7 +2314,7 @@ User Message → agent_service.py
 
 
 ================================================================================
-FILE: Nola/Stimuli/README.md
+FILE: agent/Stimuli/README.md
 ================================================================================
 
 # Stimuli
@@ -2358,7 +2358,7 @@ Responses go to platform's native draft folder (Gmail drafts, Slack scheduled me
 ## Quick Start
 
 ```python
-from Nola.Stimuli.router import get_router, ResponseTemplate
+from agent.Stimuli.router import get_router, ResponseTemplate
 
 router = get_router()
 
@@ -2456,7 +2456,7 @@ These predate the router and store raw files. May be migrated to SQLite.
 
 
 ================================================================================
-FILE: Nola/react-chat-app/README.md
+FILE: agent/react-chat-app/README.md
 ================================================================================
 
 # React Chat App
@@ -2533,7 +2533,7 @@ docker-compose up --build
 
 
 ================================================================================
-FILE: Nola/react-chat-app/frontend/README.md
+FILE: agent/react-chat-app/frontend/README.md
 ================================================================================
 
 # React + TypeScript + Vite
@@ -2612,7 +2612,7 @@ export default defineConfig([
 
 
 ================================================================================
-FILE: Nola/subconscious/README.md
+FILE: agent/subconscious/README.md
 ================================================================================
 
 # Subconscious
@@ -2645,7 +2645,7 @@ The agent is stateless. Before each response, `agent_service` calls `get_conscio
 ### Quick Start
 
 ```python
-from Nola.subconscious import wake, get_consciousness_context
+from agent.subconscious import wake, get_consciousness_context
 
 # At startup
 wake()
@@ -2674,9 +2674,9 @@ subconscious/
 ├── triggers.py         # Event-driven: TimeTrigger, EventTrigger, ThresholdTrigger
 └── threads/
     ├── base.py         # ThreadInterface protocol
-    ├── log_adapter.py  # Wraps Nola/log_thread
-    ├── memory_adapter.py   # Wraps Nola/temp_memory
-    └── identity_adapter.py # Wraps Nola/idv2
+    ├── log_adapter.py  # Wraps agent/log_thread
+    ├── memory_adapter.py   # Wraps agent/temp_memory
+    └── identity_adapter.py # Wraps agent/idv2
 ```
 
 ### API Reference
@@ -2775,7 +2775,7 @@ class MyThreadAdapter(ThreadInterface):
 
 
 ================================================================================
-FILE: Nola/threads/README.md
+FILE: agent/threads/README.md
 ================================================================================
 
 # Nola Core Threads
@@ -2912,7 +2912,7 @@ data: { "url": "github.com", "session_id": "abc123" }
 ## Directory Structure
 
 ```
-Nola/threads/
+agent/threads/
 ├── __init__.py              # Thread registry and exports
 ├── README.md                # This file
 │
@@ -2964,7 +2964,7 @@ Nola/threads/
 - [x] Create threads/__init__.py registry
 
 ### Phase 2: Wire Up Subconscious (PENDING)
-- [ ] Update `subconscious/core.py` to import from `Nola/threads/`
+- [ ] Update `subconscious/core.py` to import from `agent/threads/`
 - [ ] Deprecate `subconscious/threads/` adapters
 - [ ] Test all 6 threads register correctly
 
@@ -2976,12 +2976,12 @@ Files to move:
 | `subconscious/threads/identity_adapter.py` | `threads/identity/adapter.py` | Identity |
 | `subconscious/threads/log_adapter.py` | `threads/log/adapter.py` | Log |
 | `subconscious/threads/memory_adapter.py` | `threads/identity/modules/temp_memory.py` | Identity |
-| `Nola/idv2/` | `threads/identity/modules/idv2/` | Identity |
-| `Nola/identity_thread/` | `threads/identity/data/legacy/` | Identity |
-| `Nola/relevance.py` | `threads/linking_core/modules/relevance.py` | LinkingCore |
-| `Nola/log_thread/` | `threads/log/modules/` | Log |
-| `Nola/temp_memory/` | `threads/identity/modules/temp_memory/` | Identity |
-| `Nola/services/kernel_service.py` | `threads/form/modules/kernel.py` | Form |
+| `agent/idv2/` | `threads/identity/modules/idv2/` | Identity |
+| `agent/identity_thread/` | `threads/identity/data/legacy/` | Identity |
+| `agent/relevance.py` | `threads/linking_core/modules/relevance.py` | LinkingCore |
+| `agent/log_thread/` | `threads/log/modules/` | Log |
+| `agent/temp_memory/` | `threads/identity/modules/temp_memory/` | Identity |
+| `agent/services/kernel_service.py` | `threads/form/modules/kernel.py` | Form |
 
 ### Phase 4: Update Imports (PENDING)
 - [ ] Update all imports in `services/agent_service.py`
@@ -2998,7 +2998,7 @@ Files to move:
 ## Usage
 
 ```python
-from Nola.threads import get_all_threads, get_thread
+from agent.threads import get_all_threads, get_thread
 
 # Get all threads
 threads = get_all_threads()
@@ -3066,7 +3066,7 @@ class ThreadAdapter:
 
 
 ================================================================================
-FILE: Nola/threads/REBUILD_CHECKLIST.md
+FILE: agent/threads/REBUILD_CHECKLIST.md
 ================================================================================
 
 # Thread System Rebuild Checklist
@@ -3207,16 +3207,16 @@ class ThreadAdapter:
 **Profile:** `backend-developer`
 
 Deleted deprecated files (~1,700 lines):
-- [x] `Nola/relevance.py` → replaced by `linking_core/scoring.py`
-- [x] `Nola/identity_thread/` entire directory → data in DB
-- [x] `Nola/idv2/idv2.py` → replaced by `schema.py`
-- [x] `Nola/contract.py` shim → use `subconscious/contract.py`
+- [x] `agent/relevance.py` → replaced by `linking_core/scoring.py`
+- [x] `agent/identity_thread/` entire directory → data in DB
+- [x] `agent/idv2/idv2.py` → replaced by `schema.py`
+- [x] `agent/contract.py` shim → use `subconscious/contract.py`
 - [x] Old `threads/*/adapter.py` files → renamed `adapter_v2.py` to `adapter.py`
-- [x] `Nola/subconscious/threads/` directory → adapters now in `Nola/threads/*/adapter.py`
+- [x] `agent/subconscious/threads/` directory → adapters now in `agent/threads/*/adapter.py`
 - [x] Updated imports in `subconscious/core.py` and `subconscious/__init__.py`
 - [x] Cleaned stale `__pycache__` directories
 
-**NOTE:** `Nola/Nola.json` kept for now (still used by agent.py bootstrap)
+**NOTE:** `agent/Nola.json` kept for now (still used by agent.py bootstrap)
 
 ---
 
@@ -3225,14 +3225,14 @@ Deleted deprecated files (~1,700 lines):
 When you want to add a new thread (e.g., "memory", "social", "calendar"):
 
 ```python
-from Nola.threads.schema import register_module, push_to_module
+from agent.threads.schema import register_module, push_to_module
 
 # 1. Register modules
 register_module("calendar", "events", "Calendar events and reminders")
 register_module("calendar", "patterns", "Recurring patterns")
 
 # 2. Create adapter (copy template)
-# Nola/threads/calendar/adapter.py
+# agent/threads/calendar/adapter.py
 
 # 3. Register in threads/__init__.py
 from .calendar.adapter import CalendarThreadAdapter
@@ -3272,13 +3272,13 @@ Thread system rebuild finished 2025-01-06.
 - Duplicate adapter implementations
 
 **Files to know:**
-- `Nola/threads/schema.py` - The foundation
-- `Nola/threads/base.py` - Universal adapter base
-- `Nola/subconscious/orchestrator.py` - Context builder
+- `agent/threads/schema.py` - The foundation
+- `agent/threads/base.py` - Universal adapter base
+- `agent/subconscious/orchestrator.py` - Context builder
 
 
 ================================================================================
-FILE: Nola/threads/THREAD_BROWSER_UI.md
+FILE: agent/threads/THREAD_BROWSER_UI.md
 ================================================================================
 
 # Thread Browser UI Implementation
@@ -3290,7 +3290,7 @@ FILE: Nola/threads/THREAD_BROWSER_UI.md
 
 ## Implementation ✅
 
-The thread browser is implemented as `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
+The thread browser is implemented as `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
 
 - ✅ Thread tabs (identity, log, form, philosophy, reflex, linking_core)
 - ✅ Thread health display with status indicators
@@ -3387,7 +3387,7 @@ Implementation includes `hooks/useThreadBrowser.ts` to manage selection, fetchin
 
 
 ================================================================================
-FILE: Nola/threads/TROUBLESHOOTING.md
+FILE: agent/threads/TROUBLESHOOTING.md
 ================================================================================
 
 # Troubleshooting
@@ -3473,7 +3473,7 @@ npm run dev -- --port 5174
 The memory system might not be connected. Check:
 ```bash
 # From project root
-python3 -c "from Nola.subconscious import wake, get_status; wake(); print(get_status())"
+python3 -c "from agent.subconscious import wake, get_status; wake(); print(get_status())"
 ```
 
 All threads should show "ok" status.
@@ -3514,7 +3514,7 @@ Ollama can be resource-intensive. Options:
 
 ### "Where are my conversations?"
 
-Stored in: `Nola/Stimuli/conversations/`
+Stored in: `agent/Stimuli/conversations/`
 
 Each file is named `react_YYYYMMDD_HHMMSS.json`.
 
@@ -3522,8 +3522,8 @@ Each file is named `react_YYYYMMDD_HHMMSS.json`.
 
 Check if identity files exist:
 ```bash
-ls Nola/identity_thread/userID/
-ls Nola/Nola.json
+ls agent/identity_thread/userID/
+ls agent/Nola.json
 ```
 
 If missing, they'll be recreated on next start with defaults.
@@ -3533,9 +3533,9 @@ If missing, they'll be recreated on next start with defaults.
 ⚠️ **This deletes all memory and conversations:**
 
 ```bash
-rm -rf Nola/Stimuli/conversations/*
+rm -rf agent/Stimuli/conversations/*
 rm -rf data/db/state.db
-rm Nola/Nola.json
+rm agent/Nola.json
 ```
 
 Then restart: `./start.sh`
@@ -3546,7 +3546,7 @@ Then restart: `./start.sh`
 
 1. **Check the logs:**
    ```bash
-   cat Nola/LOG.txt
+   cat agent/LOG.txt
    ```
 
 2. **Run tests:**
@@ -3563,7 +3563,7 @@ Include:
 
 
 ================================================================================
-FILE: Nola/threads/form/IMPLEMENTATION.md
+FILE: agent/threads/form/IMPLEMENTATION.md
 ================================================================================
 
 # Form Thread — Implementation Notes
@@ -3583,7 +3583,7 @@ Notes:
 
 
 ================================================================================
-FILE: Nola/threads/form/README.md
+FILE: agent/threads/form/README.md
 ================================================================================
 
 # Form Thread
@@ -3605,7 +3605,7 @@ Form manages capabilities and current state. It tracks what tools exist (static)
 ## Quick Start
 
 ```python
-from Nola.threads.form import (
+from agent.threads.form import (
     FormThreadAdapter,
     get_available_tools,
     execute_tool,
@@ -3761,7 +3761,7 @@ Action history enables:
 ## API Usage
 
 ```python
-from Nola.threads.form.adapter import FormThreadAdapter
+from agent.threads.form.adapter import FormThreadAdapter
 
 adapter = FormThreadAdapter()
 
@@ -3826,7 +3826,7 @@ You now have a complete "Living Body" integration for Nola that enables browser 
 ## 📁 Files Created/Modified
 
 ### New Files
-1. **[kernel_service.py](../Nola/services/kernel_service.py)** (387 lines)
+1. **[kernel_service.py](../agent/services/kernel_service.py)** (387 lines)
   - Core browser automation service
   - Human behavior mimicry (mouse jerks, typing delays)
   - Persistent profile management
@@ -3847,21 +3847,21 @@ You now have a complete "Living Body" integration for Nola that enables browser 
   - Verifies all components work
 
 ### Modified Files
-1. **[agent_service.py](../Nola/services/agent_service.py)**
+1. **[agent_service.py](../agent/services/agent_service.py)**
   - Added `_is_demo_command()` method
   - Added `_handle_demo_command()` method
   - Added `do_facebook_demo()` workflow
   - Added `_generate_post_from_identity()` content generator
   - Added helper functions for browser control
 
-2. **[requirements.txt](../Nola/react-chat-app/backend/requirements.txt)**
+2. **[requirements.txt](../agent/react-chat-app/backend/requirements.txt)**
   - Added `kernel>=0.1.0`
   - Added `playwright>=1.40.0`
 
 3. **[.env.example](../.env.example)**
   - Added `KERNEL_API_KEY=` configuration
 
-4. **[services/README.md](../Nola/services/README.md)**
+4. **[services/README.md](../agent/services/README.md)**
   - Documented kernel_service.py
   - Added demo commands
 
@@ -4000,7 +4000,7 @@ See `KERNEL_DEMO_SETUP.md` for detailed steps. In short:
 ```bash
 # From repo root
 cp .env.example .env
-cd Nola/react-chat-app/backend
+cd agent/react-chat-app/backend
 pip install kernel playwright
 playwright install chromium
 python main.py  # backend
@@ -4019,7 +4019,7 @@ npm install && npm run dev  # frontend
 
 
 ================================================================================
-FILE: Nola/threads/identity/IMPLEMENTATION.md
+FILE: agent/threads/identity/IMPLEMENTATION.md
 ================================================================================
 
 # Identity Thread — Implementation Notes
@@ -4027,21 +4027,21 @@ FILE: Nola/threads/identity/IMPLEMENTATION.md
 Primary sources: `docs/implementation/database_integration_plan.md`, `docs/DEV_NOTES.md`, `docs/FOCUS_CHECKLIST.md`.
 
 What lives here (current canonical):
-- Per-key L1/L2/L3 storage (see `Nola/threads/identity/adapter.py`).
+- Per-key L1/L2/L3 storage (see `agent/threads/identity/adapter.py`).
 - Tables: `identity_flat` or module tables under `threads/identity/modules/`.
 - Weight, metadata, and consolidation logic referenced in `docs/FOCUS_IMPLEMENTATION.md`.
 
 Recommended consolidation steps:
 1. Copy the identity-specific schema sections from `docs/implementation/database_integration_plan.md` into this file or `README.md` (short summary + migration notes).
-2. Move identity migration/migration scripts into `Nola/threads/identity/migrations/` and reference here.
+2. Move identity migration/migration scripts into `agent/threads/identity/migrations/` and reference here.
 3. Add examples for `push_identity`, `pull_identity`, and `sync_for_stimuli` (small code snippets).
 
 Notes:
-- Tests in `tests/test_idv2.py` reference legacy `idv2` APIs; consider adding a small compatibility shim that forwards to `Nola/threads/identity` adapter while you update tests.
+- Tests in `tests/test_idv2.py` reference legacy `idv2` APIs; consider adding a small compatibility shim that forwards to `agent/threads/identity` adapter while you update tests.
 
 
 ================================================================================
-FILE: Nola/threads/identity/README.md
+FILE: agent/threads/identity/README.md
 ================================================================================
 
 # Identity Thread
@@ -4114,7 +4114,7 @@ VALUES
 ## API Usage
 
 ```python
-from Nola.threads.identity.adapter import IdentityThreadAdapter
+from agent.threads.identity.adapter import IdentityThreadAdapter
 
 adapter = IdentityThreadAdapter()
 
@@ -4147,10 +4147,10 @@ The canonical implementation details and migration plan for the state/database i
 
 # Database Integration Plan
 
-**Status:** ✅ IMPLEMENTED (see `Nola/idv2/idv2.py`)  
+**Status:** ✅ IMPLEMENTED (see `agent/idv2/idv2.py`)  
 **Last Updated:** 2025-12-23
 
-> **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See `Nola/idv2/idreadme.md` for implementation details.
+> **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See `agent/idv2/idreadme.md` for implementation details.
 
 ## Overview
 
@@ -4253,7 +4253,7 @@ POST   /api/state/restore           # Restore from JSON checkpoint
 
 ### Identity Thread v2 Development Plan
 
-**Current Status**: Working with `Nola/identity_thread` containing existing JSON state files
+**Current Status**: Working with `agent/identity_thread` containing existing JSON state files
 
 **Migration Plan:**
 1. **JSON Preservation**: Convert existing JSONs in `identity_thread` to database creation tools
@@ -4276,11 +4276,11 @@ POST   /api/state/restore           # Restore from JSON checkpoint
 
 ### Frontend Developer Note
 
-**Important**: The React app currently recreates the nested folder structure `Nola/Stimuli/conversations/` that already exists in the project. This redundancy should be addressed during the frontend refactor to prevent conflicts and maintain clean file organization.
+**Important**: The React app currently recreates the nested folder structure `agent/Stimuli/conversations/` that already exists in the project. This redundancy should be addressed during the frontend refactor to prevent conflicts and maintain clean file organization.
 
 **Folder Structure Consideration:**
-- Existing: `Nola/Stimuli/conversations/` (note capitalization)
-- React Creates: `Nola/stimuli/conversations/` (lowercase)
+- Existing: `agent/Stimuli/conversations/` (note capitalization)
+- React Creates: `agent/stimuli/conversations/` (lowercase)
 - Solution needed: Align folder creation with existing structure or consolidate
 
 ### Implementation Priority
@@ -4294,7 +4294,7 @@ POST   /api/state/restore           # Restore from JSON checkpoint
 
 
 ================================================================================
-FILE: Nola/threads/linking_core/IMPLEMENTATION.md
+FILE: agent/threads/linking_core/IMPLEMENTATION.md
 ================================================================================
 
 # Linking Core — Implementation Notes
@@ -4314,7 +4314,7 @@ Notes:
 
 
 ================================================================================
-FILE: Nola/threads/linking_core/README.md
+FILE: agent/threads/linking_core/README.md
 ================================================================================
 
 # Linking Core Thread
@@ -4536,7 +4536,7 @@ User: "Hey, did Sarah mention anything about coffee?"
 
 ## Background Daemon Integration
 
-The consolidation daemon (`Nola/services/consolidation_daemon.py`) runs:
+The consolidation daemon (`agent/services/consolidation_daemon.py`) runs:
 - **Every conversation end**: `record_concept_cooccurrence()` on extracted concepts
 - **Nightly**: `decay_concept_links(decay_rate=0.95)` to fade old associations
 
@@ -4621,8 +4621,8 @@ RESPONSE
 - [x] Create indexes on weight columns for fast attention queries
 
 **Files to modify:**
-- `Nola/idv2/idv2.py` - Update `init_db()` schema
-- Add migration script: `Nola/idv2/migrations/001_add_weights.sql`
+- `agent/idv2/idv2.py` - Update `init_db()` schema
+- Add migration script: `agent/idv2/migrations/001_add_weights.sql`
 
 ### 1.2 Create Key Sequence Learning Table
 - [ ] Create `key_sequences` table
@@ -4641,7 +4641,7 @@ RESPONSE
 - [ ] Add to schema.py
 
 **Files to create:**
-- `Nola/subconscious/focus/sequence_learner.py`
+- `agent/subconscious/focus/sequence_learner.py`
 
 ---
 
@@ -4649,7 +4649,7 @@ RESPONSE
 
 ### 2.1 Create Focus Module Structure
 ```
-Nola/subconscious/focus/
+agent/subconscious/focus/
 ├── __init__.py           # Public API: get_focused_context()
 ├── sequence_learner.py   # Key sequence learning (after A → B)
 ├── attention_scorer.py   # Weight management and scoring
@@ -4676,7 +4676,7 @@ Nola/subconscious/focus/
 - [ ] Return both prompt text AND accessed_keys list
 
 **Files to create:**
-- All files in `Nola/subconscious/focus/` directory
+- All files in `agent/subconscious/focus/` directory
 
 ---
 
@@ -4725,11 +4725,11 @@ def should_save_memory(key, value):
 - [ ] Auto-expire queued items after 7 days
 
 **Files to create:**
-- `Nola/subconscious/focus/memory_filter.py`
-- `Nola/temp_memory/permanence.py`
+- `agent/subconscious/focus/memory_filter.py`
+- `agent/temp_memory/permanence.py`
 
 **Files to modify:**
-- `Nola/temp_memory/store.py` - Add permanence checks before save
+- `agent/temp_memory/store.py` - Add permanence checks before save
 
 ---
 
@@ -4742,8 +4742,8 @@ def should_save_memory(key, value):
 - [ ] Trigger weight updates every 5 turns
 
 **Files to modify:**
-- `Nola/subconscious/core.py` - Replace context building logic
-- `Nola/subconscious/__init__.py` - Update public API
+- `agent/subconscious/core.py` - Replace context building logic
+- `agent/subconscious/__init__.py` - Update public API
 
 ### 4.2 Agent Service Integration  
 - [ ] Pass query to subconscious for focus determination
@@ -4752,8 +4752,8 @@ def should_save_memory(key, value):
 - [ ] Add `helpful=True/False` feedback parameter for weight updates
 
 **Files to modify:**
-- `Nola/services/agent_service.py` - Use new focus API
-- `Nola/agent.py` - Add feedback mechanism to generate()
+- `agent/services/agent_service.py` - Use new focus API
+- `agent/agent.py` - Add feedback mechanism to generate()
 
 ### 4.3 Profile System Integration
 - [ ] Update agent profiles to understand focus mechanism
@@ -4782,7 +4782,7 @@ def should_save_memory(key, value):
 - [ ] Export focus stats to `logs/focus_health.json`
 
 **Files to modify:**
-- `Nola/subconscious/loops.py` - Add FocusMaintenanceLoop
+- `agent/subconscious/loops.py` - Add FocusMaintenanceLoop
 
 ---
 
@@ -4825,8 +4825,8 @@ def should_save_memory(key, value):
 - [ ] Unified focus state across both systems
 
 **Files to create:**
-- `Nola/workspace/export_focus.py` - Export to VS Code format
-- `Nola/workspace/import_feedback.py` - Ingest VS Code feedback
+- `agent/workspace/export_focus.py` - Export to VS Code format
+- `agent/workspace/import_feedback.py` - Ingest VS Code feedback
 
 ---
 
@@ -4889,7 +4889,7 @@ def should_save_memory(key, value):
 
 1. ✅ Read this document
 2. ✅ Run schema migration on existing DB (`identity_flat`, `philosophy_flat` tables created)
-3. [ ] Create `Nola/subconscious/focus/` directory structure
+3. [ ] Create `agent/subconscious/focus/` directory structure
 4. [ ] Implement `sequence_learner.py` first (core functionality)
 5. [ ] Write unit tests for sequence learning
 6. [ ] Integrate with one agent profile as proof of concept
@@ -4898,7 +4898,7 @@ def should_save_memory(key, value):
 
 
 ================================================================================
-FILE: Nola/threads/log/IMPLEMENTATION.md
+FILE: agent/threads/log/IMPLEMENTATION.md
 ================================================================================
 
 # Log Thread — Implementation Notes
@@ -4906,7 +4906,7 @@ FILE: Nola/threads/log/IMPLEMENTATION.md
 Primary sources: `docs/implementation/log_thread_implementation_plan.md`, `docs/DEV_NOTES.md`.
 
 What lives here (canonical):
-- Append-only event logging API (`log_event`, `log_error`) writing to `Nola/log_thread/master.log`.
+- Append-only event logging API (`log_event`, `log_error`) writing to `agent/log_thread/master.log`.
 - Tables/modules: `log_events`, `log_sessions` (future DB migration described in docs).
 
 Recommended consolidation steps:
@@ -4919,7 +4919,7 @@ Notes:
 
 
 ================================================================================
-FILE: Nola/threads/log/README.md
+FILE: agent/threads/log/README.md
 ================================================================================
 
 # Log Thread
@@ -5014,7 +5014,7 @@ VALUES (
 ## API Usage
 
 ```python
-from Nola.threads.log.adapter import LogThreadAdapter
+from agent.threads.log.adapter import LogThreadAdapter
 
 adapter = LogThreadAdapter()
 
@@ -5088,7 +5088,7 @@ The `log_thread/` module sits adjacent to `identity_thread/` and provides a **fl
 ## Directory Structure
 
 ```
-Nola/
+agent/
 ├── identity_thread/       # WHO/WHAT/WHY (interpretive)
 │   ├── identity.json
 │   ├── identity.py
@@ -5164,7 +5164,7 @@ Nola/
 
 ## Storage Design (File → DB)
 
-- **Now (file appender)**: Single append-only file at `Nola/log_thread/master.log` with pipe-delimited lines. This is the source of truth.
+- **Now (file appender)**: Single append-only file at `agent/log_thread/master.log` with pipe-delimited lines. This is the source of truth.
 - **Later (DB-backed)**: Swap storage to SQLite while keeping the same public API (`log_event`, `log_error`).
 - **Abstraction**: Introduce a minimal storage interface so callers never change:
 
@@ -5463,7 +5463,7 @@ __all__ = [
 
 
 ================================================================================
-FILE: Nola/threads/philosophy/IMPLEMENTATION.md
+FILE: agent/threads/philosophy/IMPLEMENTATION.md
 ================================================================================
 
 # Philosophy Thread — Implementation Notes
@@ -5483,7 +5483,7 @@ Notes:
 
 
 ================================================================================
-FILE: Nola/threads/philosophy/README.md
+FILE: agent/threads/philosophy/README.md
 ================================================================================
 
 # Philosophy Thread
@@ -5580,7 +5580,7 @@ Philosophy allows:
 ## API Usage
 
 ```python
-from Nola.threads.philosophy.adapter import PhilosophyThreadAdapter
+from agent.threads.philosophy.adapter import PhilosophyThreadAdapter
 
 adapter = PhilosophyThreadAdapter()
 
@@ -5615,7 +5615,7 @@ This is how Nola develops a genuine personality over time.
 
 ## Implementation (canonical)
 
-Implementation guidance and safety checklists live in `Nola/threads/philosophy/IMPLEMENTATION.md`.
+Implementation guidance and safety checklists live in `agent/threads/philosophy/IMPLEMENTATION.md`.
 
 Quick implementer notes:
 - Philosophy enforces constraints before Form executes actions — document `detect_harm()` and `preserve_dignity()` placeholders here.
@@ -5624,12 +5624,12 @@ Quick implementer notes:
 
 
 ================================================================================
-FILE: Nola/threads/reflex/IMPLEMENTATION.md
+FILE: agent/threads/reflex/IMPLEMENTATION.md
 ================================================================================
 
 # Reflex Thread — Implementation Notes
 
-Primary sources: `docs/logs/CHANGELOG.md`, `docs/DEV_NOTES.md`, `Nola/threads/reflex/README.md`.
+Primary sources: `docs/logs/CHANGELOG.md`, `docs/DEV_NOTES.md`, `agent/threads/reflex/README.md`.
 
 What lives here (canonical):
 - Reflex storage for trigger→response mappings, shortcuts, and system reflex promotion rules (10x rule).
@@ -5644,7 +5644,7 @@ Notes:
 
 
 ================================================================================
-FILE: Nola/threads/reflex/README.md
+FILE: agent/threads/reflex/README.md
 ================================================================================
 
 # Reflex Thread
@@ -5754,7 +5754,7 @@ VALUES (
 ## API Usage
 
 ```python
-from Nola.threads.reflex.adapter import ReflexThreadAdapter
+from agent.threads.reflex.adapter import ReflexThreadAdapter
 
 adapter = ReflexThreadAdapter()
 
@@ -5795,7 +5795,7 @@ First match wins.
 
 ## Implementation (canonical)
 
-Implementation notes and promotion rules live in `Nola/threads/reflex/IMPLEMENTATION.md`.
+Implementation notes and promotion rules live in `agent/threads/reflex/IMPLEMENTATION.md`.
 
 Quick implementer notes:
 - Promotion: 10x rule triggers promotion; Log records frequency and consolidation daemon performs promotions.
@@ -5805,7 +5805,7 @@ Quick implementer notes:
 
 
 ================================================================================
-FILE: Nola/workspace/Welcome.md
+FILE: agent/workspace/Welcome.md
 ================================================================================
 
 # Welcome to Nola Workspace! 🧠
@@ -5930,7 +5930,7 @@ Nola: "How's TaskMaster coming along? Need any Python help?"
 
 ### Change Her Name or Personality
 
-Edit `Nola/Nola.json`:
+Edit `agent/Nola.json`:
 
 ```json
 {
@@ -5942,7 +5942,7 @@ Edit `Nola/Nola.json`:
 
 ### Tell Her About Yourself
 
-Edit `Nola/identity_thread/userID/user.json`:
+Edit `agent/identity_thread/userID/user.json`:
 
 ```json
 {
@@ -5961,7 +5961,7 @@ Edit `Nola/identity_thread/userID/user.json`:
 
 ### Is my data really private?
 
-**Yes.** Everything runs on your computer. Your conversations are stored in a folder on your machine (`Nola/Stimuli/conversations/`), not on any server.
+**Yes.** Everything runs on your computer. Your conversations are stored in a folder on your machine (`agent/Stimuli/conversations/`), not on any server.
 
 ### Do I need internet after setup?
 
@@ -6060,7 +6060,7 @@ This is a solo project built since April 2025. The foundation is solid, the theo
 | [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
 | [**Developer Guide**](DEVELOPERS.md) | Build features, understand the code |
 | [**All Documentation**](docs/README.md) | Full documentation index |
-| [**Architecture**](Nola/ARCHITECTURE.md) | Technical deep-dive |
+| [**Architecture**](agent/ARCHITECTURE.md) | Technical deep-dive |
 | [**Contributing**](CONTRIBUTING.md) | Help make Nola better |
 
 ---
@@ -6249,7 +6249,7 @@ FILE: docs/CONSOLIDATED_INDEX.md
 This file summarizes the project's documentation, highlights which docs are clearly current (from the changelog), which are archived, and which need review or updating to reflect the codebase. Use this as the single source-of-truth for triaging doc work.
 
 Summary
-- **Scope scanned:** `docs/` (core docs, implementation, theory, archive) and thread READMEs under `Nola/threads/`.
+- **Scope scanned:** `docs/` (core docs, implementation, theory, archive) and thread READMEs under `agent/threads/`.
 - **Heuristic:** A doc is marked **Recent** if it's referenced in `docs/logs/CHANGELOG.md` with a 2025-12/2026-01 entry; otherwise it is marked **Needs review** unless in `docs/archive/` (marked **Archived**).
 
 Actionable high-level recommendations
@@ -6274,18 +6274,18 @@ Docs inventory (high level)
 - `docs/license.md` — Recent: license (keep)
 
 Thread README notes (where found)
-- Each thread under `Nola/threads/` contains a README describing the thread architecture (identity, log, linking_core, form, reflex, temp_memory). These are authoritative for implementation details. Treat thread READMEs as canonical for that thread.
+- Each thread under `agent/threads/` contains a README describing the thread architecture (identity, log, linking_core, form, reflex, temp_memory). These are authoritative for implementation details. Treat thread READMEs as canonical for that thread.
 
 Suggested file-level TODOs (short, actionable)
 - `docs/DEV_NOTES.md`: Extract a short `docs/DEV_QUICKSTART.md` (3 steps: setup venv, run tests, start app). Mark: `Needs action`.
-- `tests/test_idv2.py`: Either reinstate a compatibility module `Nola/idv2/idv2.py` or update tests to import the new thread schema. Mark: `Blocker for CI`.
+- `tests/test_idv2.py`: Either reinstate a compatibility module `agent/idv2/idv2.py` or update tests to import the new thread schema. Mark: `Blocker for CI`.
 - `CONTRIBUTING.md`: Add a one-paragraph "Run tests" section with the exact commands used in CI. Mark: `High priority`.
 - `docs/README.md`: Add a one-line table cell: "Run tests" with exact commands. Mark: `Quick win`.
 
 How to proceed (recommended execution plan)
 1. Create `docs/DEV_QUICKSTART.md` with 3 commands: `./install.sh`, `./runtests.sh --unit`, `./start.sh`.
 2. Add `docs/REPO_HEALTH.md` with CI status, last green commit hash, and top 3 blockers (tests failing, idv2 drift, path quirks).
-3. Add compatibility shim: `Nola/idv2/__init__.py` that imports/forwards new schema functions (if you want tests to keep referencing `idv2`).
+3. Add compatibility shim: `agent/idv2/__init__.py` that imports/forwards new schema functions (if you want tests to keep referencing `idv2`).
 4. Split `DEV_NOTES.md` into `DEV_QUICKSTART.md` + `DEV_DETAILED.md` (archive the long file or move to `docs/archive/` once trimmed).
 
 Notes and caveats
@@ -6311,7 +6311,7 @@ Quick links for developers:
 
 - `docs/DEV_QUICKSTART.md` — 3-step local setup and test commands
 - `docs/CONSOLIDATED_INDEX.md` — Consolidated index of docs and recommended edits
-- `Nola/threads/*/README.md` — Per-thread canonical READMEs with implementation pointers
+- `agent/threads/*/README.md` — Per-thread canonical READMEs with implementation pointers
 
 If you need the full historical notes restored here, I can copy them back into `docs/DEV_NOTES.md` or leave them in the archive file.
 ✅ Pinned deps with SHA256 hashes (requirements.lock)
@@ -6460,7 +6460,7 @@ Key Breakthrough:
 
 Next Phase:
 [ ] Schema migration: Add weight/access_count/last_accessed columns
-[ ] Create Nola/subconscious/focus/ module
+[ ] Create agent/subconscious/focus/ module
 [ ] Implement sequence_learner.py (key → key predictions)
 [ ] Build memory_filter.py (permanence logic)
 [ ] Integrate with subconscious core
@@ -6472,7 +6472,7 @@ Last Updated: 2025-12-27
 Status: ✅ SUBCONSCIOUS INTEGRATION COMPLETE
 
 Subconscious Integration (2025-12-27):
-✅ Created Nola/subconscious/ module with full architecture
+✅ Created agent/subconscious/ module with full architecture
 ✅ ThreadInterface protocol defines adapters for internal modules
 ✅ Built-in adapters: log_thread, temp_memory, identity
 ✅ Background loops (consolidation, sync, health) implemented
@@ -6488,17 +6488,17 @@ Context Levels (HEA):
 - L3: ~200 tokens - Analytical (full identity + memory + session info)
 
 Key Files Added/Modified:
-- Nola/subconscious/__init__.py - wake(), sleep(), get_consciousness_context()
-- Nola/subconscious/core.py - ThreadRegistry, SubconsciousCore
-- Nola/subconscious/threads/ - base.py, log_adapter.py, memory_adapter.py, identity_adapter.py
-- Nola/subconscious/loops.py - ConsolidationLoop, SyncLoop, HealthLoop
-- Nola/subconscious/triggers.py - TimeTrigger, EventTrigger, ThresholdTrigger
-- Nola/agent.py - Added consciousness_context parameter to generate()
-- Nola/services/agent_service.py - Calls subconscious before agent.generate()
+- agent/subconscious/__init__.py - wake(), sleep(), get_consciousness_context()
+- agent/subconscious/core.py - ThreadRegistry, SubconsciousCore
+- agent/subconscious/threads/ - base.py, log_adapter.py, memory_adapter.py, identity_adapter.py
+- agent/subconscious/loops.py - ConsolidationLoop, SyncLoop, HealthLoop
+- agent/subconscious/triggers.py - TimeTrigger, EventTrigger, ThresholdTrigger
+- agent/agent.py - Added consciousness_context parameter to generate()
+- agent/services/agent_service.py - Calls subconscious before agent.generate()
 
 Previous Architecture Simplification:
 ✅ Removed redundant files: relevancev2.py (incomplete stub), chat_demo.py (unused TKinter)
-✅ Moved agent_service.py from backend/services/ to Nola/services/ for centralized access
+✅ Moved agent_service.py from backend/services/ to agent/services/ for centralized access
 ✅ Deprecated utils.py conversation functions (append_to_conversation, load_conversation)
 ✅ Unified conversation storage: Only agent_service.py handles JSON conversation logs
 ✅ Simplified import paths: Removed complex relative path resolution
@@ -6517,10 +6517,10 @@ Conversation Storage Consolidation:
 ✅ Maintained backward compatibility with deprecation warnings
 
 File Reduction Summary:
-❌ Removed: Nola/relevancev2.py (19 lines, unused stub)
-❌ Removed: Nola/chat_demo.py (214 lines, TKinter interface)
+❌ Removed: agent/relevancev2.py (19 lines, unused stub)
+❌ Removed: agent/chat_demo.py (214 lines, TKinter interface)
 ❌ Removed: backend/services/ directory
-📁 Moved: agent_service.py to Nola/services/
+📁 Moved: agent_service.py to agent/services/
 🔄 Updated: 4 import statements across chat.py, websockets.py
 ⚠️  Deprecated: utils.py conversation functions (soft removal)
 
@@ -6531,7 +6531,7 @@ Assessment Complete:
 ✅ FastAPI starts without errors  
 ✅ /health endpoint responds
 ✅ /api/chat/message routes to Nola
-✅ Conversations save to Nola/Stimuli/conversations/
+✅ Conversations save to agent/Stimuli/conversations/
 
 HEA Implementation Status:
 ✅ machineID.py: Added extract_level_data() - filters JSON by level_1/level_2/level_3
@@ -6565,7 +6565,7 @@ Status: ✅ Nola agent loaded
 Runtime Findings:
 - `agent_service` imported `Nola` successfully at runtime.
 - Agent introspect returned name: "Nola" and status: `ready`.
-- Agent object file: Nola/agent.py
+- Agent object file: agent/agent.py
 
 Notes / Issues:
 - Directory name: `Nola` (no trailing space)
@@ -6575,7 +6575,7 @@ Assessment Checklist:
 - **FastAPI starts without errors**: not checked in this run (previous verification exists)
 - **`/health` endpoint responds**: not checked in this run
 - **`/api/chat/message` routes to Nola**: not checked in this run
-- **Conversations save to `Nola/Stimuli/conversations/`**: path confirmed exists in agent_service logging, but actual write not executed in this run
+- **Conversations save to `agent/Stimuli/conversations/`**: path confirmed exists in agent_service logging, but actual write not executed in this run
 
 Blocking Issues:
 - None from the agent import perspective; the trailing-space directory may be worth fixing.
@@ -6624,7 +6624,7 @@ Last Updated: 2025-12-19
 Status: ✅ IDV2 DB BACKEND COMPLETE
 
 Identity Thread v2 Implementation (DB-backed):
-✅ Created Nola/idv2/idv2.py with full SQLite backend
+✅ Created agent/idv2/idv2.py with full SQLite backend
 ✅ Implemented init_db() - creates identity_sections and identity_meta tables
 ✅ Implemented seed_from_json() - migrates from identity_thread JSONs
 ✅ Implemented push_section() - stores machineID/userID with L1/L2/L3 variants
@@ -6657,7 +6657,7 @@ Docker Integration (Steps 3-4):
    - Added nola_memory volume mount at /app/data/db
    - Added IDENTITY_BACKEND=db env var
    - Added IDENTITY_DB_PATH=/app/data/db/identity.db
-   - Added IDENTITY_SEED_DIR=/app/Nola/identity_thread
+   - Added IDENTITY_SEED_DIR=/app/agent/identity_thread
 ✅ Entrypoint checks IDENTITY_BACKEND and runs migration conditionally
 ✅ Health check validates DB before starting server
 ✅ Volumes persist across container restarts
@@ -6876,10 +6876,10 @@ internal state and assembles context before each agent call.
 
 Directory Structure:
 ```
-Nola/subconscious/
+agent/subconscious/
 ├── __init__.py         # wake(), sleep(), get_context()
 ├── core.py             # ThreadRegistry, SubconsciousCore
-├── contract.py         # Moved from Nola/contract.py
+├── contract.py         # Moved from agent/contract.py
 ├── loops.py            # ConsolidationLoop, SyncLoop, HealthLoop
 ├── triggers.py         # TimeTrigger, EventTrigger, ThresholdTrigger
 └── threads/
@@ -6941,17 +6941,17 @@ async def send_message(self, content: str, ...):
 ================================================================================
 
 FILES CREATED THIS SESSION:
-- Nola/log_thread/__init__.py, logger.py, config.py
-- Nola/temp_memory/__init__.py, store.py
-- Nola/services/consolidation_daemon.py
+- agent/log_thread/__init__.py, logger.py, config.py
+- agent/temp_memory/__init__.py, store.py
+- agent/services/consolidation_daemon.py
 - .github/agents/VISION.agent.md
 
 FILES MODIFIED THIS SESSION:
-- Nola/services/memory_service.py
-- Nola/agent.py
-- Nola/services/agent_service.py
-- Nola/idv2/idv2.py
-- Nola/react-chat-app/backend/api/database.py
+- agent/services/memory_service.py
+- agent/agent.py
+- agent/services/agent_service.py
+- agent/idv2/idv2.py
+- agent/react-chat-app/backend/api/database.py
 - notes.txt, CHANGELOG.md, LOG.txt
 
 **NEXT UP: Task 4.2 - Dynamic Tab "Brain Scan" UI**
@@ -6965,7 +6965,7 @@ Depends On: Task 2.1 (temp_memory store)
 Handoff To: 🤖 AI/ML Engineer (Task 3.1)
 
 Files Modified:
-  - Nola/services/memory_service.py
+  - agent/services/memory_service.py
 
 Changes Made:
   - Added imports for temp_memory and log_thread
@@ -6991,7 +6991,7 @@ Depends On: Task 2.2 (facts flowing to temp_memory)
 Handoff To: ⚙️ DevOps (Task 3.2)
 
 Files Modified:
-  - Nola/services/memory_service.py
+  - agent/services/memory_service.py
 
 Functions Added:
   - score_fact(fact_text, context) → {permanence, relevance, identity, total, reasoning}
@@ -7014,7 +7014,7 @@ Depends On: Task 3.1 (scorer), Task 1.3 (events table)
 Handoff To: 🤖 AI/ML Engineer (Task 3.3)
 
 Files Created:
-  - Nola/services/consolidation_daemon.py
+  - agent/services/consolidation_daemon.py
 
 Classes:
   - ConsolidationConfig: thresholds, batch size, triggers
@@ -7040,7 +7040,7 @@ Depends On: Task 3.2 (daemon structure)
 Handoff To: 💾 Backend Developer (Task 3.4)
 
 Files to Modify:
-  - Nola/services/memory_service.py
+  - agent/services/memory_service.py
 
 Functions:
   def summarize_to_l3(facts: List[str]) -> str:
@@ -7064,7 +7064,7 @@ Depends On: Task 3.3 (summarizers working)
 Handoff To: 💾 Backend Developer (Task 4.1)
 
 Files to Modify:
-  - Nola/idv2/idv2.py
+  - agent/idv2/idv2.py
 
 Schema:
   CREATE TABLE consolidation_history (
@@ -7089,19 +7089,19 @@ Depends On: Task 3.2 (consolidation daemon exists)
 Handoff To: 💾 Backend Developer (Task 4.1b)
 
 Files Created:
-  - Nola/subconscious/__init__.py (main API: wake, sleep, get_consciousness_context)
-  - Nola/subconscious/core.py (ThreadRegistry, SubconsciousCore)
-  - Nola/subconscious/contract.py (moved from Nola/contract.py)
-  - Nola/subconscious/loops.py (ConsolidationLoop, SyncLoop, HealthLoop)
-  - Nola/subconscious/triggers.py (TimeTrigger, EventTrigger, ThresholdTrigger)
-  - Nola/subconscious/threads/__init__.py
-  - Nola/subconscious/threads/base.py (ThreadInterface protocol)
-  - Nola/subconscious/threads/log_adapter.py
-  - Nola/subconscious/threads/memory_adapter.py
-  - Nola/subconscious/threads/identity_adapter.py
+  - agent/subconscious/__init__.py (main API: wake, sleep, get_consciousness_context)
+  - agent/subconscious/core.py (ThreadRegistry, SubconsciousCore)
+  - agent/subconscious/contract.py (moved from agent/contract.py)
+  - agent/subconscious/loops.py (ConsolidationLoop, SyncLoop, HealthLoop)
+  - agent/subconscious/triggers.py (TimeTrigger, EventTrigger, ThresholdTrigger)
+  - agent/subconscious/threads/__init__.py
+  - agent/subconscious/threads/base.py (ThreadInterface protocol)
+  - agent/subconscious/threads/log_adapter.py
+  - agent/subconscious/threads/memory_adapter.py
+  - agent/subconscious/threads/identity_adapter.py
 
 Files Modified:
-  - Nola/contract.py (now re-exports from subconscious/contract.py)
+  - agent/contract.py (now re-exports from subconscious/contract.py)
 
 Core API:
   wake(start_loops=True) → Initialize registry, register adapters, start loops
@@ -7133,10 +7133,10 @@ Depends On: Task 1.2 (logger API working)
 Handoff To: 💾 Backend Developer (Task 4.1b)
 
 Files Modified:
-  - Nola/agent.py (startup logging, path fix for imports)
-  - Nola/services/agent_service.py (conversation:start, error logging)
-  - Nola/log_thread/logger.py (added read_events, get_event_stats)
-  - Nola/log_thread/__init__.py (exported read_events, get_event_stats)
+  - agent/agent.py (startup logging, path fix for imports)
+  - agent/services/agent_service.py (conversation:start, error logging)
+  - agent/log_thread/logger.py (added read_events, get_event_stats)
+  - agent/log_thread/__init__.py (exported read_events, get_event_stats)
   - backend/api/database.py (added /events and /events/stats endpoints)
 
 Logging Philosophy (LIGHTWEIGHT!):
@@ -7175,7 +7175,7 @@ Depends On: Task 4.0 (subconscious module exists)
 Handoff To: 💾 Backend Developer (Task 4.3)
 
 Files to Modify:
-  - Nola/agent.py
+  - agent/agent.py
 
 Changes:
   # REMOVE: All bootstrap logic (identity loading, HEA setup)
@@ -7199,8 +7199,8 @@ Depends On: Task 3.4 (consolidation_history table), Task 4.1 (events logged)
 Handoff To: 💾 Backend Developer (Task 4.3)
 
 Files to Modify:
-  - Nola/react-chat-app/frontend/src/components/Database/MemoryPanel.tsx
-  - Nola/react-chat-app/backend/api/database.py (already has /identity-changes)
+  - agent/react-chat-app/frontend/src/components/Database/MemoryPanel.tsx
+  - agent/react-chat-app/backend/api/database.py (already has /identity-changes)
 
 UI Updates:
   - Fetch from /api/database/identity-changes
@@ -7215,7 +7215,7 @@ Depends On: Task 4.0 (subconscious), Task 4.1b (stateless agent)
 Handoff To: ⚛️ Frontend (Task 4.2)
 
 Files to Modify:
-  - Nola/services/agent_service.py
+  - agent/services/agent_service.py
 
 Changes:
 ```python
@@ -7288,10 +7288,10 @@ SESSION LOG
 - [x] Identified log_thread as foundation dependency
 
 Files Modified This Session:
-- Nola/react-chat-app/frontend/src/components/Database/MemoryPanel.tsx
-- Nola/react-chat-app/frontend/src/components/Database/MemoryPanel.css
-- Nola/react-chat-app/frontend/src/services/api.ts
-- Nola/react-chat-app/backend/api/database.py
+- agent/react-chat-app/frontend/src/components/Database/MemoryPanel.tsx
+- agent/react-chat-app/frontend/src/components/Database/MemoryPanel.css
+- agent/react-chat-app/frontend/src/services/api.ts
+- agent/react-chat-app/backend/api/database.py
 - notes.txt (this file)
 
 Next Up: Task 1.1 (DevOps creates log_thread/ structure)
@@ -7567,7 +7567,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [x] Create `fact_relevance` table (multi-dimensional scoring)
 - [x] Test migration on dev database
 
-**Implemented in:** `Nola/threads/schema.py`
+**Implemented in:** `agent/threads/schema.py`
 
 ### Create Focus Module (Partial)
 - [x] `spread_activate()` - Activation spreading through concept graph
@@ -7577,7 +7577,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [x] `extract_concepts_from_text()` - Pull concepts from messages
 - [x] `get_keys_for_concepts()` - Retrieve facts for activated concepts
 
-**Implemented in:** `Nola/threads/schema.py`, `Nola/threads/linking_core/adapter.py`
+**Implemented in:** `agent/threads/schema.py`, `agent/threads/linking_core/adapter.py`
 
 ### LinkingCore Integration
 - [x] `activate_memories(input_text)` - Uses spread activation
@@ -7603,7 +7603,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [ ] Daily summary generation
 - [ ] Auto-expire after 7 days
 
-**File:** `Nola/temp_memory/permanence.py`
+**File:** `agent/temp_memory/permanence.py`
 
 **Test:** Memory saves only when unique, queues conflicts
 
@@ -7617,7 +7617,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [ ] Record accessed keys after response
 - [ ] Trigger weight updates every 5 turns
 
-**Files:** `Nola/subconscious/core.py`, `Nola/subconscious/__init__.py`
+**Files:** `agent/subconscious/core.py`, `agent/subconscious/__init__.py`
 
 ### Agent Service
 - [ ] Pass query to subconscious for focus
@@ -7625,7 +7625,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [ ] Pass accessed_keys back to learner
 - [ ] Add feedback mechanism (`helpful=True/False`)
 
-**File:** `Nola/services/agent_service.py`
+**File:** `agent/services/agent_service.py`
 
 ### Background Loops
 - [ ] FocusMaintenanceLoop (runs every 30 min)
@@ -7633,7 +7633,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [ ] Normalize weights per table
 - [ ] Prune sequences with weight < 0.1
 
-**File:** `Nola/subconscious/loops.py`
+**File:** `agent/subconscious/loops.py`
 
 ---
 
@@ -7658,7 +7658,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [ ] Import feedback from VS Code usage
 - [ ] Bidirectional learning loop
 
-**Files:** `Nola/workspace/export_focus.py`, `Nola/workspace/import_feedback.py`
+**Files:** `agent/workspace/export_focus.py`, `agent/workspace/import_feedback.py`
 
 ---
 
@@ -7671,21 +7671,21 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [ ] `restore_checkpoint()` - revert to state
 - [ ] `_prune_checkpoints()` - keep only MAX_CHECKPOINTS
 
-**File:** `Nola/threads/schema.py`
+**File:** `agent/threads/schema.py`
 
 ### Log Thread Integration
 - [ ] Add checkpoint methods to `LogThreadAdapter`
 - [ ] Log `checkpoint:created` and `checkpoint:restored` events
 - [ ] Auto-checkpoint before consolidation (if > 1 hour since last)
 
-**File:** `Nola/threads/log/adapter.py`
+**File:** `agent/threads/log/adapter.py`
 
 ### API Endpoints
 - [ ] GET `/api/introspection/checkpoints` - list checkpoints
 - [ ] POST `/api/introspection/checkpoints` - create new
 - [ ] POST `/api/introspection/checkpoints/{key}/restore` - restore
 
-**File:** `Nola/react-chat-app/backend/api/introspection.py`
+**File:** `agent/react-chat-app/backend/api/introspection.py`
 
 ### Frontend UI
 - [ ] "Checkpoints" section in RightSidebar
@@ -7701,7 +7701,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 
 ### Implementation
 
-Live in `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
+Live in `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
 
 - [x] Thread tabs (identity, log, philosophy, reflex, form, linking_core)
 - [x] Thread health display with status indicators
@@ -7745,7 +7745,7 @@ Original mockup (implemented as ThreadsPage):
 - [x] Add row/event forms
 - [x] Edit modal for rows
 
-**File:** `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx`
+**File:** `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`
 
 ### API Endpoints ✅ COMPLETE
 - [x] GET `/api/introspection/threads/summary` - all threads overview
@@ -7795,7 +7795,7 @@ Original mockup (implemented as ThreadsPage):
 ## 📡 Stimuli System (Jan 10) — ✅ COMPLETE
 
 ### Core Architecture
-- [x] `Nola/Stimuli/router.py` — Universal API adapter
+- [x] `agent/Stimuli/router.py` — Universal API adapter
 - [x] `NormalizedMessage` dataclass — Any source → same format
 - [x] `ResponseTemplate` dataclass — Deterministic fields + LLM slots
 - [x] `SourceConfig` dataclass — Parsed YAML configs
@@ -7811,7 +7811,7 @@ Original mockup (implemented as ThreadsPage):
 - [x] **Commerce:** Shopify, HubSpot
 - [x] **Generic:** Webhook, Template
 
-**File:** `Nola/Stimuli/sources/*.yaml`
+**File:** `agent/Stimuli/sources/*.yaml`
 
 ### Frontend Dashboard
 - [x] Source list with enable/disable toggles
@@ -7821,7 +7821,7 @@ Original mockup (implemented as ThreadsPage):
 - [x] Test connection button
 - [x] Delete source confirmation
 
-**File:** `Nola/react-chat-app/frontend/src/pages/StimuliPage.tsx`
+**File:** `agent/react-chat-app/frontend/src/pages/StimuliPage.tsx`
 
 ### Backend API
 - [x] GET `/api/stimuli/sources` — List all sources
@@ -7833,7 +7833,7 @@ Original mockup (implemented as ThreadsPage):
 - [x] POST `/api/stimuli/sources/{name}/test` — Test connection
 - [x] GET `/api/stimuli/templates` — List source templates
 
-**File:** `Nola/react-chat-app/backend/api/stimuli.py`
+**File:** `agent/react-chat-app/backend/api/stimuli.py`
 
 ### Key Innovation: Slot-Based Architecture
 ```
@@ -7857,7 +7857,7 @@ LLM cannot make routing errors. Only prose errors.
 - [x] Tables, lists, headers, bold/italic
 - [x] Links, blockquotes
 
-**File:** `Nola/react-chat-app/frontend/src/components/Chat/MessageList.tsx`
+**File:** `agent/react-chat-app/frontend/src/components/Chat/MessageList.tsx`
 
 ### Conversation Sidebar
 - [x] List all conversations with auto-generated names
@@ -7876,7 +7876,7 @@ LLM cannot make routing errors. Only prose errors.
 - [x] Auto-refreshes every 5 seconds
 - [x] Collapsible sidebar
 
-**File:** `Nola/react-chat-app/frontend/src/components/Chat/SystemPromptSidebar.tsx`
+**File:** `agent/react-chat-app/frontend/src/components/Chat/SystemPromptSidebar.tsx`
 
 ### Feedback System
 - [x] 👍/👎 buttons on assistant messages
@@ -7898,7 +7898,7 @@ LLM cannot make routing errors. Only prose errors.
 - [x] LLM classifies thread (identity vs philosophy)
 - [x] LLM classifies type (user, nola, value, etc.)
 
-**File:** `Nola/services/fact_extractor.py`
+**File:** `agent/services/fact_extractor.py`
 
 ### Model Choice
 - Default: `llama3.2:3b` — 2GB, fast, reliable
@@ -7909,7 +7909,7 @@ LLM cannot make routing errors. Only prose errors.
 ## 📊 Training Data Pipeline (Jan 9-10) — ✅ COMPLETE
 
 ### Auto-Generated Training Data
-- [x] `Nola/training/logger.py` — Core logging module
+- [x] `agent/training/logger.py` — Core logging module
 - [x] Log identity decisions (confident retrievals)
 - [x] Log linking activations (spread activation)
 - [x] Log conversation examples
@@ -7943,7 +7943,7 @@ LLM cannot make routing errors. Only prose errors.
 
 ### Run Migration
 ```bash
-cd Nola/idv2
+cd agent/idv2
 python migrations/001_add_weights.py
 ```
 
@@ -8007,11 +8007,11 @@ The agent is stateless. Before each response, the subconscious assembles context
 ## Current State (Updated: 2026-01-08)
 
 ### Completed ✅
-- **Thread System Migration** - Old idv2/log_thread replaced with unified `Nola/threads/`
+- **Thread System Migration** - Old idv2/log_thread replaced with unified `agent/threads/`
 - New thread schema: `{thread}_{module}` tables (e.g., `identity_user_profile`, `log_events`)
 - 5 threads operational: identity, log, reflex, philosophy, form, linking_core
-- Subconscious module (`Nola/subconscious/`)
-- LinkingCore for relevance scoring (`Nola/threads/linking_core/`)
+- Subconscious module (`agent/subconscious/`)
+- LinkingCore for relevance scoring (`agent/threads/linking_core/`)
 - Agent integration (stateless with `consciousness_context` param)
 - 23 tests passing
 
@@ -8052,7 +8052,7 @@ log_thread/logger.py → separate logging system
 ```
 threads_registry table → lists all threads and modules
 {thread}_{module} tables → identity_user_profile, identity_nola_self, etc.
-Nola/threads/__init__.py → unified thread interface
+agent/threads/__init__.py → unified thread interface
 ```
 
 Each row now has: `key`, `context_level`, `data`, `metadata`, `weight`, `updated_at`
@@ -8092,7 +8092,7 @@ class ThreadInterface(Protocol):
 ## Where Things Live
 
 ```
-Nola/
+agent/
 ├── agent.py              # LLM interface, generate()
 ├── threads/              # Unified thread system
 │   ├── __init__.py       # get_thread(), ThreadManager
@@ -8144,7 +8144,7 @@ pytest tests/ -v
 
 ### Test subconscious
 ```python
-from Nola.subconscious import wake, get_consciousness_context
+from agent.subconscious import wake, get_consciousness_context
 wake()
 print(get_consciousness_context(level=2))
 ```
@@ -8166,16 +8166,16 @@ sqlite3 data/db/state.db ".tables"
 ## If You're Adding a Feature
 
 ### New Thread Adapter
-1. Create `Nola/subconscious/threads/my_adapter.py`
+1. Create `agent/subconscious/threads/my_adapter.py`
 2. Implement `ThreadInterface`
 3. Register in `core.py` `_register_default_threads()`
 
 ### New API Endpoint
-1. Add to `Nola/react-chat-app/backend/api/`
+1. Add to `agent/react-chat-app/backend/api/`
 2. Register router in `main.py`
 
 ### New Stimuli Channel
-1. Create handler in `Nola/Stimuli/comms/`
+1. Create handler in `agent/Stimuli/comms/`
 2. Call `agent_service.send_message()`
 
 ---
@@ -8186,7 +8186,7 @@ sqlite3 data/db/state.db ".tables"
 |------|------|
 | User-friendly intro | [README.md](README.md) |
 | Developer guide | [DEVELOPERS.md](DEVELOPERS.md) |
-| Architecture deep-dive | [Nola/ARCHITECTURE.md](Nola/ARCHITECTURE.md) |
+| Architecture deep-dive | [agent/ARCHITECTURE.md](agent/ARCHITECTURE.md) |
 | Theory behind HEA | [docs/concept_attention_theory.md](docs/concept_attention_theory.md) |
 | Module specifics | Each module has a README.md |
 
@@ -8203,11 +8203,11 @@ sqlite3 data/db/state.db ".tables"
 
 ## If Something Breaks
 
-1. Check `Nola/LOG.txt`
+1. Check `agent/LOG.txt`
 2. Run `pytest tests/ -v`
 3. Check subconscious status:
    ```python
-   from Nola.subconscious import get_status
+   from agent.subconscious import get_status
    print(get_status())
    ```
 4. Read the module's README.md
@@ -8546,7 +8546,7 @@ Completed or outdated documents kept for reference.
 | File | Location | Description |
 |------|----------|-------------|
 | [license.md](license.md) | docs/ | License information |
-| [Nola threads checklist](../Nola/threads/REBUILD_CHECKLIST.md) | Nola/threads/ | Thread system rebuild status |
+| [Nola threads checklist](../agent/threads/REBUILD_CHECKLIST.md) | agent/threads/ | Thread system rebuild status |
 
 
 ================================================================================
@@ -8575,7 +8575,7 @@ How to reproduce locally
 ```
 
 Recommended immediate actions
-- Create a small compatibility shim at `Nola/idv2/__init__.py` that forwards the minimal API used by tests to the current implementation (fastest path to green tests).
+- Create a small compatibility shim at `agent/idv2/__init__.py` that forwards the minimal API used by tests to the current implementation (fastest path to green tests).
 - Add a `.github/workflows/ci.yml` check (if not already present) that uses a clean runner, installs from `requirements.txt`, and runs `./runtests.sh --unit`.
 - Add `docs/DEV_QUICKSTART.md` (created) and link it in `README.md` for reviewers.
 
@@ -8725,7 +8725,7 @@ Verification:  Run both, compare outputs for critical decisions
 **Goal:** Nola becomes a background presence, not a chat window.
 
 **✅ Implemented (Jan 10, 2026):**
-- [x] **Stimuli Router** — Universal API adapter layer (`Nola/Stimuli/router.py`)
+- [x] **Stimuli Router** — Universal API adapter layer (`agent/Stimuli/router.py`)
 - [x] **YAML-Driven Sources** — Drop a config file, get an integration
 - [x] **20+ Pre-Built Sources** — Gmail, Slack, Discord, GitHub, Linear, Notion, etc.
 - [x] **Normalized Messages** — Any platform → same `NormalizedMessage` format
@@ -9078,7 +9078,7 @@ Reality: Life doesn't stop when your laptop closes
 **The Insight:** If Qwen 2.5 7B is fine-tuned on Nola's own documentation, thread schemas, and function signatures, it develops **structural self-awareness**. It doesn't just use the system — it *understands* the system.
 
 - [ ] **Structure Documentation** — Generate training data from thread schemas
-- [ ] **Self-Reference Dataset** — "Where is identity stored?" → "Nola/idv2/"
+- [ ] **Self-Reference Dataset** — "Where is identity stored?" → "agent/idv2/"
 - [ ] **Function Mapping** — Model learns which functions do what
 - [ ] **Error Recovery Training** — Train on "this broke, here's how to fix it"
 - [ ] **Continuous Learning** — Periodic re-tune as structure evolves
@@ -9459,7 +9459,7 @@ When they ask technical questions:
 - [ ] Laptop charged (bring charger)
 - [ ] Kernel API key in `.env` file
 - [ ] Test "do the facebook thing" before leaving
-- [ ] Backend running: `cd Nola/react-chat-app/backend && python main.py`
+- [ ] Backend running: `cd agent/react-chat-app/backend && python main.py`
 - [ ] Frontend running: `cd frontend && npm run dev`
 - [ ] Browser open to http://localhost:5173
 - [ ] Backup: Screenshot of successful demo on phone
@@ -10627,8 +10627,8 @@ RESPONSE
 - [x] Create indexes on weight columns for fast attention queries
 
 **Files to modify:**
-- `Nola/idv2/idv2.py` - Update `init_db()` schema
-- Add migration script: `Nola/idv2/migrations/001_add_weights.sql`
+- `agent/idv2/idv2.py` - Update `init_db()` schema
+- Add migration script: `agent/idv2/migrations/001_add_weights.sql`
 
 ### 1.2 Create Key Sequence Learning Table
 - [ ] Create `key_sequences` table
@@ -10647,7 +10647,7 @@ RESPONSE
 - [ ] Add to schema.py
 
 **Files to create:**
-- `Nola/subconscious/focus/sequence_learner.py`
+- `agent/subconscious/focus/sequence_learner.py`
 
 ---
 
@@ -10655,7 +10655,7 @@ RESPONSE
 
 ### 2.1 Create Focus Module Structure
 ```
-Nola/subconscious/focus/
+agent/subconscious/focus/
 ├── __init__.py           # Public API: get_focused_context()
 ├── sequence_learner.py   # Key sequence learning (after A → B)
 ├── attention_scorer.py   # Weight management and scoring
@@ -10682,7 +10682,7 @@ Nola/subconscious/focus/
 - [ ] Return both prompt text AND accessed_keys list
 
 **Files to create:**
-- All files in `Nola/subconscious/focus/` directory
+- All files in `agent/subconscious/focus/` directory
 
 ---
 
@@ -10731,11 +10731,11 @@ def should_save_memory(key, value):
 - [ ] Auto-expire queued items after 7 days
 
 **Files to create:**
-- `Nola/subconscious/focus/memory_filter.py`
-- `Nola/temp_memory/permanence.py`
+- `agent/subconscious/focus/memory_filter.py`
+- `agent/temp_memory/permanence.py`
 
 **Files to modify:**
-- `Nola/temp_memory/store.py` - Add permanence checks before save
+- `agent/temp_memory/store.py` - Add permanence checks before save
 
 ---
 
@@ -10748,8 +10748,8 @@ def should_save_memory(key, value):
 - [ ] Trigger weight updates every 5 turns
 
 **Files to modify:**
-- `Nola/subconscious/core.py` - Replace context building logic
-- `Nola/subconscious/__init__.py` - Update public API
+- `agent/subconscious/core.py` - Replace context building logic
+- `agent/subconscious/__init__.py` - Update public API
 
 ### 4.2 Agent Service Integration  
 - [ ] Pass query to subconscious for focus determination
@@ -10758,8 +10758,8 @@ def should_save_memory(key, value):
 - [ ] Add `helpful=True/False` feedback parameter for weight updates
 
 **Files to modify:**
-- `Nola/services/agent_service.py` - Use new focus API
-- `Nola/agent.py` - Add feedback mechanism to generate()
+- `agent/services/agent_service.py` - Use new focus API
+- `agent/agent.py` - Add feedback mechanism to generate()
 
 ### 4.3 Profile System Integration
 - [ ] Update agent profiles to understand focus mechanism
@@ -10788,7 +10788,7 @@ def should_save_memory(key, value):
 - [ ] Export focus stats to `logs/focus_health.json`
 
 **Files to modify:**
-- `Nola/subconscious/loops.py` - Add FocusMaintenanceLoop
+- `agent/subconscious/loops.py` - Add FocusMaintenanceLoop
 
 ---
 
@@ -10831,8 +10831,8 @@ def should_save_memory(key, value):
 - [ ] Unified focus state across both systems
 
 **Files to create:**
-- `Nola/workspace/export_focus.py` - Export to VS Code format
-- `Nola/workspace/import_feedback.py` - Ingest VS Code feedback
+- `agent/workspace/export_focus.py` - Export to VS Code format
+- `agent/workspace/import_feedback.py` - Ingest VS Code feedback
 
 ---
 
@@ -10895,7 +10895,7 @@ def should_save_memory(key, value):
 
 1. ✅ Read this document
 2. ✅ Run schema migration on existing DB (`identity_flat`, `philosophy_flat` tables created)
-3. [ ] Create `Nola/subconscious/focus/` directory structure
+3. [ ] Create `agent/subconscious/focus/` directory structure
 4. [ ] Implement `sequence_learner.py` first (core functionality)
 5. [ ] Write unit tests for sequence learning
 6. [ ] Integrate with one agent profile as proof of concept
@@ -10910,7 +10910,7 @@ FILE: docs/implementation/INTEGRATION_COMPLETE.md
 ## What You Now Have
 
 ### 🎯 Core Functionality
-- ✅ Full Kernel browser automation service ([kernel_service.py](../Nola/services/kernel_service.py))
+- ✅ Full Kernel browser automation service ([kernel_service.py](../agent/services/kernel_service.py))
 - ✅ Human behavior mimicry (mouse jerks, typing delays, typos)
 - ✅ Persistent profile management linked to Nola's identity
 - ✅ Content generation from identity database
@@ -10948,7 +10948,7 @@ FILE: docs/implementation/INTEGRATION_COMPLETE.md
 
 2. **Install Dependencies**
    ```bash
-   cd Nola/react-chat-app/backend
+   cd agent/react-chat-app/backend
    pip install kernel playwright
    playwright install chromium
    ```
@@ -10963,11 +10963,11 @@ FILE: docs/implementation/INTEGRATION_COMPLETE.md
 4. **Test the Demo Command**
    ```bash
    # Terminal 1: Backend
-   cd Nola/react-chat-app/backend
+   cd agent/react-chat-app/backend
    python main.py
 
    # Terminal 2: Frontend
-   cd Nola/react-chat-app/frontend
+   cd agent/react-chat-app/frontend
    npm run dev
    ```
    - Open http://localhost:5173
@@ -11018,8 +11018,8 @@ FILE: docs/implementation/INTEGRATION_COMPLETE.md
 ### At Union Hall (5:00 PM - Get there early!)
 - [ ] Find a good spot with table/power
 - [ ] Connect to WiFi
-- [ ] Start backend: `cd Nola/react-chat-app/backend && python main.py`
-- [ ] Start frontend: `cd Nola/react-chat-app/frontend && npm run dev`
+- [ ] Start backend: `cd agent/react-chat-app/backend && python main.py`
+- [ ] Start frontend: `cd agent/react-chat-app/frontend && npm run dev`
 - [ ] Open http://localhost:5173 in browser
 - [ ] Do ONE test run to verify it works on their network
 - [ ] Keep terminal visible in background (looks impressive)
@@ -11197,7 +11197,7 @@ cp .env.example .env
 ### 3. Install Dependencies
 
 ```bash
-cd Nola/react-chat-app/backend
+cd agent/react-chat-app/backend
 
 # Install Kernel SDK and Playwright
 pip install kernel playwright
@@ -11318,7 +11318,7 @@ await human_type("Hello world!", add_typos=True)
 
 ### Change the Target Site
 
-Edit [kernel_service.py](../Nola/services/kernel_service.py):
+Edit [kernel_service.py](../agent/services/kernel_service.py):
 
 ```python
 # Line ~265
@@ -11330,7 +11330,7 @@ login_url = "https://your-test-site.com/login"
 
 ### Customize Post Content
 
-Edit the `_generate_post_from_identity()` function in [agent_service.py](../Nola/services/agent_service.py):
+Edit the `_generate_post_from_identity()` function in [agent_service.py](../agent/services/agent_service.py):
 
 ```python
 # Line ~503
@@ -11423,7 +11423,7 @@ You now have a complete "Living Body" integration for Nola that enables browser 
 ## 📁 Files Created/Modified
 
 ### New Files
-1. **[kernel_service.py](../Nola/services/kernel_service.py)** (387 lines)
+1. **[kernel_service.py](../agent/services/kernel_service.py)** (387 lines)
    - Core browser automation service
    - Human behavior mimicry (mouse jerks, typing delays)
    - Persistent profile management
@@ -11444,21 +11444,21 @@ You now have a complete "Living Body" integration for Nola that enables browser 
    - Verifies all components work
 
 ### Modified Files
-1. **[agent_service.py](../Nola/services/agent_service.py)**
+1. **[agent_service.py](../agent/services/agent_service.py)**
    - Added `_is_demo_command()` method
    - Added `_handle_demo_command()` method
    - Added `do_facebook_demo()` workflow
    - Added `_generate_post_from_identity()` content generator
    - Added helper functions for browser control
 
-2. **[requirements.txt](../Nola/react-chat-app/backend/requirements.txt)**
+2. **[requirements.txt](../agent/react-chat-app/backend/requirements.txt)**
    - Added `kernel>=0.1.0`
    - Added `playwright>=1.40.0`
 
 3. **[.env.example](../.env.example)**
    - Added `KERNEL_API_KEY=` configuration
 
-4. **[services/README.md](../Nola/services/README.md)**
+4. **[services/README.md](../agent/services/README.md)**
    - Documented kernel_service.py
    - Added demo commands
 
@@ -11722,7 +11722,7 @@ FILE: docs/implementation/THREAD_BROWSER_UI.md
 
 ## Implementation ✅
 
-The thread browser is implemented as `Nola/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
+The thread browser is implemented as `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
 
 - ✅ Thread tabs (identity, log, philosophy, reflex, form, linking_core)
 - ✅ Thread health display with status indicators
@@ -12213,7 +12213,7 @@ Most already exist, but we need:
 @router.put("/threads/{thread_name}/{module_name}/{key}")
 async def update_key(thread_name: str, module_name: str, key: str, body: dict):
     """Update a specific key's data."""
-    from Nola.threads.schema import push_to_module
+    from agent.threads.schema import push_to_module
     push_to_module(
         thread_name, module_name, key,
         metadata=body.get("metadata", {}),
@@ -12227,7 +12227,7 @@ async def update_key(thread_name: str, module_name: str, key: str, body: dict):
 @router.delete("/threads/{thread_name}/{module_name}/{key}")
 async def delete_key(thread_name: str, module_name: str, key: str):
     """Delete a specific key."""
-    from Nola.threads.schema import delete_from_module
+    from agent.threads.schema import delete_from_module
     delete_from_module(thread_name, module_name, key)
     return {"success": True}
 ```
@@ -12427,10 +12427,10 @@ FILE: docs/implementation/database_integration_plan.md
 
 # Database Integration Plan
 
-**Status:** ✅ IMPLEMENTED (see `Nola/idv2/idv2.py`)  
+**Status:** ✅ IMPLEMENTED (see `agent/idv2/idv2.py`)  
 **Last Updated:** 2025-12-23
 
-> **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See [idv2/idreadme.md](../Nola/idv2/idreadme.md) for implementation details.
+> **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See [idv2/idreadme.md](../agent/idv2/idreadme.md) for implementation details.
 
 ## Overview
 
@@ -12533,7 +12533,7 @@ POST   /api/state/restore           # Restore from JSON checkpoint
 
 ### Identity Thread v2 Development Plan
 
-**Current Status**: Working with `Nola/identity_thread` containing existing JSON state files
+**Current Status**: Working with `agent/identity_thread` containing existing JSON state files
 
 **Migration Plan:**
 1. **JSON Preservation**: Convert existing JSONs in `identity_thread` to database creation tools
@@ -12548,11 +12548,11 @@ POST   /api/state/restore           # Restore from JSON checkpoint
 
 ### Frontend Developer Note
 
-**Important**: The React app currently recreates the nested folder structure `Nola/stimuli/conversations/` that already exists in the project. This redundancy should be addressed during the frontend refactor to prevent conflicts and maintain clean file organization.
+**Important**: The React app currently recreates the nested folder structure `agent/stimuli/conversations/` that already exists in the project. This redundancy should be addressed during the frontend refactor to prevent conflicts and maintain clean file organization.
 
 **Folder Structure Consideration:**
-- Existing: `Nola/Stimuli/conversations/` (note capitalization)
-- React Creates: `Nola/stimuli/conversations/` (lowercase)
+- Existing: `agent/Stimuli/conversations/` (note capitalization)
+- React Creates: `agent/stimuli/conversations/` (lowercase)
 - Solution needed: Align folder creation with existing structure or consolidate
 
 ### Implementation Priority
@@ -12596,7 +12596,7 @@ The `log_thread/` module sits adjacent to `identity_thread/` and provides a **fl
 ## Directory Structure
 
 ```
-Nola/
+agent/
 ├── identity_thread/       # WHO/WHAT/WHY (interpretive)
 │   ├── identity.json
 │   ├── identity.py
@@ -12672,7 +12672,7 @@ Nola/
 
 ## Storage Design (File → DB)
 
-- **Now (file appender)**: Single append-only file at `Nola/log_thread/master.log` with pipe-delimited lines. This is the source of truth.
+- **Now (file appender)**: Single append-only file at `agent/log_thread/master.log` with pipe-delimited lines. This is the source of truth.
 - **Later (DB-backed)**: Swap storage to SQLite while keeping the same public API (`log_event`, `log_error`).
 - **Abstraction**: Introduce a minimal storage interface so callers never change:
 
@@ -13069,7 +13069,7 @@ The log_thread can be scored by `relevance.py` just like any other thread:
 from relevance import RelevanceIndex
 from log_thread import get_log_text, MASTER_LOG
 
-# Build index from Nola.json (or identity.json)
+# Build index from agent.json (or identity.json)
 index = RelevanceIndex.from_json_file("Nola.json")
 
 # Score recent log activity against identity
@@ -13123,7 +13123,7 @@ def rotate_log(max_size_mb: float = 10.0):
 ## Implementation Checklist
 
 ### Phase 1: Core Logger (Est. 30 min)
-- [ ] Create `Nola/log_thread/` directory
+- [ ] Create `agent/log_thread/` directory
 - [ ] Implement `log.py` with `log_event()`, `log_error()`
 - [ ] Create `__init__.py` with exports
 - [ ] Manual test: verify log lines written to `master.log`
@@ -13266,7 +13266,7 @@ npm run dev -- --port 5174
 The memory system might not be connected. Check:
 ```bash
 # From project root
-python3 -c "from Nola.subconscious import wake, get_status; wake(); print(get_status())"
+python3 -c "from agent.subconscious import wake, get_status; wake(); print(get_status())"
 ```
 
 All threads should show "ok" status.
@@ -13307,7 +13307,7 @@ Ollama can be resource-intensive. Options:
 
 ### "Where are my conversations?"
 
-Stored in: `Nola/Stimuli/conversations/`
+Stored in: `agent/Stimuli/conversations/`
 
 Each file is named `react_YYYYMMDD_HHMMSS.json`.
 
@@ -13315,8 +13315,8 @@ Each file is named `react_YYYYMMDD_HHMMSS.json`.
 
 Check if identity files exist:
 ```bash
-ls Nola/identity_thread/userID/
-ls Nola/Nola.json
+ls agent/identity_thread/userID/
+ls agent/Nola.json
 ```
 
 If missing, they'll be recreated on next start with defaults.
@@ -13326,9 +13326,9 @@ If missing, they'll be recreated on next start with defaults.
 ⚠️ **This deletes all memory and conversations:**
 
 ```bash
-rm -rf Nola/Stimuli/conversations/*
+rm -rf agent/Stimuli/conversations/*
 rm -rf data/db/state.db
-rm Nola/Nola.json
+rm agent/Nola.json
 ```
 
 Then restart: `./start.sh`
@@ -13339,7 +13339,7 @@ Then restart: `./start.sh`
 
 1. **Check the logs:**
    ```bash
-   cat Nola/LOG.txt
+   cat agent/LOG.txt
    ```
 
 2. **Run tests:**
@@ -13429,7 +13429,7 @@ All notable changes to this repository are documented below. Entries are grouped
   - `OPENAI_API_KEY` (for fallback/Elaris)
   - `KERNEL_API_KEY` (browser automation)
   - `LINEAR_API_KEY` (task management)
-- **`Nola/Nola.json`**: Fixed hardcoded `/Users/cade/...` path → relative `./identity_thread/identity.json`
+- **`agent/Nola.json`**: Fixed hardcoded `/Users/cade/...` path → relative `./identity_thread/identity.json`
 - **`README.md`**: Added Step 2 for copying `.env.example` before first run
 
 ### Clone & Run Instructions
@@ -13446,7 +13446,7 @@ start.bat             # Windows
 ## 2026-01-10 — Thread Dashboards & Tool Registry
 
 ### Added
-- **Form Thread Tool System** (`Nola/threads/form/`)
+- **Form Thread Tool System** (`agent/threads/form/`)
   - **Tool Registry** (`tools.py`): 21 tool definitions across 6 categories
     - Communication: `send_email`, `send_sms`, `post_slack`, `send_discord`
     - Browser: `browse_url`, `search_web`, `take_screenshot`, `fill_form`
@@ -13499,7 +13499,7 @@ start.bat             # Windows
 ## 2026-01-10 — Stimuli System & Universal API Router
 
 ### Added
-- **Stimuli Router Architecture** (`Nola/Stimuli/router.py`)
+- **Stimuli Router Architecture** (`agent/Stimuli/router.py`)
   - **Universal API Adapter**: Config-driven integrations via YAML files
   - **Core Data Classes**:
     - `NormalizedMessage`: Converts any platform → standardized format
@@ -13507,7 +13507,7 @@ start.bat             # Windows
     - `SourceConfig`: Parses YAML configs with auth, pull, push sections
   - **JSONPath Extraction**: Maps nested API responses to normalized fields
   - **Template Rendering**: `{{slot}}` placeholders filled by LLM
-- **20+ YAML Source Configs** (`Nola/Stimuli/sources/*.yaml`)
+- **20+ YAML Source Configs** (`agent/Stimuli/sources/*.yaml`)
   - Communication: Gmail, Slack, SMS (Twilio), Discord, Telegram, Twitter/X, WhatsApp, Microsoft Teams
   - Project Management: GitHub, Linear, Jira, Todoist
   - Databases: Notion, Airtable
@@ -13529,7 +13529,7 @@ start.bat             # Windows
   - `POST /api/stimuli/sources/{name}/toggle` — Enable/disable
   - `POST /api/stimuli/sources/{name}/test` — Test connection
   - `GET /api/stimuli/templates` — List available templates
-- **LLM Fact Extraction** (`Nola/services/fact_extractor.py`)
+- **LLM Fact Extraction** (`agent/services/fact_extractor.py`)
   - Replaces regex parsing with LLM-based extraction
   - LLM generates: key, L3 (full), L2 (summary), L1 (essence)
   - Uses `llama3.2:3b` by default, configurable via `NOLA_EXTRACT_MODEL`
@@ -13591,17 +13591,17 @@ start.bat             # Windows
   - `PUT /api/introspection/identity/{key}` — Update identity values
   - `DELETE /api/introspection/identity/{key}` — Delete identity entries
   - `GET /api/introspection/threads/health` — Health status for all threads
-- **Spread Activation System** (`Nola/threads/schema.py`)
+- **Spread Activation System** (`agent/threads/schema.py`)
   - `concept_links` table: Hebbian strength/decay between concepts
   - `link_concepts(a, b)`: Strengthens association when concepts co-occur
   - `decay_concept_links()`: Daily decay (0.95×) with pruning
   - `spread_activate(concepts)`: Associative memory retrieval
   - `generate_hierarchical_key(fact)`: Converts facts to dot-notation keys
   - `extract_concepts_from_text(text)`: Pulls concepts from messages
-- **Memory Service Updates** (`Nola/services/memory_service.py`)
+- **Memory Service Updates** (`agent/services/memory_service.py`)
   - `_add_to_temp_memory()` generates hierarchical keys and links concepts
   - Facts pre-populate `fact_relevance` table
-- **LinkingCore Adapter** (`Nola/threads/linking_core/adapter.py`)
+- **LinkingCore Adapter** (`agent/threads/linking_core/adapter.py`)
   - `activate_memories(input_text)`: Uses spread activation
   - `get_associative_context()`: Combines embedding + spread activation
 
@@ -13615,7 +13615,7 @@ start.bat             # Windows
 ## 2026-01-06 — Thread System Migration Complete
 
 ### Changed
-- **Thread System Architecture**: Migrated from old idv2/log_thread to unified `Nola/threads/`
+- **Thread System Architecture**: Migrated from old idv2/log_thread to unified `agent/threads/`
   - Old: `identity_sections` table with `data_l1_json`, `data_l2_json`, `data_l3_json` columns
   - New: `{thread}_{module}` tables (e.g., `identity_user_profile`, `log_events`)
   - Each row: `key`, `context_level`, `data`, `metadata`, `weight`, `updated_at`
@@ -13679,15 +13679,15 @@ start.bat             # Windows
 - **Identity Anchor** in agent.py: "You are ALWAYS Nola" — prevents name changes
 - **Reality Anchor** in agent.py: "If information is not in context, it does not exist"
 - **Chinese README** (`README.zh.md`): Full translation
-- **Subconscious Module** (`Nola/subconscious/`)
+- **Subconscious Module** (`agent/subconscious/`)
   - `__init__.py`: Main API — `wake()`, `sleep()`, `get_consciousness_context()`
   - `core.py`: `ThreadRegistry`, `SubconsciousCore` singleton
   - `contract.py`: Metadata protocol for sync
   - `loops.py`: `ConsolidationLoop`, `SyncLoop`, `HealthLoop`
   - `triggers.py`: `TimeTrigger`, `EventTrigger`, `ThresholdTrigger`
-- **Log Thread Module** (`Nola/log_thread/`): Lightweight event tracking
-- **Temp Memory Store** (`Nola/temp_memory/`): Session-scoped fact extraction
-- **Consolidation Daemon** (`Nola/services/consolidation_daemon.py`)
+- **Log Thread Module** (`agent/log_thread/`): Lightweight event tracking
+- **Temp Memory Store** (`agent/temp_memory/`): Session-scoped fact extraction
+- **Consolidation Daemon** (`agent/services/consolidation_daemon.py`)
 - **Events API**: `GET /api/database/events`, `GET /api/database/events/stats`
 
 ### Changed
@@ -13731,7 +13731,7 @@ start.bat             # Windows
 ## 2025-12-19 — Identity Thread v2 (DB Backend)
 
 ### Added
-- SQLite-backed identity pipeline (`Nola/idv2/idv2.py`) with level-scoped storage
+- SQLite-backed identity pipeline (`agent/idv2/idv2.py`) with level-scoped storage
 - Sync mapping: `sync_for_stimuli` translates stimuli types → context levels
 - `pull_identity` returns level-filtered identity for prompts
 - DatabaseAgent helper centralizes `state.db` connections
@@ -14233,7 +14233,7 @@ These priors:
 
 **Key Modules**:
 ```
-Nola/
+agent/
 ├── agent.py                    # LLM interface
 ├── subconscious/
 │   ├── core.py                 # Context assembly
@@ -14324,7 +14324,7 @@ This ensures the LLM sees natural language content while the database manages st
 
 **Evidence from Transcripts**:
 
-Conversation logs (Nola/Stimuli/conversations/) demonstrate that 7B models with focused context:
+Conversation logs (agent/Stimuli/conversations/) demonstrate that 7B models with focused context:
 - Maintain coherent identity ("acts like Nola")
 - Complete tasks successfully (conversation, explanation, problem-solving)
 - Show appropriate personality and boundaries
@@ -15050,7 +15050,7 @@ FILE: docs/theory/LIVING_BODY_ARCHITECTURE.md
 │                   AGENT SERVICE (Brain)                          │
 │  ┌──────────────────────────────────────────────────────────┐   │
 │  │  1. Detect "facebook thing" command                      │   │
-│  │  2. Load identity from Nola.json                         │   │
+│  │  2. Load identity from agent.json                         │   │
 │  │  3. Generate post content from personality               │   │
 │  │  4. Call do_facebook_demo()                              │   │
 │  └──────────────────────────────────────────────────────────┘   │
@@ -15231,7 +15231,7 @@ Free tier: $5.00/month = 2,500 demos/month
 ```
 T+0.0s:  User types "hey nola do the facebook thing"
 T+0.1s:  agent_service detects demo command
-T+0.2s:  Loads identity from Nola.json
+T+0.2s:  Loads identity from agent.json
 T+0.3s:  Calls kernel_service.launch_browser()
 T+0.5s:  Kernel API creates unikernel
 T+2.0s:  Browser running, Live View URL ready
@@ -18420,7 +18420,7 @@ Tulving, E. (1972). Episodic and semantic memory. In *Organization of Memory* (p
 
 ```
 AI_OS/
-├── Nola/                    # Core cognitive system
+├── agent/                    # Core cognitive system
 │   ├── agent.py            # Thread-safe singleton agent
 │   ├── subconscious/       # Context assembly
 │   │   ├── core.py         # Registry + orchestration

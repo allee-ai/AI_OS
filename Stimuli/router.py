@@ -25,7 +25,7 @@ from email.mime.text import MIMEText
 
 STIMULI_DIR = Path(__file__).parent
 SOURCES_DIR = STIMULI_DIR / "sources"
-TOKENS_DIR = Path.home() / ".nola" / "tokens"
+TOKENS_DIR = Path.home() / ".aios" / "tokens"
 
 
 @dataclass

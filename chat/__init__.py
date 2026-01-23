@@ -1,5 +1,5 @@
 """
-Nola Chat Module
+Agent Chat Module
 ----------------
 Self-contained module for conversation management.
 

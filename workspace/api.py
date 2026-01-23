@@ -250,7 +250,7 @@ async def workspace_info():
     """Get workspace info and status."""
     stats = get_workspace_stats()
     return {
-        "name": "Nola Workspace",
+        "name": "Agent Workspace",
         "type": "sqlite-vfs",
         "stats": stats,
         "features": [

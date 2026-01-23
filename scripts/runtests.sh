@@ -18,7 +18,7 @@ PROJECT_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$PROJECT_ROOT"
 
 # Default backend port (change if needed)
-NOLA_BACKEND="http://localhost:8000"
+AIOS_BACKEND="http://localhost:8000"
 
 # Activate virtual environment
 if [ -f ".venv/bin/activate" ]; then
@@ -34,16 +34,16 @@ print_header() {
 }
 
 check_backend() {
-    echo -e "${BLUE}Checking if Nola backend is running...${NC}"
-    if curl -s "$NOLA_BACKEND/health" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Backend is running at $NOLA_BACKEND${NC}"
+    echo -e "${BLUE}Checking if the agent backend is running...${NC}"
+    if curl -s "$AIOS_BACKEND/health" > /dev/null 2>&1; then
+        echo -e "${GREEN}✅ Backend is running at $AIOS_BACKEND${NC}"
         return 0
     else
         echo -e "${YELLOW}⚠️  Backend not running. Starting it...${NC}"
-        python3 Nola/react-chat-app/backend/main.py &
+        python3 agent/react-chat-app/backend/main.py &
         BACKEND_PID=$!
         sleep 3
-        if curl -s "$NOLA_BACKEND/health" > /dev/null 2>&1; then
+        if curl -s "$AIOS_BACKEND/health" > /dev/null 2>&1; then
             echo -e "${GREEN}✅ Backend started (PID: $BACKEND_PID)${NC}"
             return 0
         else
@@ -81,16 +81,16 @@ run_unit_tests() {
 }
 
 run_coherence_test() {
-    print_header "🎯 COHERENCE TEST (Nola vs Raw LLM)"
+    print_header "🎯 COHERENCE TEST (Managed vs Raw LLM)"
     echo -e "${BLUE}Testing: Structure beats scale hypothesis${NC}"
-    echo -e "${BLUE}Nola (7B + HEA) vs Raw 20B model${NC}"
+    echo -e "${BLUE}Managed (7B + HEA) vs Raw 20B model${NC}"
     echo ""
     
     python3 -c "
 import sys
 sys.path.insert(0, '.')
 import eval.coherence_test as ct
-ct.NOLA_BACKEND = '$NOLA_BACKEND'
+ct.AIOS_BACKEND = '$AIOS_BACKEND'
 ct.run_coherence_test()
 "
     
@@ -110,7 +110,7 @@ run_adversarial_test() {
 import sys
 sys.path.insert(0, '.')
 import eval.identity_battle as ib
-ib.NOLA_BACKEND = '$NOLA_BACKEND'
+ib.AIOS_BACKEND = '$AIOS_BACKEND'
 ib.run_identity_battle($TURNS)
 "
     
@@ -137,7 +137,7 @@ show_help() {
     echo "  ./runtests.sh --all               # Everything"
     echo ""
     echo "Environment:"
-    echo "  NOLA_BACKEND    Backend URL (default: http://localhost:8000)"
+    echo "  AIOS_BACKEND    Backend URL (default: http://localhost:8000)"
 }
 
 # Parse arguments
@@ -194,8 +194,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 # Override backend URL from env if set
-if [ -n "$NOLA_BACKEND_URL" ]; then
-    NOLA_BACKEND="$NOLA_BACKEND_URL"
+if [ -n "$AIOS_BACKEND_URL" ]; then
+    AIOS_BACKEND="$AIOS_BACKEND_URL"
 fi
 
 print_header "🧠 AI_OS Test Runner"

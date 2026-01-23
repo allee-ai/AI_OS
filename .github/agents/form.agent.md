@@ -82,12 +82,12 @@ data_json TEXT                  -- {"url": "...", "title": "...", "session_id": 
 
 ## Adapter
 
-**Location:** `Nola/threads/form/adapter.py`
+**Location:** `agent/threads/form/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.form.adapter import FormThreadAdapter
+from agent.threads.form.adapter import FormThreadAdapter
 
 adapter = FormThreadAdapter()
 
@@ -124,12 +124,12 @@ adapter.record_action(
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/form/adapter.py` | Core adapter - `get_tools()`, `register_tool()`, `record_action()` |
-| `Nola/threads/form/__init__.py` | Public API |
-| `Nola/threads/form/README.md` | Documentation |
-| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
-| `Nola/services/kernel_service.py` | Browser/Kernel integration |
-| `Nola/threads/schema.py` | DB schema - `pull_from_module()` |
+| `agent/threads/form/adapter.py` | Core adapter - `get_tools()`, `register_tool()`, `record_action()` |
+| `agent/threads/form/__init__.py` | Public API |
+| `agent/threads/form/README.md` | Documentation |
+| `agent/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
+| `agent/services/kernel_service.py` | Browser/Kernel integration |
+| `agent/threads/schema.py` | DB schema - `pull_from_module()` |
 
 ### Backend Endpoints
 
@@ -166,8 +166,8 @@ form_browser         - Browser/Kernel state (url, session_id)
 
 | File | Purpose |
 |------|---------|
-| `Nola/services/kernel_service.py` | Browser automation via Kernel |
-| `Nola/agent.py` | Tool execution via `_execute_tool()` |
+| `agent/services/kernel_service.py` | Browser automation via Kernel |
+| `agent/agent.py` | Tool execution via `_execute_tool()` |
 
 ### Future UI (TODO)
 
@@ -220,4 +220,4 @@ def first_run_scan():
 
 ## README
 
-Full documentation: `Nola/threads/form/README.md`
+Full documentation: `agent/threads/form/README.md`

@@ -10,7 +10,7 @@ Your VS Code GitHub Copilot conversations are stored at:
 
 ### 2. Using the Import Feature in Nola
 
-1. Open Nola's chat interface
+1. Open the agent's chat interface
 2. Click the **Import** button in the left sidebar
 3. Select **VS Code Copilot** from the platform dropdown
 4. Either:
@@ -35,7 +35,7 @@ python3 import_vscode_conversations.py
 
 This will:
 - Find all VS Code chat sessions automatically
-- Import all 163+ conversations to `Nola/Stimuli/conversations/`
+- Import all 163+ conversations to `agent/Stimuli/conversations/`
 - Generate a log file: `vscode_import_log.json`
 
 ## Archive Feature

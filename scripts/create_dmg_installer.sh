@@ -1,22 +1,22 @@
 #!/bin/bash
-# Create a distributable DMG installer for Nola AI OS
+# Create a distributable DMG installer for AI OS
 # Creates the classic "drag to Applications" experience
 
 set -e
 
-APP_NAME="Nola AI OS"
-DMG_NAME="Nola-AI-OS-Installer"
-DMG_VOLUME_NAME="Nola AI OS"
+APP_NAME="AI OS"
+DMG_NAME="AIOS-Installer"
+DMG_VOLUME_NAME="AI OS"
 VERSION="1.0.0"
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-echo "📦 Creating Nola AI OS DMG Installer..."
+echo "📦 Creating AI OS DMG Installer..."
 
-# Make sure Nola.app exists
-if [ ! -d "Nola.app" ]; then
-    echo "🔨 Building Nola.app first..."
+# Make sure AIOS.app exists
+if [ ! -d "AIOS.app" ]; then
+    echo "🔨 Building AIOS.app first..."
     ./create_app_bundle.sh
 fi
 
@@ -26,8 +26,8 @@ rm -rf "$DMG_TEMP"
 mkdir -p "$DMG_TEMP"
 
 # Copy the app bundle
-echo "📁 Copying Nola.app..."
-cp -R "Nola.app" "$DMG_TEMP/"
+echo "📁 Copying AIOS.app..."
+cp -R "AIOS.app" "$DMG_TEMP/"
 
 # Create Applications symlink for drag-and-drop install
 echo "🔗 Creating Applications shortcut..."
@@ -60,7 +60,7 @@ tell application "Finder"
         set viewOptions to the icon view options of container window
         set arrangement of viewOptions to not arranged
         set icon size of viewOptions to 100
-        set position of item "Nola.app" of container window to {125, 150}
+        set position of item "AIOS.app" of container window to {125, 150}
         set position of item "Applications" of container window to {375, 150}
         close
         open
@@ -91,7 +91,7 @@ echo ""
 echo "📋 What users see when they open it:"
 echo "   ┌─────────────────────────────────┐"
 echo "   │                                 │"
-echo "   │    [Nola.app]  →  [Applications]│"
+echo "   │    [AIOS.app]  →  [Applications]│"
 echo "   │                                 │"
 echo "   └─────────────────────────────────┘"
 echo ""

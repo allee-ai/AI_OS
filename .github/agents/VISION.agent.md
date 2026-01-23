@@ -41,7 +41,7 @@ Look for "Ghost Code" — complex logic in backend files (e.g., `schema.py`, `co
 - 📜 `docs/logs/CHANGELOG.md` (What *actually* shipped recently?)
 - 🏗 `docs/specs/` (The intended architecture)
 - 🧠 `docs/vision/` (The core philosophy—are we still aligned?)
-- 📂 `Nola/threads/schema.py` (The database source of truth)
+- 📂 `agent/threads/schema.py` (The database source of truth)
 - 🖥️ `frontend/src/pages/ThreadsPage.tsx` (The current UI implementation)
 
 **Key Questions:**

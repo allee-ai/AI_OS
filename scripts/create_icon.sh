@@ -56,38 +56,38 @@ try:
     draw.text((x, y), brain_emoji, font=font, fill=(66, 165, 245, 255))
     
     # Save as PNG
-    img.save('temp_icon/nola_512.png', 'PNG')
-    print("Created nola_512.png")
+    img.save('temp_icon/aios_512.png', 'PNG')
+    print("Created aios_512.png")
     
 except ImportError:
     print("PIL not available, creating text-based icon")
     # Fallback: create a simple text file
-    with open('temp_icon/nola.txt', 'w') as f:
-        f.write('🧠 Nola AI OS')
+    with open('temp_icon/aios.txt', 'w') as f:
+        f.write('🧠 AI OS')
 EOF
 
 # Convert to icns format if iconutil is available
-if command -v iconutil > /dev/null 2>&1 && [ -f "temp_icon/nola_512.png" ]; then
+if command -v iconutil > /dev/null 2>&1 && [ -f "temp_icon/aios_512.png" ]; then
     # Create iconset directory structure
-    mkdir -p temp_icon/nola.iconset
+    mkdir -p temp_icon/aios.iconset
     
     # Copy and resize for different icon sizes
-    cp temp_icon/nola_512.png temp_icon/nola.iconset/icon_512x512.png
+    cp temp_icon/aios_512.png temp_icon/aios.iconset/icon_512x512.png
     
     # Create smaller sizes (simplified - just copy the large one)
     for size in 16 32 128 256; do
-        cp temp_icon/nola_512.png "temp_icon/nola.iconset/icon_${size}x${size}.png"
+        cp temp_icon/aios_512.png "temp_icon/aios.iconset/icon_${size}x${size}.png"
     done
     
     # Convert to icns
-    iconutil -c icns temp_icon/nola.iconset -o temp_icon/nola.icns
+    iconutil -c icns temp_icon/aios.iconset -o temp_icon/aios.icns
     
-    echo "✅ Created nola.icns icon file"
+    echo "✅ Created aios.icns icon file"
 else
     echo "⚠️ iconutil not available or PNG not created"
     echo "📝 Will use fallback icon method"
 fi
 
 # Clean up
-rm -rf temp_icon/nola.iconset
+rm -rf temp_icon/aios.iconset
 echo "🎨 Icon files created in temp_icon/"

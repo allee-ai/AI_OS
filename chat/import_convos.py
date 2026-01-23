@@ -1,5 +1,5 @@
 """
-Import service for converting AI exports to Nola format.
+Import service for converting AI exports to AI OS format.
 """
 
 import asyncio
@@ -21,7 +21,7 @@ from chat.parsers import (
 
 
 class ImportConvos:
-    """Import conversations from other AI platforms into Nola."""
+    """Import conversations from other AI platforms into AI OS."""
     
     def __init__(self, workspace_path: Path, stimuli_path: Path):
         self.workspace_path = workspace_path
@@ -70,22 +70,22 @@ class ImportConvos:
         # Parse conversations
         conversations = await parser.parse(export_path)
         
-        # Convert to Nola format and save
+        # Convert to AI OS format and save
         imported_count = 0
         failed_count = 0
         attachments_moved = 0
         
         for conv in conversations:
             try:
-                # Convert to Nola format
-                nola_conv = self._convert_to_nola_format(conv)
+                # Convert to AI OS format
+                aios_conv = self._convert_to_aios_format(conv)
                 
                 # Save conversation
                 conv_file = self.stimuli_path / "conversations" / f"imported_{conv.id}.json"
                 conv_file.parent.mkdir(parents=True, exist_ok=True)
                 
                 with open(conv_file, 'w', encoding='utf-8') as f:
-                    json.dump(nola_conv, f, indent=2, default=str)
+                    json.dump(aios_conv, f, indent=2, default=str)
                 
                 # Handle attachments
                 if conv.attachments and organize_by_project:
@@ -107,8 +107,8 @@ class ImportConvos:
             "timestamp": datetime.now().isoformat()
         }
     
-    def _convert_to_nola_format(self, conv: ParsedConversation) -> Dict[str, Any]:
-        """Convert parsed conversation to Nola's JSON format."""
+    def _convert_to_aios_format(self, conv: ParsedConversation) -> Dict[str, Any]:
+        """Convert parsed conversation to AI OS's JSON format."""
         turns = []
         
         for i in range(0, len(conv.messages), 2):

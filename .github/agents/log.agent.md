@@ -70,12 +70,12 @@ session_id TEXT
 
 ## Adapter
 
-**Location:** `Nola/threads/log/adapter.py`
+**Location:** `agent/threads/log/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.log.adapter import LogThreadAdapter
+from agent.threads.log.adapter import LogThreadAdapter
 
 adapter = LogThreadAdapter()
 
@@ -99,7 +99,7 @@ recent = adapter.get_recent_events(limit=10)
 
 ### Special: `pull_log_events()`
 ```python
-from Nola.threads.schema import pull_log_events
+from agent.threads.schema import pull_log_events
 
 # Query by recency, not level
 events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
@@ -111,11 +111,11 @@ events = pull_log_events(module_name="events", limit=100, min_weight=0.0)
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/log/adapter.py` | Core adapter - `log_event()`, `get_recent_events()`, `start_session()` |
-| `Nola/threads/log/__init__.py` | Public API - `log_event()`, `log_error()`, `read_log()` |
-| `Nola/threads/log/README.md` | Documentation |
-| `Nola/services/api.py # introspection.py` | REST endpoints (lines 413, 780-850) |
-| `Nola/threads/schema.py` | DB helpers - `pull_log_events()` (line 1228) |
+| `agent/threads/log/adapter.py` | Core adapter - `log_event()`, `get_recent_events()`, `start_session()` |
+| `agent/threads/log/__init__.py` | Public API - `log_event()`, `log_error()`, `read_log()` |
+| `agent/threads/log/README.md` | Documentation |
+| `agent/services/api.py # introspection.py` | REST endpoints (lines 413, 780-850) |
+| `agent/threads/schema.py` | DB helpers - `pull_log_events()` (line 1228) |
 
 ### Backend Endpoints
 
@@ -196,4 +196,4 @@ error:*          - Errors
 
 ## README
 
-Full documentation: `Nola/threads/log/README.md`
+Full documentation: `agent/threads/log/README.md`

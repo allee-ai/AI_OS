@@ -4,7 +4,7 @@ Common problems and how to fix them.
 
 ---
 
-## Nola Won't Start
+## Agent Won't Start
 
 ### "Command not found: ./start.sh"
 
@@ -76,12 +76,12 @@ npm run dev -- --port 5174
    ./start.sh
    ```
 
-### Nola responds but doesn't remember things
+### Agent responds but doesn't remember things
 
 The memory system might not be connected. Check:
 ```bash
 # From project root
-python3 -c "from Nola.subconscious import wake, get_status; wake(); print(get_status())"
+python3 -c "from agent.subconscious import wake, get_status; wake(); print(get_status())"
 ```
 
 All threads should show "ok" status.
@@ -122,7 +122,7 @@ Ollama can be resource-intensive. Options:
 
 ### "Where are my conversations?"
 
-Stored in: `Nola/Stimuli/conversations/`
+Stored in: `agent/Stimuli/conversations/`
 
 Each file is named `react_YYYYMMDD_HHMMSS.json`.
 
@@ -130,20 +130,20 @@ Each file is named `react_YYYYMMDD_HHMMSS.json`.
 
 Check if identity files exist:
 ```bash
-ls Nola/identity_thread/userID/
-ls Nola/Nola.json
+ls agent/identity_thread/userID/
+ls agent/identity.json
 ```
 
 If missing, they'll be recreated on next start with defaults.
 
-### Reset Nola completely
+### Reset Agent completely
 
 ⚠️ **This deletes all memory and conversations:**
 
 ```bash
-rm -rf Nola/Stimuli/conversations/*
+rm -rf agent/Stimuli/conversations/*
 rm -rf data/db/state.db
-rm Nola/Nola.json
+rm agent/identity.json
 ```
 
 Then restart: `./start.sh`
@@ -154,7 +154,7 @@ Then restart: `./start.sh`
 
 1. **Check the logs:**
    ```bash
-   cat Nola/LOG.txt
+   cat agent/LOG.txt
    ```
 
 2. **Run tests:**

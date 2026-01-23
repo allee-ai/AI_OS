@@ -1,5 +1,5 @@
 #!/bin/bash
-# Nola AI OS - VM/Linux Installer
+# AI OS - VM/Linux Installer
 # Modified for VM deployment (removes Mac-specific parts)
 
 set -e
@@ -9,15 +9,15 @@ cd "$SCRIPT_DIR"
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║            🧠 Nola AI OS - VM Setup                      ║"
+echo "║            🧠 AI OS - VM Setup                      ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
 
 # Create data directories
 echo "📁 Creating data directories..."
 mkdir -p data/db
-mkdir -p Nola/temp_memory
-mkdir -p Nola/workspace
+mkdir -p agent/temp_memory
+mkdir -p agent/workspace
 
 # Check/Install dependencies
 echo ""
@@ -86,17 +86,17 @@ else
     
     echo "  → Installing core requirements..."
     pip3 install -r requirements.txt
-    if [ -f "Nola/react-chat-app/backend/requirements.txt" ]; then
+    if [ -f "agent/react-chat-app/backend/requirements.txt" ]; then
         echo "  → Installing backend requirements..."
-        pip3 install -r Nola/react-chat-app/backend/requirements.txt
+        pip3 install -r agent/react-chat-app/backend/requirements.txt
     fi
 fi
 
 # Install Node dependencies for frontend
 echo ""
 echo "📦 Installing Node dependencies..."
-if [ -d "Nola/react-chat-app/frontend" ]; then
-    cd "Nola/react-chat-app/frontend"
+if [ -d "agent/react-chat-app/frontend" ]; then
+    cd "agent/react-chat-app/frontend"
     npm install
     echo "  → Building frontend..."
     npm run build
@@ -107,19 +107,19 @@ fi
 echo ""
 echo "🔧 Creating systemd service..."
 
-cat > /etc/systemd/system/nola.service << 'EOF'
+cat > /etc/systemd/system/aios.service << 'EOF'
 [Unit]
-Description=Nola AI Backend
+Description=AI OS Backend
 After=network.target ollama.service
 Requires=ollama.service
 
 [Service]
 Type=simple
 User=root
-WorkingDirectory=/root/AI_OS/Nola/react-chat-app/backend
+WorkingDirectory=/root/AI_OS/agent/react-chat-app/backend
 Environment=PATH=/root/AI_OS/.venv/bin
 Environment=PYTHONPATH=/root/AI_OS
-Environment=NOLA_MODE=production
+Environment=AIOS_MODE=production
 ExecStart=/root/AI_OS/.venv/bin/python -m uvicorn main:app --host 0.0.0.0 --port 8000
 Restart=always
 RestartSec=3
@@ -130,21 +130,21 @@ EOF
 
 # Enable and start service
 systemctl daemon-reload
-systemctl enable nola
-systemctl start nola
+systemctl enable aios
+systemctl start aios
 
 # Create marker file
-touch ".nola_installed"
+touch ".aios_installed"
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║                  ✅ VM Setup Complete!                    ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
-echo "🎯 Nola is now running as a service:"
+echo "🎯 the agent is now running as a service:"
 echo "   • Backend: http://YOUR-VM-IP:8000"
-echo "   • Status: systemctl status nola"
-echo "   • Logs: journalctl -u nola -f"
+echo "   • Status: systemctl status aios"
+echo "   • Logs: journalctl -u aios -f"
 echo ""
 echo "🔗 From your Mac, create SSH tunnel:"
 echo "   ssh -L 8000:localhost:8000 root@$(curl -s ifconfig.me)"

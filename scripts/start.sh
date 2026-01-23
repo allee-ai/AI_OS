@@ -45,58 +45,17 @@ echo -e "${BLUE}💻 Environment: ${NC}${TERM_TYPE}"
 echo ""
 
 # ============================================================================
-# STARTUP MODE SELECTION (before starting any services)
+# STARTUP CONFIGURATION
 # ============================================================================
 
-# Allow override via environment variables
-if [ -z "${NOLA_MODE:-}" ] || [ -z "${BUILD_METHOD:-}" ]; then
-    if [ "$OS" = "macos" ]; then
-        # macOS: Single dialog with buttons
-        # Updated to include Dev Mode
-        CHOICE=$(osascript <<'EOF'
-tell application "System Events"
-    activate
-    set theResult to display dialog "🧠 Nola AI OS" & return & return & "Choose your configuration:" buttons {"Demo Mode", "Personal Mode", "Dev Mode"} default button "Dev Mode" with title "Nola Launcher" with icon note
-    return button returned of theResult
-end tell
-EOF
-        )
-        if [ "$CHOICE" = "Demo Mode" ]; then
-            export NOLA_MODE="demo"
-            export DEV_MODE="false"
-        elif [ "$CHOICE" = "Dev Mode" ]; then
-            export NOLA_MODE="personal"
-            export DEV_MODE="true"
-        else
-            export NOLA_MODE="personal"
-            export DEV_MODE="false"
-        fi
-        export BUILD_METHOD="local"
-    else
-        # Linux/other: Terminal prompt
-        echo -e "${BLUE}Select mode:${NC}"
-        echo -e "  [1] Personal - Your private data"
-        echo -e "  [2] Demo - Sample showcase data"
-        echo -e "  [3] Dev Mode - Personal data + Dev tools"
-        read -r -p "Choose 1, 2, or 3 [default: 3]: " MODE_CHOICE
-        if [ "$MODE_CHOICE" = "2" ]; then
-            export NOLA_MODE="demo"
-            export DEV_MODE="false"
-        elif [ "$MODE_CHOICE" = "1" ]; then
-            export NOLA_MODE="personal"
-            export DEV_MODE="false"
-        else
-            export NOLA_MODE="personal"
-            export DEV_MODE="true"
-        fi
-        export BUILD_METHOD="local"
-    fi
-fi
+# Default settings (can be overridden by environment variables)
+: "${AIOS_MODE:=personal}"
+
+export AIOS_MODE
 
 echo ""
 echo -e "${GREEN}📋 Configuration:${NC}"
-echo -e "   Mode: ${CYAN}${NOLA_MODE}${NC}"
-echo -e "   Build: ${CYAN}${BUILD_METHOD}${NC}"
+echo -e "   Mode: ${CYAN}${AIOS_MODE}${NC}"
 echo ""
 
 # Check if we're on a supported platform
@@ -138,8 +97,8 @@ if [ -f "$REPO_ROOT/.env" ]; then
 fi
 
 # Verify we're in the right place
-if [ ! -d "$REPO_ROOT/Nola" ]; then
-    echo -e "${RED}❌ Nola directory not found at $REPO_ROOT/Nola${NC}"
+if [ ! -d "$REPO_ROOT/agent" ]; then
+    echo -e "${RED}❌ the agent directory not found at $REPO_ROOT/agent${NC}"
     if [ "$TERM_TYPE" = "gui" ]; then
         echo ""
         read -n 1 -s -r -p "Press any key to close..."
@@ -147,7 +106,7 @@ if [ ! -d "$REPO_ROOT/Nola" ]; then
     exit 1
 fi
 
-NOLA_DIR="$REPO_ROOT/Nola"
+AIOS_DIR="$REPO_ROOT/agent"
 
 # Frontend location (now at project root)
 FRONTEND_DIR="$REPO_ROOT/frontend"
@@ -157,42 +116,6 @@ VENV_DIR="$REPO_ROOT/.venv"
 command_exists() { command -v "$1" >/dev/null 2>&1; }
 port_in_use() { lsof -i:"$1" >/dev/null 2>&1; }
 
-install_docker_if_missing() {
-    if command_exists docker; then
-        return
-    fi
-    echo -e "${YELLOW}⚙️  Docker not found. Attempting install...${NC}"
-    if [ "$OS" = "linux" ] && command_exists apt-get; then
-        sudo apt-get update -y && sudo apt-get install -y docker.io docker-compose-plugin || {
-            echo -e "${RED}❌ Docker install failed via apt-get${NC}"; exit 1; }
-        if command_exists systemctl; then
-            sudo systemctl enable docker >/dev/null 2>&1 || true
-            sudo systemctl start docker >/dev/null 2>&1 || true
-        fi
-        echo -e "${GREEN}✅ Docker installed${NC}"
-        echo -e "${YELLOW}ℹ️  If you see permission errors, add your user to the docker group and re-login:${NC}"
-        echo -e "    sudo usermod -aG docker $USER && newgrp docker"
-    elif [ "$OS" = "macos" ]; then
-        # Try Homebrew auto-install if available (may require user interaction)
-        if command_exists brew; then
-            echo -e "${YELLOW}→ Homebrew found. Installing Docker Desktop via brew...${NC}"
-            brew install --cask docker || {
-                echo -e "${RED}❌ brew install failed. Please install Docker Desktop manually from https://www.docker.com/products/docker-desktop${NC}"
-                exit 1
-            }
-            echo -e "${GREEN}✅ Docker Desktop installed via Homebrew.${NC}"
-            echo -e "${YELLOW}ℹ️  Please start Docker Desktop (open /Applications/Docker.app) and wait until it's running. Press Enter to continue...${NC}"
-            read -r
-            return
-        fi
-
-        echo -e "${RED}❌ Docker not installed.${NC} Please install Docker Desktop from https://www.docker.com/products/docker-desktop and re-run."
-        exit 1
-    else
-        echo -e "${RED}❌ Unsupported OS for auto-install. Install Docker manually and retry.${NC}"
-        exit 1
-    fi
-}
 
 wait_for_service() {
     local url=$1 name=$2 max=30 attempt=1
@@ -209,19 +132,11 @@ wait_for_service() {
     return 1
 }
 
-# Mode selection now happens in the UI (StartupPage)
-# Docker mode deprecated - use native launch
-if [ "${BUILD_METHOD}" = "docker" ]; then
-    echo -e "${YELLOW}⚠️  Docker mode deprecated. Use native launch instead.${NC}"
-    echo -e "${YELLOW}   Run: python -m scripts.server${NC}"
-    exit 1
-fi
-
 # === PREREQUISITES ===
 echo -e "${BLUE}📋 Checking prerequisites...${NC}"
 
-MODEL_PROVIDER="${NOLA_MODEL_PROVIDER:-ollama}"
-MODEL_NAME="${NOLA_MODEL_NAME:-qwen2.5:7b}"
+MODEL_PROVIDER="${AIOS_MODEL_PROVIDER:-ollama}"
+MODEL_NAME="${AIOS_MODEL_NAME:-qwen2.5:7b}"
 
 # Ollama (only when provider=ollama)
 if [ "$MODEL_PROVIDER" = "ollama" ]; then
@@ -322,9 +237,7 @@ fi
 # Start backend with mode env vars already set
 echo -e "${YELLOW}  → Starting backend (scripts.server)...${NC}"
 export PYTHONDONTWRITEBYTECODE=1
-export NOLA_MODE="${NOLA_MODE}"
-export DEV_MODE="${DEV_MODE}"
-export BUILD_METHOD="${BUILD_METHOD}"
+export AIOS_MODE="${AIOS_MODE}"
 
 # Use uv run if available (ensures correct venv), otherwise fallback to direct venv python
 if command -v uv >/dev/null 2>&1; then
@@ -347,15 +260,15 @@ wait_for_service "http://localhost:5173" "Frontend App"
 # === SUCCESS ===
 echo ""
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
-echo -e "${GREEN}  🎉 Nola is ready to chat!${NC}"
+echo -e "${GREEN}  🎉 the agent is ready to chat!${NC}"
 echo -e "${GREEN}═══════════════════════════════════════════════════════════${NC}"
 echo ""
 echo -e "  ${CYAN}Chat UI:${NC}   http://localhost:5173"
 echo -e "  ${CYAN}API:${NC}       http://localhost:8000"
 echo -e "  ${CYAN}API Docs:${NC}  http://localhost:8000/docs"
 echo ""
-echo -e "  ${BLUE}Nola:${NC}      $NOLA_DIR"
-echo -e "  ${BLUE}Convos:${NC}    $NOLA_DIR/Stimuli/conversations/"
+echo -e "  ${BLUE}Nola:${NC}      $AIOS_DIR"
+echo -e "  ${BLUE}Convos:${NC}    $AIOS_DIR/Stimuli/conversations/"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
 echo ""

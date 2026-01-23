@@ -16,7 +16,7 @@ from pathlib import Path
 # Add project root to path for imports
 PROJECT_ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(PROJECT_ROOT))
-sys.path.insert(0, str(PROJECT_ROOT / "Nola"))
+sys.path.insert(0, str(PROJECT_ROOT / "Agent"))
 
 
 @pytest.fixture
@@ -86,12 +86,12 @@ def mock_agent_config():
 
 
 @pytest.fixture
-def nola_path():
-    """Path to Nola module."""
-    return PROJECT_ROOT / "Nola"
+def aios_path():
+    """Path to agent module."""
+    return PROJECT_ROOT / "Agent"
 
 
 @pytest.fixture
-def identity_thread_path(nola_path):
+def identity_thread_path(aios_path):
     """Path to identity_thread directory."""
-    return nola_path / "identity_thread"
+    return aios_path / "identity_thread"

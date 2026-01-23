@@ -2,7 +2,7 @@
 AI OS Server - Main FastAPI Application
 =======================================
 Central entry point for the AI OS. All routes are imported from 
-self-contained modules (Nola, chat, workspace, Stimuli, etc.).
+self-contained modules (agent, chat, workspace, Stimuli, etc.).
 
 Run with:
     uvicorn scripts.server:app --reload
@@ -28,22 +28,22 @@ if str(_project_root) not in sys.path:
 from data.db import is_demo_mode, set_demo_mode, get_db_path
 
 # Core settings
-from Nola.core import settings, models_router
+from agent.core import settings, models_router
 
-# Self-contained Nola modules with routers
+# Self-contained the agent modules with routers
 from chat import router as chat_router, websocket_manager
 from workspace import router as workspace_router
-from Nola.services import router as services_router
+from agent.services import router as services_router
 from Stimuli import api_router as stimuli_router
-from Nola.subconscious import subconscious_router
+from agent.subconscious import subconscious_router
 
 # Thread routers
-from Nola.threads.philosophy import router as philosophy_router
-from Nola.threads.identity import router as identity_router
-from Nola.threads.reflex import router as reflex_router
-from Nola.threads.form import router as form_router
-from Nola.threads.linking_core import router as linking_router
-from Nola.threads.log import router as log_router
+from agent.threads.philosophy import router as philosophy_router
+from agent.threads.identity import router as identity_router
+from agent.threads.reflex import router as reflex_router
+from agent.threads.form import router as form_router
+from agent.threads.linking_core import router as linking_router
+from agent.threads.log import router as log_router
 
 # Project-level modules with routers
 from docs import router as docs_router
@@ -56,7 +56,7 @@ from finetune import router as finetune_router
 
 app = FastAPI(
     title=settings.app_name,
-    description="Nola AI OS - Backend API",
+    description="AI OS - Backend API",
     version="1.0.0",
     debug=settings.debug
 )
@@ -76,7 +76,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 # Include Routers
 # =============================================================================
 
-# Nola modules
+# the agent modules
 app.include_router(chat_router)
 app.include_router(workspace_router)
 app.include_router(services_router)
@@ -135,13 +135,13 @@ async def startup_event():
         print(f"[Startup] DB exists: {DB_PATH.exists()}")
         
         # Wake subconscious
-        from Nola.subconscious import get_core
+        from agent.subconscious import get_core
         core = get_core()
         core.wake()
         print(f"[Startup] Subconscious awakened with {core.registry.count()} threads")
         
         # Verify identity data
-        from Nola.threads.identity.schema import pull_profile_facts
+        from agent.threads.identity.schema import pull_profile_facts
         try:
             rows = pull_profile_facts(limit=3)
             print(f"[Startup] identity check: {len(rows)} rows")
@@ -167,7 +167,7 @@ async def health_check():
 @app.get("/")
 async def root():
     """Root endpoint"""
-    return {"message": "Nola AI OS API", "docs": "/docs"}
+    return {"message": "AI OS API", "docs": "/docs"}
 
 
 @app.websocket("/ws")

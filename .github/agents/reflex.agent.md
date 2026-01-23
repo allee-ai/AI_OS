@@ -66,12 +66,12 @@ data_json TEXT                  -- {"action": "log_and_notify"}
 
 ## Adapter
 
-**Location:** `Nola/threads/reflex/adapter.py`
+**Location:** `agent/threads/reflex/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.reflex.adapter import ReflexThreadAdapter
+from agent.threads.reflex.adapter import ReflexThreadAdapter
 
 adapter = ReflexThreadAdapter()
 
@@ -97,11 +97,11 @@ adapter.register_shortcut(
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/reflex/adapter.py` | Core adapter - `match_pattern()`, `get_data()`, `register_shortcut()` |
-| `Nola/threads/reflex/__init__.py` | Public API |
-| `Nola/threads/reflex/README.md` | Documentation |
-| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
-| `Nola/threads/schema.py` | DB schema - `pull_from_module()` |
+| `agent/threads/reflex/adapter.py` | Core adapter - `match_pattern()`, `get_data()`, `register_shortcut()` |
+| `agent/threads/reflex/__init__.py` | Public API |
+| `agent/threads/reflex/README.md` | Documentation |
+| `agent/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
+| `agent/threads/schema.py` | DB schema - `pull_from_module()` |
 
 ### Backend Endpoints
 
@@ -177,4 +177,4 @@ time_trigger = {
 
 ## README
 
-Full documentation: `Nola/threads/reflex/README.md`
+Full documentation: `agent/threads/reflex/README.md`

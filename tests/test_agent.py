@@ -1,5 +1,5 @@
 """
-Tests for Nola agent module.
+Tests for agent module.
 
 Tests cover:
 - Singleton pattern (get_agent returns same instance)
@@ -16,7 +16,7 @@ from unittest.mock import patch, MagicMock
 class TestAgentSingleton:
     """Test that agent follows singleton pattern."""
     
-    def test_get_agent_returns_same_instance(self, nola_path):
+    def test_get_agent_returns_same_instance(self, aios_path):
         """get_agent() should return the same Agent instance."""
         from agent import get_agent
         
@@ -25,7 +25,7 @@ class TestAgentSingleton:
         
         assert agent1 is agent2, "get_agent should return singleton"
     
-    def test_agent_has_required_methods(self, nola_path):
+    def test_agent_has_required_methods(self, aios_path):
         """Agent instance should have all required methods."""
         from agent import get_agent
         
@@ -41,7 +41,7 @@ class TestAgentSingleton:
 class TestAgentThreadSafety:
     """Test thread safety of agent operations."""
     
-    def test_concurrent_state_access(self, nola_path):
+    def test_concurrent_state_access(self, aios_path):
         """Multiple threads should safely access agent state."""
         from agent import get_agent
         
@@ -68,19 +68,19 @@ class TestAgentThreadSafety:
 class TestAgentProvider:
     """Test provider switching functionality."""
     
-    def test_mock_provider_returns_response(self, nola_path):
+    def test_mock_provider_returns_response(self, aios_path):
         """Mock provider should return predictable response."""
         from agent import get_agent
         
         agent = get_agent()
         
         # Force mock provider for testing
-        with patch.dict('os.environ', {'NOLA_PROVIDER': 'mock'}):
+        with patch.dict('os.environ', {'AIOS_PROVIDER': 'mock'}):
             response = agent.generate("Test prompt", stimuli_type="realtime")
             assert response is not None
             assert isinstance(response, str)
     
-    def test_generate_accepts_stimuli_type(self, nola_path):
+    def test_generate_accepts_stimuli_type(self, aios_path):
         """generate() should accept stimuli_type parameter."""
         from agent import get_agent
         
@@ -88,7 +88,7 @@ class TestAgentProvider:
         
         # All three stimuli types should work
         for stimuli_type in ["realtime", "conversational", "analytical"]:
-            with patch.dict('os.environ', {'NOLA_PROVIDER': 'mock'}):
+            with patch.dict('os.environ', {'AIOS_PROVIDER': 'mock'}):
                 response = agent.generate(
                     f"Test {stimuli_type}",
                     stimuli_type=stimuli_type
@@ -99,7 +99,7 @@ class TestAgentProvider:
 class TestAgentIdentity:
     """Test identity loading and system prompt generation."""
     
-    def test_load_identity_returns_dict(self, nola_path):
+    def test_load_identity_returns_dict(self, aios_path):
         """_load_identity_for_stimuli should return identity dict."""
         from agent import get_agent
         
@@ -110,7 +110,7 @@ class TestAgentIdentity:
             identity = agent._load_identity_for_stimuli("conversational")
             assert isinstance(identity, dict)
     
-    def test_get_state_includes_identity(self, nola_path):
+    def test_get_state_includes_identity(self, aios_path):
         """State should include identity context."""
         from agent import get_agent
         

@@ -83,12 +83,12 @@ last_updated TEXT               -- timestamp
 
 ## Adapter
 
-**Location:** `Nola/threads/linking_core/adapter.py`
+**Location:** `agent/threads/linking_core/adapter.py`
 
 ### Key Functions
 
 ```python
-from Nola.threads.linking_core.adapter import LinkingCoreAdapter
+from agent.threads.linking_core.adapter import LinkingCoreAdapter
 
 adapter = LinkingCoreAdapter()
 
@@ -120,11 +120,11 @@ def spread(concept, initial_activation=1.0, decay=0.5, max_depth=3):
 
 | File | Purpose |
 |------|---------|
-| `Nola/threads/linking_core/adapter.py` | Core adapter - `health()` (README-based) |
-| `Nola/threads/linking_core/__init__.py` | Public API |
-| `Nola/threads/linking_core/README.md` | **THE DATA** - algorithms documented here |
-| `Nola/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
-| `Nola/threads/schema.py` | DB schema (future: concept_links table) |
+| `agent/threads/linking_core/adapter.py` | Core adapter - `health()` (README-based) |
+| `agent/threads/linking_core/__init__.py` | Public API |
+| `agent/threads/linking_core/README.md` | **THE DATA** - algorithms documented here |
+| `agent/services/api.py # introspection.py` | REST endpoints (lines 647-710) |
+| `agent/threads/schema.py` | DB schema (future: concept_links table) |
 
 ### Backend Endpoints
 
@@ -260,4 +260,4 @@ def hebbian_update(activations, learning_rate=0.01):
 
 ## README
 
-Full documentation: `Nola/threads/linking_core/README.md`
+Full documentation: `agent/threads/linking_core/README.md`

@@ -18,7 +18,7 @@ Usage:
 Files:
     data/db/state.db      - Personal/production database
     data/db/state_demo.db - Demo database (safe to reset)
-    data/.nola_mode       - Current mode file ("demo" or "personal")
+    data/.aios_mode       - Current mode file ("demo" or "personal")
 """
 
 import sqlite3
@@ -28,7 +28,7 @@ from pathlib import Path
 # Paths
 _DB_DIR = Path(__file__).parent.resolve()  # data/db/
 _DATA_DIR = _DB_DIR.parent                  # data/
-_MODE_FILE = _DATA_DIR / ".nola_mode"
+_MODE_FILE = _DATA_DIR / ".aios_mode"
 
 # Database files
 STATE_DB = _DB_DIR / "state.db"
@@ -43,7 +43,7 @@ def _get_current_mode() -> str:
     """
     if _MODE_FILE.exists():
         return _MODE_FILE.read_text().strip().lower()
-    return os.getenv("NOLA_MODE", "personal").lower()
+    return os.getenv("AIOS_MODE", "personal").lower()
 
 
 def is_demo_mode() -> bool:

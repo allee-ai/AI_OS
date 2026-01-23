@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Populate Nola's personal database from Allee.json profile.
+Populate Agent's personal database from Allee.json profile.
 Extracts identity, philosophy, and personal data into L1/L2/L3 fact structure.
 """
 
@@ -9,14 +9,14 @@ import sys
 from pathlib import Path
 
 # Add project paths
-sys.path.insert(0, str(Path(__file__).parent / "Nola" / "threads"))
+sys.path.insert(0, str(Path(__file__).parent / "agent" / "threads"))
 sys.path.insert(0, str(Path(__file__).parent))
 
 # Force personal mode
 import os
-os.environ["NOLA_MODE"] = "personal"
+os.environ["AIOS_MODE"] = "personal"
 
-from Nola.threads.schema import (
+from agent.threads.schema import (
     create_profile_type, create_profile, push_profile_fact,
     create_fact_type, get_profiles
 )
@@ -287,7 +287,7 @@ def seed_philosophy_profiles(data: dict):
 def main():
     """Main entry point."""
     import argparse
-    parser = argparse.ArgumentParser(description="Populate Nola database from Allee.json")
+    parser = argparse.ArgumentParser(description="Populate agent database from Allee.json")
     parser.add_argument("json_path", help="Path to Allee.json file")
     args = parser.parse_args()
     

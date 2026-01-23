@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-Import all VS Code GitHub Copilot conversations into Nola.
+Import all VS Code GitHub Copilot conversations into AI OS.
 
 This script:
 1. Finds all VS Code chat sessions from Library
 2. Parses them using the VSCodeExportParser
-3. Imports them into Nola's Stimuli/conversations folder
+3. Imports them into AI OS's Stimuli/conversations folder
 """
 
 import asyncio
@@ -14,7 +14,7 @@ import sys
 from pathlib import Path
 from datetime import datetime
 
-# Add parent directory to path to import Nola modules
+# Add parent directory to path to import agent modules
 sys.path.insert(0, str(Path(__file__).parent))
 
 from chat.import_convos import ImportConvos
@@ -50,13 +50,13 @@ def find_vscode_chat_sessions() -> list[Path]:
 async def main():
     """Import all VS Code conversations."""
     print("=" * 80)
-    print("VS Code Conversations Import to Nola")
+    print("VS Code Conversations Import to AI OS")
     print("=" * 80)
     
     # Setup paths
     base_dir = Path(__file__).parent
-    workspace_path = base_dir / "Nola/workspace"
-    stimuli_path = base_dir / "Nola/Stimuli"
+    workspace_path = base_dir / "agent/workspace"
+    stimuli_path = base_dir / "agent/Stimuli"
     
     # Ensure directories exist
     workspace_path.mkdir(parents=True, exist_ok=True)

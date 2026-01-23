@@ -1,5 +1,5 @@
 #!/bin/bash
-# Nola AI OS - First Run Installer
+# AI OS - First Run Installer
 # This script runs automatically on first launch to set up everything
 
 set -e
@@ -9,7 +9,7 @@ cd "$SCRIPT_DIR"
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║            🧠 Nola AI OS - First Time Setup               ║"
+echo "║            🧠 AI OS - First Time Setup               ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
 
@@ -21,12 +21,12 @@ chmod +x *.command 2>/dev/null || true
 # Create data directories
 echo "📁 Creating data directories..."
 mkdir -p data/db
-mkdir -p Nola/temp_memory
-mkdir -p Nola/workspace
+mkdir -p agent/temp_memory
+mkdir -p agent/workspace
 
 # Check for the spiral icon and create app bundle
 echo "🎨 Setting up desktop icon..."
-if [ -f "nola-spiral.png" ]; then
+if [ -f "aios-spiral.png" ]; then
     ./create_icon_from_image.sh
 fi
 ./create_app_bundle.sh
@@ -95,23 +95,23 @@ if [ -d "frontend" ]; then
 fi
 
 # Create marker file so we don't run setup again
-touch ".nola_installed"
+touch ".aios_installed"
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
 echo "║                  ✅ Setup Complete!                       ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
-echo "🎯 To start Nola:"
-echo "   • Double-click Nola.app"
+echo "🎯 To start AI OS:"
+echo "   • Double-click AIOS.app"
 echo "   • Or run: ./start.sh"
 echo ""
-echo "📍 App bundle created at: $SCRIPT_DIR/Nola.app"
+echo "📍 App bundle created at: $SCRIPT_DIR/AIOS.app"
 echo "   Drag to Applications folder or Dock for easy access"
 echo ""
 
 # Ask if user wants to start now
-read -p "🚀 Start Nola now? (y/n) " -n 1 -r
+read -p "🚀 Start the agent now? (y/n) " -n 1 -r
 echo ""
 if [[ $REPLY =~ ^[Yy]$ ]]; then
     ./start.sh

@@ -1,4 +1,4 @@
-# Nola Roadmap — From Framework to Cognitive OS
+# Agent Roadmap — From Framework to Cognitive OS
 
 > **Status:** Active development. Looking for collaborators and backing.  
 > **Author's Note:** I've been building this solo since April 2025. The theory is proven, the foundation is solid, and with help, this could move 10x faster.
@@ -61,7 +61,7 @@ Nola isn't a chatbot. It's a **Cognitive Operating System** — an open-source f
 - [ ] **UI Feedback** — "Nola learned: [fact]" toasts after conversations
 
 ### Phase 2: Philosophy Thread
-**Goal:** Give Nola a "moral compass" — constraints that guide behavior regardless of conversation.
+**Goal:** Give Agent a "moral compass" — constraints that guide behavior regardless of conversation.
 
 - [ ] **Ethics Module** — `detect_harm()`, `preserve_dignity()`, `respect_boundary()`
 - [ ] **Awareness Module** — Situational, emotional, self-awareness functions
@@ -128,7 +128,7 @@ Reflexes turn those into instant, deterministic responses. No LLM needed.
 - [ ] **Identity Integration** — Dreams shape personality, not just facts
 - [ ] **Morning Briefing** — "While you were away, I thought about..."
 
-*This prevents the "robotic rigidity" of purely factual AI. Nola develops a vibe.*
+*This prevents the "robotic rigidity" of purely factual AI. Agent develops a vibe.*
 
 ### Phase 5: Multi-Model Routing
 **Goal:** Use the right model for the right task.
@@ -144,10 +144,10 @@ Verification:  Run both, compare outputs for critical decisions
 - [ ] **Multi-Model Consensus** — For high-stakes, get agreement from multiple models
 
 ### Phase 6: Beyond Chat 🚀 — ✅ FOUNDATION COMPLETE (Stimuli System)
-**Goal:** Nola becomes a background presence, not a chat window.
+**Goal:** Agent becomes a background presence, not a chat window.
 
 **✅ Implemented (Jan 10, 2026):**
-- [x] **Stimuli Router** — Universal API adapter layer (`Nola/Stimuli/router.py`)
+- [x] **Stimuli Router** — Universal API adapter layer (`agent/Stimuli/router.py`)
 - [x] **YAML-Driven Sources** — Drop a config file, get an integration
 - [x] **20+ Pre-Built Sources** — Gmail, Slack, Discord, GitHub, Linear, Notion, etc.
 - [x] **Normalized Messages** — Any platform → same `NormalizedMessage` format
@@ -204,7 +204,7 @@ Thread unresponsive →  Kill and restart with last checkpoint
 ```
 
 ### Phase 8: Automatic Runtime Cycles ⏰
-**Goal:** Nola runs on her own schedule, not just when you talk to her.
+**Goal:** Agent runs on her own schedule, not just when you talk to her.
 
 - [ ] **Scheduled Wake/Sleep** — Configurable daily rhythms (e.g., active 8am-10pm)
 - [ ] **Idle Consolidation** — When quiet, process pending facts and dreams
@@ -242,7 +242,7 @@ Thread unresponsive →  Kill and restart with last checkpoint
 - Validate API integrations before adding to reflex thread
 
 ### Phase 10: Chat Import — "Bring Your AI History Home" 📥
-**Goal:** Zero cold-start. Users import existing conversations and Nola immediately knows them.
+**Goal:** Zero cold-start. Users import existing conversations and Agent immediately knows them.
 
 **The Killer Feature:**
 > "You've been training your AI for months. Take that with you."
@@ -254,14 +254,14 @@ Thread unresponsive →  Kill and restart with last checkpoint
 - [ ] **Fact Extraction Pipeline** — Run imported conversations through existing fact extractor
 - [ ] **Thread Population** — Auto-populate identity, relationships, preferences, projects
 - [ ] **Import Dashboard UI** — Drag-drop interface with progress visualization
-- [ ] **Deduplication** — Don't re-import facts Nola already knows
+- [ ] **Deduplication** — Don't re-import facts Agent already knows
 - [ ] **Privacy Preview** — Show user what will be extracted before committing
 
 **The Viral Loop:**
 ```
 1. Curious user downloads Nola
 2. Uploads ChatGPT export (one file, low friction)
-3. Nola extracts facts, populates threads
+3. Agent extracts facts, populates threads
 4. First conversation is shockingly personal
 5. User realizes: "This is MINE now. On MY machine."
 6. User tells friends
@@ -329,7 +329,7 @@ memory_service:
 
 - [ ] **Plugin Manifest Schema** — Standard format for new capabilities
 - [ ] **Hot Loading** — Add plugins without restart
-- [ ] **Capability Registry** — Track what Nola can do
+- [ ] **Capability Registry** — Track what Agent can do
 - [ ] **Dependency Resolution** — Plugins can require other plugins
 - [ ] **Uninstall/Rollback** — Remove plugins cleanly
 
@@ -387,11 +387,11 @@ memory_service:
 ---
 
 ### Phase 14: Always-On Core & Mobile Endpoint 📱
-**Goal:** Nola runs 24/7, accessible from any device. Your laptop is just a window.
+**Goal:** Agent runs 24/7, accessible from any device. Your laptop is just a window.
 
 **The Problem:**
 ```
-Current: Laptop closed = Nola sleeping = No AI
+Current: Laptop closed = Agent sleeping = No AI
 Reality: Life doesn't stop when your laptop closes
 ```
 
@@ -419,7 +419,7 @@ Reality: Life doesn't stop when your laptop closes
 - [ ] **Quick Capture API** — `POST /api/quick_capture` → fact extraction
 - [ ] **Voice Memo Input** — Transcribe → extract → store
 - [ ] **Text Input** — Simple chat interface
-- [ ] **Push Response** — Notification when Nola responds
+- [ ] **Push Response** — Notification when Agent responds
 - [ ] **PWA** — Works in browser, no app store needed
 - [ ] **Telegram Bot Option** — Alternative lightweight interface
 
@@ -436,7 +436,7 @@ Reality: Life doesn't stop when your laptop closes
 │              NOLA BOX                        │
 │                                             │
 │   Pre-configured Raspberry Pi 5             │
-│   - Nola Core pre-installed                 │
+│   - Agent Core pre-installed                 │
 │   - SQLite DB on SSD                        │
 │   - Secure remote access                    │
 │   - Auto-updates                            │
@@ -457,11 +457,11 @@ Reality: Life doesn't stop when your laptop closes
 ---
 
 ### Phase 15: Quick Capture & Daily Presence 🎯
-**Goal:** Nola is always one action away, always providing value.
+**Goal:** Agent is always one action away, always providing value.
 
 **Quick Capture Features:**
 - [ ] **Global Hotkey** — `Cmd+Shift+N` → popup → "remember this"
-- [ ] **Clipboard Monitor** — Copy anything, Nola remembers it
+- [ ] **Clipboard Monitor** — Copy anything, Agent remembers it
 - [ ] **Screenshot + OCR** — Capture screen, extract text, add to memory
 - [ ] **Quick Note Widget** — Desktop/mobile widget for instant capture
 - [ ] **Voice Shortcut** — "Hey Nola, remember..."
@@ -469,7 +469,7 @@ Reality: Life doesn't stop when your laptop closes
 **Daily Presence:**
 - [ ] **Morning Briefing** — Wake up to: "Here's your day, what you forgot, what's due"
 - [ ] **System Tray/Menu Bar** — Always visible, one click away
-- [ ] **Daily Digest** — Optional email summary of what Nola learned
+- [ ] **Daily Digest** — Optional email summary of what Agent learned
 - [ ] **Idle Insights** — When quiet, surface patterns: "You've mentioned X 5 times this week"
 - [ ] **Proactive Nudges** — "You haven't replied to Sarah in 3 days"
 
@@ -480,13 +480,13 @@ Reality: Life doesn't stop when your laptop closes
 - [ ] **Relationship Map** — Visual graph of people and connections
 
 **Data Sovereignty:**
-- [ ] **Full Export** — One click → ZIP of everything Nola knows
+- [ ] **Full Export** — One click → ZIP of everything Agent knows
 - [ ] **Scheduled Backups** — Automatic local backups
 - [ ] **Selective Delete** — "Forget everything about X"
 - [ ] **Privacy Mode** — Pause all learning temporarily
 
 **Zero-Friction Integrations:**
-- [ ] **RSS Feeds** — Add any feed, Nola summarizes
+- [ ] **RSS Feeds** — Add any feed, Agent summarizes
 - [ ] **ICS Calendars** — Subscribe to any public calendar
 - [ ] **Markdown Folder** — Point at Obsidian vault, instant indexing
 - [ ] **Bookmarks Import** — Browser bookmarks → knowledge graph
@@ -497,10 +497,10 @@ Reality: Life doesn't stop when your laptop closes
 ### Phase 16: Self-Tuning Architecture 🧬
 **Goal:** Fine-tune the 7B model on its own structure so it *knows* where its pieces are.
 
-**The Insight:** If Qwen 2.5 7B is fine-tuned on Nola's own documentation, thread schemas, and function signatures, it develops **structural self-awareness**. It doesn't just use the system — it *understands* the system.
+**The Insight:** If Qwen 2.5 7B is fine-tuned on the agent's own documentation, thread schemas, and function signatures, it develops **structural self-awareness**. It doesn't just use the system — it *understands* the system.
 
 - [ ] **Structure Documentation** — Generate training data from thread schemas
-- [ ] **Self-Reference Dataset** — "Where is identity stored?" → "Nola/idv2/"
+- [ ] **Self-Reference Dataset** — "Where is identity stored?" → "agent/idv2/"
 - [ ] **Function Mapping** — Model learns which functions do what
 - [ ] **Error Recovery Training** — Train on "this broke, here's how to fix it"
 - [ ] **Continuous Learning** — Periodic re-tune as structure evolves

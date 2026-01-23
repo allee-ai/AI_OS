@@ -1,6 +1,6 @@
 # Documentation Index
 
-All documentation for the AI_OS / Nola project.
+All documentation for the AI_OS / Agent project.
 
 ---
 
