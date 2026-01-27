@@ -196,10 +196,9 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 | Guide | Description |
 |-------|-------------|
 | [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
-| [**Developer Guide**](DEVELOPERS.md) | Build features, understand the code |
-| [**All Documentation**](docs/README.md) | Full documentation index |
-| [**Architecture**](agent/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, Hebbian linking) |
-| [**Contributing**](CONTRIBUTING.md) | Help build it |
+| [**Architecture**](docs/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, state) |
+| [**Research Paper**](docs/RESEARCH_PAPER.md) | The theory behind the design |
+| [**Contributing**](CONTRIBUTING.md) | How to help build it |
 
 ---
 

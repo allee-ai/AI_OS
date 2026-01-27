@@ -110,7 +110,7 @@ Work on model integration and cognitive architecture.
 - Design fine-tuning pipelines
 - Work on spread activation and memory consolidation
 
-**Start here:** `agent/subconscious/`, `agent/threads/`, `docs/vision/CORE_CONTRIBUTIONS.md`
+**Start here:** `agent/subconscious/`, `agent/threads/`, `docs/ARCHITECTURE.md`
 
 **Good issues:** [label:architecture](https://github.com/allee-ai/AI_OS/issues?q=is%3Aissue+is%3Aopen+label%3Aarchitecture)
 
@@ -125,7 +125,7 @@ Advise on the theoretical foundations.
 - Help define metrics for behavioral consistency
 - Validate the "thread as brain region" metaphor
 
-**Start here:** `docs/vision/NEUROSCIENCE_VALIDATION.md`, `docs/specs/MEMORY_ARCHITECTURE.md`
+**Start here:** `docs/RESEARCH_PAPER.md`, `docs/ARCHITECTURE.md`
 
 ---
 
@@ -153,8 +153,8 @@ Small, focused PRs are easier to review. If you're doing something big, open an 
 ## Questions?
 
 - Open an issue with the `question` label
-- Check `docs/guides/HANDOFF.md` for architecture context
-- Read `docs/vision/AUTHOR_NOTE.md` for the philosophy
+- Check `docs/ARCHITECTURE.md` for architecture context
+- Read `docs/RESEARCH_PAPER.md` for the philosophy
 
 ---
 
