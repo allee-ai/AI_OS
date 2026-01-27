@@ -32,38 +32,24 @@ The LLM is the voice. The OS is the brain.
 
 ### Step 1: Download AI OS
 
-Open your terminal (on Mac: search "Terminal" in Spotlight) and run:
+You can download AI OS in two ways:
 
-```bash
-git clone https://github.com/allee-ai/AI_OS.git
-cd AI_OS
-```
+1. **From the Website:**
+   - Visit [https://allee-ai.com/download](https://allee-ai.com/download) and download the latest version for your operating system.
+   - Extract the downloaded file and open the folder.
 
-> **Don't have git?** Download the ZIP from [GitHub](https://github.com/allee-ai/AI_OS) → green "Code" button → "Download ZIP", then unzip and open that folder in terminal.
+2. **From GitHub:**
+   - Open your terminal (on Mac: search "Terminal" in Spotlight) and run:
 
-### Step 2: Configure Environment (Optional)
+     ```bash
+     git clone https://github.com/allee-ai/AI_OS.git
+     cd AI_OS
+     ```
 
-Copy the example environment file and customize if needed:
+### Step 2: Run AI OS
 
-```bash
-cp .env.example .env
-```
+Simply double-click `run.command` (on Mac/Linux) or `run.bat` (on Windows) in the downloaded folder. This script handles everything:
 
-> **Note:** The default settings work out of the box. Only edit `.env` if you want to add API keys for extended features (Kernel browser automation, Linear integration, etc.)
-
-### Step 3: Start AI OS
-
-**Mac/Linux:**
-```bash
-./start.sh
-```
-
-**Windows:**
-```cmd
-start.bat
-```
-
-That's it! The script handles everything:
 - ✅ Installs the LLM runtime (Ollama)
 - ✅ Starts the OS backend and chat interface
 - ✅ Opens your browser automatically

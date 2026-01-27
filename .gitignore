@@ -24,8 +24,11 @@ build/
 .env.*.local
 
 # VM deployment scripts (local-only)
+scripts/connect_vm_aios.sh
+scripts/install-vm.sh
 connect_vm_nola.sh
-*.command
+
+# *.command
 create_vm_desktop_app.sh
 *.app/
 

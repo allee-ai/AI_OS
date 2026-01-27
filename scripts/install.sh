@@ -26,10 +26,14 @@ mkdir -p agent/workspace
 
 # Check for the spiral icon and create app bundle
 echo "🎨 Setting up desktop icon..."
-if [ -f "aios-spiral.png" ]; then
-    ./create_icon_from_image.sh
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    if [ -f "aios-spiral.png" ]; then
+        ./create_icon_from_image.sh
+    fi
+    ./create_app_bundle.sh
+else
+    echo "   (Skipping macOS app bundle creation on non-Mac system)"
 fi
-./create_app_bundle.sh
 
 # Check dependencies
 echo ""
