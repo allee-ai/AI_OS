@@ -101,3 +101,5 @@ stringify/_archive/
 
 # Local archive (not tracked)
 _archive/
+*.db-shm
+*.db-wal

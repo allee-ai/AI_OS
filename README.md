@@ -81,36 +81,18 @@ AI: "TaskMaster? Or, one of your other projects {list}"
 
 ## Make It Yours
 
-### Name Your AI
+### Configure in the UI
 
-Edit `agent/Agent.json`:
+Everything is configurable directly from the dashboard.
 
-```json
-{
-  "name": "Friday",
-  "personality": "dry wit, competent, anticipates needs",
-  "greeting": "What do you need?"
-}
-```
+1.  **Customize Your Agent:** Click the **Agent Card** on the home screen to change its name, personality, and greeting (e.g., "Atlas", "Vega", or "Sarcastic Robot").
+2.  **Manage Identities:** Click **Identity** to update your profile.
+    *   **Automatic Setup:** Your primary user and machine ID profiles are pre-created.
+    *   **Family & Trust:** Add family members and assign trust levels.
+    *   **Context Awareness:** If a family member says hello, the Agent remembers them and understands their relationship to you.
+3.  **Create Tools:** Navigate to **Agent → Tools** to build custom web tools or edit existing capabilities using the simple form generator.
 
-The name is just a key. Call it Jarvis, Friday, whatever. The OS doesn't care.
-
-### Tell It About Yourself
-
-Edit `agent/identity_thread/userID/user.json`:
-
-```json
-{
-  "name": "Alex",
-  "occupation": "software developer",
-  "interests": ["gaming", "cooking", "hiking"],
-  "preferences": {
-    "communication_style": "direct, no fluff"
-  }
-}
-```
-
-It's still prompting — just organized. **Hybrid human/program prompting.** You define who you are, the OS decides what's relevant right now, and together they build context the LLM can actually use. Easier for you to manage. Easier for the LLM to understand.
+It's prompt engineering, but organized. You define who you (and your agent) are, and the OS handles the context window.
 
 ---
 
@@ -138,7 +120,12 @@ It's still prompting — just organized. **Hybrid human/program prompting.** You
 
 ### Can I use a different AI model?
 
-Yes! Edit `.env` and change `OLLAMA_MODEL` to any model Ollama supports. Try `llama3.1` for more capabilities or `phi3` for faster responses.
+**Yes!** You can switch chat models instantly.
+
+*   **Chat Models:** Use the model selector in the chat interface to switch between models or click **"Add Model"** to download new ones (like Llama 3, Phi-3, Mistral). The AI OS architecture works with any model you choose for conversation. 
+*   **Import History:** Click **Import**, choose your export type, and port your conversations from other models directly into AI OS.
+
+> **Pro Tip for Developers:** You can override the system architecture models by editing the `.env` file if you want to experiment with different backends for specific modules.
 
 ### Something broke!
 
@@ -155,7 +142,8 @@ Yes! Edit `.env` and change `OLLAMA_MODEL` to any model Ollama supports. Try `ll
 |----------|-----------|------------|
 | **Context** | "Who am I talking to?" | Knows your name, job, projects, preferences |
 | **Continuity** | Every conversation starts fresh | Picks up where you left off, even weeks later |
-| **Consistency** | Personality drifts with prompting | Identity is structural, can't be manipulated |
+| **Consistency** | Personality drifts with prompting | Identity is structural, 
+| **Action** | Locked in chat box | Builds web tools, manages feeds, drafts in native apps (Email, Discord, Slack) |can't be manipulated |
 | **Learning** | Same quality forever | Gets better as it learns your patterns |
 
 ---
