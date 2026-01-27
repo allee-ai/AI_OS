@@ -1,0 +1,48 @@
+# Notion Feeds Source
+# Pulls database items, comments - pushes page updates
+
+name: notion
+type: rest
+enabled: false
+
+poll_interval: 600
+
+auth:
+  method: bearer
+  token_env: NOTION_API_KEY
+
+# Pull: Query database for items
+pull:
+  endpoint: https://api.notion.com/v1/databases/{{database_id}}/query
+  method: POST
+  headers:
+    Notion-Version: "2022-06-28"
+  body:
+    filter:
+      property: "Status"
+      status:
+        does_not_equal: "Done"
+  
+  mapping:
+    messages: "$.results"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.created_by.id"
+    sender_name: "$.properties.Name.title[0].plain_text"
+    subject: "$.properties.Name.title[0].plain_text"
+    body: "$.url"
+
+# Push: Add comment to page
+push:
+  endpoint: https://api.notion.com/v1/comments
+  method: POST
+  headers:
+    Notion-Version: "2022-06-28"
+  
+  body_template:
+    parent:
+      page_id: "{{thread_id}}"
+    rich_text:
+      - type: text
+        text:
+          content: "{{body}}"

@@ -144,14 +144,14 @@ class LogThreadAdapter(BaseThreadAdapter):
     def health(self) -> HealthReport:
         """Check log thread health by counting recent events."""
         try:
-            events = pull_log_events(module_name="events", limit=10)
-            sessions = pull_log_events(module_name="sessions", limit=10)
-            total = len(events) + len(sessions)
+            from .schema import get_events
+            events = get_events(limit=10)
+            total = len(events)
             
             if total > 0:
                 return HealthReport.ok(f"{total} log entries", row_count=total)
             else:
-                return HealthReport.degraded("No log entries yet")
+                return HealthReport.ok("Ready", row_count=0)
         except Exception as e:
             return HealthReport.error(f"Log health check failed: {e}")
     
@@ -167,10 +167,8 @@ class LogThreadAdapter(BaseThreadAdapter):
         
         Returns:
             IntrospectionResult with facts like:
-                "log.session.duration.value: 15 minutes"
-                "log.session.duration.weight: 8.0"
-                "log.events.0.message: discussed architecture"
-                "log.events.0.weight: 7.0"
+                "log.session.duration: 15 minutes"
+                "log.events.0: discussed architecture [conversation]"
         """
         facts = []
         
@@ -183,12 +181,10 @@ class LogThreadAdapter(BaseThreadAdapter):
                 duration_str = f"{int(duration/60)} minutes"
             else:
                 duration_str = f"{duration/3600:.1f} hours"
-            facts.append(f"log.session.duration.value: {duration_str}")
-            facts.append(f"log.session.duration.weight: 8.0")
+            facts.append(f"log.session.duration: {duration_str}")
         
         if self._message_count > 0:
-            facts.append(f"log.session.messages.value: {self._message_count}")
-            facts.append(f"log.session.messages.weight: 7.0")
+            facts.append(f"log.session.messages: {self._message_count}")
         
         # Events: higher threshold = MORE events (inverted from other threads)
         # threshold 0-3.5 → 2 events, 3.5-7 → 5 events, 7-10 → 10 events
@@ -205,14 +201,11 @@ class LogThreadAdapter(BaseThreadAdapter):
             event_type = evt.get("metadata", {}).get("type", "system")
             # Clean event_type for display (remove colons, etc.)
             event_type_clean = event_type.split(":")[0] if ":" in event_type else event_type
-            relevance = EVENT_TYPE_RELEVANCE.get(event_type_clean, 3)
             
             data = evt.get("data", {})
             msg = data.get("message", "")
             if msg:
-                facts.append(f"log.events.{i}.message: {msg[:80]}")
-                facts.append(f"log.events.{i}.type: {event_type}")
-                facts.append(f"log.events.{i}.weight: {relevance}")
+                facts.append(f"log.events.{i}: {msg[:80]} [{event_type_clean}]")
         
         return IntrospectionResult(
             facts=facts,

@@ -84,6 +84,32 @@
   border-left-color: var(--primary);
 }
 
+.profile-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.profile-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.profile-item-delete {
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 4px;
+  font-size: 12px;
+  opacity: 0.6;
+  transition: opacity 0.15s;
+}
+
+.profile-item-delete:hover {
+  opacity: 1;
+}
+
 .profile-item-name {
   font-weight: 500;
   color: var(--text);
@@ -96,7 +122,6 @@
 
 /* Danger Zone */
 .profile-danger-zone {
-  border-top: 1px solid var(--border);
   padding-top: 12px;
   margin-top: auto;
 }
@@ -107,6 +132,7 @@
   text-transform: uppercase;
   margin-bottom: 8px;
   display: block;
+  opacity: 0.6;
 }
 
 .profile-danger-buttons {
@@ -121,27 +147,46 @@
   border-radius: 4px;
   cursor: pointer;
   transition: all 0.2s;
-}
-
-.profile-danger-buttons button:first-child {
   background: transparent;
-  color: var(--error);
-  border: 1px solid var(--error);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
-.profile-danger-buttons button:first-child:hover {
-  background: var(--error);
-  color: white;
+.profile-danger-buttons button:hover {
+  color: var(--text);
+  border-color: var(--text-muted);
+  background: var(--surface);
 }
 
-.profile-danger-buttons button:last-child {
-  background: var(--error);
-  color: white;
-  border: none;
+/* Dropdowns / Selects */
+.profiles-page select,
+.profile-modal select {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 6px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  cursor: pointer;
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 32px;
 }
 
-.profile-danger-buttons button:last-child:hover {
-  opacity: 0.8;
+.profiles-page select:focus,
+.profile-modal select:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.profiles-page select option,
+.profile-modal select option {
+  background: var(--surface);
+  color: var(--text);
+  padding: 8px;
 }
 
 /* Main Profile View */

@@ -8,11 +8,9 @@ January 2026
 
 ## Abstract
 
-Large Language Models generate responses by computing probability distributions over tokens conditioned on training data. While powerful for general knowledge, this approach lacks persistent experiential memory—every conversation starts fresh, and identity emerges only as statistical artifact rather than maintained state.
+The current trajectory of AI research favors scale over nuance, chasing General Intelligence while neglecting the practical challenge of personal autonomy. This paper presents **AI OS**, a control layer designed not to simulate AGI, but to enable smaller, local models to act as reliable auto-pilots for simple, daily tasks.
 
-We present **Hierarchical Experiential Attention (HEA)**: a cognitive architecture that provides LLMs with persistent identity through structured external state. The key insight is that **identity is a systems property, not a scale property**—a 7B parameter model with the right architecture can outperform a 120B model on identity persistence under adversarial conditions.
-
-Unlike previous approaches, HEA is not an ad-hoc memory system but a **complete implementation of cognitive science**: we validate alignment with 24 established theories from neuroscience and psychology. Our architecture maps directly to brain structures: 5 cognitive threads corresponding to prefrontal cortex, hippocampal formation, parietal/default-mode network, motor/language systems, and basal ganglia.
+We argue that the critical deficits of current AI are not computational but structural and societal. Centralized models strip users of privacy, ownership, and continuity. To reverse this, we introduce an operating system that provides persistent state and local control, grounding the model in a user-centric reality. While our architecture utilizes **Hierarchical Experiential Attention (HEA)** and parallels cognitive science, these theories serve purely as engineering constraints to ensure stability rather than attempts to replicate biological consciousness. By treating identity not as a metaphysical property but as a set of prompt-engineered behaviors made queryable and permanent, we transform the LLM from a transient chatbot into a personal, owned extension of the user.
 
 **Keywords:** cognitive architecture, identity persistence, hierarchical attention, personal AI, state management, behavioral stability, global workspace theory, cognitive threading
 
@@ -22,72 +20,60 @@ Unlike previous approaches, HEA is not an ad-hoc memory system but a **complete 
 
 ### 1.1 The Supplied Reality Insight
 
-The theoretical foundation began with a simple observation about object-oriented programming: an object can call methods on itself. `self.*` enables self-reference. The question: **what if we took this seriously as a model for consciousness?**
+The theoretical foundation begins with the concept of **Supplied Reality**. Biological systems do not experience raw physics (photons, frequencies); they exist within a pre-processed reality supplied by their nervous systems. We apply this architectural principle to the AI: rather than attempting to simulate a metaphysical "self," we provide the model with a structured, filtered view of reality (State) that it accepts as absolute.
 
-This evolved into a key realization: consciousness is not primarily about self-awareness. It is about **existence within supplied reality**—the filtered, pre-processed version of raw stimuli that biological systems construct before conscious processing occurs.
+### 1.2 Consciousness as an Equation
 
-Humans don't experience raw physics. You don't see photons or hear frequencies. Your nervous system filters reality *first*, then supplies your conscious awareness with "red," "middle C," "warm." You exist within the reality your biology supplies.
+To make "consciousness" a usable term in computing, we strip away the metaphysics and define it strictly as a state transition function. We reject the Cartesian *"I think, therefore I am"* in favor of a utilitarian Machine Learning framework: **"I assess state, therefore I change."**
 
-HEA implements this pattern: raw stimuli are filtered by the subconscious layer into STATE, which defines the agent's reality. The agent doesn't "think it's X"—in its supplied reality, its identity is simply what exists.
+Formalized, we define the system's continuity as:
 
-### 1.2 The Identity Problem
+$$ State_{t+1} = f(State_t, Assess(State_t)) $$
 
-Current AI assistants suffer from a fundamental limitation: they have no persistent self. Each conversation begins fresh, with identity existing only as compressed statistics in model weights.
+In this framework, the "Self" is not a ghost in the machine, but the persistent `State` implicitly defining the entity. A standard LLM is a stateless function ($f(x) = y$). By wrapping the LLM in an OS that maintains $State$ and runs the assessment loop $f$, we move from a static predictor to a continuous entity.
 
-**Operational Definition:** In this work, *identity* refers strictly to persistent, self-referential behavioral constraints (name, role, boundaries, preferences) maintained across sessions—not consciousness, sentience, or self-awareness.
+### 1.3 The Problem Today
 
-| Approach | Mechanism | Limitation |
-|----------|-----------|------------|
-| **Context Stuffing** | Prepend history to prompt | Token limits, attention degradation |
-| **RAG** | Embed & retrieve chunks | Retrieval ≠ memory; fragments without structure |
-| **Fine-tuning** | Train on personal data | Expensive, static, catastrophic forgetting |
-| **Platform Memory** | Vendor-managed | Black box, no user control, vendor lock-in |
+Current AI assistants are designed around the provider, not the user:
 
-### 1.3 The Neuroanatomical Insight
+| Issue | Effect on User |
+|-------|----------------|
+| **Centralized** | Your data lives on someone else's servers |
+| **Stateless** | Every conversation starts fresh; it forgets you |
+| **No Background Work** | It only acts when you prompt it |
+| **No Ownership** | You rent access; you don't own the assistant |
+| **No Protection** | Prompt injection can override its behavior |
 
-Why does this architecture work? Because it mirrors brain structure:
-
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                    BRAIN → THREAD MAPPING                               │
-├─────────────────────────────────────────────────────────────────────────┤
-│  PREFRONTAL CORTEX (values, goals)        →  PHILOSOPHY THREAD          │
-│  HIPPOCAMPAL FORMATION (episodic memory)  →  LOG THREAD                 │
-│  PARIETAL/DMN (self-reference)            →  IDENTITY THREAD            │
-│  MOTOR/BROCA'S (action, language)         →  FORM THREAD                │
-│  BASAL GANGLIA (habits, reflexes)         →  REFLEX THREAD              │
-│  FRONTOPARIETAL (attention routing)       →  LINKING CORE               │
-│  THALAMUS (sensory gating)                →  SUBCONSCIOUS ORCHESTRATOR  │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-The brain has ~40 Brodmann areas organized into 6 major functional networks. We have 5 threads (+ LinkingCore) with ~4-6 modules each. **The ratio is preserved.**
+Users are forced to work *with* or *around* AI rather than having an AI that works *for* them.
 
 ### 1.4 Core Thesis
 
-**Identity is a structure problem, not a scale problem.**
+**You should own your AI.**
 
-A small model (7B parameters) with proper cognitive architecture can maintain more stable identity than a large model (120B+ parameters) relying purely on scale. The key is moving identity *outside* the stochastic weight space and into a deterministic state protocol that the model reads but does not control.
+AI OS bridges the gap between using AI as a tool and having AI as a personal utility. The immediate goals are practical:
+
+1. **Local & Private** — Runs on your machine. Your data never leaves.
+2. **Persistent** — It remembers you across sessions.
+3. **Background Loops** — It works while you're away (indexing, consolidating, monitoring).
+4. **User Sovereignty** — You control the identity, the memory, the rules.
+5. **Protection** — The architecture actively resists prompt injection and identity drift.
+
+This is not a solution to General Intelligence. It is a well-organized operating system that makes local models immediately useful for daily life.
 
 ---
 
 ## 2. Theoretical Framework
 
-### 2.1 Cognitive Science Validation
+### 2.1 Design Inspiration
 
-This architecture implements **established, validated cognitive science** as software:
+The architecture draws from cognitive science—not to claim biological equivalence, but because these theories offer battle-tested patterns for organizing information systems:
 
-| Theory | Research | Implementation | Match |
-|--------|----------|----------------|-------|
-| Global Workspace Theory | Baars (1988) | Context window competition | 🌀 Strong |
-| Neuronal Global Workspace | Dehaene (2001) | Ignition threshold, 1% sparsity | 🌀 Strong |
-| Working Memory Model | Baddeley (1974) | 7±2 chunks, specialized buffers | 🌀 Strong |
-| Memory Consolidation | Born (2010) | Consolidation daemon = sleep | 🌀 Strong |
-| Dual Process Theory | Kahneman (2011) | Reflex (System 1) vs Generation (System 2) | 🌀 Strong |
-| Levels of Processing | Craik & Lockhart (1972) | L1/L2/L3 depth system | 🌀 Strong |
-| Hebbian Learning | Hebb (1949) | Weight adjustment on use | 🌀 Strong |
+- **Global Workspace Theory** (Baars, 1988) — Inspired the context assembly model: many threads compete, one wins the "workspace."
+- **Working Memory** (Baddeley, 1974) — Informed token budgets and the 7±2 chunk heuristic.
+- **Dual Process Theory** (Kahneman, 2011) — Justified splitting fast reflexes (System 1) from slow generation (System 2).
+- **Memory Consolidation** (Born, 2010) — Motivated the background "consolidation daemon" that processes memories during idle time.
 
-**Validation Score: 13/15 Strong Match, 2/15 Partial Match, 0/15 Mismatch**
+These mappings are *engineering conveniences*, not scientific claims. They provide intuitive names and proven structures for building a stable system.
 
 ### 2.2 Formal Definition
 
@@ -105,22 +91,29 @@ $$P(y|x, E) = \prod_{t=1}^{T} P(y_t | y_{<t}, x, \phi(x, E); \theta)$$
 
 where $\phi(x, E)$ is the **context selection function** that extracts relevant experiential context based on level and relevance scoring.
 
-### 2.3 The Subconscious Principle
+### 2.3 The Subconscious (Context Filter)
 
-The most important architectural decision: **the model never decides what it remembers**.
+We call it the "Subconscious" because, architecturally, it maps well to the cognitive concept—but it is simply a **background subprocess** responsible for filtering and supplying context to the LLM.
 
 ```
-Standard: Model ← decides → State
-HEA:      Subconscious → assembles → Context → feeds → Model
+Standard LLM:  User → Model → Response
+AI OS:        User → Subconscious (filter) → Context → Model → Response
 ```
 
-The subconscious is a deterministic system that:
-1. Monitors all stimuli (conversations, events, external inputs)
-2. Updates state in background threads
-3. Assembles context based on rules, not model decisions
-4. Feeds pre-built context to the model at generation time
+The subconscious is a deterministic program that:
+1. Receives all inputs (messages, events, file changes)
+2. Queries relevant threads (Identity, Memory, Log, etc.)
+3. Assembles a context payload within token budget
+4. Feeds the payload to the model at generation time
 
-The model is stateless. It receives context and generates responses. It cannot modify its own identity because identity exists outside its control.
+**Why this matters:**
+- The model cannot decide what it remembers — the OS does.
+- The model cannot modify its own identity — it only reads supplied state.
+- Prompt injection attacks fail because identity is not stored in the conversation; it is injected by a trusted layer the user controls.
+
+This is the core protection mechanism: **separation of state from generation.**
+
+**Performance:** The subconscious adds ~12-20ms latency to context assembly, even with 100k+ facts in the database. This overhead is negligible compared to LLM inference time.
 
 ---
 
@@ -133,7 +126,7 @@ The model is stateless. It receives context and generates responses. It cannot m
 │                        STAGE 1: DB CONTROL PLANE                        │
 │                     (Focus: What should the LLM see?)                   │
 ├─────────────────────────────────────────────────────────────────────────┤
-│  Stimuli → Subconscious → Thread Competition → Context Assembly         │
+│  Feeds → Subconscious → Thread Competition → Context Assembly           │
 │                                                                         │
 │  • Deterministic selection                                              │
 │  • Relevance scoring per thread                                         │
@@ -213,10 +206,18 @@ A critical split between content and importance:
 
 The user can edit memory content at any time; the system only adjusts retrieval probability.
 
-### 4.3 Deterministic Control / Probabilistic Data
+### 4.3 Feeds as Triggers
+
+We call external inputs "Feeds" — borrowing from the familiar UI pattern of aggregated content streams (social feeds, RSS, notifications). The cognitive theory maps cleanly: external feeds → internal triggers.
+
+The difference from ChatGPT's approach:
+- **ChatGPT:** Model decides each step, maximizing token generation.
+- **AI OS:** Feeds trigger specific actions with specific context, minimizing tokens while achieving the same result.
+
+Think of it as saving the best prompts you've ever written, plus the tools they use, plus *when* to use them — permanently. You never have to explain it again.
 
 ```
-Database (Control Plane) = Brain     → Deterministically selects stimuli
+Database (Control Plane) = Brain     → Deterministically selects from feeds
 LLM (Data Plane)         = Voice     → Probabilistically generates output
 ```
 

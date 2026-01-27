@@ -1,0 +1,52 @@
+# HubSpot Feeds Source
+# Pulls contacts/deals, pushes notes
+
+name: hubspot
+type: rest
+enabled: false
+
+poll_interval: 300
+
+auth:
+  method: bearer
+  token_env: HUBSPOT_ACCESS_TOKEN
+
+# Pull: Get recent contacts
+pull:
+  endpoint: https://api.hubapi.com/crm/v3/objects/contacts/search
+  method: POST
+  body:
+    sorts:
+      - propertyName: lastmodifieddate
+        direction: DESCENDING
+    limit: 20
+    properties:
+      - firstname
+      - lastname
+      - email
+      - notes_last_updated
+  
+  mapping:
+    messages: "$.results"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.properties.email"
+    sender_name: "$.properties.firstname"
+    subject: "$.properties.lastname"
+    body: "$.properties.email"
+
+# Push: Create note on contact
+push:
+  endpoint: https://api.hubapi.com/crm/v3/objects/notes
+  method: POST
+  
+  body_template:
+    properties:
+      hs_note_body: "{{body}}"
+      hs_timestamp: "{{timestamp}}"
+    associations:
+      - to:
+          id: "{{to}}"
+        types:
+          - associationCategory: HUBSPOT_DEFINED
+            associationTypeId: 202

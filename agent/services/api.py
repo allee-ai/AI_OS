@@ -457,9 +457,9 @@ async def parse_export(upload_id: str = Form(...), platform: Optional[str] = For
         
         project_root = Path(__file__).resolve().parents[2]
         workspace_path = project_root / "workspace"
-        stimuli_path = project_root / "Stimuli"
+        feeds_path = project_root / "Feeds"
         
-        import_convos = ImportConvos(workspace_path, stimuli_path)
+        import_convos = ImportConvos(workspace_path, feeds_path)
         
         if not platform:
             parser = import_convos.detect_platform(export_path)
@@ -512,9 +512,9 @@ async def commit_import(
         
         project_root = Path(__file__).resolve().parents[2]
         workspace_path = project_root / "workspace"
-        stimuli_path = project_root / "Stimuli"
+        feeds_path = project_root / "Feeds"
         
-        import_convos = ImportConvos(workspace_path, stimuli_path)
+        import_convos = ImportConvos(workspace_path, feeds_path)
         result = await import_convos.import_conversations(
             export_path=export_path,
             platform=platform,

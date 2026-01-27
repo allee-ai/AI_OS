@@ -66,6 +66,11 @@ class IntrospectionResult:
     context_level: int = 2
     health: Optional[Dict[str, Any]] = None
     relevant_concepts: List[str] = field(default_factory=list)
+    # Thread metadata for STATE block
+    thread_name: str = ""
+    thread_description: str = ""
+    relevance_score: float = 0.0
+    fact_scores: Dict[str, float] = field(default_factory=dict)  # fact -> score
     
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dict for JSON/aggregation."""
@@ -76,6 +81,10 @@ class IntrospectionResult:
             "health": self.health,
             "relevant_concepts": self.relevant_concepts,
             "fact_count": len(self.facts),
+            "thread_name": self.thread_name,
+            "thread_description": self.thread_description,
+            "relevance_score": self.relevance_score,
+            "fact_scores": self.fact_scores,
         }
 
 
@@ -329,7 +338,7 @@ class BaseThreadAdapter:
           - Score 7-10: Tier 3 (Full facts with L1/L2/L3)
         
         Args:
-            query: The stimuli to score against
+            query: The feeds to score against
             context: Optional dict (unused, for backward compatibility)
         
         Returns:

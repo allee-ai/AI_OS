@@ -70,12 +70,18 @@ body {
 }
 
 .app-footer {
-  padding: 12px 24px;
-  text-align: center;
+  padding: 8px 24px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
   font-size: 0.75rem;
   color: var(--text-muted);
   border-top: 1px solid var(--border);
   background: var(--surface);
+}
+
+.app-footer p {
+  margin: 0;
 }
 
 /* Page wrapper for routed pages */

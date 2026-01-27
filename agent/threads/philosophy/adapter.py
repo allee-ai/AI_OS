@@ -66,10 +66,7 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
             row_count = len(rows)
             
             if row_count == 0:
-                return HealthReport.degraded(
-                    "No philosophy data found",
-                    row_count=0
-                )
+                return HealthReport.ok("Ready", row_count=0)
             
             return HealthReport.ok(
                 f"{row_count} principles",
@@ -132,8 +129,8 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         
         Returns:
             IntrospectionResult with facts like:
-                "philosophy.core.honesty.value: always direct"
-                "philosophy.core.honesty.weight: 9.5"
+                "philosophy.values.honesty: always direct"
+                "philosophy.principles.consent: never act without agreement"
         """
         facts = []
         relevant_concepts = []
@@ -162,18 +159,12 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         for f in all_facts:
             key = f.get('key', 'unknown')
             value = f.get(level_col) or f.get('l2_value', '')
-            weight = f.get('weight', 0.5)
             fact_type = (f.get('fact_type') or 'general').lower().replace(' ', '_')
-            profile_id = f.get('profile_id', 'agent.core')
-            
-            # Build path: philosophy.{profile_short}.{key}
-            profile_parts = profile_id.split('.')
-            profile_short = profile_parts[1] if len(profile_parts) >= 2 else profile_id
             
             if value:
-                path = f"philosophy.{profile_short}.{key}"
-                facts.append(f"{path}.value: {value}")
-                facts.append(f"{path}.weight: {weight}")
+                # Use fact_type as category: philosophy.values.honesty, philosophy.principles.consent
+                path = f"philosophy.{fact_type}.{key}"
+                facts.append(f"{path}: {value}")
         
         return IntrospectionResult(
             facts=facts,

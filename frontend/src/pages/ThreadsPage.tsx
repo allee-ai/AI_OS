@@ -419,7 +419,7 @@ export const ThreadsPage = () => {
               </div>
               {renderReadme()}
             </>
-          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'linking_core' && activeThread !== 'form' && activeThread !== 'reflex' ? (
+          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'philosophy' && activeThread !== 'linking_core' && activeThread !== 'form' && activeThread !== 'reflex' ? (
             <div className="empty-state">
               <p>No data in {activeThread}</p>
               <p className="muted">{threads[activeThread]?.message}</p>

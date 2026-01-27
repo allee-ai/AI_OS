@@ -11,10 +11,15 @@ Tables:
 """
 
 import sqlite3
+import threading
 from typing import List, Dict, Optional
 
 # Database connection from central location
 from data.db import get_connection
+
+# Thread-safe initialization lock
+_init_lock = threading.Lock()
+_initialized = False
 
 
 # ============================================================================
@@ -42,11 +47,8 @@ def init_profile_types(conn: Optional[sqlite3.Connection] = None) -> None:
     cur.execute("SELECT COUNT(*) FROM profile_types")
     if cur.fetchone()[0] == 0:
         defaults = [
-            ("self", 10, 3, True, "The AI itself"),
-            ("admin", 9, 3, True, "Primary user with full control"),
-            ("family", 7, 2, False, "Close family members"),
-            ("friend", 5, 2, False, "Friends and trusted contacts"),
-            ("acquaintance", 2, 1, False, "People you know casually"),
+            ("user", 10, 3, True, "Primary user"),
+            ("machine", 8, 2, True, "Host machine"),
         ]
         cur.executemany("""
             INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
@@ -82,10 +84,10 @@ def init_profiles(conn: Optional[sqlite3.Connection] = None) -> None:
     if "protected" not in columns:
         cur.execute("ALTER TABLE profiles ADD COLUMN protected BOOLEAN DEFAULT FALSE")
     
-    # Core protected profiles - exist by default, cannot be deleted from UI
+    # Core protected profiles
     core_profiles = [
-        ("self.agent", "self", "Agent", True),
-        ("user.primary", "admin", "User", True),
+        ("primary_user", "user", "Primary User", True),
+        ("machine", "machine", "Machine", True),
     ]
     for profile_id, type_name, display_name, protected in core_profiles:
         cur.execute("SELECT COUNT(*) FROM profiles WHERE profile_id = ?", (profile_id,))
@@ -118,14 +120,13 @@ def init_fact_types(conn: Optional[sqlite3.Connection] = None) -> None:
     cur.execute("SELECT COUNT(*) FROM fact_types")
     if cur.fetchone()[0] == 0:
         defaults = [
-            ("name", "Display name or identifier", 0.9),
-            ("birthday", "Date of birth", 0.5),
-            ("occupation", "Job or profession", 0.6),
-            ("location", "Where they live or work", 0.5),
-            ("preference", "Likes, dislikes, preferences", 0.4),
-            ("belief", "Values, opinions, worldview", 0.5),
-            ("relationship", "Connection to other profiles", 0.7),
+            ("name", "Display name", 0.9),
+            ("email", "Email address", 0.6),
+            ("location", "Location or timezone", 0.5),
+            ("occupation", "Job or role", 0.6),
             ("note", "Freeform notes", 0.3),
+            ("os", "Operating system", 0.5),
+            ("hardware", "Hardware specs", 0.4),
         ]
         cur.executemany("""
             INSERT INTO fact_types (fact_type, description, default_weight)
@@ -174,35 +175,55 @@ def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
     if "protected" not in columns:
         cur.execute("ALTER TABLE profile_facts ADD COLUMN protected BOOLEAN DEFAULT FALSE")
     
-    # Core fact keys for self.agent (values empty - user fills in)
-    agent_facts = [
-        ("self.agent", "name", "name", 1.0, True),
-        ("self.agent", "role", "occupation", 0.9, True),
-        ("self.agent", "personality", "preference", 0.8, False),
-        ("self.agent", "boundaries", "belief", 0.9, False),
-    ]
-    
-    # Core fact keys for user.primary (values empty - user fills in)  
+    # Preset empty facts for primary_user
     user_facts = [
-        ("user.primary", "name", "name", 1.0, True),
-        ("user.primary", "location", "location", 0.6, False),
-        ("user.primary", "occupation", "occupation", 0.6, False),
-        ("user.primary", "timezone", "preference", 0.5, False),
+        ("primary_user", "name", "name", 0.9),
+        ("primary_user", "email", "email", 0.6),
+        ("primary_user", "location", "location", 0.5),
+        ("primary_user", "occupation", "occupation", 0.6),
+        ("primary_user", "notes", "note", 0.3),
     ]
     
-    for profile_id, key, fact_type, weight, protected in agent_facts + user_facts:
+    # Preset empty facts for machine
+    machine_facts = [
+        ("machine", "name", "name", 0.8),
+        ("machine", "os", "os", 0.7),
+        ("machine", "hardware", "hardware", 0.5),
+        ("machine", "location", "location", 0.4),
+        ("machine", "notes", "note", 0.3),
+    ]
+    
+    for profile_id, key, fact_type, weight in user_facts + machine_facts:
         cur.execute(
             "SELECT COUNT(*) FROM profile_facts WHERE profile_id = ? AND key = ?",
             (profile_id, key)
         )
         if cur.fetchone()[0] == 0:
             cur.execute("""
-                INSERT INTO profile_facts (profile_id, key, fact_type, weight, protected)
-                VALUES (?, ?, ?, ?, ?)
-            """, (profile_id, key, fact_type, weight, protected))
+                INSERT INTO profile_facts (profile_id, key, fact_type, weight)
+                VALUES (?, ?, ?, ?)
+            """, (profile_id, key, fact_type, weight))
     
     if own_conn:
         conn.commit()
+
+
+def ensure_initialized() -> None:
+    """Thread-safe initialization - call this before any DB operation."""
+    global _initialized
+    if _initialized:
+        return
+    
+    with _init_lock:
+        if _initialized:  # Double-check after acquiring lock
+            return
+        conn = get_connection()
+        init_profile_types(conn)
+        init_profiles(conn)
+        init_fact_types(conn)
+        init_profile_facts(conn)
+        conn.commit()
+        _initialized = True
 
 
 # ============================================================================
@@ -217,9 +238,9 @@ def create_profile_type(
     description: str = ""
 ) -> None:
     """Create or update a profile type."""
+    ensure_initialized()
     conn = get_connection()
     cur = conn.cursor()
-    init_profile_types(conn)
     
     cur.execute("""
         INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
@@ -235,9 +256,9 @@ def create_profile_type(
 
 def get_profile_types() -> List[Dict]:
     """Get all profile types."""
-    conn = get_connection(readonly=False)
+    ensure_initialized()
+    conn = get_connection(readonly=True)
     cur = conn.cursor()
-    init_profile_types(conn)
     
     cur.execute("SELECT * FROM profile_types ORDER BY trust_level DESC")
     return [dict(row) for row in cur.fetchall()]
@@ -263,9 +284,9 @@ def delete_profile_type(type_name: str) -> bool:
 
 def create_profile(profile_id: str, type_name: str, display_name: str = "") -> None:
     """Create or update a profile."""
+    ensure_initialized()
     conn = get_connection()
     cur = conn.cursor()
-    init_profiles(conn)
     
     cur.execute("""
         INSERT INTO profiles (profile_id, type_name, display_name)
@@ -279,10 +300,10 @@ def create_profile(profile_id: str, type_name: str, display_name: str = "") -> N
 
 def get_profiles(type_name: str = None) -> List[Dict]:
     """Get all profiles, optionally filtered by type."""
-    conn = get_connection(readonly=False)
+    ensure_initialized()
+    conn = get_connection(readonly=True)
     try:
         cur = conn.cursor()
-        init_profiles(conn)
         
         if type_name:
             cur.execute("""
@@ -327,9 +348,9 @@ def delete_profile(profile_id: str) -> bool:
 
 def create_fact_type(fact_type: str, description: str = "", default_weight: float = 0.5) -> None:
     """Create or update a fact type."""
+    ensure_initialized()
     conn = get_connection()
     cur = conn.cursor()
-    init_fact_types(conn)
     
     cur.execute("""
         INSERT INTO fact_types (fact_type, description, default_weight)
@@ -343,9 +364,9 @@ def create_fact_type(fact_type: str, description: str = "", default_weight: floa
 
 def get_fact_types() -> List[Dict]:
     """Get all fact types."""
-    conn = get_connection(readonly=False)
+    ensure_initialized()
+    conn = get_connection(readonly=True)
     cur = conn.cursor()
-    init_fact_types(conn)
     
     cur.execute("SELECT * FROM fact_types ORDER BY fact_type")
     return [dict(row) for row in cur.fetchall()]
@@ -379,9 +400,9 @@ def push_profile_fact(
     weight: float = None
 ) -> None:
     """Push a fact to a profile with L1/L2/L3 verbosity levels."""
+    ensure_initialized()
     conn = get_connection()
     cur = conn.cursor()
-    init_profile_facts(conn)
     
     if weight is None:
         cur.execute("SELECT default_weight FROM fact_types WHERE fact_type = ?", (fact_type,))
@@ -411,10 +432,10 @@ def pull_profile_facts(
     limit: int = 100
 ) -> List[Dict]:
     """Pull facts, optionally filtered by profile and/or fact type."""
-    conn = get_connection(readonly=False)
+    ensure_initialized()
+    conn = get_connection(readonly=True)
     try:
         cur = conn.cursor()
-        init_profile_facts(conn)
         
         query = """
             SELECT pf.*, p.display_name, p.type_name, pt.trust_level
@@ -476,14 +497,26 @@ def delete_profile_fact(profile_id: str, key: str) -> bool:
 # ============================================================================
 
 def get_value_by_weight(fact: Dict, weight: float = None) -> str:
-    """Get appropriate verbosity level based on weight."""
+    """Get appropriate verbosity level based on weight.
+    
+    Falls back through l3 -> l2 -> l1 based on weight threshold.
+    If only l1 exists, always returns l1 regardless of weight.
+    """
+    l1 = fact.get('l1_value', '') or ''
+    l2 = fact.get('l2_value', '') or ''
+    l3 = fact.get('l3_value', '') or ''
+    
+    # If only l1 exists, use it
+    if l1 and not l2 and not l3:
+        return l1
+    
     w = weight if weight is not None else fact.get('weight', 0.5)
     if w >= 0.7:
-        return fact.get('l3_value', '') or fact.get('l2_value', '') or fact.get('l1_value', '')
+        return l3 or l2 or l1
     elif w >= 0.4:
-        return fact.get('l2_value', '') or fact.get('l1_value', '')
+        return l2 or l1
     else:
-        return fact.get('l1_value', '') or fact.get('l2_value', '')
+        return l1 or l2
 
 
 __all__ = [

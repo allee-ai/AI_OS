@@ -2,13 +2,13 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
+  background: var(--surface);
 }
 
 .table-header {
   padding: 16px 20px;
-  background: #252526;
-  border-bottom: 1px solid #333;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -18,7 +18,7 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #cccccc;
+  color: var(--text);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -27,8 +27,8 @@
 .level-badge {
   font-size: 11px;
   font-weight: 500;
-  background: #0e639c;
-  color: #ffffff;
+  background: var(--primary);
+  color: white;
   padding: 3px 8px;
   border-radius: 3px;
   margin-left: 8px;
@@ -36,8 +36,8 @@
 
 .record-count {
   font-size: 12px;
-  color: #858585;
-  background: #333;
+  color: var(--text-muted);
+  background: var(--bg);
   padding: 4px 8px;
   border-radius: 3px;
 }
@@ -57,7 +57,7 @@
   position: sticky;
   top: 0;
   z-index: 10;
-  background: #2d2d30;
+  background: var(--bg);
 }
 
 .hea-table th {
@@ -65,20 +65,20 @@
   text-align: left;
   font-size: 12px;
   font-weight: 600;
-  color: #858585;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  border-bottom: 2px solid #555;
-  background: #2d2d30;
+  border-bottom: 2px solid var(--border);
+  background: var(--bg);
 }
 
 .hea-table tbody tr {
-  border-bottom: 1px solid #333;
+  border-bottom: 1px solid var(--border);
   transition: background-color 0.2s;
 }
 
 .hea-table tbody tr:hover {
-  background: #252526;
+  background: var(--bg);
 }
 
 .module-column {
@@ -99,26 +99,26 @@
 .module-cell {
   padding: 12px 16px;
   vertical-align: top;
-  background: #252526;
-  border-right: 1px solid #333;
+  background: var(--bg);
+  border-right: 1px solid var(--border);
 }
 
 .module-name {
   font-weight: 600;
-  color: #4ec9b0;
+  color: var(--accent);
   font-size: 13px;
 }
 
 .module-key {
   font-size: 11px;
-  color: #dcdcaa;
+  color: var(--warning);
   margin-top: 2px;
   font-family: 'SF Mono', 'Monaco', monospace;
 }
 
 .module-meta {
   font-size: 10px;
-  color: #6a6a6a;
+  color: var(--text-muted);
   margin-top: 4px;
 }
 
@@ -146,33 +146,33 @@
   padding: 3px 8px;
   border-radius: 3px;
   font-weight: 500;
-  background: #3d5a80;
-  color: #98c1d9;
+  background: rgba(59, 130, 246, 0.2);
+  color: var(--accent);
 }
 
 .status-badge.ready {
-  background: #2d4f2d;
-  color: #6a9955;
+  background: rgba(16, 185, 129, 0.2);
+  color: var(--success);
 }
 
 .status-badge.updating {
-  background: #4f4d2d;
-  color: #dcdcaa;
+  background: rgba(245, 158, 11, 0.2);
+  color: var(--warning);
 }
 
 .status-badge.error {
-  background: #4f2d2d;
-  color: #f48771;
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
 }
 
 .status-badge.stale {
-  background: #4f3d2d;
-  color: #ce9178;
+  background: rgba(245, 158, 11, 0.15);
+  color: var(--warning);
 }
 
 .status-badge.unknown {
-  background: #333;
-  color: #858585;
+  background: var(--bg);
+  color: var(--text-muted);
 }
 
 .meta-cell {
@@ -183,20 +183,20 @@
 
 .timestamp {
   font-size: 11px;
-  color: #858585;
+  color: var(--text-muted);
 }
 
 .time-detail {
   font-size: 10px;
-  color: #6a6a6a;
+  color: var(--text-muted);
   margin-top: 2px;
 }
 
 /* Table Footer */
 .table-footer {
   padding: 12px 20px;
-  background: #252526;
-  border-top: 1px solid #333;
+  background: var(--bg);
+  border-top: 1px solid var(--border);
 }
 
 .footer-info {
@@ -207,7 +207,7 @@
 
 .info-item {
   font-size: 11px;
-  color: #858585;
+  color: var(--text-muted);
 }
 
 /* Scrollbar styling */
@@ -217,16 +217,16 @@
 }
 
 .hea-table-scroll::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: var(--surface);
 }
 
 .hea-table-scroll::-webkit-scrollbar-thumb {
-  background: #424242;
+  background: var(--border);
   border-radius: 5px;
 }
 
 .hea-table-scroll::-webkit-scrollbar-thumb:hover {
-  background: #4e4e4e;
+  background: var(--text-muted);
 }
 
 /* Empty state */
@@ -235,6 +235,6 @@
   display: block;
   padding: 32px;
   text-align: center;
-  color: #858585;
+  color: var(--text-muted);
   font-style: italic;
 }

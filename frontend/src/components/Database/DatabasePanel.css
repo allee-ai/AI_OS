@@ -2,14 +2,14 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
-  color: #cccccc;
+  background: var(--surface);
+  color: var(--text);
 }
 
 .database-header {
   padding: 16px 20px;
-  background: #252526;
-  border-bottom: 1px solid #333;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -27,13 +27,13 @@
   margin: 0;
   font-size: 16px;
   font-weight: 600;
-  color: #cccccc;
+  color: var(--text);
 }
 
 .refresh-button {
   background: none;
-  border: 1px solid #555;
-  color: #cccccc;
+  border: 1px solid var(--border);
+  color: var(--text);
   width: 28px;
   height: 28px;
   border-radius: 4px;
@@ -46,8 +46,8 @@
 }
 
 .refresh-button:hover:not(:disabled) {
-  background: #2a2a2a;
-  border-color: #666;
+  background: var(--bg);
+  border-color: var(--text-muted);
 }
 
 .refresh-button:disabled {
@@ -71,7 +71,7 @@
 
 .context-level-selector label {
   font-size: 12px;
-  color: #858585;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -83,9 +83,9 @@
 
 .level-button {
   padding: 6px 12px;
-  background: #333;
-  border: 1px solid #555;
-  color: #cccccc;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
   border-radius: 4px;
   cursor: pointer;
   font-size: 12px;
@@ -95,19 +95,19 @@
 }
 
 .level-button:hover {
-  background: #3a3a3a;
-  border-color: #666;
+  background: var(--surface);
+  border-color: var(--text-muted);
 }
 
 .level-button.active {
-  background: #0e639c;
-  border-color: #1177bb;
-  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
 }
 
 .level-description {
   font-size: 11px;
-  color: #6a9955;
+  color: var(--success);
   font-style: italic;
 }
 
@@ -118,9 +118,9 @@
 
 .thread-button {
   padding: 6px 12px;
-  background: #333;
-  border: 1px solid #555;
-  color: #cccccc;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  color: var(--text);
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -128,14 +128,14 @@
 }
 
 .thread-button:hover {
-  background: #3a3a3a;
-  border-color: #666;
+  background: var(--surface);
+  border-color: var(--text-muted);
 }
 
 .thread-button.active {
-  background: #0e639c;
-  border-color: #1177bb;
-  color: #ffffff;
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
 }
 
 .database-content {
@@ -152,14 +152,14 @@
   justify-content: center;
   height: 100%;
   gap: 16px;
-  color: #858585;
+  color: var(--text-muted);
 }
 
 .spinner {
   width: 40px;
   height: 40px;
-  border: 3px solid #333;
-  border-top-color: #0e639c;
+  border: 3px solid var(--border);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
@@ -176,16 +176,16 @@
   justify-content: center;
   height: 100%;
   gap: 16px;
-  color: #f48771;
+  color: var(--error);
   padding: 20px;
   text-align: center;
 }
 
 .error-state button {
   padding: 8px 16px;
-  background: #0e639c;
+  background: var(--primary);
   border: none;
-  color: #ffffff;
+  color: white;
   border-radius: 4px;
   cursor: pointer;
   font-size: 13px;
@@ -193,7 +193,7 @@
 }
 
 .error-state button:hover {
-  background: #1177bb;
+  background: var(--primary-light);
 }
 
 /* Empty state */
@@ -202,6 +202,6 @@
   align-items: center;
   justify-content: center;
   height: 100%;
-  color: #858585;
+  color: var(--text-muted);
   font-style: italic;
 }

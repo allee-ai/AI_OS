@@ -71,7 +71,7 @@ def init_convos_tables():
             timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             user_message TEXT,
             assistant_message TEXT,
-            stimuli_type TEXT,
+            feed_type TEXT,
             context_level INTEGER DEFAULT 0,
             metadata_json TEXT,
             FOREIGN KEY (convo_id) REFERENCES convos(id) ON DELETE CASCADE
@@ -132,7 +132,7 @@ def add_turn(
     session_id: str,
     user_message: str,
     assistant_message: str,
-    stimuli_type: Optional[str] = None,
+    feed_type: Optional[str] = None,
     context_level: int = 0,
     metadata: Optional[Dict] = None,
 ) -> int:
@@ -144,7 +144,7 @@ def add_turn(
         session_id: Conversation identifier
         user_message: What the user said
         assistant_message: What the assistant responded
-        stimuli_type: Type of stimulus (user, scheduled, system, etc.)
+        feed_type: Type of stimulus (user, scheduled, system, etc.)
         context_level: 0=none, 1=recent, 2=full
         metadata: Optional metadata dict
     
@@ -172,9 +172,9 @@ def add_turn(
     # Add the turn
     metadata_json = json.dumps(metadata) if metadata else None
     cur.execute("""
-        INSERT INTO convo_turns (convo_id, turn_index, user_message, assistant_message, stimuli_type, context_level, metadata_json)
+        INSERT INTO convo_turns (convo_id, turn_index, user_message, assistant_message, feed_type, context_level, metadata_json)
         VALUES (?, ?, ?, ?, ?, ?, ?)
-    """, (convo_id, turn_index, user_message, assistant_message, stimuli_type, context_level, metadata_json))
+    """, (convo_id, turn_index, user_message, assistant_message, feed_type, context_level, metadata_json))
     
     # Update conversation metadata
     cur.execute("""
@@ -217,7 +217,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
     
     # Get turns
     cur.execute("""
-        SELECT turn_index, timestamp, user_message, assistant_message, stimuli_type, context_level, metadata_json
+        SELECT turn_index, timestamp, user_message, assistant_message, feed_type, context_level, metadata_json
         FROM convo_turns WHERE convo_id = ? ORDER BY turn_index
     """, (convo_id,))
     
@@ -227,7 +227,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
             "timestamp": turn_row[1],
             "user": turn_row[2],
             "assistant": turn_row[3],
-            "stimuli_type": turn_row[4],
+            "feed_type": turn_row[4],
             "context_level": turn_row[5],
         }
         if turn_row[6]:

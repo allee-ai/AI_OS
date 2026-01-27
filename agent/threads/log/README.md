@@ -6,24 +6,23 @@
 
 ---
 
-## Necessity
+## Purpose
 
 Log provides temporal awareness — a timeline of events, sessions, and patterns. Unlike other threads that store "what is true", Log stores "what has occurred". This is how Agent knows "we talked about this yesterday" or "you've been working for 2 hours."
 
 ---
 
-## Backend
+## Database Schema
 
-### Database Tables
+### Tables
 
-| Table | Location | Purpose |
-|-------|----------|---------|
-| `unified_events` | `schema.py:86` | Central event timeline |
-| `log_events` | Module table | System events (errors, starts) |
-| `log_sessions` | Module table | Conversation sessions |
-| `log_temporal` | Module table | Time-based patterns |
+| Table | Purpose |
+|-------|---------|
+| `unified_events` | Central event timeline |
+| `log_events` | System events (errors, starts) |
+| `log_sessions` | Conversation sessions |
 
-### Schema: unified_events
+### unified_events
 
 ```sql
 CREATE TABLE unified_events (
@@ -39,30 +38,27 @@ CREATE TABLE unified_events (
 )
 ```
 
-### Core Functions
+---
 
-| Function | Location | Purpose |
-|----------|----------|---------|
-| `log_event()` | `schema.py:111` | Log event to unified timeline |
-| `get_events()` | `schema.py:172` | Query events with filters |
-| `pull_log_events()` | `schema.py:1278` | Pull by recency + weight |
-| `init_event_log_table()` | `schema.py:76` | Initialize tables |
+## Adapter Methods
 
-### Adapter
-
-| Method | Location | Purpose |
-|--------|----------|---------|
-| `get_data()` | `adapter.py:62` | Get events by recency level |
-| `start_session()` | `adapter.py:80` | Start conversation session |
-| `end_session()` | `adapter.py:99` | End conversation session |
-| `log_message()` | `adapter.py:120` | Log a conversation message |
-| `get_session_duration()` | `adapter.py:140` | Get time since session start |
+| Method | Purpose |
+|--------|---------|
+| `get_data(level, limit)` | Get events by recency level |
+| `start_session()` | Start a new conversation session |
+| `log_event(event_type, source, message, weight)` | Log a system event |
+| `record_message()` | Increment message count for session |
+| `get_session_duration()` | Get current session duration in seconds |
+| `get_recent_events(limit)` | Get recent events by timestamp |
+| `get_recent_sessions(limit)` | Get recent sessions |
+| `introspect(context_level, query, threshold)` | Build STATE block contribution |
+| `health()` | Health check with event counts |
 
 ---
 
 ## Context Levels (Recency-Based)
 
-Log uses **recency**, not depth:
+Log uses **recency**, not depth. Levels determine how far back to look:
 
 | Level | Events | Use Case |
 |-------|--------|----------|
@@ -87,37 +83,43 @@ LOG_LIMITS = {1: 10, 2: 100, 3: 1000}
 | `system` | 2 | System events (background) |
 | `activation` | 1 | Spread activation (technical) |
 
-Defined in `adapter.py:35`:
-```python
-EVENT_TYPE_RELEVANCE = {
-    "convo": 8,
-    "memory": 7,
-    "user_action": 6,
-    "file": 4,
-    "system": 2,
-    "activation": 1
-}
+---
+
+## Output Format
+
+Facts are formatted with dot notation for the STATE block:
+
+```
+log.session.duration: 15 minutes
+log.session.messages: 8
+log.events.0: discussed architecture [conversation]
+log.events.1: user opened settings [user_action]
+log.events.2: file saved: notes.md [file]
 ```
 
 ---
 
-## Frontend
+## Integration Points
 
-| Component | Location | Status |
-|-----------|----------|--------|
-| Log events table | `ThreadsPage.tsx` | 🌀 Done |
-| Session viewer | `ThreadsPage.tsx` | 🌀 Done |
-
-**Features**:
-- 🌀 View event timeline
-- 🌀 Filter by event type
-- 🌀 Session tracking
-- ⬜ Timeline visualization
-- ⬜ Pattern detection UI
+| Thread | Integration |
+|--------|-------------|
+| **Subconscious** | Calls `introspect()` to build STATE block |
+| **Identity** | Session tracks who's talking |
+| **Linking Core** | Events trigger concept co-occurrence |
+| **Philosophy** | Can track ethical decisions over time |
 
 ---
 
 ## Weight Semantics
+
+| Weight | Meaning | Examples |
+|--------|---------|----------|
+| 0.8+ | Important events | User messages, errors |
+| 0.5-0.7 | Standard events | System actions |
+| 0.3-0.5 | Background events | Health checks |
+| <0.3 | Technical events | Activation patterns |
+
+Higher weight = more likely to surface in context.
 
 Weight represents **significance**, not permanence:
 

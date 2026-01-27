@@ -59,6 +59,7 @@ pids/
 *.sqlite
 *.sqlite3
 data/db/*.db
+
 # But allow demo database (ships pre-populated)
 !data/db/state_demo.db
 
@@ -79,7 +80,7 @@ temp/
 Thumbs.db
 
 # Conversation data (optional - uncomment to exclude from repo)
-Nola*/Stimuli/conversations/*.json
+Agent*/Feeds/conversations/*.json
 
 # Local evaluator checklist
 docs/checklist.md
@@ -93,7 +94,7 @@ eval/transcripts/*.md
 # Build artifacts and generated files
 *.dmg
 *.icns
-.nola_installed
+.aios_installed
 vscode_import_log.json
 
 # Development utility scripts (not needed for users)
@@ -101,6 +102,3 @@ stringify/_archive/
 
 # Local archive (not tracked)
 _archive/
-*.db-shm
-*.db-wal
-push.command

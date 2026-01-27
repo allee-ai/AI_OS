@@ -62,7 +62,7 @@ Before pushing to main:
 
 - [ ] `./start.sh` runs from repo root without errors
 - [ ] Nola agent responds to messages
-- [ ] Conversations persist to `agent/Stimuli/conversations/`
+- [ ] Conversations persist to `agent/Feeds/conversations/`
 - [ ] README quick start is accurate
 - [ ] No hardcoded absolute paths
 - [ ] All agent assessments show READY status

@@ -9,12 +9,12 @@ export const API_CONFIG = {
     START_SESSION: '/api/chat/start-session',
     GET_MODELS: '/api/models',
     SET_MODEL: '/api/models/current',
-    // Introspection endpoints (trailing slashes required by FastAPI)
-    INTROSPECTION: '/api/introspection/',
-    INTROSPECTION_IDENTITY: '/api/introspection/identity',
-    INTROSPECTION_THREADS: '/api/introspection/threads',
-    INTROSPECTION_CONTEXT: '/api/introspection/context',
-    INTROSPECTION_EVENTS: '/api/introspection/events',
+    // Introspection endpoints (now via subconscious)
+    INTROSPECTION: '/api/subconscious/state',
+    INTROSPECTION_IDENTITY: '/api/identity/introspect',
+    INTROSPECTION_THREADS: '/api/subconscious/health',
+    INTROSPECTION_CONTEXT: '/api/subconscious/context',
+    INTROSPECTION_EVENTS: '/api/log/events',
     // Database endpoints (new thread system)
     DATABASE_TABLES: '/api/database/tables',
     DATABASE_THREADS_SUMMARY: '/api/database/threads-summary',

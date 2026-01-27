@@ -2,14 +2,14 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1a1a2e;
+  background: var(--surface);
   overflow: hidden;
 }
 
 .memory-header {
   padding: 12px 16px;
-  background: linear-gradient(135deg, #16213e 0%, #1a1a2e 100%);
-  border-bottom: 1px solid #0f3460;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -30,15 +30,15 @@
 
 .header-left h3 {
   margin: 0;
-  color: #e8e8e8;
+  color: var(--text);
   font-size: 15px;
   font-weight: 600;
 }
 
 .refresh-button {
   padding: 4px 8px;
-  background: #0f3460;
-  color: #64b5f6;
+  background: var(--surface);
+  color: var(--accent);
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -47,7 +47,7 @@
 }
 
 .refresh-button:hover:not(:disabled) {
-  background: #1a5490;
+  background: var(--border);
 }
 
 .refresh-button:disabled {
@@ -64,8 +64,8 @@
 .tab-button {
   flex: 1;
   padding: 8px 12px;
-  background: #0f3460;
-  color: #888;
+  background: var(--surface);
+  color: var(--text-muted);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -79,13 +79,13 @@
 }
 
 .tab-button:hover {
-  background: #1a5490;
-  color: #ccc;
+  background: var(--border);
+  color: var(--text);
 }
 
 .tab-button.active {
-  background: linear-gradient(135deg, #64b5f6 0%, #42a5f5 100%);
-  color: #1a1a2e;
+  background: var(--primary);
+  color: white;
 }
 
 .tab-button .tab-hint {
@@ -108,9 +108,9 @@
 
 .level-button {
   padding: 4px 10px;
-  background: #0f3460;
+  background: var(--surface);
   border: none;
-  color: #888;
+  color: var(--text-muted);
   border-radius: 4px;
   cursor: pointer;
   font-size: 11px;
@@ -120,13 +120,13 @@
 }
 
 .level-button:hover {
-  background: #1a5490;
-  color: #ccc;
+  background: var(--border);
+  color: var(--text);
 }
 
 .level-button.active {
-  background: #64b5f6;
-  color: #1a1a2e;
+  background: var(--primary);
+  color: white;
 }
 
 .memory-content {
@@ -143,7 +143,7 @@
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #888;
+  color: var(--text-muted);
   text-align: center;
   padding: 20px;
 }
@@ -155,19 +155,19 @@
 
 .empty-state .hint {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 8px;
 }
 
 .error-state {
-  color: #ff6b6b;
+  color: var(--error);
 }
 
 .error-state button {
   margin-top: 12px;
   padding: 8px 16px;
-  background: #0f3460;
-  color: #e8e8e8;
+  background: var(--primary);
+  color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
@@ -176,8 +176,8 @@
 .spinner {
   width: 24px;
   height: 24px;
-  border: 2px solid #0f3460;
-  border-top-color: #64b5f6;
+  border: 2px solid var(--border);
+  border-top-color: var(--primary);
   border-radius: 50%;
   animation: spin 1s linear infinite;
   margin-bottom: 12px;
@@ -196,15 +196,15 @@
 }
 
 .change-card {
-  background: #16213e;
-  border: 1px solid #0f3460;
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 12px;
   transition: border-color 0.2s;
 }
 
 .change-card:hover {
-  border-color: #1a5490;
+  border-color: var(--text-muted);
 }
 
 .change-header {
@@ -216,18 +216,18 @@
 
 .change-module {
   font-weight: 600;
-  color: #64b5f6;
+  color: var(--accent);
   font-size: 13px;
 }
 
 .change-time {
   font-size: 11px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .change-field {
   font-size: 12px;
-  color: #aaa;
+  color: var(--text-muted);
   margin-bottom: 8px;
   font-family: 'SF Mono', Monaco, monospace;
 }
@@ -250,13 +250,13 @@
 }
 
 .old-value {
-  background: rgba(255, 107, 107, 0.15);
-  color: #ff6b6b;
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
 }
 
 .new-value {
-  background: rgba(100, 181, 246, 0.15);
-  color: #64b5f6;
+  background: rgba(59, 130, 246, 0.1);
+  color: var(--accent);
 }
 
 .diff-label {

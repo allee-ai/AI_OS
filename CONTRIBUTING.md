@@ -1,4 +1,4 @@
-# Contributing to Nola
+# Contributing to Agent
 
 Thanks for wanting to help build the future of personal AI. This project is open to everyone—coders, researchers, teachers, and people who just care about getting this right.
 
@@ -15,7 +15,7 @@ The most valuable contribution is honest feedback. Clone it, run `./start.sh`, a
 Open an issue with the label `feedback` or `bug`.
 
 ### Create Training Conversations
-Nola learns from examples. You can help by having conversations that demonstrate:
+The agent learns from examples. You can help by having conversations that demonstrate:
 - How she should handle personal questions
 - How she should respond when she doesn't know something
 - Edge cases (rude users, ambiguous requests, emotional situations)
@@ -77,7 +77,7 @@ Maintain and extend the API layer.
 **What you'll do:**
 - Add new API endpoints
 - Improve database operations
-- Work on the Stimuli system (integrations)
+- Work on the Feeds system (integrations)
 - Optimize performance
 
 **Start here:** `scripts/server.py`, `agent/threads/`, `chat/`

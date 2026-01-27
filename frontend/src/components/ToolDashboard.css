@@ -147,11 +147,11 @@
 }
 
 .status-dot.available {
-  background: #22c55e;
+  background: var(--success);
 }
 
 .status-dot.unavailable {
-  background: #ef4444;
+  background: var(--error);
 }
 
 /* Tool Detail */
@@ -251,12 +251,13 @@
 }
 
 .save-btn {
-  background: #22c55e;
+  background: var(--success);
   color: white;
 }
 
 .save-btn:hover {
-  background: #16a34a;
+  background: var(--success);
+  filter: brightness(0.9);
 }
 
 .cancel-btn {
@@ -377,10 +378,10 @@
   width: 100%;
   min-height: 200px;
   padding: 0.75rem;
-  background: #1a1a24;
+  background: var(--surface);
   border: 1px solid var(--border, #27272a);
   border-radius: 6px;
-  color: #a5f3fc;
+  color: var(--text);
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8rem;
   line-height: 1.4;
@@ -389,7 +390,7 @@
 }
 
 .code-block {
-  background: #1a1a24;
+  background: var(--surface);
   border: 1px solid var(--border, #27272a);
   border-radius: 6px;
   padding: 0.75rem;
@@ -397,7 +398,7 @@
   font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
   font-size: 0.8rem;
   line-height: 1.4;
-  color: #a5f3fc;
+  color: var(--text);
   white-space: pre;
   margin: 0;
   max-height: 300px;
@@ -673,7 +674,7 @@
 
 .run-btn {
   padding: 0.5rem 1rem;
-  background: #22c55e;
+  background: var(--success);
   color: white;
   border: none;
   border-radius: 6px;
@@ -684,13 +685,14 @@
 }
 
 .run-btn:hover:not(:disabled) {
-  background: #16a34a;
+  background: var(--success);
+  filter: brightness(0.9);
 }
 
 .run-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
-  background: #6b7280;
+  background: var(--text-muted);
 }
 
 .params-row {

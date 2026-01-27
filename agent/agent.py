@@ -36,23 +36,35 @@ class Agent:
     
     @property
     def name(self) -> str:
-        """Get agent name from identity thread via subconscious."""
+        """Get agent name from identity thread (machine profile)."""
+        default_name = "Agent"
         if not _HAS_SUBCONSCIOUS:
-            return "Agent"
+            return default_name
         try:
-            sub = get_subconscious()
-            ctx = sub.build_context(level=1)
-            state = ctx.get("state", {})
-            identity = state.get("identity", {})
-            return identity.get("name", "Agent")
+            # Get identity adapter directly
+            from agent.threads import get_thread
+            identity = get_thread("identity")
+            if identity:
+                # Look for machine.name fact
+                facts = identity.get_data(level=1)
+                for fact in facts:
+                    profile = fact.get("profile_id", "")
+                    key = fact.get("key", "")
+                    if profile == "machine" and key == "name":
+                        value = fact.get("value", "")
+                        if value:
+                            # Extract just the name (before any dash or description)
+                            name = value.split(" - ")[0].strip()
+                            return name if name else value
+            return default_name
         except Exception:
-            return "Agent"
+            return default_name
     
     def generate(
         self, 
         user_input: str, 
         convo: str = "", 
-        stimuli_type: str = "conversational",
+        feed_type: str = "conversational",
         context_level: int = 2,
         consciousness_context: Optional[str] = None
     ) -> str:
@@ -61,7 +73,7 @@ class Agent:
         Args:
             user_input: The user's message
             convo: Previous conversation context
-            stimuli_type: HEA classification
+            feed_type: HEA classification
             context_level: 1=minimal, 2=moderate, 3=full
             consciousness_context: Pre-assembled context (optional, else fetched)
         """

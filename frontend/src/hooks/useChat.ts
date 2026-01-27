@@ -14,18 +14,25 @@ export const useChat = () => {
 
   const { isConnected, lastMessage, sendMessage: sendWS } = useWebSocket();
 
-  // Load initial chat history
+  // Load initial chat history or start new session
   useEffect(() => {
-    const loadHistory = async () => {
+    const initializeChat = async () => {
       try {
         const history = await apiService.getChatHistory();
-        setMessages(history);
+        
+        if (history.length === 0) {
+          // No history - start a fresh session
+          const { session_id } = await apiService.startSession();
+          setSessionId(session_id);
+        } else {
+          setMessages(history);
+        }
       } catch (error) {
-        console.error('Failed to load chat history:', error);
+        console.error('Failed to initialize chat:', error);
       }
     };
 
-    loadHistory();
+    initializeChat();
   }, []);
 
   // Load agent status
@@ -155,19 +162,20 @@ export const useChat = () => {
 
   const startNewSession = useCallback(async () => {
     try {
-      // Start new session and get Nola's proactive intro
-      const { message: introMessage } = await apiService.startSession();
-      setMessages([introMessage]);
-      setSessionId(undefined);
+      const { session_id } = await apiService.startSession();
+      setMessages([]);
+      setSessionId(session_id);
     } catch (error) {
       console.error('Failed to start session:', error);
-      // Fallback to just clearing
       await clearHistory();
     }
   }, [clearHistory]);
 
   const loadConversation = useCallback(async (conversationSessionId: string) => {
     try {
+      // Tell backend to use this session
+      await apiService.setSession(conversationSessionId);
+      
       const conversation = await apiService.getConversation(conversationSessionId);
       
       // Convert turns to messages

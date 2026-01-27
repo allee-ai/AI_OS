@@ -2,7 +2,7 @@
 Tests for HEA (Hierarchical Experiential Attention) context system.
 
 Tests cover:
-- Stimuli classification (realtime/conversational/analytical)
+- Feeds classification (realtime/conversational/analytical)
 - Context level selection (L1/L2/L3)
 - Identity filtering by level
 - Token budget approximations
@@ -19,17 +19,17 @@ sys.path.insert(0, str(PROJECT_ROOT / "Agent" / "services"))
 sys.path.insert(0, str(PROJECT_ROOT / "Agent" / "react-chat-app" / "backend"))
 
 
-def get_classify_stimuli():
-    """Get the classify_stimuli function, handling import issues."""
+def get_classify_feed():
+    """Get the classify_feed function, handling import issues."""
     try:
         # Try importing ContextManager directly
         from agent_service import ContextManager
         cm = ContextManager()
-        return cm.classify_stimuli
+        return cm.classify_feed
     except ImportError:
         # Fallback: implement classification logic directly from agent_service
         # This mirrors the actual implementation
-        async def classify_stimuli(message: str) -> str:
+        async def classify_feed(message: str) -> str:
             msg_lower = message.lower().strip()
             word_count = len(message.split())
             
@@ -44,36 +44,36 @@ def get_classify_stimuli():
             # Long/complex messages -> analytical (L3)
             return "analytical"
         
-        return classify_stimuli
+        return classify_feed
 
 
-class TestStimuliClassification:
-    """Test stimuli type classification logic."""
+class TestFeedClassification:
+    """Test feeds type classification logic."""
     
     @pytest.mark.asyncio
     async def test_short_message_is_realtime(self):
         """Short messages should classify as realtime."""
-        classify = get_classify_stimuli()
+        classify = get_classify_feed()
         
         # Short greeting should be realtime
-        stimuli_type = await classify("hi")
-        assert stimuli_type == "realtime"
+        feed_type = await classify("hi")
+        assert feed_type == "realtime"
         
-        stimuli_type = await classify("hello")
-        assert stimuli_type == "realtime"
+        feed_type = await classify("hello")
+        assert feed_type == "realtime"
     
     @pytest.mark.asyncio
     async def test_question_is_conversational(self):
         """Questions should classify as conversational."""
-        classify = get_classify_stimuli()
+        classify = get_classify_feed()
         
-        stimuli_type = await classify("What do you think about AI?")
-        assert stimuli_type == "conversational"
+        feed_type = await classify("What do you think about AI?")
+        assert feed_type == "conversational"
     
     @pytest.mark.asyncio
     async def test_complex_request_is_analytical(self):
         """Complex multi-part requests should classify as analytical."""
-        classify = get_classify_stimuli()
+        classify = get_classify_feed()
         
         complex_msg = """
         I need you to analyze the following data and provide insights:
@@ -82,28 +82,28 @@ class TestStimuliClassification:
         3. Suggest optimizations based on the patterns
         """
         
-        stimuli_type = await classify(complex_msg)
-        assert stimuli_type == "analytical"
+        feed_type = await classify(complex_msg)
+        assert feed_type == "analytical"
 
 
 class TestContextLevelSelection:
-    """Test context level selection based on stimuli."""
+    """Test context level selection based on feeds."""
     
-    @pytest.mark.parametrize("stimuli_type,expected_level", [
+    @pytest.mark.parametrize("feed_type,expected_level", [
         ("realtime", "L1"),
         ("conversational", "L2"),
         ("analytical", "L3"),
     ])
-    def test_stimuli_maps_to_level(self, stimuli_type, expected_level):
-        """Each stimuli type should map to correct context level."""
+    def test_feed_maps_to_level(self, feed_type, expected_level):
+        """Each feeds type should map to correct context level."""
         # Direct mapping test
-        STIMULI_TO_LEVEL = {
+        FEED_TO_LEVEL = {
             "realtime": "L1",
             "conversational": "L2",
             "analytical": "L3"
         }
         
-        assert STIMULI_TO_LEVEL[stimuli_type] == expected_level
+        assert FEED_TO_LEVEL[feed_type] == expected_level
 
 
 class TestIdentityFiltering:

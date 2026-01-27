@@ -2,7 +2,7 @@
  * Introspection Service
  * =====================
  * API client for the /api/introspection endpoints.
- * Provides visibility into Nola's internal state for the viewer panel.
+ * Provides visibility into the agent's internal state for the viewer panel.
  */
 
 import type { 
@@ -34,7 +34,43 @@ class IntrospectionService {
       throw new Error(`Introspection error: ${response.status}`);
     }
 
-    return response.json();
+    const data = await response.json();
+    
+    // Transform subconscious response to IntrospectionData format
+    const threads: Record<string, any> = {};
+    let totalFacts = 0;
+    let threadCount = 0;
+    
+    if (data.state) {
+      for (const [name, info] of Object.entries(data.state as Record<string, any>)) {
+        threadCount++;
+        const factCount = info.fact_count || 0;
+        totalFacts += factCount;
+        threads[name] = {
+          name,
+          status: info.health?.status || info.state?.status || 'unknown',
+          message: info.health?.message || `${factCount} facts`,
+          details: info.health?.details || {}
+        };
+      }
+    }
+    
+    return {
+      status: 'awake',
+      overall_health: 'healthy',
+      threads,
+      identity_facts: [],
+      recent_events: data.meta?.recent_events || [],
+      context: {
+        level,
+        facts: [],
+        fact_count: totalFacts,
+        thread_count: threadCount,
+        timestamp: new Date().toISOString()
+      },
+      context_level: level,
+      relevance_scores: []
+    };
   }
 
   /**

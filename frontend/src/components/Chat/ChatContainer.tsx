@@ -65,7 +65,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
             </div>
           </div>
           <div className="agent-details">
-            <h3 className="agent-name">{agentStatus?.name || 'Nola'}</h3>
+            <h3 className="agent-name">{agentStatus?.name || 'Agent'}</h3>
             <div className="agent-status">
               <div className={`status-dot ${agentStatus?.status || 'offline'}`} />
               <span className="status-text">
@@ -131,6 +131,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
       <SystemPromptSidebar
         isCollapsed={rightSidebarCollapsed}
         onToggleCollapse={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
+        lastQuery={messages.filter(m => m.role === 'user').slice(-1)[0]?.content}
       />
     </div>
   );

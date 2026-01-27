@@ -4,7 +4,7 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.5);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -12,13 +12,14 @@
 }
 
 .modal-content {
-  background: var(--bg-secondary, #1a1a2e);
+  background: var(--surface);
   border-radius: 12px;
   max-width: 600px;
   width: 90%;
   max-height: 80vh;
   overflow-y: auto;
   position: relative;
+  border: 1px solid var(--border);
 }
 
 .import-modal {
@@ -31,7 +32,7 @@
   right: 16px;
   background: transparent;
   border: none;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   font-size: 32px;
   cursor: pointer;
   line-height: 1;
@@ -41,12 +42,12 @@
 }
 
 .modal-close:hover {
-  color: var(--text-primary, #fff);
+  color: var(--text);
 }
 
 .import-step h3 {
   margin: 0 0 24px 0;
-  color: var(--text-primary, #fff);
+  color: var(--text);
   font-size: 24px;
 }
 
@@ -57,22 +58,22 @@
 .platform-selector label {
   display: block;
   margin-bottom: 8px;
-  color: var(--text-secondary, #aaa);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
 .platform-selector select {
   width: 100%;
   padding: 10px;
-  background: var(--bg-hover, #2a2a4a);
-  border: 1px solid var(--border-color, #3a3a5a);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: var(--text-primary, #fff);
+  color: var(--text);
   font-size: 14px;
 }
 
 .drop-zone {
-  border: 2px dashed var(--border-color, #3a3a5a);
+  border: 2px dashed var(--border);
   border-radius: 12px;
   padding: 48px 24px;
   text-align: center;
@@ -82,23 +83,23 @@
 
 .drop-zone:hover,
 .drop-zone.dragging {
-  border-color: var(--accent-color, #6366f1);
-  background: var(--bg-hover, #2a2a4a);
+  border-color: var(--primary);
+  background: var(--bg);
 }
 
 .drop-zone svg {
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   margin-bottom: 16px;
 }
 
 .drop-zone p {
   margin: 0 0 8px 0;
-  color: var(--text-primary, #fff);
+  color: var(--text);
   font-size: 16px;
 }
 
 .drop-zone .hint {
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   font-size: 13px;
 }
 
@@ -111,7 +112,7 @@
   gap: 24px;
   margin-bottom: 24px;
   padding: 16px;
-  background: var(--bg-hover, #2a2a4a);
+  background: var(--bg);
   border-radius: 8px;
 }
 
@@ -123,18 +124,18 @@
 
 .stat strong {
   font-size: 24px;
-  color: var(--accent-color, #6366f1);
+  color: var(--primary);
 }
 
 .stat span {
   font-size: 12px;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   text-transform: uppercase;
 }
 
 .conversation-list h4 {
   margin: 0 0 12px 0;
-  color: var(--text-secondary, #aaa);
+  color: var(--text-muted);
   font-size: 14px;
   font-weight: 500;
 }
@@ -144,7 +145,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px;
-  background: var(--bg-hover, #2a2a4a);
+  background: var(--bg);
   border-radius: 6px;
   margin-bottom: 8px;
 }
@@ -156,12 +157,12 @@
 }
 
 .conv-title {
-  color: var(--text-primary, #fff);
+  color: var(--text);
   font-size: 14px;
 }
 
 .conv-meta {
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   font-size: 12px;
 }
 
@@ -171,7 +172,7 @@
 
 .more-convs {
   text-align: center;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   font-size: 13px;
   margin-top: 12px;
 }
@@ -195,28 +196,29 @@
 }
 
 .btn-primary {
-  background: var(--accent-color, #6366f1);
+  background: var(--primary);
   color: white;
 }
 
 .btn-primary:hover {
-  background: var(--accent-hover, #5558e3);
+  background: var(--primary-light);
 }
 
 .btn-secondary {
-  background: var(--bg-hover, #2a2a4a);
-  color: var(--text-secondary, #aaa);
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-active, #3a3a5a);
-  color: var(--text-primary, #fff);
+  background: var(--border);
+  color: var(--text);
 }
 
 .progress-bar {
   width: 100%;
   height: 8px;
-  background: var(--bg-hover, #2a2a4a);
+  background: var(--bg);
   border-radius: 4px;
   overflow: hidden;
   margin: 24px 0;
@@ -224,13 +226,13 @@
 
 .progress-fill {
   height: 100%;
-  background: var(--accent-color, #6366f1);
+  background: var(--primary);
   transition: width 0.3s ease;
 }
 
 .import-step p {
   text-align: center;
-  color: var(--text-secondary, #aaa);
+  color: var(--text-muted);
   margin: 16px 0 0 0;
 }
 
@@ -239,7 +241,7 @@
   height: 80px;
   margin: 24px auto;
   border-radius: 50%;
-  background: var(--accent-color, #6366f1);
+  background: var(--primary);
   color: white;
   display: flex;
   align-items: center;
@@ -250,9 +252,9 @@
 .error-message {
   margin-top: 16px;
   padding: 12px;
-  background: rgba(255, 59, 48, 0.1);
-  border: 1px solid rgba(255, 59, 48, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
   border-radius: 6px;
-  color: #ff3b30;
+  color: var(--error);
   font-size: 14px;
 }

@@ -31,7 +31,7 @@ pytest tests/ --cov=agent --cov-report=html
 |------|---------------|
 | `test_agent.py` | Singleton pattern, thread safety, provider toggle |
 | `test_idv2.py` | Database operations, level filtering, migration |
-| `test_hea.py` | Stimuli classification, context levels, token budgets |
+| `test_hea.py` | Feeds classification, context levels, token budgets |
 | `conftest.py` | Shared fixtures |
 
 ### Writing New Tests

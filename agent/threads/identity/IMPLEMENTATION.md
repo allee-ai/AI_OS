@@ -10,7 +10,7 @@ What lives here (current canonical):
 Recommended consolidation steps:
 1. Copy the identity-specific schema sections from `docs/implementation/database_integration_plan.md` into this file or `README.md` (short summary + migration notes).
 2. Move identity migration/migration scripts into `agent/threads/identity/migrations/` and reference here.
-3. Add examples for `push_identity`, `pull_identity`, and `sync_for_stimuli` (small code snippets).
+3. Add examples for `push_identity`, `pull_identity`, and `sync_for_feed` (small code snippets).
 
 Notes:
 - Use `agent/threads/identity/adapter.py` for new development.

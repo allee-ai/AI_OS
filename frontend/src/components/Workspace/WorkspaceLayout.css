@@ -4,7 +4,7 @@
   min-height: 0;
   width: 100%;
   overflow: hidden;
-  background: #1a1a2e;
+  background: var(--surface);
   border-radius: 8px;
 }
 
@@ -15,8 +15,8 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #16213e;
-  border: 1px solid #0f3460;
+  background: var(--bg);
+  border: 1px solid var(--border);
   overflow: hidden;
   flex-shrink: 0;
 }
@@ -41,11 +41,11 @@
 }
 
 .resize-handle:hover {
-  background: rgba(79, 172, 254, 0.3);
+  background: rgba(124, 58, 237, 0.3);
 }
 
 .resize-handle:active {
-  background: rgba(79, 172, 254, 0.5);
+  background: rgba(124, 58, 237, 0.5);
 }
 
 .sidebar-content {
@@ -70,9 +70,9 @@
   height: 100%;
   display: flex;
   flex-direction: column;
-  background: #1a1a2e;
-  border-top: 1px solid #0f3460;
-  border-bottom: 1px solid #0f3460;
+  background: var(--surface);
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
   /* Prevent resizing based on content */
   overflow: hidden;
   min-height: 0;
@@ -99,16 +99,16 @@
 }
 
 .sidebar-content::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: var(--surface);
 }
 
 .sidebar-content::-webkit-scrollbar-thumb {
-  background: #0f3460;
+  background: var(--border);
   border-radius: 3px;
 }
 
 .sidebar-content::-webkit-scrollbar-thumb:hover {
-  background: #1a5490;
+  background: var(--text-muted);
 }
 
 /* Responsive adjustments */
@@ -137,20 +137,20 @@
   
   .workspace-left {
     border-radius: 8px 8px 0 0;
-    border-right: 1px solid #0f3460;
+    border-right: 1px solid var(--border);
     border-bottom: none;
   }
   
   .workspace-right {
     border-radius: 0 0 8px 8px;
-    border-left: 1px solid #0f3460;
+    border-left: 1px solid var(--border);
     border-top: none;
   }
   
   .workspace-center {
     flex: 1;
-    border-left: 1px solid #0f3460;
-    border-right: 1px solid #0f3460;
+    border-left: 1px solid var(--border);
+    border-right: 1px solid var(--border);
     border-top: none;
     border-bottom: none;
   }

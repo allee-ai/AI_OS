@@ -17,7 +17,7 @@ export const KernelDashboard = ({ config, status, message, onChangesMade, onSave
   const [localConfig, setLocalConfig] = useState<ServiceConfig>({
     enabled: false,
     settings: {
-      profile_name: 'nola_identity',
+      profile_name: 'agent_identity',
       default_timeout: 3600,
       headless: false,
       stealth: true,

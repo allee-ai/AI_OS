@@ -69,6 +69,7 @@ ratings_router = APIRouter(prefix="/api/ratings", tags=["ratings"])
 
 # Chat models
 class ChatMessage(BaseModel):
+    id: Optional[str] = None
     role: str
     content: str
     timestamp: Optional[datetime] = None
@@ -83,6 +84,13 @@ class SendMessageRequest(BaseModel):
 class SendMessageResponse(BaseModel):
     message: ChatMessage
     agent_status: str
+    session_id: Optional[str] = None
+
+
+class StartSessionResponse(BaseModel):
+    messages: List[ChatMessage]
+    agent_status: str
+    session_id: Optional[str] = None
 
 
 class AgentStatus(BaseModel):
@@ -145,11 +153,34 @@ def _get_agent_service():
 
 @chat_router.get("/history", response_model=List[ChatMessage])
 async def get_chat_history(limit: int = 50):
-    """Get recent chat history"""
+    """Get recent chat history from database for current session"""
     try:
         agent_service = _get_agent_service()
-        history = await agent_service.get_chat_history(limit)
-        return history
+        session_id = agent_service.session_id
+        
+        # Load from database
+        convo = get_conversation(session_id)
+        if not convo or not convo.get('turns'):
+            return []
+        
+        messages = []
+        for turn in convo['turns'][-limit:]:
+            if turn.get('user'):
+                messages.append(ChatMessage(
+                    id=f"user_{turn['timestamp']}",
+                    role='user',
+                    content=turn['user'],
+                    timestamp=turn['timestamp']
+                ))
+            if turn.get('assistant'):
+                messages.append(ChatMessage(
+                    id=f"assistant_{turn['timestamp']}",
+                    role='assistant',
+                    content=turn['assistant'],
+                    timestamp=turn['timestamp']
+                ))
+        
+        return messages
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error retrieving chat history: {str(e)}")
 
@@ -200,20 +231,27 @@ async def clear_chat_history():
         raise HTTPException(status_code=500, detail=f"Error clearing history: {str(e)}")
 
 
-@chat_router.post("/start-session", response_model=SendMessageResponse)
+@chat_router.post("/start-session")
 async def start_session():
-    """Start a new session with the agent's proactive intro"""
+    """Start a new chat session"""
     try:
         agent_service = _get_agent_service()
-        await agent_service.clear_history()
-        intro_message = await agent_service.get_proactive_intro()
+        new_session_id = await agent_service.clear_history()
         
-        return SendMessageResponse(
-            message=intro_message,
-            agent_status="ready"
-        )
+        return {"session_id": new_session_id, "status": "ok"}
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Error starting session: {str(e)}")
+
+
+@chat_router.post("/set-session/{session_id}")
+async def set_session(session_id: str):
+    """Set the current session ID (when loading an existing conversation)"""
+    try:
+        agent_service = _get_agent_service()
+        agent_service.set_session(session_id)
+        return {"session_id": session_id, "status": "ok"}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Error setting session: {str(e)}")
 
 
 # =============================================================================

@@ -49,12 +49,12 @@ EOF
 # Create launcher script that uses 'open' on run.command (most reliable method)
 # Using relative path so the app works even if the folder is moved
 
-cat > "AIOS.app/Contents/MacOS/Nola" << 'LAUNCHER'
+cat > "AIOS.app/Contents/MacOS/Agent" << 'LAUNCHER'
 #!/bin/bash
 # macOS App Bundle Launcher for AI OS
 # This acts as a bridge to execute the run.command file in the actual repo
 
-# Calculate repo path relative to this script: .../AIOS.app/Contents/MacOS/Nola -> ../../../
+# Calculate repo path relative to this script: .../AIOS.app/Contents/MacOS/Agent -> ../../../
 # This allows the entire AI_OS folder to be moved or renamed without breaking the app
 REPO_PATH="$(cd "$(dirname "$0")/../../.." && pwd)"
 COMMAND_FILE="$REPO_PATH/run.command"
@@ -69,8 +69,8 @@ fi
 LAUNCHER
 
 # Make launcher executable (IMPORTANT - must be executable for app to work)
-chmod +x "AIOS.app/Contents/MacOS/Nola"
-chmod 755 "AIOS.app/Contents/MacOS/Nola"
+chmod +x "AIOS.app/Contents/MacOS/Agent"
+chmod 755 "AIOS.app/Contents/MacOS/Agent"
 
 # Use the spiral icon if available, otherwise create a basic placeholder
 if [ -f "AIOSIcon.icns" ]; then

@@ -69,12 +69,14 @@ def init_philosophy_profile_facts(conn: sqlite3.Connection = None) -> None:
     """Initialize philosophy profile facts table."""
     conn = conn or get_connection()
     init_philosophy_profiles(conn)
+    init_philosophy_fact_types(conn)
     cur = conn.cursor()
     cur.execute("""
         CREATE TABLE IF NOT EXISTS philosophy_profile_facts (
             id INTEGER PRIMARY KEY,
             profile_id TEXT NOT NULL,
             key TEXT NOT NULL,
+            fact_type TEXT DEFAULT 'stance',
             l1_value TEXT,
             l2_value TEXT,
             l3_value TEXT,
@@ -86,6 +88,58 @@ def init_philosophy_profile_facts(conn: sqlite3.Connection = None) -> None:
             UNIQUE(profile_id, key)
         )
     """)
+    conn.commit()
+
+
+def init_philosophy_fact_types(conn: sqlite3.Connection = None) -> None:
+    """Initialize philosophy fact types table with defaults."""
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS philosophy_fact_types (
+            fact_type TEXT PRIMARY KEY,
+            description TEXT,
+            default_weight REAL DEFAULT 0.5,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP
+        )
+    """)
+    # Seed defaults
+    cur.execute("SELECT COUNT(*) FROM philosophy_fact_types")
+    if cur.fetchone()[0] == 0:
+        defaults = [
+            ("stance", "A position or viewpoint on a topic", 0.5),
+            ("principle", "A fundamental rule or belief", 0.7),
+            ("value", "Something considered important or worthwhile", 0.8),
+            ("constraint", "A limitation or ethical boundary", 0.6),
+            ("preference", "A favored choice or tendency", 0.4),
+        ]
+        cur.executemany("""
+            INSERT INTO philosophy_fact_types (fact_type, description, default_weight)
+            VALUES (?, ?, ?)
+        """, defaults)
+    conn.commit()
+
+
+def get_philosophy_fact_types() -> List[Dict]:
+    """Get all philosophy fact types."""
+    conn = get_connection(readonly=True)
+    init_philosophy_fact_types(conn)
+    cur = conn.cursor()
+    cur.execute("SELECT * FROM philosophy_fact_types ORDER BY fact_type")
+    return [dict(row) for row in cur.fetchall()]
+
+
+def create_philosophy_fact_type(fact_type: str, description: str = "", default_weight: float = 0.5) -> None:
+    """Create or update a philosophy fact type."""
+    conn = get_connection()
+    init_philosophy_fact_types(conn)
+    conn.cursor().execute("""
+        INSERT INTO philosophy_fact_types (fact_type, description, default_weight)
+        VALUES (?, ?, ?)
+        ON CONFLICT(fact_type) DO UPDATE SET
+            description = excluded.description,
+            default_weight = excluded.default_weight
+    """, (fact_type, description, default_weight))
     conn.commit()
 
 
@@ -249,6 +303,7 @@ __all__ = [
     'init_philosophy_profile_types',
     'init_philosophy_profiles', 
     'init_philosophy_profile_facts',
+    'init_philosophy_fact_types',
     'create_philosophy_profile_type',
     'get_philosophy_profile_types',
     'create_philosophy_profile',
@@ -257,5 +312,7 @@ __all__ = [
     'push_philosophy_profile_fact',
     'pull_philosophy_profile_facts',
     'delete_philosophy_profile_fact',
+    'get_philosophy_fact_types',
+    'create_philosophy_fact_type',
     'get_value_by_weight',
 ]

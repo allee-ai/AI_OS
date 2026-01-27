@@ -11,7 +11,7 @@
 |-------|--------|----------------|
 | **Core** | 🌀 | Threads, HEA, SQLite backend, stateless agent |
 | **UI** | 🌀 | React app, chat, thread visualization |
-| **Integrations** | 🔄 | Stimuli system built, needs OAuth + polling daemon |
+| **Integrations** | 🔄 | Feeds system built, needs OAuth + polling daemon |
 | **Advanced** | 🔮 | Philosophy, Dreams, Reflex Builder (designed, not implemented) |
 
 **To contribute:** See [GitHub Issues](https://github.com/allee-ai/AI_OS/issues) for tagged tasks.
@@ -20,7 +20,7 @@
 
 ## The Vision
 
-Nola isn't a chatbot. It's a **Cognitive Operating System** — an open-source framework that gives any LLM a persistent identity, hierarchical memory, and the ability to *grow* through experience rather than retraining.
+AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source framework that gives any LLM a persistent identity, hierarchical memory, and the ability to *grow* through experience rather than retraining.
 
 **The core insight:** Structure beats scale. A 7B model with proper cognitive architecture outperforms a 100B model with flat context.
 
@@ -58,7 +58,7 @@ Nola isn't a chatbot. It's a **Cognitive Operating System** — an open-source f
 - [x] **Spread Activation** — Query "coffee" → activates sarah.* if linked
 - [x] **Hebbian Learning** — Concepts that co-occur strengthen links
 - [ ] **Promotion Thresholds** — Score ≥4.0 → L2, Score ≥3.0 → L3, <2.0 → discard
-- [ ] **UI Feedback** — "Nola learned: [fact]" toasts after conversations
+- [ ] **UI Feedback** — "Agent learned: [fact]" toasts after conversations
 
 ### Phase 2: Philosophy Thread
 **Goal:** Give Agent a "moral compass" — constraints that guide behavior regardless of conversation.
@@ -93,14 +93,14 @@ The Reflex thread becomes a **visual programming system** for AI automations:
 └─────────────────────────────────────────────────────────────┘
 ```
 
-**Key Insight:** Reflexes connect Stimuli (input sources) → Form (tool palette) → Output.
+**Key Insight:** Reflexes connect Feeds (input sources) → Form (tool palette) → Output.
 LLM is just ONE tool among many (ask_llm, load_profile, notify, flag_moment, etc.)
 
 **Implementation Tasks:**
 - [ ] **Reflex Builder UI** — Drag-drop interface for creating automations
 - [ ] **Pattern Matching Engine** — Regex, glob, semantic matching
 - [ ] **Tool Palette (Form thread)** — ask_llm, notify, archive, flag, etc.
-- [ ] **Stimuli Integration** — Reflexes triggered by source events
+- [ ] **Feeds Integration** — Reflexes triggered by source events
 - [ ] **Weight Boosting** — Reflexes temporarily boost relevant identity keys
 - [ ] **Auto-Logging** — Every reflex execution logs to Log thread
 - [ ] **10x Promotion** — Detect repeated patterns, suggest reflexes
@@ -143,16 +143,16 @@ Verification:  Run both, compare outputs for critical decisions
 - [ ] **Cost Optimization** — Local for simple, cloud for complex
 - [ ] **Multi-Model Consensus** — For high-stakes, get agreement from multiple models
 
-### Phase 6: Beyond Chat 🚀 — 🌀 FOUNDATION COMPLETE (Stimuli System)
+### Phase 6: Beyond Chat 🚀 — 🌀 FOUNDATION COMPLETE (Feeds System)
 **Goal:** Agent becomes a background presence, not a chat window.
 
 **🌀 Implemented (Jan 10, 2026):**
-- [x] **Stimuli Router** — Universal API adapter layer (`agent/Stimuli/router.py`)
+- [x] **Feeds Router** — Universal API adapter layer (`agent/Feeds/router.py`)
 - [x] **YAML-Driven Sources** — Drop a config file, get an integration
 - [x] **20+ Pre-Built Sources** — Gmail, Slack, Discord, GitHub, Linear, Notion, etc.
 - [x] **Normalized Messages** — Any platform → same `NormalizedMessage` format
 - [x] **Draft-First Output** — LLM fills `subject` + `body` slots only, pushes to drafts
-- [x] **Stimuli Dashboard UI** — View, edit, test, and add sources in React frontend
+- [x] **Feeds Dashboard UI** — View, edit, test, and add sources in React frontend
 - [x] **Pull/Push Mapping** — JSONPath extraction and template rendering
 
 **🔮 Remaining:**
@@ -259,7 +259,7 @@ Thread unresponsive →  Kill and restart with last checkpoint
 
 **The Viral Loop:**
 ```
-1. Curious user downloads Nola
+1. Curious user downloads Agent
 2. Uploads ChatGPT export (one file, low friction)
 3. Agent extracts facts, populates threads
 4. First conversation is shockingly personal
@@ -285,7 +285,7 @@ Thread unresponsive →  Kill and restart with last checkpoint
 | **Memory Service** | Active/Idle | Flush, Clear temp, View stats |
 | **Fact Extractor** | Processing/Idle | Queue depth, Extraction rate, Confidence threshold |
 | **Consolidation Daemon** | Scheduled/Running | Next run, Manual trigger, View last results |
-| **Stimuli Router** | Connected/Disconnected | Source status, Polling intervals |
+| **Feeds Router** | Connected/Disconnected | Source status, Polling intervals |
 | **Thread Health** | Per-thread status | Restart, Pause, View logs |
 
 **Dashboard Features:**
@@ -338,9 +338,9 @@ memory_service:
 {
   "name": "slack_monitor",
   "version": "1.0",
-  "thread": "stimuli",
+  "thread": "feeds",
   "capabilities": ["read_messages", "send_messages", "react"],
-  "triggers": ["@nola", "direct_message"],
+  "triggers": ["@agent", "direct_message"],
   "reflexes": [
     {"pattern": "status update request", "action": "send_standup_summary"}
   ]
@@ -351,7 +351,7 @@ memory_service:
 **Goal:** Creator economy for AI modules. Developers build, price, and sell capabilities.
 
 **The Model:**
-- Core Nola: Free forever (AGPL)
+- Core Agent: Free forever (AGPL)
 - Marketplace: 1% platform fee on transactions
 - Developers set their own prices
 - Users decide what their attention is worth
@@ -382,7 +382,7 @@ memory_service:
 **The Platform Inversion:**
 > Companies don't build "their AI" anymore.
 > They build modules to access YOUR AI.
-> "Nola-compatible" becomes the new "mobile-friendly."
+> "AI OS-compatible" becomes the new "mobile-friendly."
 
 ---
 
@@ -398,7 +398,7 @@ Reality: Life doesn't stop when your laptop closes
 **The Architecture:**
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                    NOLA CORE (always on)                     │
+│                    AI OS CORE (always on)                     │
 │         State, threads, memory, fact extraction              │
 │                                                              │
 │    Runs on: Raspberry Pi / NAS / cheap VPS / old laptop      │
@@ -426,14 +426,14 @@ Reality: Life doesn't stop when your laptop closes
 **Always-On Infrastructure:**
 - [ ] **Docker Compose** — One-command deployment for any server
 - [ ] **Tailscale Integration** — Secure access from anywhere
-- [ ] **mDNS** — `nola.local` on home network
+- [ ] **mDNS** — `aios.local` on home network
 - [ ] **Auto-Updates** — Pull latest, restart, continue
 - [ ] **Health Endpoint** — Monitor uptime, get alerts
 
-**Nola Box (Hardware Product):**
+**AI OS Box (Hardware Product):**
 ```
 ┌─────────────────────────────────────────────┐
-│              NOLA BOX                        │
+│              AI OS BOX                        │
 │                                             │
 │   Pre-configured Raspberry Pi 5             │
 │   - Agent Core pre-installed                 │
@@ -451,7 +451,7 @@ Reality: Life doesn't stop when your laptop closes
 - Not "laptop AI" — actual personal AI
 - Always learning, even when you're away
 - Access from phone while walking
-- "Remind Nola" becomes natural
+- "Remind Agent" becomes natural
 - Background processes actually run in background
 
 ---
@@ -464,7 +464,7 @@ Reality: Life doesn't stop when your laptop closes
 - [ ] **Clipboard Monitor** — Copy anything, Agent remembers it
 - [ ] **Screenshot + OCR** — Capture screen, extract text, add to memory
 - [ ] **Quick Note Widget** — Desktop/mobile widget for instant capture
-- [ ] **Voice Shortcut** — "Hey Nola, remember..."
+- [ ] **Voice Shortcut** — "Hey Agent, remember..."
 
 **Daily Presence:**
 - [ ] **Morning Briefing** — Wake up to: "Here's your day, what you forgot, what's due"
@@ -509,7 +509,7 @@ Reality: Life doesn't stop when your laptop closes
 ```
 Scenario: Log thread adapter crashes
 Traditional: Error → User investigates → Manual fix
-Self-Tuned Nola: Error → Recognizes log_adapter.py → 
+Self-Tuned Agent: Error → Recognizes log_adapter.py → 
                  Knows ThreadInterface contract → 
                  Suggests fix or auto-repairs
 ```
@@ -524,13 +524,13 @@ Self-Tuned Nola: Error → Recognizes log_adapter.py →
 **Goal:** Open source framework + paid orchestrator integration.
 
 **The Model:**
-- Framework is free (Nola core, all threads, local-first)
+- Framework is free (Agent core, all threads, local-first)
 - Enterprises pay to build secure orchestrator bridges
 - Users bring their own AI to work — portable career identity
 
 **Why companies want this:**
 - Employees arrive with pre-configured cognitive assistants
-- Zero-day productivity (Nola already knows their style)
+- Zero-day productivity (The agent already knows their style)
 - Documentation is a byproduct of work, not a chore
 
 ---
@@ -545,7 +545,7 @@ Self-Tuned Nola: Error → Recognizes log_adapter.py →
 
 ```
 Standard RAG:      100,000 tokens → 10,000,000,000 attention operations
-Nola HEA:          10 threads × 200 tokens → 400,000 operations
+AI OS HEA:          10 threads × 200 tokens → 400,000 operations
 ```
 
 A 7B model with HEA can outperform a 100B model with flat context because it's always working with high signal-to-noise ratio.
@@ -570,7 +570,7 @@ A 7B model with HEA can outperform a 100B model with flat context because it's a
 └────────────────────────────┬────────────────────────────────────┘
                              ▼
 ┌─────────────────────────────────────────────────────────────────┐
-│                STIMULI CLASSIFICATION                            │
+│                FEED CLASSIFICATION                            │
 │           (realtime / conversational / analytical)               │
 └────────────────────────────┬────────────────────────────────────┘
                              ▼
@@ -653,7 +653,7 @@ A 7B model with HEA can outperform a 100B model with flat context because it's a
                              ▼
 ┌──────────────────────────────────────────────────────────────┐
 │              APPLY TO APPROPRIATE THREAD                      │
-│         (stimuli, identity, reflex, etc.)                    │
+│         (feeds, identity, reflex, etc.)                    │
 └────────────────────────────┬─────────────────────────────────┘
                              ▼
 ┌──────────────────────────────────────────────────────────────┐
@@ -671,14 +671,14 @@ A 7B model with HEA can outperform a 100B model with flat context because it's a
 
 ## Lineage
 
-Nola evolved from **Elaris**, a prototype I built starting April 2025. Elaris had:
+AI OS evolved from **Elaris**, a prototype I built starting April 2025. Elaris had:
 - Reflex thread with `blink()`, `yawn()`, `stretch()` functions
 - Philosophy thread with ethics, awareness, curiosity modules
 - Dream processing that turned symbolic JSONs into personality traits
 - Wake/sleep cycles for state management
 - Protected "core memories" that the AI couldn't overwrite
 
-Nola is the production-ready refinement: cleaner abstractions, proper database backend, modular thread system, and a real UI.
+Agent is the production-ready refinement: cleaner abstractions, proper database backend, modular thread system, and a real UI.
 
 ---
 
@@ -717,7 +717,7 @@ Nola is the production-ready refinement: cleaner abstractions, proper database b
 
 Most AI frameworks treat the LLM as a stateless calculator. Send prompt, get response, forget everything.
 
-Nola treats the LLM as a **reasoning engine** operating on a **structured reality**. The identity persists. The memories consolidate. The reflexes automate. The philosophy constrains.
+AI OS treats the LLM as a **reasoning engine** operating on a **structured reality**. The identity persists. The memories consolidate. The reflexes automate. The philosophy constrains.
 
 It's not artificial general intelligence. It's **artificial persistent intelligence** — an AI that actually grows with its user.
 

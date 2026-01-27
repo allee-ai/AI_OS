@@ -3,39 +3,38 @@ import './SystemPromptSidebar.css';
 
 const API_BASE = 'http://localhost:8000';
 
-interface SystemPromptData {
-  level: number;
-  system_prompt: string;
-  consciousness_context: string;
+interface StateData {
+  state: string;
   char_count: number;
-  timestamp: string;
+  query?: string;
 }
 
 interface SystemPromptSidebarProps {
   isCollapsed: boolean;
   onToggleCollapse: () => void;
+  lastQuery?: string;
 }
 
 export const SystemPromptSidebar: React.FC<SystemPromptSidebarProps> = ({
   isCollapsed,
-  onToggleCollapse
+  onToggleCollapse,
+  lastQuery
 }) => {
-  const [data, setData] = useState<SystemPromptData | null>(null);
+  const [data, setData] = useState<StateData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [level, setLevel] = useState(2);
-  const [showFull, setShowFull] = useState(false);
 
-  const fetchSystemPrompt = async () => {
+  const fetchState = async (query?: string) => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`${API_BASE}/api/subconscious/context?level=${level}`);
+      const params = query ? `?query=${encodeURIComponent(query)}` : '';
+      const response = await fetch(`${API_BASE}/api/subconscious/build_state${params}`);
       if (!response.ok) throw new Error('Failed to fetch');
       const result = await response.json();
       setData(result);
     } catch (err) {
-      setError('Could not load system prompt');
+      setError('Could not load state');
     } finally {
       setLoading(false);
     }
@@ -43,23 +42,23 @@ export const SystemPromptSidebar: React.FC<SystemPromptSidebarProps> = ({
 
   useEffect(() => {
     if (!isCollapsed) {
-      fetchSystemPrompt();
+      fetchState(lastQuery);
     }
-  }, [level, isCollapsed]);
+  }, [isCollapsed, lastQuery]);
 
   // Poll every 5 seconds when not collapsed
   useEffect(() => {
     if (isCollapsed) return;
     
-    const interval = setInterval(fetchSystemPrompt, 5000);
+    const interval = setInterval(() => fetchState(lastQuery), 5000);
     return () => clearInterval(interval);
-  }, [level, isCollapsed]);
+  }, [isCollapsed]);
 
   if (isCollapsed) {
     return (
       <div className="system-prompt-sidebar collapsed">
-        <button className="toggle-btn" onClick={onToggleCollapse} title="Show System Prompt">
-          📋
+        <button className="toggle-btn" onClick={onToggleCollapse} title="Show State">
+          🧠
         </button>
       </div>
     );
@@ -68,28 +67,15 @@ export const SystemPromptSidebar: React.FC<SystemPromptSidebarProps> = ({
   return (
     <div className="system-prompt-sidebar">
       <div className="sidebar-header">
-        <h3>System Prompt</h3>
-        <button className="toggle-btn" onClick={onToggleCollapse} title="Hide">
-          ✕
-        </button>
-      </div>
-
-      <div className="level-selector">
-        <span className="level-label">Context Level:</span>
-        <div className="level-buttons">
-          {[1, 2, 3].map(l => (
-            <button
-              key={l}
-              className={`level-btn ${level === l ? 'active' : ''}`}
-              onClick={() => setLevel(l)}
-            >
-              L{l}
-            </button>
-          ))}
+        <h3>State</h3>
+        <div className="header-actions">
+          <button className="refresh-btn" onClick={fetchState} title="Refresh">
+            🔄
+          </button>
+          <button className="toggle-btn" onClick={onToggleCollapse} title="Hide">
+            ✕
+          </button>
         </div>
-        <button className="refresh-btn" onClick={fetchSystemPrompt} title="Refresh">
-          🔄
-        </button>
       </div>
 
       {loading && !data && (
@@ -104,26 +90,10 @@ export const SystemPromptSidebar: React.FC<SystemPromptSidebarProps> = ({
         <div className="prompt-content">
           <div className="stats">
             <span className="stat">{data.char_count.toLocaleString()} chars</span>
-            <span className="stat">L{data.level}</span>
-          </div>
-
-          <div className="view-toggle">
-            <button
-              className={`view-btn ${!showFull ? 'active' : ''}`}
-              onClick={() => setShowFull(false)}
-            >
-              Context Only
-            </button>
-            <button
-              className={`view-btn ${showFull ? 'active' : ''}`}
-              onClick={() => setShowFull(true)}
-            >
-              Full Prompt
-            </button>
           </div>
 
           <div className="prompt-text">
-            <pre>{showFull ? data.system_prompt : data.consciousness_context}</pre>
+            <pre>{data.state}</pre>
           </div>
         </div>
       )}

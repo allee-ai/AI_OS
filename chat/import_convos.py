@@ -23,9 +23,9 @@ from chat.parsers import (
 class ImportConvos:
     """Import conversations from other AI platforms into AI OS."""
     
-    def __init__(self, workspace_path: Path, stimuli_path: Path):
+    def __init__(self, workspace_path: Path, feeds_path: Path):
         self.workspace_path = workspace_path
-        self.stimuli_path = stimuli_path
+        self.feeds_path = feeds_path
         self.parsers: List[ExportParserBase] = [
             ChatGPTExportParser(),
             ClaudeExportParser(),
@@ -81,7 +81,7 @@ class ImportConvos:
                 aios_conv = self._convert_to_aios_format(conv)
                 
                 # Save conversation
-                conv_file = self.stimuli_path / "conversations" / f"imported_{conv.id}.json"
+                conv_file = self.feeds_path / "conversations" / f"imported_{conv.id}.json"
                 conv_file.parent.mkdir(parents=True, exist_ok=True)
                 
                 with open(conv_file, 'w', encoding='utf-8') as f:
@@ -119,7 +119,7 @@ class ImportConvos:
                 "timestamp": user_msg.timestamp.isoformat(),
                 "user": user_msg.content,
                 "assistant": assistant_msg.content if assistant_msg else "",
-                "stimuli_type": "conversational",
+                "feed_type": "conversational",
                 "context_level": 2
             }
             turns.append(turn)

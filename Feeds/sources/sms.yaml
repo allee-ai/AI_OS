@@ -1,0 +1,42 @@
+# SMS Feeds Source (via Twilio)
+# Pulls incoming SMS, pushes queued messages
+
+name: sms
+type: rest
+enabled: false
+
+poll_interval: 120
+
+auth:
+  method: basic
+  account_sid_env: TWILIO_ACCOUNT_SID
+  auth_token_env: TWILIO_AUTH_TOKEN
+
+# Pull: Get recent messages
+pull:
+  endpoint: https://api.twilio.com/2010-04-01/Accounts/{{account_sid}}/Messages.json
+  method: GET
+  params:
+    PageSize: 20
+    To: "{{your_number}}"  # Only incoming
+  
+  mapping:
+    messages: "$.messages"
+    id: "$.sid"
+    thread_id: "$.from"  # Thread by phone number
+    sender_id: "$.from"
+    sender_name: "$.from"
+    subject: null
+    body: "$.body"
+
+# Push: Queue message (review before send)
+push:
+  endpoint: https://api.twilio.com/2010-04-01/Accounts/{{account_sid}}/Messages.json
+  method: POST
+  
+  # Note: StatusCallback can pause for review
+  body_template:
+    To: "{{to}}"
+    From: "{{from_number}}"
+    Body: "{{body}}"
+    # StatusCallback: "https://your-app.com/sms/review"

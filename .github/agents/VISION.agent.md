@@ -255,7 +255,7 @@ Without it, users can't see Nola thinking. Prioritize visualization over feature
 **Boredom Audit**:
 - **Log Thread**: 4/5 ⚡ (Good bones, but write-only. A diary nobody opens).
 - **Consolidation**: 3/5 😐 (Mechanically sound, but scoring feels arbitrary).
-- **Stimuli Classification**: 2/5 😴 (Keyword matching is weak. Needs learning).
+- **Feeds Classification**: 2/5 😴 (Keyword matching is weak. Needs learning).
 </details>
 
 ### 🤖 Model: Claude Opus 4.5 | Date: 2026-01-19 (Fresh Assessment)

@@ -1,0 +1,43 @@
+# Zendesk Feeds Source
+# Pulls tickets, pushes comments
+
+name: zendesk
+type: rest
+enabled: false
+
+poll_interval: 300
+
+auth:
+  method: basic
+  # Use email/token auth: email@domain.com/token:API_TOKEN
+  credentials_env: ZENDESK_CREDENTIALS
+  subdomain_env: ZENDESK_SUBDOMAIN
+
+# Pull: Get open tickets
+pull:
+  endpoint: https://{{subdomain}}.zendesk.com/api/v2/tickets.json
+  method: GET
+  params:
+    status: "open,pending"
+    sort_by: "updated_at"
+    sort_order: "desc"
+  
+  mapping:
+    messages: "$.tickets"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.requester_id"
+    sender_name: "$.via.source.from.name"
+    subject: "$.subject"
+    body: "$.description"
+
+# Push: Add comment to ticket
+push:
+  endpoint: https://{{subdomain}}.zendesk.com/api/v2/tickets/{{thread_id}}.json
+  method: PUT
+  
+  body_template:
+    ticket:
+      comment:
+        body: "{{body}}"
+        public: false  # Internal note by default

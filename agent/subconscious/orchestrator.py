@@ -32,8 +32,8 @@ from datetime import datetime, timezone
 import json
 
 
-# Thread list (linking_core excluded - it scores, doesn't contribute facts)
-THREADS = ["identity", "log", "form", "philosophy", "reflex"]
+# Thread list - linking_core included for UI visibility
+THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
 
 # Score thresholds for context levels
 # Score determines: (1) block order, (2) L1/L2/L3 level, (3) fact weight threshold
@@ -163,16 +163,19 @@ class Subconscious:
             query: Optional query for thread introspection filtering
         
         Returns:
-            Formatted STATE block string:
+            Formatted STATE block string with thread sections:
             
             == STATE ==
             
-            identity - 8.2
-            identity.agent.name.value: Nola
-            identity.agent.name.weight: 10.0
+            [identity] Who I am, who you are, and who we know
+            machine:
+              name: Nola
+            primary_user:
+              name: Jamie
             
-            log - 5.5
-            log.events.0.message: discussed architecture
+            [log] Temporal awareness and history
+            recent:
+              - discussed architecture
             
             == END STATE ==
         """
@@ -184,12 +187,9 @@ class Subconscious:
         )
         
         # Build state blocks
-        lines = ["== STATE ==", ""]
+        lines = ["== STATE =="]
         
         for thread_name, score in ordered_threads:
-            if thread_name == "linking_core":
-                continue  # linking_core scores, doesn't contribute facts
-                
             adapter = self._get_adapter(thread_name)
             if not adapter:
                 continue
@@ -216,14 +216,16 @@ class Subconscious:
                 facts = result_dict.get("facts", [])
                 
                 if facts:
-                    # Thread header with score
-                    lines.append(f"{thread_name} - {score:.1f}")
+                    # Thread header with description
+                    description = getattr(adapter, '_description', '')
+                    lines.append("")
+                    lines.append(f"[{thread_name}] {description}")
+                    lines.append(f"  context_level: {level}")
+                    lines.append(f"  fact_count: {len(facts)}")
                     
-                    # Facts (already formatted with dot notation by adapter)
+                    # Flat dot notation facts
                     for fact in facts:
                         lines.append(fact)
-                    
-                    lines.append("")  # Blank line between threads
                     
             except TypeError:
                 # Adapter doesn't support threshold yet - fall back to old signature
@@ -233,15 +235,67 @@ class Subconscious:
                     facts = result_dict.get("facts", [])
                     
                     if facts:
-                        lines.append(f"{thread_name} - {score:.1f}")
+                        description = getattr(adapter, '_description', '')
+                        lines.append("")
+                        lines.append(f"[{thread_name}] {description}")
+                        lines.append(f"  context_level: {level}")
+                        lines.append(f"  fact_count: {len(facts)}")
                         for fact in facts:
                             lines.append(fact)
-                        lines.append("")
                 except Exception as e:
                     print(f"⚠️ {thread_name} introspect failed: {e}")
                     
             except Exception as e:
                 print(f"⚠️ {thread_name} introspect failed: {e}")
+        
+        lines.append("")
+        lines.append("== END STATE ==")
+        
+        # Track timing
+        self._last_context_time = datetime.now(timezone.utc).isoformat()
+        self._last_query = query
+        
+        return "\n".join(lines)
+    
+    def _group_facts_by_category(self, facts: List[str], thread_name: str) -> Dict[str, List[str]]:
+        """
+        Group dot-notation facts by their category, preserving thread prefix.
+        
+        Input:  ["identity.machine.name: Nola", "identity.dad.name: Robert", "identity.dad.likes: fishing"]
+        Output: {"identity.machine": ["name: Nola"], "identity.dad": ["name: Robert", "likes: fishing"]}
+        """
+        from collections import OrderedDict
+        grouped: Dict[str, List[str]] = OrderedDict()
+        
+        for fact in facts:
+            # Parse "thread.category.key: value" format
+            if ": " in fact:
+                path, value = fact.split(": ", 1)
+                parts = path.split(".")
+                
+                if len(parts) >= 3:
+                    # thread.category.key -> thread.category, key: value
+                    category = f"{parts[0]}.{parts[1]}"
+                    key = ".".join(parts[2:])  # Handle nested keys
+                    formatted = f"{key}: {value}"
+                elif len(parts) == 2:
+                    # thread.key -> thread, key: value
+                    category = parts[0]
+                    key = parts[1]
+                    formatted = f"{key}: {value}"
+                else:
+                    category = thread_name
+                    formatted = fact
+            else:
+                # No colon, treat as-is
+                category = thread_name
+                formatted = fact
+            
+            if category not in grouped:
+                grouped[category] = []
+            grouped[category].append(formatted)
+        
+        return grouped
         
         lines.append("== END STATE ==")
         

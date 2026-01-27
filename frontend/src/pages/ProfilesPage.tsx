@@ -33,9 +33,14 @@ interface Profile {
   profile_id: string;
   type_name: string;
   display_name: string;
-  trust_level: number;
-  context_priority: number;
-  can_edit: boolean;
+  // Identity fields
+  trust_level?: number;
+  context_priority?: number;
+  can_edit?: boolean;
+  protected?: boolean;
+  // Philosophy fields  
+  priority?: number;
+  description?: string;
 }
 
 interface FactType {
@@ -70,6 +75,7 @@ interface ProfileSidebarProps {
   onProfileSelect: (profileId: string) => void;
   onAddType: (name: string) => Promise<void>;
   onAddProfile: () => void;
+  onDeleteProfile: (profileId: string) => Promise<void>;
   onDeleteAllFacts: () => void;
   onDeleteAllProfiles: () => void;
   entityName: string;
@@ -84,6 +90,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   onProfileSelect,
   onAddType,
   onAddProfile,
+  onDeleteProfile,
   onDeleteAllFacts,
   onDeleteAllProfiles,
   entityName,
@@ -133,10 +140,26 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
               onClick={() => onProfileSelect(p.profile_id)}
               className={`profile-item ${selectedProfile === p.profile_id ? 'active' : ''}`}
             >
-              <div className="profile-item-name">{p.display_name}</div>
-              <div className="profile-item-meta">
-                {p.type_name} • trust: {p.trust_level}
+              <div className="profile-item-content">
+                <div className="profile-item-name">{p.display_name}</div>
+                <div className="profile-item-meta">
+                  {p.type_name} • {p.trust_level !== undefined ? `trust: ${p.trust_level}` : `priority: ${p.priority || 0}`}
+                </div>
               </div>
+              {!p.protected && (
+                <button
+                  className="profile-item-delete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    if (confirm(`Delete profile "${p.display_name}"?`)) {
+                      onDeleteProfile(p.profile_id);
+                    }
+                  }}
+                  title="Delete profile"
+                >
+                  🗑️
+                </button>
+              )}
             </div>
           ))}
         </div>
@@ -262,19 +285,21 @@ const ProfileView: React.FC<ProfileViewProps> = ({
             onChange={(e) => setNewFact({ ...newFact, key: e.target.value })}
           />
           {contextLevel === 1 && (
-            <input
-              type="text"
+            <textarea
               placeholder="L1: Brief (~10 tokens)"
               value={newFact.l1_value}
               onChange={(e) => setNewFact({ ...newFact, l1_value: e.target.value })}
+              rows={3}
+              style={{ gridColumn: '1 / -1' }}
             />
           )}
           {contextLevel === 2 && (
-            <input
-              type="text"
+            <textarea
               placeholder="L2: Standard (~50 tokens)"
               value={newFact.l2_value}
               onChange={(e) => setNewFact({ ...newFact, l2_value: e.target.value })}
+              rows={3}
+              style={{ gridColumn: '1 / -1' }}
             />
           )}
           {contextLevel === 3 && (
@@ -452,23 +477,48 @@ const getWeightColor = (weight: number): string => {
 interface AddProfileModalProps {
   isOpen: boolean;
   typeName: string;
+  mode: ProfileMode;
+  identityProfiles?: Profile[];
   onClose: () => void;
-  onAdd: (profileId: string, displayName: string) => Promise<void>;
+  onAdd: (profileId: string, displayName: string, linkedIdentity?: string) => Promise<void>;
 }
 
-const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onClose, onAdd }) => {
+const AddProfileModal: React.FC<AddProfileModalProps> = ({ 
+  isOpen, 
+  typeName, 
+  mode, 
+  identityProfiles = [],
+  onClose, 
+  onAdd 
+}) => {
   const [name, setName] = useState('');
   const [displayName, setDisplayName] = useState('');
+  const [linkedIdentity, setLinkedIdentity] = useState('');
 
   if (!isOpen) return null;
 
   const handleSubmit = async () => {
     if (name.trim()) {
       const profileId = `${typeName}.${name.trim().toLowerCase().replace(/\s+/g, '_')}`;
-      await onAdd(profileId, displayName || name.trim());
+      await onAdd(profileId, displayName || name.trim(), linkedIdentity || undefined);
       setName('');
       setDisplayName('');
+      setLinkedIdentity('');
       onClose();
+    }
+  };
+
+  // Auto-fill from identity profile selection
+  const handleIdentitySelect = (identityId: string) => {
+    setLinkedIdentity(identityId);
+    if (identityId && !name) {
+      // Extract name from identity profile_id (e.g., "primary_user" -> "primary_user")
+      const shortName = identityId.split('.').pop() || identityId;
+      setName(shortName);
+      if (!displayName) {
+        const profile = identityProfiles.find(p => p.profile_id === identityId);
+        setDisplayName(profile?.display_name || shortName);
+      }
     }
   };
 
@@ -477,12 +527,39 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
       <div className="profile-modal" onClick={(e) => e.stopPropagation()}>
         <h3>Add {typeName} Profile</h3>
         <div className="profile-modal-form">
+          {mode === 'philosophy' && identityProfiles.length > 0 && (
+            <div style={{ marginBottom: '8px' }}>
+              <label style={{ fontSize: '12px', color: 'var(--text-muted)', marginBottom: '4px', display: 'block' }}>
+                Link to Identity (optional)
+              </label>
+              <select
+                value={linkedIdentity}
+                onChange={(e) => handleIdentitySelect(e.target.value)}
+                style={{
+                  width: '100%',
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid var(--border)',
+                  background: 'var(--surface)',
+                  color: 'var(--text)',
+                  fontSize: '13px',
+                }}
+              >
+                <option value="">— No link —</option>
+                {identityProfiles.map(p => (
+                  <option key={p.profile_id} value={p.profile_id}>
+                    {p.display_name} ({p.profile_id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <input
             type="text"
             placeholder="Name (e.g. 'mom', 'john')"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            autoFocus
+            autoFocus={mode !== 'philosophy'}
           />
           <input
             type="text"
@@ -492,6 +569,11 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
           />
           <div style={{ color: 'var(--text-muted)', fontSize: '12px' }}>
             Profile ID: {typeName}.{name.trim().toLowerCase().replace(/\s+/g, '_') || '...'}
+            {linkedIdentity && (
+              <span style={{ marginLeft: '8px', color: 'var(--primary)' }}>
+                🔗 → {linkedIdentity}
+              </span>
+            )}
           </div>
           <div className="profile-modal-buttons">
             <button onClick={onClose}>Cancel</button>
@@ -518,6 +600,7 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [identityProfiles, setIdentityProfiles] = useState<Profile[]>([]); // For philosophy mode linking
 
   // Fetch all data
   const fetchData = useCallback(async () => {
@@ -530,12 +613,22 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
       setProfileTypes(await typesRes.json());
       setProfiles(await profilesRes.json());
       setFactTypes(await factTypesRes.json());
+      
+      // In philosophy mode, also fetch identity profiles for linking
+      if (mode === 'philosophy') {
+        try {
+          const identityRes = await fetch('/api/identity');
+          setIdentityProfiles(await identityRes.json());
+        } catch (err) {
+          console.error('Failed to fetch identity profiles for linking:', err);
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch profiles data:', err);
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [API, mode]);
 
   // Fetch facts for selected profile
   const fetchFacts = useCallback(async (profileId: string) => {
@@ -554,11 +647,12 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
   // Auto-select first profile if none selected
   useEffect(() => {
     if (!selectedProfile && profiles.length > 0) {
-      // Prefer self.nola if it exists
-      const self = profiles.find(p => p.profile_id === 'self.nola');
-      setSelectedProfile(self ? self.profile_id : profiles[0].profile_id);
+      // For identity: prefer primary_user; for philosophy: prefer core.values
+      const preferred = mode === 'identity' ? 'primary_user' : 'core.values';
+      const defaultProfile = profiles.find(p => p.profile_id === preferred);
+      setSelectedProfile(defaultProfile ? defaultProfile.profile_id : profiles[0].profile_id);
     }
-  }, [profiles, selectedProfile]);
+  }, [profiles, selectedProfile, mode]);
 
   useEffect(() => {
     if (selectedProfile) {
@@ -578,12 +672,31 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
     await fetchData();
   };
 
-  const handleAddProfile = async (profileId: string, displayName: string) => {
+  const handleAddProfile = async (profileId: string, displayName: string, linkedIdentity?: string) => {
     await fetch(API, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ profile_id: profileId, type_name: selectedType, display_name: displayName }),
     });
+    
+    // Create link in linking_core if linked to an identity
+    if (linkedIdentity && mode === 'philosophy') {
+      try {
+        await fetch('/api/linking_core/links', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            concept_a: `identity:${linkedIdentity}`,
+            concept_b: `philosophy:${profileId}`,
+            strength: 0.8,
+            link_type: 'has_philosophy'
+          }),
+        });
+      } catch (err) {
+        console.error('Failed to create identity-philosophy link:', err);
+      }
+    }
+    
     await fetchData();
     setSelectedProfile(profileId);
   };
@@ -648,6 +761,15 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
     }
   };
 
+  const handleDeleteProfile = async (profileId: string) => {
+    await fetch(`${API}/${profileId}`, { method: 'DELETE' });
+    if (selectedProfile === profileId) {
+      setSelectedProfile(null);
+      setFacts([]);
+    }
+    await fetchData();
+  };
+
   if (loading) {
     return (
       <div className="profiles-page-loading">
@@ -668,6 +790,7 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
         onProfileSelect={setSelectedProfile}
         onAddType={handleAddType}
         onAddProfile={() => setShowAddModal(true)}
+        onDeleteProfile={handleDeleteProfile}
         onDeleteAllFacts={handleDeleteAllFacts}
         onDeleteAllProfiles={handleDeleteAllProfiles}
         entityName={entityName}
@@ -685,6 +808,8 @@ const AddProfileModal: React.FC<AddProfileModalProps> = ({ isOpen, typeName, onC
       <AddProfileModal
         isOpen={showAddModal}
         typeName={selectedType}
+        mode={mode}
+        identityProfiles={identityProfiles}
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddProfile}
       />

@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import { Dashboard } from './pages/Dashboard'
 import { ChatPage } from './pages/ChatPage'
-import { StimuliPage } from './pages/StimuliPage'
+import { FeedsPage } from './pages/FeedsPage'
 import { ThreadsPage } from './pages/ThreadsPage'
 import { WorkspacePage } from './pages/WorkspacePage'
 import { DocsPage } from './pages/DocsPage'
@@ -10,18 +10,18 @@ import { SettingsPage } from './pages/SettingsPage'
 import { DevDashboard } from './pages/DevDashboard'
 import ProfilesPage from './pages/ProfilesPage'
 import { DatabaseToggle } from './components/Chat/DatabaseToggle'
-import { useNolaMode } from './hooks/useNolaMode'
+import { useAppMode } from './hooks/useAppMode'
 import './App.css'
 
 function App() {
-  const { loading, is_demo } = useNolaMode();
+  const { loading, is_demo } = useAppMode();
   
   if (loading) {
     return (
       <div className="app loading-app">
         <div className="loading-container">
           <div className="startup-logo">🧠</div>
-          <p>Loading Nola...</p>
+          <p>Loading AI OS...</p>
         </div>
       </div>
     );
@@ -29,16 +29,6 @@ function App() {
 
   return (
     <BrowserRouter>
-      {/* Global Database Toggle - Top Right Corner */}
-      <div style={{
-        position: 'fixed',
-        top: '16px',
-        right: '16px',
-        zIndex: 10000
-      }}>
-        <DatabaseToggle />
-      </div>
-      
       {is_demo && (
         <div style={{
           backgroundColor: '#ff9800',
@@ -56,11 +46,10 @@ function App() {
           ⚠️ DEMO MODE: Data will be reset on restart
         </div>
       )}
-      <div className="app" style={is_demo ? { marginTop: '24px' } : {}}>
-        <Routes>
+      <div className="app" style={is_demo ? { marginTop: '24px' } : {}}>        <Routes>
           <Route path="/" element={<Dashboard />} />
           <Route path="/chat" element={<ChatPage />} />
-          <Route path="/stimuli" element={<StimuliPage />} />
+          <Route path="/feeds" element={<FeedsPage />} />
           <Route path="/threads" element={<ThreadsPage />} />
           <Route path="/profiles" element={<ProfilesPage />} />
           <Route path="/workspace" element={<WorkspacePage />} />
@@ -72,6 +61,7 @@ function App() {
         </Routes>
         <footer className="app-footer">
           <p>Local-first • Your data stays on your machine • Powered by Ollama</p>
+          <DatabaseToggle />
         </footer>
       </div>
     </BrowserRouter>

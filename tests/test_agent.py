@@ -76,22 +76,22 @@ class TestAgentProvider:
         
         # Force mock provider for testing
         with patch.dict('os.environ', {'AIOS_PROVIDER': 'mock'}):
-            response = agent.generate("Test prompt", stimuli_type="realtime")
+            response = agent.generate("Test prompt", feed_type="realtime")
             assert response is not None
             assert isinstance(response, str)
     
-    def test_generate_accepts_stimuli_type(self, aios_path):
-        """generate() should accept stimuli_type parameter."""
+    def test_generate_accepts_feed_type(self, aios_path):
+        """generate() should accept feed_type parameter."""
         from agent import get_agent
         
         agent = get_agent()
         
-        # All three stimuli types should work
-        for stimuli_type in ["realtime", "conversational", "analytical"]:
+        # All three feeds types should work
+        for feed_type in ["realtime", "conversational", "analytical"]:
             with patch.dict('os.environ', {'AIOS_PROVIDER': 'mock'}):
                 response = agent.generate(
-                    f"Test {stimuli_type}",
-                    stimuli_type=stimuli_type
+                    f"Test {feed_type}",
+                    feed_type=feed_type
                 )
                 assert response is not None
 
@@ -100,14 +100,14 @@ class TestAgentIdentity:
     """Test identity loading and system prompt generation."""
     
     def test_load_identity_returns_dict(self, aios_path):
-        """_load_identity_for_stimuli should return identity dict."""
+        """_load_identity_for_feed should return identity dict."""
         from agent import get_agent
         
         agent = get_agent()
         
         # Access private method for testing
-        if hasattr(agent, '_load_identity_for_stimuli'):
-            identity = agent._load_identity_for_stimuli("conversational")
+        if hasattr(agent, '_load_identity_for_feed'):
+            identity = agent._load_identity_for_feed("conversational")
             assert isinstance(identity, dict)
     
     def test_get_state_includes_identity(self, aios_path):

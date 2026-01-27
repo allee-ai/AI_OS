@@ -1,82 +1,145 @@
 # Identity Thread
 
-**Cognitive Question**: WHO am I? WHO are you?  
-**Resolution Order**: 1st (all thought patterns resolve identity first)  
+**Cognitive Question**: WHO am I? WHO are you? WHO do we know?  
+**Resolution Order**: 1st (all cognition begins with identity resolution)  
 **Brain Mapping**: Prefrontal Cortex (self-model, theory of mind)
 
 ---
 
-## Necessity
+## Purpose
 
-All psychological documentation confirms: cognition begins with identity resolution. Before "what should I do?" comes "who am I?" and "who is this?". Without identity anchoring, agents drift into incoherent personas.
+Identity provides the foundation for all reasoning. Before "what should I do?" comes "who am I?" and "who is asking?". Without identity anchoring, agents drift into incoherent personas.
+
+The identity thread manages:
+- **Machine identity** (the agent itself)
+- **Primary user** (who is talking to the agent)
+- **Contacts** (family, friends, acquaintances)
 
 ---
 
-## Backend
+## Database Schema
 
-### Database Tables
+### Tables
 
-| Table | Location | Purpose |
-|-------|----------|---------|
-| `identity_flat` | `schema.py:1469` | Main identity storage with L1/L2/L3 columns |
-| `profiles` | `schema.py:1881` | Profile entities (user, agent, contacts) |
-| `profile_facts` | `schema.py:1941` | Facts linked to profiles |
+| Table | Purpose |
+|-------|---------|
+| `profile_types` | Categories with trust levels (user, machine, family, friend, etc.) |
+| `profiles` | Individual identity profiles |
+| `fact_types` | Types of facts (name, email, preference, relationship, etc.) |
+| `profile_facts` | The actual facts with L1/L2/L3 values |
 
-### Key Functions
+### profile_facts
 
-| Function | Location | Purpose |
-|----------|----------|---------|
-| `init_identity_flat()` | `schema.py:1462` | Create identity table |
-| `push_identity_row()` | `schema.py:1492` | Insert/update identity fact |
-| `pull_identity_flat()` | `schema.py:1525` | Get facts at specified level |
-| `get_identity_context()` | `schema.py:1549` | Format facts for system prompt |
-| `get_identity_table_data()` | `schema.py:1572` | Get all facts for UI table |
+```sql
+CREATE TABLE profile_facts (
+    profile_id TEXT NOT NULL,
+    key TEXT NOT NULL,               -- 'name', 'likes', 'relationship'
+    fact_type TEXT NOT NULL,         -- FK to fact_types
+    l1_value TEXT,                   -- Brief (5-10 tokens)
+    l2_value TEXT,                   -- Standard (20-50 tokens)
+    l3_value TEXT,                   -- Detailed (100+ tokens)
+    weight REAL DEFAULT 0.5,         -- 0.0-1.0 importance
+    protected BOOLEAN DEFAULT FALSE,
+    access_count INTEGER DEFAULT 0,
+    PRIMARY KEY (profile_id, key)
+)
+```
 
-### Adapter
+---
 
-| Method | Location | Purpose |
+## Adapter Methods
+
+| Method | Purpose |
+|--------|---------|
+| `get_data(level, min_weight, limit)` | Get facts across all profiles |
+| `get_context_string(level, token_budget)` | Formatted string for prompts |
+| `set_fact(profile_id, key, l1, l2, l3, fact_type, weight)` | Create/update a fact |
+| `introspect(context_level, query, threshold)` | Build STATE block contribution |
+| `health()` | Health check with fact counts |
+| `score_relevance(fact, context)` | Score fact importance |
+| `get_module_data(module, level)` | Get facts for a specific profile |
+
+### introspect()
+
+The main interface for subconscious integration. Returns `IntrospectionResult` with:
+- `facts`: List of dot-notation facts like `identity.dad.name: Robert`
+- `relevant_concepts`: Concepts extracted from query
+- `context_level`: HEA level used
+- `health`: Thread health status
+
+Facts are filtered by `_filter_by_relevance()` using LinkingCore spread activation.
+
+---
+
+## Context Levels (HEA)
+
+| Level | Content | Token Budget |
+|-------|---------|--------------|
+| **L1** | Core identifiers only (machine name, user name) | ~10 tokens |
+| **L2** | L1 + top profiles with key facts | ~50 tokens |
+| **L3** | L2 + detailed facts, relationships | ~200 tokens |
+
+### L1/L2/L3 Value Example
+
+```
+profile: family.dad
+key: name
+
+l1_value: "Robert"
+l2_value: "Robert, your father"  
+l3_value: "Robert, your father, retired engineer who lives in Ohio"
+```
+
+---
+
+## Output Format
+
+Facts are formatted with dot notation for the STATE block:
+
+```
+identity.machine.name: Nola - a personal AI
+identity.primary_user.name: Jamie
+identity.dad.relationship: Your father, retired engineer
+identity.dad.likes: fishing, woodworking
+```
+
+---
+
+## Relevance Filtering
+
+When a query is provided, `_filter_by_relevance()` uses LinkingCore to filter:
+
+1. Extract concepts from query ("dad" -> `["dad", "father", "family"]`)
+2. Run spread activation to get related concepts
+3. Filter facts where profile_id, key, or value match any activated concept
+
+Example: Query "dad" activates `family.dad.*` facts.
+
+---
+
+## Core Profiles
+
+Two protected profiles are created by default:
+
+| Profile ID | Type | Purpose |
+|------------|------|---------|
+| `machine` | machine | The agent itself (name, OS, capabilities) |
+| `primary_user` | user | The main user (name, email, preferences) |
+
+Additional profiles use compound IDs: `family.dad`, `friend.alex`, `acquaintance.coworker`
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Purpose |
 |--------|----------|---------|
-| `get_data()` | `adapter.py:51` | Get identity data at HEA level |
-| `get_table_data()` | `adapter.py:62` | Get all rows for table display |
-| `get_context_string()` | `adapter.py:70` | Get formatted context for prompt |
-| `set_fact()` | `adapter.py:80` | Set fact with L1/L2/L3 |
-| `introspect()` | `adapter.py:97` | Return structured introspection |
-| `health()` | `adapter.py:113` | Health check |
-
----
-
-## Context Levels
-
-| Level | Token Budget | Content |
-|-------|--------------|---------|
-| **L1** | ~10 tokens | `machineID`, `userID`, metadata only |
-| **L2** | ~50 tokens | L1 + top-k PROFILES with profile metadata |
-| **L3** | ~200 tokens | L2 + top-k FACTS per profile |
-
-### Example L1/L2/L3
-
-```
-key: "user_name"
-L1: "Jordan"                                    (~5 tokens)
-L2: "Jordan, software developer"                (~15 tokens)
-L3: "Jordan, software developer building AI_OS, prefers morning sessions" (~30 tokens)
-```
-
----
-
-## Frontend
-
-| Component | Location | Status |
-|-----------|----------|--------|
-| `ProfilesPage.tsx` | `react-chat-app/frontend/src/pages/ProfilesPage.tsx` | 🌀 Done |
-| Identity table | `ThreadsPage.tsx:217-231` | 🌀 Done |
-
-**Features**:
-- 🌀 View all identity facts
-- 🌀 Edit L1/L2/L3 values inline
-- 🌀 Adjust weights
-- 🌀 Add new facts
-- 🌀 Filter by metadata_type (user/agent/machine/relationship)
+| GET | `/api/identity/profiles` | List all profiles |
+| GET | `/api/identity/profiles/{id}` | Get profile with facts |
+| POST | `/api/identity/profiles` | Create profile |
+| DELETE | `/api/identity/profiles/{id}` | Delete profile (if not protected) |
+| GET | `/api/identity/facts` | List all facts |
+| POST | `/api/identity/facts` | Create/update fact |
 
 ---
 
@@ -84,166 +147,22 @@ L3: "Jordan, software developer building AI_OS, prefers morning sessions" (~30 t
 
 | Thread | Integration |
 |--------|-------------|
-| **Log** | Records when identity facts accessed/modified |
-| **Linking Core** | Scores which identity facts are relevant NOW |
+| **Subconscious** | Calls `introspect()` to build STATE block |
+| **Linking Core** | Scores relevance, spread activation for filtering |
+| **Log** | Records when identity facts are accessed |
 | **Philosophy** | Identity informs value application |
 | **Form** | User preferences affect tool behavior |
-| **Subconscious** | `get_context()` pulls identity at specified level |
 
 ---
 
 ## Weight Semantics
 
-- **0.9+**: Core identity (name, role)
-- **0.6-0.8**: Important preferences (communication style)
-- **0.3-0.5**: Contextual facts (current project)
-- **<0.3**: Peripheral (mentioned once)
+| Weight | Meaning | Examples |
+|--------|---------|----------|
+| 0.9+ | Core identity | name, role |
+| 0.6-0.8 | Important facts | occupation, email |
+| 0.3-0.5 | Contextual | current project, preferences |
+| <0.3 | Peripheral | mentioned once |
 
-Higher weight = retrieved more often = stays in working memory.
-
-# Database Integration Plan
-
-**Status:** 🌀 IMPLEMENTED  
-**Last Updated:** 2026-01-20
-
-> **Note:** This plan has been implemented. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and persistent storage. See `agent/threads/schema.py` for implementation details.
-
-## Overview
-
-This document outlines the migration from flat JSON file storage to a persistent SQLite database system for the agent's state management. The goal is to maintain local-first architecture while enabling persistent, editable state across sessions.
-
-## Current Architecture
-
-- **State Storage**: JSON files in various locations
-- **Persistence**: File-based, session-dependent
-- **Editing**: Manual file modification
-- **Scaling**: Limited by file I/O performance
-
-## Target Architecture
-
-- **State Storage**: SQLite database with JSON columns
-- **Persistence**: Docker volume-mounted database file
-- **Editing**: Web UI with real-time state modification
-- **Scaling**: Efficient nested key queries and updates
-
-## Implementation Strategy
-
-### Phase 1: Database Schema Design
-
-**Primary Table Structure:**
-```sql
-CREATE TABLE IF NOT EXISTS state_storage (
-    key_name TEXT PRIMARY KEY,       -- 'Identity', 'Persona', 'Context'
-    value_json TEXT,                 -- Nested JSON structure
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-
-CREATE TABLE IF NOT EXISTS conversation_history (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id TEXT,
-    message TEXT,
-    speaker TEXT,
-    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-);
-```
-
-### Phase 2: Migration Strategy
-
-1. **JSON Preservation**: Existing JSON files become database seed data
-2. **Checkpoint System**: JSONs serve as state restoration points for catastrophic failure
-3. **Migration Script**: Automated conversion from file-based to database storage
-
-### Phase 3: Docker Volume Integration
-
-**docker-compose.yml Configuration:**
-```yaml
-services:
-  aios_backend:
-    volumes:
-      - aios_memory:/app/data/db/
-      
-volumes:
-  aios_memory:
-```
-
-**Database Initialization:**
-- First run: Creates empty database from JSON checkpoints
-- Subsequent runs: Loads existing state from persistent volume
-
-### Phase 4: Frontend Integration
-
-**Editable State UI:**
-- Real-time key/value editing interface
-- Nested key creation and modification
-- State synchronization with backend
-- Visual state tree representation
-
-## Technical Benefits
-
-1. **Persistence**: State survives container restarts
-2. **Performance**: Efficient querying of nested JSON structures
-3. **Concurrency**: Safe multi-user access (when scaled)
-4. **Flexibility**: Dynamic schema via JSON columns
-5. **Portability**: Single SQLite file for entire state
-
-## API Endpoints
-
-```
-GET    /api/state                    # Retrieve full state
-GET    /api/state/{key}             # Retrieve specific key
-PUT    /api/state/{key}             # Update/create key
-DELETE /api/state/{key}             # Remove key
-POST   /api/state/restore           # Restore from JSON checkpoint
-```
-
-## Risk Mitigation
-
-- **Data Loss**: JSON checkpoint system provides rollback capability
-- **Corruption**: Database integrity checks and backup procedures
-- **Migration Issues**: Gradual rollout with fallback to JSON files
-
----
-
-## Notes
-
-### Identity Thread v2 Development Plan
-
-**Current Status**: Working with `agent/identity_thread` containing existing JSON state files
-
-**Migration Plan:**
-1. **JSON Preservation**: Convert existing JSONs in `identity_thread` to database creation tools
-2. **Checkpoint System**: Treat current JSONs as state checkpoints for catastrophic failure recovery
-3. **Database Seeding**: Use preserved JSONs as starting point when users clone the app
-4. **State Bootstrap**: On first run, database populates from these JSON "templates"
-
-**Next Phase - Frontend Development:**
-- Jump to React app development for user-friendly interface
-- Implement editable database interface
-- Create intuitive state management UI
-
-## Technical Benefits
-
-1. **Persistence**: State survives container restarts
-2. **Performance**: Efficient querying of nested JSON structures
-3. **Concurrency**: Safe multi-user access (when scaled)
-4. **Flexibility**: Dynamic schema via JSON columns
-5. **Portability**: Single SQLite file for entire state
-
-### Frontend Developer Note
-
-**Important**: The React app currently recreates the nested folder structure `agent/Stimuli/conversations/` that already exists in the project. This redundancy should be addressed during the frontend refactor to prevent conflicts and maintain clean file organization.
-
-**Folder Structure Consideration:**
-- Existing: `agent/Stimuli/conversations/` (note capitalization)
-- React Creates: `agent/stimuli/conversations/` (lowercase)
-- Solution needed: Align folder creation with existing structure or consolidate
-
-### Implementation Priority
-
-1. **Backend**: Database integration and migration scripts
-2. **State Management**: JSON-to-database conversion tools  
-3. **Frontend**: Editable state interface
-4. **Testing**: State persistence and UI functionality
-5. **Documentation**: User guides and API documentation
+Higher weight = retrieved more often at lower HEA levels.
 

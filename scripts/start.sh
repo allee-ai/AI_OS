@@ -267,8 +267,8 @@ echo -e "  ${CYAN}Chat UI:${NC}   http://localhost:5173"
 echo -e "  ${CYAN}API:${NC}       http://localhost:8000"
 echo -e "  ${CYAN}API Docs:${NC}  http://localhost:8000/docs"
 echo ""
-echo -e "  ${BLUE}Nola:${NC}      $AIOS_DIR"
-echo -e "  ${BLUE}Convos:${NC}    $AIOS_DIR/Stimuli/conversations/"
+echo -e "  ${BLUE}Agent:${NC}      $AIOS_DIR"
+echo -e "  ${BLUE}Convos:${NC}    $AIOS_DIR/Feeds/conversations/"
 echo ""
 echo -e "${YELLOW}Press Ctrl+C to stop${NC}"
 echo ""
@@ -289,6 +289,11 @@ cleanup() {
     if [ -n "$OLLAMA_PID" ]; then
         kill $OLLAMA_PID 2>/dev/null || true
     fi
+    
+    # Clean up SQLite WAL files to prevent "database is locked" on next start
+    sleep 0.5
+    rm -f "$PROJECT_DIR/data/db/state.db-shm" "$PROJECT_DIR/data/db/state.db-wal" 2>/dev/null
+    
     echo -e "${GREEN}🌀 Done${NC}"
     
     # Handle GUI vs terminal cleanup
@@ -298,6 +303,6 @@ cleanup() {
     fi
     exit 0
 }
-trap cleanup SIGINT SIGTERM
+trap cleanup SIGINT SIGTERM EXIT
 
 wait

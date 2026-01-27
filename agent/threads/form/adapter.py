@@ -222,9 +222,8 @@ class FormThreadAdapter(BaseThreadAdapter):
         
         Returns:
             IntrospectionResult with facts like:
-                "form.tools.browser.description: Kernel browser automation"
-                "form.tools.browser.weight: 8.0"
-                "form.browser.url.value: github.com"
+                "form.tools.browser: Kernel browser automation"
+                "form.browser.url: github.com"
         """
         # Ensure tools are seeded on first introspection
         self.seed_tools()
@@ -242,18 +241,12 @@ class FormThreadAdapter(BaseThreadAdapter):
                 path = f"form.tools.{t.name}"
                 
                 if context_level == 1:
-                    facts.append(f"{path}.name: {t.name}")
-                    facts.append(f"{path}.weight: {t.weight}")
+                    facts.append(f"{path}: {t.name}")
                 elif context_level == 2:
-                    facts.append(f"{path}.description: {t.description}")
-                    facts.append(f"{path}.category: {t.category.value}")
-                    facts.append(f"{path}.weight: {t.weight}")
+                    facts.append(f"{path}: {t.description}")
                 else:
                     # L3: Full details
-                    facts.append(f"{path}.description: {t.description}")
-                    facts.append(f"{path}.actions: {', '.join(t.actions[:3])}")
-                    facts.append(f"{path}.category: {t.category.value}")
-                    facts.append(f"{path}.weight: {t.weight}")
+                    facts.append(f"{path}: {t.description} [{t.category.value}]")
         else:
             # Fallback to DB lookup
             tools = self.get_tools(context_level)
@@ -268,8 +261,7 @@ class FormThreadAdapter(BaseThreadAdapter):
                 name = meta.get("name", tool.get("key", "").replace("tool_", ""))
                 if data.get("available", True):
                     path = f"form.tools.{name}"
-                    facts.append(f"{path}.description: {meta.get('description', '')}")
-                    facts.append(f"{path}.weight: {weight}")
+                    facts.append(f"{path}: {meta.get('description', '')}")
         
         # Browser state (L2+)
         if context_level >= 2:
@@ -278,13 +270,10 @@ class FormThreadAdapter(BaseThreadAdapter):
                 data = b.get("data", {})
                 url = data.get("url", "")
                 title = data.get("title", "")
-                session_id = data.get("session_id", "")
                 if url:
-                    facts.append(f"form.browser.url.value: {url}")
-                    facts.append(f"form.browser.title.value: {title}")
-                    if session_id:
-                        facts.append(f"form.browser.session.value: {session_id}")
-                    facts.append(f"form.browser.weight: 6.0")
+                    facts.append(f"form.browser.url: {url}")
+                    if title:
+                        facts.append(f"form.browser.title: {title}")
         
         # Action history (L3 only)
         if context_level >= 3:

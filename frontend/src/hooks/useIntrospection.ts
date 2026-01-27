@@ -1,7 +1,7 @@
 /**
  * useIntrospection Hook
  * =====================
- * React hook for fetching and polling Nola's introspection state.
+ * React hook for fetching and polling Agent's introspection state.
  * Provides real-time visibility into identity, threads, and context.
  */
 

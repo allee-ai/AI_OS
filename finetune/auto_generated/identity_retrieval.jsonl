@@ -1,1 +1,0 @@
-{"category": "identity_retrieval", "timestamp": "2026-01-09T08:14:42.133754+00:00", "confidence": 0.95, "input": "What's my name?", "output": "Your name is Jordan.", "context": {"retrieved_key": "user.name"}, "id": "identity_retrieval_3466631c6109"}

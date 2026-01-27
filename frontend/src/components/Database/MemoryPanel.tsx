@@ -155,7 +155,7 @@ export const MemoryPanel: React.FC = () => {
             {data.length === 0 ? (
               <div className="empty-state">
                 <p>No identity data available</p>
-                <p className="hint">Identity modules define who Nola is</p>
+                <p className="hint">Identity modules define the agent's identity</p>
               </div>
             ) : (
               <HEATable data={data} threadName="Identity" contextLevel={contextLevel} />

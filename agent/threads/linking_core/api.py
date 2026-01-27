@@ -216,16 +216,16 @@ async def score_facts(request: ScoreRequest):
 
 
 @router.post("/score/threads")
-async def score_threads(stimuli: str):
+async def score_threads(feeds: str):
     """
-    Score all threads for relevance to stimuli.
+    Score all threads for relevance to feeds.
     
     Used for context gating (deciding which threads to include).
     """
     adapter = LinkingCoreThreadAdapter()
-    scores = adapter.score_threads(stimuli)
+    scores = adapter.score_threads(feeds)
     return {
-        "stimuli": stimuli,
+        "feeds": feeds,
         "thread_scores": scores
     }
 

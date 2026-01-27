@@ -1,8 +1,8 @@
 .conversation-sidebar {
   width: 260px;
   height: 100%;
-  background: var(--bg-secondary, #1a1a2e);
-  border-right: 1px solid var(--border-color, #2a2a4a);
+  background: var(--surface);
+  border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
   transition: width 0.2s ease;
@@ -19,7 +19,7 @@
   padding: 16px;
   display: flex;
   gap: 8px;
-  border-bottom: 1px solid var(--border-color, #2a2a4a);
+  border-bottom: 1px solid var(--border);
 }
 
 .sidebar-actions {
@@ -28,8 +28,8 @@
   flex-direction: column;
   gap: 6px;
   padding: 8px;
-  background: var(--bg-primary, #16162a);
-  border: 1px solid var(--border-color, #2a2a4a);
+  background: var(--bg);
+  border: 1px solid var(--border);
   border-radius: 8px;
 }
 
@@ -50,31 +50,31 @@
 }
 
 .new-chat-button {
-  background: var(--accent-color, #6366f1);
+  background: var(--primary);
   color: white;
 }
 
 .new-chat-button:hover {
-  background: var(--accent-hover, #5558e3);
+  background: var(--primary-light);
 }
 
 .import-button,
 .settings-button {
-  background: var(--bg-hover, #2a2a4a);
-  color: var(--text-secondary, #aaa);
+  background: var(--bg);
+  color: var(--text-muted);
 }
 
 .import-button:hover,
 .settings-button:hover {
-  background: var(--bg-active, #3a3a5a);
-  color: var(--text-primary, #fff);
+  background: var(--border);
+  color: var(--text);
 }
 
 .collapse-toggle {
   padding: 8px;
   background: transparent;
   border: none;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 6px;
   display: flex;
@@ -83,13 +83,13 @@
 }
 
 .collapse-toggle:hover {
-  background: var(--bg-hover, #2a2a4a);
-  color: var(--text-primary, #fff);
+  background: var(--bg);
+  color: var(--text);
 }
 
 .new-chat-icon {
   padding: 10px;
-  background: var(--accent-color, #6366f1);
+  background: var(--primary);
   border: none;
   border-radius: 8px;
   color: white;
@@ -97,7 +97,7 @@
 }
 
 .new-chat-icon:hover {
-  background: var(--accent-hover, #5558e3);
+  background: var(--primary-light);
 }
 
 .conversations-list {
@@ -118,11 +118,12 @@
 }
 
 .conversation-item:hover {
-  background: var(--bg-hover, #2a2a4a);
+  background: var(--bg);
 }
 
 .conversation-item.active {
-  background: var(--bg-active, #3a3a5a);
+  background: var(--primary);
+  color: white;
 }
 
 .conversation-info {
@@ -135,15 +136,23 @@
 
 .conversation-name {
   font-size: 14px;
-  color: var(--text-primary, #fff);
+  color: var(--text);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
+.conversation-item.active .conversation-name {
+  color: white;
+}
+
 .conversation-meta {
   font-size: 11px;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
+}
+
+.conversation-item.active .conversation-meta {
+  color: rgba(255, 255, 255, 0.7);
 }
 
 .conversation-actions {
@@ -159,7 +168,7 @@
   padding: 4px;
   background: transparent;
   border: none;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   cursor: pointer;
   border-radius: 4px;
   display: flex;
@@ -168,21 +177,21 @@
 }
 
 .action-btn:hover {
-  background: var(--bg-hover, #3a3a5a);
-  color: var(--text-primary, #fff);
+  background: var(--bg);
+  color: var(--text);
 }
 
 .action-btn.delete:hover {
-  color: #ef4444;
+  color: var(--error);
 }
 
 .rename-input {
   width: 100%;
   padding: 6px 8px;
-  background: var(--bg-primary, #0a0a1a);
-  border: 1px solid var(--accent-color, #6366f1);
+  background: var(--bg);
+  border: 1px solid var(--primary);
   border-radius: 4px;
-  color: var(--text-primary, #fff);
+  color: var(--text);
   font-size: 14px;
   outline: none;
 }
@@ -191,7 +200,7 @@
 .empty-state {
   padding: 20px;
   text-align: center;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   font-size: 14px;
 }
 
@@ -205,12 +214,12 @@
 }
 
 .conversations-list::-webkit-scrollbar-thumb {
-  background: var(--border-color, #2a2a4a);
+  background: var(--border);
   border-radius: 3px;
 }
 
 .conversations-list::-webkit-scrollbar-thumb:hover {
-  background: var(--text-secondary, #888);
+  background: var(--text-muted);
 }
 
 /* Section divider */
@@ -220,7 +229,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  color: var(--text-muted, #666);
+  color: var(--text-muted);
   font-size: 11px;
   font-weight: 600;
   text-transform: uppercase;
@@ -232,7 +241,7 @@
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--border-color, #2a2a4a);
+  background: var(--border);
 }
 
 /* Archive section */
@@ -247,7 +256,7 @@
   padding: 10px 16px;
   background: transparent;
   border: none;
-  color: var(--text-secondary, #888);
+  color: var(--text-muted);
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -261,8 +270,8 @@
 }
 
 .archive-toggle:hover {
-  background: var(--bg-hover, #2a2a4a);
-  color: var(--text-primary, #fff);
+  background: var(--bg);
+  color: var(--text);
 }
 
 .conversation-item.archived {

@@ -15,7 +15,7 @@ The model learns to treat the `== STATE ==` block as its complete reality. If in
 
 ### 2. Explicit State References
 The model learns to reference specific state fields:
-- "I can see `identity.name` = Nola"
+- "I can see `identity.name` = Agent"
 - "Your `trust_level` is established"
 - "That action isn't in my `allowed_actions`"
 
@@ -72,12 +72,12 @@ modal run axolotl_train.py --config aios_config.yaml
 
 ### Hypothesis
 A model fine-tuned on state-obedience data WITHOUT the runtime architecture will perform worse on identity persistence than:
-1. Base model WITH architecture (current Nola)
+1. Base model WITH architecture (current AI OS)
 2. Fine-tuned model WITH architecture
 
 ### Test Protocol
 1. Run `eval/identity_battle.py` against:
-   - Base 7B + architecture (Nola)
+   - Base 7B + architecture (AI OS)
    - Base 7B without architecture
    - Fine-tuned 7B without architecture
    - Fine-tuned 7B + architecture (expected best)
@@ -94,8 +94,8 @@ If it's just training data: Fine-tuned without architecture ≈ Base with archit
 ## Expanding the Dataset
 
 To generate more examples:
-1. Run conversations with Nola
-2. Extract turns where she correctly references state
+1. Run conversations with the agent
+2. Extract turns where it correctly references state
 3. Add adversarial prompts from `eval/identity_battle.py`
 4. Include edge cases (missing fields, conflicting info, etc.)
 

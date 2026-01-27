@@ -14,7 +14,7 @@ DEST_DIR = Path.home() / "Desktop" / "docs"
 # Directories to skip
 SKIP_DIRS = {
     ".venv", "node_modules", ".git", "__pycache__", 
-    "dist", "build", ".next", "Nola AI OS.app"
+    "dist", "build", ".next", "AI OS OS.app"
 }
 
 def copy_md_files():

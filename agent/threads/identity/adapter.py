@@ -39,7 +39,8 @@ class IdentityThreadAdapter(BaseThreadAdapter):
     """
     
     _name = "identity"
-    _description = "Self-awareness and user recognition"
+    _description = "Who I am (machine), who you are (user), and who we know"
+    _prompt_hint = "Use these facts to personalize responses and remember relationships"
     
     def get_data(self, level: int = 2, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
         """
@@ -115,8 +116,8 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         
         Returns:
             IntrospectionResult with facts like:
-                "identity.agent.name.value: Nola"
-                "identity.agent.name.weight: 10.0"
+                "identity.nola.name: I am Nola..."
+                "identity.user.name: Jordan"
         """
         relevant_concepts = []
         
@@ -136,22 +137,17 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             profile_id = row.get('profile_id', 'unknown')
             key = row.get('key', 'unknown')
             value = row.get('value', '')
-            weight = row.get('weight', 0.5)
             
             # Build dot notation path: identity.{profile}.{key}
-            # profile_id is like "self.agent" or "user.primary"
-            # We want: identity.agent.name or identity.user.name
+            # profile_id is like "self.nola" or "user.demo_user"
             profile_parts = profile_id.split('.')
             if len(profile_parts) >= 2:
-                profile_short = profile_parts[1]  # "agent" or "primary" -> "user"
-                if profile_short == "primary":
-                    profile_short = "user"
+                profile_short = profile_parts[1]  # "nola", "demo_user", etc.
             else:
                 profile_short = profile_id
             
             path = f"identity.{profile_short}.{key}"
-            facts.append(f"{path}.value: {value}")
-            facts.append(f"{path}.weight: {weight}")
+            facts.append(f"{path}: {value}")
         
         # Get health
         health_report = self.health()
@@ -192,12 +188,14 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             for a in activated:
                 relevant.add(a.get("concept", ""))
             
-            # Filter items
+            # Filter items - check profile_id, key, AND value
             filtered = []
             for item in items:
+                profile_id = item.get("profile_id", "").lower()
                 key = item.get("key", "").lower()
                 value = str(item.get("value", "")).lower()
-                item_text = f"{key} {value}"
+                # Include profile_id in searchable text (e.g. "family.dad" matches "dad")
+                item_text = f"{profile_id} {key} {value}"
                 
                 for concept in relevant:
                     if concept.lower() in item_text:

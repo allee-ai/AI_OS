@@ -1,5 +1,5 @@
 """
-Agent Service - React Chat as Stimuli Channel
+Agent Service - React Chat as Feeds Channel
 
 This module connects the React frontend to the agent's hierarchical state system.
 The UI never sees context levels - it just sends messages and receives responses.
@@ -110,8 +110,8 @@ class AgentService:
     
     Responsibilities:
     - Route messages through the agent's generate()
-    - Manage context levels via stimuli_type
-    - Store conversations in Stimuli/conversations/
+    - Manage context levels via feed_type
+    - Store conversations in Feeds/conversations/
     - Hide all HEA complexity from the frontend
     """
     
@@ -164,31 +164,35 @@ class AgentService:
         
         try:
             if self.agent:
-                # Determine stimuli type based on message analysis
-                stimuli_type = await self.context_manager.classify_stimuli(user_message)
+                # Determine feeds type based on message analysis
+                feed_type = await self.context_manager.classify_feed(user_message)
                 
                 # Build conversation context from recent history
                 convo_context = self._build_conversation_context()
 
                 # Score relevance against identity and persist to DB (best-effort)
-                await self._score_and_persist_relevance(user_message, convo_context, stimuli_type)
+                await self._score_and_persist_relevance(user_message, convo_context, feed_type)
                 
                 # Get consciousness context from subconscious (learned facts, identity, etc.)
                 # This is the complete, formatted context for the system prompt
-                # Pass user_message as query for relevance-based state assembly
+                # Pass conversation context (last 5 turns) as assess block for relevance scoring
                 consciousness_context = ""
                 if _HAS_SUBCONSCIOUS and get_consciousness_context:
-                    # Map stimuli type to context level
+                    # Map feeds type to context level
                     level_map = {"realtime": 1, "conversational": 2, "analytical": 3}
-                    context_level = level_map.get(stimuli_type, 2)
-                    consciousness_context = get_consciousness_context(level=context_level, query=user_message)
+                    context_level = level_map.get(feed_type, 2)
+                    
+                    # Build assess block from recent conversation + current message
+                    # This gives relevance scoring full context (pronoun resolution, topic continuity)
+                    assess_block = f"{convo_context}\nUser: {user_message}" if convo_context else user_message
+                    consciousness_context = get_consciousness_context(level=context_level, query=assess_block)
                     
                     # Log context assembly
                     if _HAS_UNIFIED_LOG:
                         unified_log(
                             "system",
                             f"Context assembled at L{context_level}",
-                            {"stimuli_type": stimuli_type, "context_level": context_level, 
+                            {"feed_type": feed_type, "context_level": context_level, 
                              "context_length": len(consciousness_context)},
                             session_id=self.session_id
                         )
@@ -197,7 +201,7 @@ class AgentService:
                 response_text = self.agent.generate(
                     user_input=user_message,
                     convo=convo_context,
-                    stimuli_type=stimuli_type,
+                    feed_type=feed_type,
                     consciousness_context=consciousness_context
                 )
                 
@@ -205,7 +209,7 @@ class AgentService:
                 await self.context_manager.log_interaction(
                     user_message, 
                     response_text,
-                    stimuli_type
+                    feed_type
                 )
                 
                 # Trigger Memory Consolidation (Background Task)
@@ -214,8 +218,8 @@ class AgentService:
                         self.memory_service.consolidate(user_message, response_text)
                     )
                 
-                # Persist to Stimuli/conversations/
-                await self._save_conversation_turn(user_message, response_text, stimuli_type)
+                # Persist to Feeds/conversations/
+                await self._save_conversation_turn(user_message, response_text, feed_type)
                 
             else:
                 # Mock response when the agent not available
@@ -240,7 +244,7 @@ class AgentService:
         
         return assistant_msg
 
-    async def _score_and_persist_relevance(self, user_message: str, convo_context: str, stimuli_type: str) -> None:
+    async def _score_and_persist_relevance(self, user_message: str, convo_context: str, feed_type: str) -> None:
         """Run relevance scoring against identity and persist scores to DB.
 
         Lightweight best-effort; failure does not block chat.
@@ -313,7 +317,7 @@ class AgentService:
         return assistant_msg
 
     
-    async def _save_conversation_turn(self, user_msg: str, assistant_msg: str, stimuli_type: str):
+    async def _save_conversation_turn(self, user_msg: str, assistant_msg: str, feed_type: str):
         """Persist conversation turn to database."""
         if not _HAS_CHAT_SCHEMA:
             return
@@ -327,12 +331,11 @@ class AgentService:
             if is_first_turn:
                 state_snapshot = {}
                 if self.agent:
-                    state_snapshot = self._capture_state_snapshot(stimuli_type)
+                    state_snapshot = self._capture_state_snapshot(feed_type)
                 
                 save_conversation(
                     session_id=self.session_id,
                     channel="react-chat",
-                    started=datetime.now(),
                     state_snapshot=state_snapshot
                 )
             
@@ -341,7 +344,7 @@ class AgentService:
                 session_id=self.session_id,
                 user_message=user_msg,
                 assistant_message=assistant_msg,
-                stimuli_type=stimuli_type,
+                feed_type=feed_type,
                 context_level=self.context_manager.current_level
             )
             
@@ -360,14 +363,14 @@ class AgentService:
         except Exception as e:
             print(f"Auto-naming failed: {e}")
 
-    def _capture_state_snapshot(self, stimuli_type: str) -> dict:
+    def _capture_state_snapshot(self, feed_type: str) -> dict:
         """Capture a minimal state snapshot scoped to current context level.
 
         Uses new thread system for identity data.
         """
-        # Map stimuli → context level (same as agent.generate)
+        # Map feed → context level (same as agent.generate)
         level_map = {"realtime": 1, "conversational": 2, "analytical": 3}
-        context_level = level_map.get(stimuli_type, self.context_manager.current_level)
+        context_level = level_map.get(feed_type, self.context_manager.current_level)
 
         # Use new thread system
         try:
@@ -450,8 +453,45 @@ class AgentService:
         self.message_history = []
         self.context_manager.reset()
         self.session_id = f"react_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+        
+        # Update log thread with new session
+        if _HAS_LOG_THREAD:
+            set_session(self.session_id)
+            log_event("conversation:start", "agent_service", self.session_id)
+        
+        return self.session_id
+    
+    def set_session(self, session_id: str):
+        """Set the current session ID (e.g., when loading a past conversation)"""
+        self.session_id = session_id
+        if _HAS_LOG_THREAD:
+            set_session(session_id)
+        
+        # Load conversation history from DB into memory
+        if _HAS_CHAT_SCHEMA:
+            try:
+                convo = get_conversation(session_id)
+                if convo and convo.get('turns'):
+                    self.message_history = []
+                    for turn in convo['turns']:
+                        if turn.get('user'):
+                            self.message_history.append(ChatMessage(
+                                id=f"user_{turn['timestamp']}",
+                                content=turn['user'],
+                                role='user',
+                                timestamp=datetime.fromisoformat(turn['timestamp'].replace(' ', 'T')) if isinstance(turn['timestamp'], str) else turn['timestamp']
+                            ))
+                        if turn.get('assistant'):
+                            self.message_history.append(ChatMessage(
+                                id=f"assistant_{turn['timestamp']}",
+                                content=turn['assistant'],
+                                role='assistant',
+                                timestamp=datetime.fromisoformat(turn['timestamp'].replace(' ', 'T')) if isinstance(turn['timestamp'], str) else turn['timestamp']
+                            ))
+            except Exception as e:
+                print(f"Warning: Could not load conversation history: {e}")
 
-    async def get_proactive_intro(self) -> ChatMessage:
+    async def get_proactive_intro(self, save_to_db: bool = True) -> ChatMessage:
         """
         Generate the agent's proactive intro for a new conversation.
         
@@ -459,6 +499,9 @@ class AgentService:
         - Recent memories/topics
         - Graph stats (concepts, links)
         - Prompt for user context
+        
+        Args:
+            save_to_db: If True, saves the intro as the first turn in the conversation
         """
         intro_parts = ["Hello. "]
         
@@ -510,6 +553,14 @@ class AgentService:
         # Prompt for context
         intro_parts.append("\n\nWhat are we working on today? The more detail you give me, the better I can focus.")
         
+        # Create the "wake up" user message
+        wake_message = ChatMessage(
+            id=f"wake_{datetime.now().timestamp()}",
+            content="wake up..",
+            role="user",
+            timestamp=datetime.now()
+        )
+        
         intro_message = ChatMessage(
             id=f"aios_intro_{datetime.now().timestamp()}",
             content="".join(intro_parts),
@@ -517,8 +568,27 @@ class AgentService:
             timestamp=datetime.now()
         )
         
-        # Add to history
+        # Add both to history
+        self.message_history.append(wake_message)
         self.message_history.append(intro_message)
+        
+        # Save to database as first turn
+        if save_to_db and _HAS_CHAT_SCHEMA:
+            try:
+                save_conversation(
+                    session_id=self.session_id,
+                    channel="react-chat",
+                    state_snapshot={}
+                )
+                add_turn(
+                    session_id=self.session_id,
+                    user_message="wake up..",
+                    assistant_message=intro_message.content,
+                    feed_type="intro",
+                    context_level=0
+                )
+            except Exception as e:
+                print(f"Warning: Could not save intro to DB: {e}")
         
         return intro_message
 
@@ -546,10 +616,10 @@ class ContextManager:
     """
     Hierarchical Experiential Attention (HEA) Controller
     
-    Maps user messages to appropriate context levels using stimuli classification.
+    Maps user messages to appropriate context levels using feeds classification.
     This is the "attention head" that decides how much context the agent needs.
     
-    Stimuli Types → Context Levels:
+    Feeds Types → Context Levels:
     - "realtime" → L1 (~10 tokens) - Quick responses, greetings
     - "conversational" → L2 (~50 tokens) - Default, moderate context
     - "analytical" → L3 (~200 tokens) - Deep analysis, reflection
@@ -566,9 +636,9 @@ class ContextManager:
         self.current_level = 2
         self.turns_at_level = 0
         
-    async def classify_stimuli(self, user_message: str) -> str:
+    async def classify_feed(self, user_message: str) -> str:
         """
-        Classify message into stimuli type for the agent's context system.
+        Classify message into feeds type for the agent's context system.
         
         Returns: "realtime", "conversational", or "analytical"
         """
@@ -603,30 +673,30 @@ class ContextManager:
             return self._transition_level(2, "conversational")
         
         # Stay at current level for normal messages
-        return self._current_stimuli_type()
+        return self._current_feed_type()
     
-    def _transition_level(self, new_level: int, stimuli_type: str) -> str:
+    def _transition_level(self, new_level: int, feed_type: str) -> str:
         """Handle level transition with logging"""
         if new_level != self.current_level:
             direction = "⬆️" if new_level > self.current_level else "⬇️"
-            print(f"🧠 {direction} Context: L{self.current_level} → L{new_level} ({stimuli_type})")
+            print(f"🧠 {direction} Context: L{self.current_level} → L{new_level} ({feed_type})")
             self.current_level = new_level
             self.turns_at_level = 0
         else:
             self.turns_at_level += 1
-        return stimuli_type
+        return feed_type
     
-    def _current_stimuli_type(self) -> str:
-        """Map current level to stimuli type"""
+    def _current_feed_type(self) -> str:
+        """Map current level to feeds type"""
         return {1: "realtime", 2: "conversational", 3: "analytical"}.get(self.current_level, "conversational")
         
-    async def log_interaction(self, user_message: str, response: str, stimuli_type: str):
+    async def log_interaction(self, user_message: str, response: str, feed_type: str):
         """Log interaction for context tracking"""
         self.conversation_history.append({
             "timestamp": datetime.now().isoformat(),
             "user": user_message,
             "response": response,
-            "stimuli_type": stimuli_type,
+            "feed_type": feed_type,
             "level": self.current_level
         })
         
@@ -774,7 +844,7 @@ The post should feel natural, not promotional. Just a genuine update or thought.
         generated = agent.agent.generate(
             user_input=prompt,
             convo="",
-            stimuli_type="conversational"
+            feed_type="conversational"
         )
         
         # Clean up if needed (remove quotes, trim)

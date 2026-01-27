@@ -103,7 +103,7 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
           </select>
         </div>
         <p className="setting-hint">
-          The model used for generating responses. Can also be set via NOLA_MODEL_NAME env var.
+          The model used for generating responses. Can also be set via AIOS_MODEL_NAME env var.
         </p>
 
         <div className="setting-row">
@@ -124,7 +124,7 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
         <h3>Context Levels (HEA)</h3>
         <p className="setting-hint">
           The Hierarchical Experiential Attention system controls how much context 
-          Nola loads based on message complexity.
+          Agent loads based on message complexity.
         </p>
 
         <div className="setting-row">
@@ -167,7 +167,7 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
           />
         </div>
         <p className="setting-hint">
-          When enabled, Nola extracts and remembers facts from conversations.
+          When enabled, Agent extracts and remembers facts from conversations.
         </p>
 
         <div className="setting-row">
@@ -179,7 +179,7 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
           />
         </div>
         <p className="setting-hint">
-          When enabled, Nola can control a browser for web tasks. Requires Kernel API key.
+          When enabled, The agent can control a browser for web tasks. Requires Kernel API key.
         </p>
       </section>
 

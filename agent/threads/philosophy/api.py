@@ -12,7 +12,8 @@ from typing import Optional
 from .schema import (
     get_philosophy_profile_types, create_philosophy_profile_type,
     get_philosophy_profiles, create_philosophy_profile, delete_philosophy_profile,
-    pull_philosophy_profile_facts, push_philosophy_profile_fact, delete_philosophy_profile_fact
+    pull_philosophy_profile_facts, push_philosophy_profile_fact, delete_philosophy_profile_fact,
+    get_philosophy_fact_types, create_philosophy_fact_type
 )
 
 router = APIRouter(prefix="/api/philosophy", tags=["philosophy"])
@@ -62,13 +63,18 @@ async def list_philosophy_types():
 @router.get("/fact-types")
 async def list_philosophy_fact_types():
     """Get available fact types for philosophy profiles."""
-    return [
-        {"type": "stance", "description": "A position or viewpoint on a topic"},
-        {"type": "principle", "description": "A fundamental rule or belief"},
-        {"type": "value", "description": "Something considered important or worthwhile"},
-        {"type": "constraint", "description": "A limitation or boundary"},
-        {"type": "preference", "description": "A favored choice or tendency"},
-    ]
+    return get_philosophy_fact_types()
+
+
+@router.post("/fact-types")
+async def add_philosophy_fact_type(data: dict):
+    """Create or update a philosophy fact type."""
+    create_philosophy_fact_type(
+        fact_type=data.get("fact_type", ""),
+        description=data.get("description", ""),
+        default_weight=data.get("default_weight", 0.5)
+    )
+    return {"status": "ok", "fact_type": data.get("fact_type")}
 
 
 @router.post("/types")

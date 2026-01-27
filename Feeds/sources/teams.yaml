@@ -1,0 +1,38 @@
+# Microsoft Teams Feeds Source  
+# Pulls messages via Graph API, pushes replies
+
+name: teams
+type: rest
+enabled: false
+
+poll_interval: 60
+
+auth:
+  method: oauth2
+  token_path: ~/.aios/tokens/teams.json
+  # Requires Microsoft Graph API permissions
+
+# Pull: Get chat messages
+pull:
+  endpoint: https://graph.microsoft.com/v1.0/me/chats
+  method: GET
+  params:
+    $expand: "lastMessagePreview"
+  
+  mapping:
+    messages: "$.value"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.lastMessagePreview.from.user.id"
+    sender_name: "$.lastMessagePreview.from.user.displayName"
+    subject: "$.topic"
+    body: "$.lastMessagePreview.body.content"
+
+# Push: Send message to chat
+push:
+  endpoint: https://graph.microsoft.com/v1.0/chats/{{thread_id}}/messages
+  method: POST
+  
+  body_template:
+    body:
+      content: "{{body}}"

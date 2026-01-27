@@ -52,7 +52,7 @@ form/
         ├── introspect.py
         ├── notify.py
         ├── scheduler.py
-        └── stimuli_*.py  # External service integrations
+        └── feed_*.py  # External service integrations
 ```
 
 ---
@@ -150,11 +150,11 @@ POST /api/form/tools/browser/execute
 
 | Category | Icon | Tools |
 |----------|------|-------|
-| **Communication** | 📧 | `stimuli_gmail`, `stimuli_slack`, `stimuli_sms`, `stimuli_discord`, `stimuli_telegram` |
+| **Communication** | 📧 | `feed_gmail`, `feed_slack`, `feed_sms`, `feed_discord`, `feed_telegram` |
 | **Browser** | 🌐 | `browser`, `web_search` |
 | **Memory** | 🧠 | `memory_identity`, `memory_philosophy`, `memory_log`, `memory_linking` |
 | **Files** | 📁 | `file_read`, `file_write` |
-| **Automation** | ⚙️ | `terminal`, `scheduler`, `stimuli_github`, `stimuli_linear`, `stimuli_notion` |
+| **Automation** | ⚙️ | `terminal`, `scheduler`, `stimuli_github`, `feed_linear`, `feed_notion` |
 | **Internal** | 🔧 | `ask_llm`, `introspect`, `notify` |
 
 ---

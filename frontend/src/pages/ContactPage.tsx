@@ -11,7 +11,7 @@ export const ContactPage = () => {
 
       <div className="contact-content">
         <section className="contact-card">
-          <h2>Nola AI</h2>
+          <h2>AI OS</h2>
           <p className="tagline">Adaptive Assistive Learning Agent</p>
           
           <div className="info-grid">

@@ -316,11 +316,11 @@ User: "Hey, did Sarah mention anything about coffee?"
 
 Linking Core provides three comprehensive scoring functions that power all relevance calculations in AI OS:
 
-### 1. `score_threads(stimuli)` — Thread-Level Routing
+### 1. `score_threads(feeds)` — Thread-Level Routing
 
 **Purpose**: Route incoming queries to relevant threads for context retrieval.
 
-**Input**: User query or stimuli text  
+**Input**: User query or feeds text  
 **Output**: Dict of thread_name → score (0-10 scale)
 
 **Method**: Keyword-based pattern matching per thread:
@@ -345,12 +345,12 @@ scores = score_threads("Hey what's my name again?")
 
 ---
 
-### 2. `score_relevance(stimuli, facts)` — Fact-Level Ranking
+### 2. `score_relevance(feeds, facts)` — Fact-Level Ranking
 
 **Purpose**: Rank individual facts by relevance to a query using multiple scoring methods.
 
 **Input**:
-- `stimuli` (str): Query or context text
+- `feeds` (str): Query or context text
 - `facts` (list): Facts to score, each with `id` and `text` fields
 
 **Output**: List of dicts with fact data + scoring dimensions:
@@ -878,4 +878,22 @@ When users edit a link, they're literally shaping how Agent focuses. When they w
 6. [ ] Integrate with one agent profile as proof of concept
 7. **[ ] Build concept graph visualization in ThreadsPage.tsx** ← NEW PRIORITY
 
+---
 
+## Cross-Thread Links (UI Integration)
+
+**Philosophy → Identity linking is now implemented in the UI.**
+
+When adding a philosophy profile, users can optionally link it to an identity profile. This creates a link record:
+
+```json
+{
+  "concept_a": "identity:primary_user",
+  "concept_b": "philosophy:value_system.core_values",
+  "strength": 0.8,
+  "link_type": "has_philosophy"
+}
+```
+
+**TODO:** Display these `identity ↔ philosophy` links in the 3D concept graph visualization.
+The links are stored in `concept_links` table and can be queried via `/api/linking_core/links`.

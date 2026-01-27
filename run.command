@@ -8,7 +8,7 @@ set -e
 cd "$(dirname "$0")"
 
 # First time setup - run installer if not yet installed
-if [ ! -f ".nola_installed" ]; then
+if [ ! -f ".aios_installed" ]; then
     echo "🎉 First time setup detected!"
     chmod +x scripts/install.sh 2>/dev/null || true
     ./scripts/install.sh

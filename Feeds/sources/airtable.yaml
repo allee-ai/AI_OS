@@ -1,0 +1,39 @@
+# Airtable Feeds Source
+# Pulls records from a table, pushes updates
+
+name: airtable
+type: rest
+enabled: false
+
+poll_interval: 300
+
+auth:
+  method: bearer
+  token_env: AIRTABLE_API_KEY
+
+# Pull: List records from table
+pull:
+  endpoint: https://api.airtable.com/v0/{{base_id}}/{{table_name}}
+  method: GET
+  params:
+    maxRecords: 50
+    view: "Grid view"
+  
+  mapping:
+    messages: "$.records"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.createdTime"
+    sender_name: "$.fields.Name"
+    subject: "$.fields.Title"
+    body: "$.fields.Notes"
+
+# Push: Update record
+push:
+  endpoint: https://api.airtable.com/v0/{{base_id}}/{{table_name}}/{{thread_id}}
+  method: PATCH
+  
+  body_template:
+    fields:
+      Response: "{{body}}"
+      Status: "Responded"

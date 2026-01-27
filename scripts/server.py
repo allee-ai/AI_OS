@@ -2,7 +2,7 @@
 AI OS Server - Main FastAPI Application
 =======================================
 Central entry point for the AI OS. All routes are imported from 
-self-contained modules (agent, chat, workspace, Stimuli, etc.).
+self-contained modules (agent, chat, workspace, Feeds, etc.).
 
 Run with:
     uvicorn scripts.server:app --reload
@@ -34,7 +34,7 @@ from agent.core import settings, models_router
 from chat import router as chat_router, websocket_manager
 from workspace import router as workspace_router
 from agent.services import router as services_router
-from Stimuli import api_router as stimuli_router
+from Feeds import api_router as feeds_router
 from agent.subconscious import subconscious_router
 
 # Thread routers
@@ -80,7 +80,7 @@ app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.include_router(chat_router)
 app.include_router(workspace_router)
 app.include_router(services_router)
-app.include_router(stimuli_router)
+app.include_router(feeds_router)
 app.include_router(models_router)
 
 # Thread routers
@@ -152,6 +152,19 @@ async def startup_event():
         import traceback
         print(f"[Startup] Failed to wake subconscious: {e}")
         traceback.print_exc()
+
+
+@app.on_event("shutdown")
+async def shutdown_event():
+    """Clean shutdown - checkpoint SQLite WAL to prevent lock issues."""
+    try:
+        from data.db import get_connection
+        conn = get_connection()
+        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
+        conn.close()
+        print("[Shutdown] Database checkpointed")
+    except Exception as e:
+        print(f"[Shutdown] Checkpoint failed: {e}")
 
 
 # =============================================================================

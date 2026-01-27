@@ -5,7 +5,7 @@ Import all VS Code GitHub Copilot conversations into AI OS.
 This script:
 1. Finds all VS Code chat sessions from Library
 2. Parses them using the VSCodeExportParser
-3. Imports them into AI OS's Stimuli/conversations folder
+3. Imports them into AI OS's Feeds/conversations folder
 """
 
 import asyncio
@@ -56,11 +56,11 @@ async def main():
     # Setup paths
     base_dir = Path(__file__).parent
     workspace_path = base_dir / "agent/workspace"
-    stimuli_path = base_dir / "agent/Stimuli"
+    feeds_path = base_dir / "agent/Feeds"
     
     # Ensure directories exist
     workspace_path.mkdir(parents=True, exist_ok=True)
-    stimuli_path.mkdir(parents=True, exist_ok=True)
+    feeds_path.mkdir(parents=True, exist_ok=True)
     
     # Find all chat session directories
     print("\nSearching for VS Code chat sessions...")
@@ -77,7 +77,7 @@ async def main():
     print(f"Total conversation files: {total_files}")
     
     # Create import service
-    import_convos = ImportConvos(workspace_path, stimuli_path)
+    import_convos = ImportConvos(workspace_path, feeds_path)
 
     # Import from each directory
     all_results = []
@@ -117,7 +117,7 @@ async def main():
     print(f"Total files found: {total_files}")
     print(f"Successfully imported: {total_imported}")
     print(f"Failed: {total_failed}")
-    print(f"Import location: {stimuli_path / 'conversations'}")
+    print(f"Import location: {feeds_path / 'conversations'}")
     
     # Save import log
     log_file = base_dir / "vscode_import_log.json"

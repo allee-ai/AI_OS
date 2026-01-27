@@ -1,0 +1,46 @@
+# Gmail Feeds Source
+# Pulls unread emails, pushes to drafts folder
+
+name: gmail
+type: rest
+enabled: false  # Enable after setting up OAuth
+
+# Poll every 5 minutes
+poll_interval: 300
+
+# Authentication
+auth:
+  method: oauth2
+  token_path: ~/.aios/tokens/gmail.json
+  # User needs to run OAuth flow to generate this token
+
+# Pull: Get unread emails
+pull:
+  endpoint: https://gmail.googleapis.com/gmail/v1/users/me/messages
+  method: GET
+  params:
+    q: "is:unread -category:promotions -category:social"
+    maxResults: 10
+  
+  # Map Gmail response to normalized format
+  mapping:
+    messages: "$.messages"
+    id: "$.id"
+    thread_id: "$.threadId"
+    sender_id: "$.from"
+    sender_name: "$.from"
+    subject: "$.subject"
+    body: "$.snippet"
+
+# Push: Create draft (not send directly)
+push:
+  endpoint: https://gmail.googleapis.com/gmail/v1/users/me/drafts
+  method: POST
+  
+  # Template with slots:
+  # - Deterministic: to, thread_id filled by code
+  # - Probabilistic: subject, body filled by LLM
+  body_template:
+    message:
+      raw: "{{base64_email}}"
+      threadId: "{{thread_id}}"

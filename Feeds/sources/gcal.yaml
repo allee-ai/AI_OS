@@ -1,0 +1,42 @@
+# Google Calendar Feeds Source
+# Pulls upcoming events, pushes event updates
+
+name: gcal
+type: rest
+enabled: false
+
+poll_interval: 900  # 15 minutes
+
+auth:
+  method: oauth2
+  token_path: ~/.aios/tokens/google.json
+  scopes:
+    - https://www.googleapis.com/auth/calendar.readonly
+    - https://www.googleapis.com/auth/calendar.events
+
+# Pull: Get upcoming events
+pull:
+  endpoint: https://www.googleapis.com/calendar/v3/calendars/primary/events
+  method: GET
+  params:
+    timeMin: "{{now_iso}}"
+    maxResults: 20
+    singleEvents: "true"
+    orderBy: "startTime"
+  
+  mapping:
+    messages: "$.items"
+    id: "$.id"
+    thread_id: "$.id"
+    sender_id: "$.organizer.email"
+    sender_name: "$.organizer.displayName"
+    subject: "$.summary"
+    body: "$.description"
+
+# Push: Update event (add notes)
+push:
+  endpoint: https://www.googleapis.com/calendar/v3/calendars/primary/events/{{thread_id}}
+  method: PATCH
+  
+  body_template:
+    description: "{{body}}"

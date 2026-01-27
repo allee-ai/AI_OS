@@ -122,11 +122,11 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             details={"readme": False}
         )
     
-    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """Return linking/relevance facts for context assembly."""
-        facts = self.get_context(context_level)
+        facts = self.get_context(context_level, query)
         
-        # If query provided, add relevant concepts
+        # If query provided, get relevant concepts
         relevant_concepts = []
         if query:
             try:
@@ -145,35 +145,47 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             relevant_concepts=relevant_concepts,
         )
     
-    def get_context(self, level: int) -> List[str]:
+    def get_context(self, level: int, query: str = None) -> List[str]:
         """
         Get relevance-related facts.
         
-        Note: This thread doesn't generate facts about content,
-        it SCORES facts from other threads. Its context output
-        is about the scoring itself.
-        
-        Level 1: No relevance facts (scoring is implicit)
-        Level 2: Summary of relevance state
-        Level 3: Detailed scoring breakdown
+        Level 1: Core function summary
+        Level 2: + graph stats
+        Level 3: + scoring details
         """
         facts = []
         
+        # Always explain what linking_core does
+        facts.append("linking_core.function: Scores facts by relevance using spread activation")
+        facts.append("linking_core.mechanism: Extracts concepts from query, finds connected concepts in graph")
+        
         if level >= 2:
-            if self._last_scores:
-                top_topics = sorted(
-                    self._last_scores.items(), 
-                    key=lambda x: x[1], 
-                    reverse=True
-                )[:3]
-                if top_topics:
-                    topics_str = ", ".join(f"{t[0]} ({t[1]:.2f})" for t in top_topics)
-                    facts.append(f"Top relevant topics: {topics_str}")
+            # Add graph stats
+            try:
+                from .schema import get_stats
+                stats = get_stats()
+                facts.append(f"linking_core.concepts: {stats.get('concept_count', 0)}")
+                facts.append(f"linking_core.links: {stats.get('link_count', 0)}")
+            except Exception:
+                pass
+            
+            # Show activated concepts if query provided
+            if query:
+                try:
+                    from .schema import extract_concepts_from_text, spread_activate
+                    concepts = extract_concepts_from_text(query)
+                    if concepts:
+                        activated = spread_activate(concepts, activation_threshold=0.3, max_hops=1, limit=5)
+                        if activated:
+                            top = [a['concept'] for a in activated[:5]]
+                            facts.append(f"linking_core.activated: {', '.join(top)}")
+                except Exception:
+                    pass
         
         if level >= 3:
-            facts.append(f"Embedding cache size: {len(self._embedding_cache)} entries")
+            facts.append(f"linking_core.cache_size: {len(self._embedding_cache)}")
             if self._ollama_available:
-                facts.append("Embedding model: nomic-embed-text (active)")
+                facts.append("linking_core.embedding_model: nomic-embed-text")
         
         return facts
     
@@ -383,9 +395,9 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         results.sort(key=lambda x: x["score"], reverse=True)
         return [r["text"] for r in results[:top_k]]
     
-    def score_threads(self, stimuli: str) -> Dict[str, float]:
+    def score_threads(self, feeds: str) -> Dict[str, float]:
         """
-        Score all threads for relevance to stimuli.
+        Score all threads for relevance to feeds.
         
         Returns scores (0-10 scale) for three-tier context gating:
           - 0-3.5: Tier 1 (metadata only)
@@ -399,7 +411,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         Does NOT decide when to run - that's reflex's job.
         
         Args:
-            stimuli: Input text to score against
+            feeds: Input text to score against
         
         Returns:
             Dict mapping thread_name -> relevance_score (0-10)
@@ -407,10 +419,10 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         # Try embedding-based scoring first (populated during consolidation)
         try:
             from agent.threads.linking_core.scoring import score_threads_by_embedding
-            emb_scores = score_threads_by_embedding(stimuli)
+            emb_scores = score_threads_by_embedding(feeds)
             if emb_scores:
                 # Merge with keyword scores (70% embedding, 30% keyword)
-                keyword_scores = self._keyword_score_threads(stimuli)
+                keyword_scores = self._keyword_score_threads(feeds)
                 scores = {}
                 for thread in set(emb_scores.keys()) | set(keyword_scores.keys()):
                     e = emb_scores.get(thread, 5.0)
@@ -422,13 +434,13 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             pass
         
         # Fall back to pure keyword scoring
-        scores = self._keyword_score_threads(stimuli)
+        scores = self._keyword_score_threads(feeds)
         self._last_scores = scores
         return scores
     
-    def _keyword_score_threads(self, stimuli: str) -> Dict[str, float]:
+    def _keyword_score_threads(self, feeds: str) -> Dict[str, float]:
         """Keyword-based thread scoring (fallback)."""
-        stimuli_lower = stimuli.lower()
+        feed_lower = feeds.lower()
         scores = {}
         
         # Get all threads
@@ -445,45 +457,45 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             if thread_name == 'identity':
                 # Identity: Always medium-high (core profile context)
                 base = 7.0
-                if any(kw in stimuli_lower for kw in ['who am', 'who are you', 'tell me about', 'yourself']):
+                if any(kw in feed_lower for kw in ['who am', 'who are you', 'tell me about', 'yourself']):
                     scores[thread_name] = 9.0
-                elif any(kw in stimuli_lower for kw in ['who', 'me', 'my ', 'i am', 'you are']):
+                elif any(kw in feed_lower for kw in ['who', 'me', 'my ', 'i am', 'you are']):
                     scores[thread_name] = 8.0
                 else:
                     scores[thread_name] = base
             
             elif thread_name == 'log':
                 # Log: Temporal/debugging keywords
-                if any(kw in stimuli_lower for kw in ['when', 'recent', 'earlier', 'yesterday', 'last', 'history']):
+                if any(kw in feed_lower for kw in ['when', 'recent', 'earlier', 'yesterday', 'last', 'history']):
                     scores[thread_name] = 9.0
-                elif any(kw in stimuli_lower for kw in ['debug', 'error', 'problem', 'what happened']):
+                elif any(kw in feed_lower for kw in ['debug', 'error', 'problem', 'what happened']):
                     scores[thread_name] = 8.0
-                elif any(kw in stimuli_lower for kw in ['time', 'today', 'now']):
+                elif any(kw in feed_lower for kw in ['time', 'today', 'now']):
                     scores[thread_name] = 7.0
                 else:
                     scores[thread_name] = 5.0
             
             elif thread_name == 'philosophy':
                 # Philosophy: Values/reasoning keywords
-                if any(kw in stimuli_lower for kw in ['why should', 'believe', 'value', 'ethics', 'principle']):
+                if any(kw in feed_lower for kw in ['why should', 'believe', 'value', 'ethics', 'principle']):
                     scores[thread_name] = 9.0
-                elif any(kw in stimuli_lower for kw in ['why', 'think', 'feel', 'opinion']):
+                elif any(kw in feed_lower for kw in ['why', 'think', 'feel', 'opinion']):
                     scores[thread_name] = 7.0
                 else:
                     scores[thread_name] = 3.0
             
             elif thread_name == 'form':
                 # Form: Action/tool keywords
-                if any(kw in stimuli_lower for kw in ['create', 'make', 'build', 'write', 'run', 'execute']):
+                if any(kw in feed_lower for kw in ['create', 'make', 'build', 'write', 'run', 'execute']):
                     scores[thread_name] = 8.0
-                elif any(kw in stimuli_lower for kw in ['how to', 'can you', 'help me']):
+                elif any(kw in feed_lower for kw in ['how to', 'can you', 'help me']):
                     scores[thread_name] = 7.0
                 else:
                     scores[thread_name] = 4.0
             
             elif thread_name == 'reflex':
                 # Reflex: Pattern/habit keywords
-                if any(kw in stimuli_lower for kw in ['usually', 'always', 'often', 'pattern', 'habit']):
+                if any(kw in feed_lower for kw in ['usually', 'always', 'often', 'pattern', 'habit']):
                     scores[thread_name] = 7.0
                 else:
                     scores[thread_name] = 3.0
@@ -500,7 +512,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
     
     def score_relevance(
         self,
-        stimuli: str,
+        feeds: str,
         facts: List[str],
         context_keys: List[str] = None,
         use_embeddings: bool = True,
@@ -525,7 +537,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         - Memory retrieval: Find relevant memories
         
         Args:
-            stimuli: Input text to score against
+            feeds: Input text to score against
             facts: List of fact texts to score
             context_keys: Optional list of known concept keys for co-occurrence boost
             use_embeddings: Use embedding similarity (requires Ollama)
@@ -538,10 +550,10 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         if not facts:
             return []
         
-        # Extract concepts from stimuli for mapping
+        # Extract concepts from feeds for mapping
         try:
             from agent.threads.linking_core.schema import extract_concepts_from_text, get_cooccurrence_score
-            input_concepts = extract_concepts_from_text(stimuli)
+            input_concepts = extract_concepts_from_text(feeds)
         except:
             input_concepts = []
             use_cooccurrence = False
@@ -556,7 +568,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             # 1. Embedding similarity (if available)
             if use_embeddings and HAS_RELEVANCE:
                 try:
-                    input_emb = self._embed(stimuli)
+                    input_emb = self._embed(feeds)
                     fact_emb = self._embed(fact)
                     if input_emb and fact_emb:
                         sim = self._cosine_similarity(input_emb, fact_emb)
@@ -604,7 +616,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
                     pass
             
             # 4. Keyword matching (fallback/always-on)
-            input_words = set(stimuli.lower().split())
+            input_words = set(feeds.lower().split())
             fact_words = set(fact.lower().split())
             overlap = len(input_words & fact_words)
             keyword_score = overlap / max(len(input_words), 1)

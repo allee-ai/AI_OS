@@ -1,15 +1,15 @@
 .hea-cell {
   padding: 8px 12px;
   min-height: 40px;
-  border: 1px solid #333;
-  background: #252526;
+  border: 1px solid var(--border);
+  background: var(--bg);
   position: relative;
   cursor: pointer;
   transition: background-color 0.2s;
 }
 
 .hea-cell:hover {
-  background: #2a2a2a;
+  background: var(--surface);
 }
 
 .hea-cell.empty {
@@ -18,7 +18,7 @@
 }
 
 .hea-cell.empty:hover {
-  background: #252526;
+  background: var(--bg);
 }
 
 .cell-preview {
@@ -27,19 +27,19 @@
   justify-content: space-between;
   gap: 8px;
   font-size: 13px;
-  color: #cccccc;
+  color: var(--text);
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
 
 .empty-cell {
-  color: #666;
+  color: var(--text-muted);
   font-style: italic;
 }
 
 .expand-button {
   background: none;
   border: none;
-  color: #569cd6;
+  color: var(--accent);
   cursor: pointer;
   padding: 2px 6px;
   font-size: 10px;
@@ -57,10 +57,10 @@
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
-  background: #1e1e1e;
-  border: 1px solid #555;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
   max-width: 80vw;
   max-height: 80vh;
   display: flex;
@@ -74,21 +74,21 @@
   justify-content: space-between;
   align-items: center;
   padding: 12px 16px;
-  background: #2d2d30;
-  border-bottom: 1px solid #555;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 
 .expanded-title {
   font-size: 14px;
   font-weight: 600;
-  color: #cccccc;
+  color: var(--text);
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
 }
 
 .close-button {
   background: none;
   border: none;
-  color: #cccccc;
+  color: var(--text);
   font-size: 24px;
   cursor: pointer;
   padding: 0;
@@ -101,7 +101,7 @@
 }
 
 .close-button:hover {
-  color: #ffffff;
+  color: var(--primary);
 }
 
 .json-content {
@@ -111,8 +111,8 @@
   font-family: 'Monaco', 'Menlo', 'Courier New', monospace;
   font-size: 12px;
   line-height: 1.6;
-  color: #d4d4d4;
-  background: #1e1e1e;
+  color: var(--text);
+  background: var(--bg);
   flex: 1;
 }
 
@@ -122,19 +122,19 @@
 }
 
 .json-content::-webkit-scrollbar-track {
-  background: #1e1e1e;
+  background: var(--surface);
 }
 
 .json-content::-webkit-scrollbar-thumb {
-  background: #424242;
+  background: var(--border);
   border-radius: 5px;
 }
 
 .json-content::-webkit-scrollbar-thumb:hover {
-  background: #4e4e4e;
+  background: var(--text-muted);
 }
 
 /* Syntax highlighting for JSON */
 .json-content {
-  color: #d4d4d4;
+  color: var(--text);
 }

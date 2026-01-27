@@ -6,8 +6,8 @@ import { workspaceApi } from '../services/workspaceApi';
 const MOCK_FILES: WorkspaceFile[] = [
   {
     id: '1',
-    name: 'Stimuli',
-    path: '/Stimuli',
+    name: 'Feeds',
+    path: '/Feeds',
     type: 'folder',
     createdAt: new Date(),
     updatedAt: new Date(),
@@ -22,8 +22,8 @@ const MOCK_FILES: WorkspaceFile[] = [
   },
   {
     id: '3',
-    name: 'Nola.json',
-    path: '/Nola.json',
+    name: 'Agent.json',
+    path: '/Agent.json',
     type: 'file',
     size: 4096,
     mimeType: 'application/json',

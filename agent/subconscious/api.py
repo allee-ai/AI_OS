@@ -61,7 +61,8 @@ async def build_state(
         }
     """
     sub = get_subconscious()
-    state_str = sub.build_state(query=query or "")
+    # get_state does score() + build_state() in one call
+    state_str = sub.get_state(query=query or "")
     
     return {
         "state": state_str,

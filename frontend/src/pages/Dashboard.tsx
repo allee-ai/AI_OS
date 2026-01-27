@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import './Dashboard.css';
 
 // Spiral icon served from public folder
-const spiral = '/nola-spiral.png';
+const spiral = '/aios-spiral.png';
 
 interface AgentStatus {
   status: string;
@@ -20,7 +20,7 @@ export const Dashboard = () => {
     fetch('http://localhost:8000/api/chat/agent-status')
       .then(res => res.json())
       .then(data => setAgentStatus(data))
-      .catch(() => setAgentStatus({ status: 'offline', name: 'Nola' }));
+      .catch(() => setAgentStatus({ status: 'offline', name: 'Agent' }));
   }, []);
 
   const isAwake = agentStatus?.status === 'awake';
@@ -50,12 +50,12 @@ export const Dashboard = () => {
         <Link to="/chat" className="nav-card">
           <span className="nav-icon">💬</span>
           <span className="nav-label">Chat</span>
-          <span className="nav-desc">Talk to Nola</span>
+          <span className="nav-desc">Chat</span>
         </Link>
         
-        <Link to="/stimuli" className="nav-card">
+        <Link to="/feeds" className="nav-card">
           <span className="nav-icon">�</span>
-          <span className="nav-label">Stimuli</span>
+          <span className="nav-label">Feeds</span>
           <span className="nav-desc">External API sources</span>
         </Link>
         

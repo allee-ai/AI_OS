@@ -2,7 +2,7 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  background: #1a1a2e;
+  background: var(--surface);
   border-radius: 0;
   overflow: hidden;
   min-height: 0;
@@ -14,15 +14,15 @@
   display: flex;
   gap: 8px;
   padding: 12px;
-  background: #16213e;
-  border-bottom: 1px solid #0f3460;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
   flex-wrap: wrap;
 }
 
 .toolbar-btn {
   padding: 8px 12px;
-  background: #0f3460;
-  color: #e8e8e8;
+  background: var(--surface);
+  color: var(--text);
   border: none;
   border-radius: 6px;
   cursor: pointer;
@@ -34,7 +34,7 @@
 }
 
 .toolbar-btn:hover:not(:disabled) {
-  background: #1a5490;
+  background: var(--border);
   transform: translateY(-1px);
 }
 
@@ -44,7 +44,8 @@
 }
 
 .toolbar-btn.danger:hover {
-  background: #e63946;
+  background: var(--error);
+  color: white;
 }
 
 /* Breadcrumb */
@@ -52,21 +53,21 @@
   display: flex;
   align-items: center;
   padding: 8px 12px;
-  background: #1a1a2e;
-  border-bottom: 1px solid #0f3460;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
   overflow-x: auto;
   white-space: nowrap;
 }
 
 .breadcrumb-separator {
   margin: 0 8px;
-  color: #666;
+  color: var(--text-muted);
 }
 
 .breadcrumb-item {
   background: none;
   border: none;
-  color: #64b5f6;
+  color: var(--accent);
   cursor: pointer;
   padding: 4px 8px;
   border-radius: 4px;
@@ -74,16 +75,16 @@
 }
 
 .breadcrumb-item:hover {
-  background: #0f3460;
-  color: #90caf9;
+  background: var(--bg);
+  color: var(--primary);
 }
 
 /* Error */
 .file-explorer-error {
   padding: 12px;
-  background: rgba(230, 57, 70, 0.2);
-  color: #ff6b6b;
-  border-bottom: 1px solid rgba(230, 57, 70, 0.3);
+  background: rgba(239, 68, 68, 0.1);
+  color: var(--error);
+  border-bottom: 1px solid rgba(239, 68, 68, 0.2);
 }
 
 /* New folder dialog */
@@ -91,23 +92,23 @@
   display: flex;
   gap: 8px;
   padding: 12px;
-  background: #16213e;
-  border-bottom: 1px solid #0f3460;
+  background: var(--bg);
+  border-bottom: 1px solid var(--border);
 }
 
 .new-folder-dialog input {
   flex: 1;
   padding: 8px 12px;
-  background: #1a1a2e;
-  border: 1px solid #0f3460;
+  background: var(--surface);
+  border: 1px solid var(--border);
   border-radius: 6px;
-  color: #e8e8e8;
+  color: var(--text);
   font-size: 14px;
 }
 
 .new-folder-dialog input:focus {
   outline: none;
-  border-color: #64b5f6;
+  border-color: var(--primary);
 }
 
 .new-folder-dialog button {
@@ -119,13 +120,13 @@
 }
 
 .new-folder-dialog button:first-of-type {
-  background: #64b5f6;
-  color: #1a1a2e;
+  background: var(--primary);
+  color: white;
 }
 
 .new-folder-dialog button:last-child {
-  background: #0f3460;
-  color: #e8e8e8;
+  background: var(--surface);
+  color: var(--text);
 }
 
 /* File list */
@@ -142,12 +143,12 @@
   align-items: center;
   justify-content: center;
   height: 200px;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .file-list-empty .hint {
   font-size: 12px;
-  color: #666;
+  color: var(--text-muted);
   margin-top: 8px;
 }
 
@@ -164,17 +165,17 @@
 }
 
 .file-item:hover {
-  background: #16213e;
+  background: var(--bg);
 }
 
 .file-item.selected {
-  background: #0f3460;
-  outline: 2px solid #64b5f6;
+  background: var(--border);
+  outline: 2px solid var(--primary);
 }
 
 .file-item.drag-over {
-  background: rgba(100, 181, 246, 0.2);
-  outline: 2px dashed #64b5f6;
+  background: rgba(124, 58, 237, 0.1);
+  outline: 2px dashed var(--primary);
 }
 
 .file-icon {
@@ -184,7 +185,7 @@
 
 .file-name {
   flex: 1;
-  color: #e8e8e8;
+  color: var(--text);
   font-size: 14px;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -192,7 +193,7 @@
 }
 
 .file-size {
-  color: #888;
+  color: var(--text-muted);
   font-size: 12px;
   min-width: 70px;
   text-align: right;
@@ -220,11 +221,11 @@
 }
 
 .file-action-btn:hover {
-  background: #0f3460;
+  background: var(--bg);
 }
 
 .file-action-btn.danger:hover {
-  background: rgba(230, 57, 70, 0.3);
+  background: rgba(239, 68, 68, 0.2);
 }
 
 /* Scrollbar */
@@ -233,14 +234,14 @@
 }
 
 .file-list::-webkit-scrollbar-track {
-  background: #1a1a2e;
+  background: var(--surface);
 }
 
 .file-list::-webkit-scrollbar-thumb {
-  background: #0f3460;
+  background: var(--border);
   border-radius: 4px;
 }
 
 .file-list::-webkit-scrollbar-thumb:hover {
-  background: #1a5490;
+  background: var(--text-muted);
 }

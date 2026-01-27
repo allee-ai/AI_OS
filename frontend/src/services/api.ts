@@ -112,7 +112,7 @@ class APIService {
     }
   }
 
-  async startSession(): Promise<{ message: ChatMessage; agent_status: string }> {
+  async startSession(): Promise<{ session_id: string }> {
     const response = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.START_SESSION}`, {
       method: 'POST'
     });
@@ -121,14 +121,17 @@ class APIService {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
 
-    const data = await response.json();
-    return {
-      message: {
-        ...data.message,
-        timestamp: new Date(data.message.timestamp)
-      },
-      agent_status: data.agent_status
-    };
+    return response.json();
+  }
+
+  async setSession(sessionId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/chat/set-session/${sessionId}`, {
+      method: 'POST'
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   }
 
   // Database API methods

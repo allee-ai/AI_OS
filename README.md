@@ -204,7 +204,7 @@ Built solo since April 2025. The architecture works. Now it needs to scale.
 ## Get Help
 
 - **GitHub Issues:** [Report bugs or request features](https://github.com/allee-ai/AI_OS/issues)
-- **Discussions:** Share how you're using Nola
+- **Discussions:** Share how you're using Agent
 
 ---
 

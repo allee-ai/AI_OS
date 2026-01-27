@@ -7,7 +7,7 @@
  * Silver/gold nodes float inside representing concepts
  * Lightning arcs between nodes show activation spreading
  * 
- * This is the visual representation of Nola's associative memory.
+ * This is the visual representation of the agent's associative memory.
  * "Attention over concepts, not tokens" - made visible.
  */
 
@@ -1267,8 +1267,8 @@ function Scene({ graphData, activatedConcepts, onNodeClick, pulseSpeed = 1 }: Sc
     const nodes = graphData.nodes;
     
     // Find the origin node - the "self" anchor at (0,0,0)
-    // Priority: nola > identity > name > most connected node
-    const originCandidates = ['nola', 'identity.name.nola', 'identity.nola', 'name.nola', 'identity', 'name', 'self'];
+    // Priority: identity > name > most connected node
+    const originCandidates = ['identity.name.agent', 'identity.agent', 'name.agent', 'identity', 'name', 'self'];
     let originNode = nodes.find(n => originCandidates.includes(n.id.toLowerCase()));
     
     // Fallback to most connected node if no identity node found
