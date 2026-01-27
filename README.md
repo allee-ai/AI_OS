@@ -17,6 +17,7 @@ AI OS fixes that. It's a management layer that wraps your local LLM and handles 
 - **Identity** — Consistent personality that can't be prompt-injected away  
 - **Learning** — Gets smarter from experience, not retraining
 - **Control** — LLM only handles language; the OS handles logic
+- **Background Loops** — Analyzes documents, indexes repos, and consolidates memory while idle
 
 The LLM is the voice. The OS is the brain.
 
@@ -90,7 +91,7 @@ Everything is configurable directly from the dashboard.
     *   **Automatic Setup:** Your primary user and machine ID profiles are pre-created.
     *   **Family & Trust:** Add family members and assign trust levels.
     *   **Context Awareness:** If a family member says hello, the Agent remembers them and understands their relationship to you.
-3.  **Create Tools:** Navigate to **Agent → Tools** to build custom web tools or edit existing capabilities using the simple form generator.
+3.  **Create Tools:** Navigate to **Agent → Form** to build custom web tools or edit existing capabilities using the simple form generator.
 
 It's prompt engineering, but organized. You define who you (and your agent) are, and the OS handles the context window.
 

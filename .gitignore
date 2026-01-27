@@ -103,3 +103,4 @@ stringify/_archive/
 _archive/
 *.db-shm
 *.db-wal
+push.command
