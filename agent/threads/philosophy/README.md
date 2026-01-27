@@ -91,14 +91,14 @@ Thinking approach:
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| Philosophy table | `ThreadsPage.tsx` | ✅ Done |
+| Philosophy table | `ThreadsPage.tsx` | 🌀 Done |
 
 **Features**:
-- ✅ View all philosophy facts
-- ✅ Edit L1/L2/L3 values inline
-- ✅ Adjust weights
-- ✅ Add new values/constraints
-- ✅ Filter by type (value/constraint/style)
+- 🌀 View all philosophy facts
+- 🌀 Edit L1/L2/L3 values inline
+- 🌀 Adjust weights
+- 🌀 Add new values/constraints
+- 🌀 Filter by type (value/constraint/style)
 
 ---
 

@@ -217,15 +217,15 @@ Ratio preserved: 6-7 sub-units per major unit
 
 | Processing Type | Brain Region | Our Thread | Covered? |
 |-----------------|--------------|------------|----------|
-| Values/Goals | Prefrontal | Philosophy | ✅ |
-| Episodic Memory | Hippocampus | Log | ✅ |
-| Self/Other Model | Parietal/DMN | Identity | ✅ |
-| Action/Output | Motor | Form | ✅ |
-| Automatic/Habits | Basal Ganglia | Reflex | ✅ |
-| Emotion | Limbic | Philosophy (values) + Reflex (fast) | ✅ |
-| Language | Temporal/Broca | Form (production) + Identity (semantics) | ✅ |
+| Values/Goals | Prefrontal | Philosophy | 🌀 |
+| Episodic Memory | Hippocampus | Log | 🌀 |
+| Self/Other Model | Parietal/DMN | Identity | 🌀 |
+| Action/Output | Motor | Form | 🌀 |
+| Automatic/Habits | Basal Ganglia | Reflex | 🌀 |
+| Emotion | Limbic | Philosophy (values) + Reflex (fast) | 🌀 |
+| Language | Temporal/Broca | Form (production) + Identity (semantics) | 🌀 |
 | Perception | Occipital/Sensory | **INPUT** (not stored) | N/A |
-| Attention | Frontoparietal | **LinkingCore** (not a thread) | ✅ |
+| Attention | Frontoparietal | **LinkingCore** (not a thread) | 🌀 |
 
 ### Critical Insight:
 **Perception and Attention are PROCESSES, not STORAGE.**
@@ -357,7 +357,7 @@ SAME PATTERN: Major category → specialized sub-units
 ### To add capabilities:
 
 ❌ DON'T add new threads
-✅ DO add new modules to existing threads
+🌀 DO add new modules to existing threads
 
 Example - Want to track goals?
 ```python

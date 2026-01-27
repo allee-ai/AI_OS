@@ -105,13 +105,13 @@ EVENT_TYPE_RELEVANCE = {
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| Log events table | `ThreadsPage.tsx` | ✅ Done |
-| Session viewer | `ThreadsPage.tsx` | ✅ Done |
+| Log events table | `ThreadsPage.tsx` | 🌀 Done |
+| Session viewer | `ThreadsPage.tsx` | 🌀 Done |
 
 **Features**:
-- ✅ View event timeline
-- ✅ Filter by event type
-- ✅ Session tracking
+- 🌀 View event timeline
+- 🌀 Filter by event type
+- 🌀 Session tracking
 - ⬜ Timeline visualization
 - ⬜ Pattern detection UI
 

@@ -245,7 +245,7 @@ async def list_templates():
         {"name": "zendesk", "description": "Zendesk - Support tickets", "icon": "🎫"},
         {"name": "jira", "description": "Jira - Issue tracking", "icon": "📋"},
         {"name": "airtable", "description": "Airtable - Database records", "icon": "📊"},
-        {"name": "todoist", "description": "Todoist - Tasks", "icon": "✅"},
+        {"name": "todoist", "description": "Todoist - Tasks", "icon": "🌀"},
         {"name": "gcal", "description": "Google Calendar - Events", "icon": "📅"},
         {"name": "shopify", "description": "Shopify - Orders", "icon": "🛒"},
         {"name": "hubspot", "description": "HubSpot - CRM contacts", "icon": "🧡"},

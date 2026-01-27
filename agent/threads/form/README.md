@@ -176,11 +176,11 @@ POST /api/form/tools/browser/execute
 | `ToolDashboard.tsx` | `frontend/src/components/` | View tools, execute actions, edit code |
 
 **Dashboard Features**:
-- ✅ View all registered tools
-- ✅ See availability status (green/red for env vars)
-- ✅ Execute tool actions with params
-- ✅ View execution results
-- ✅ View/edit executable source code
+- 🌀 View all registered tools
+- 🌀 See availability status (green/red for env vars)
+- 🌀 Execute tool actions with params
+- 🌀 View execution results
+- 🌀 View/edit executable source code
 
 ---
 

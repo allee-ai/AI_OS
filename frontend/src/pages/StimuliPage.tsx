@@ -49,7 +49,7 @@ const SOURCE_ICONS: Record<string, string> = {
   zendesk: '🎫',
   jira: '📋',
   airtable: '📊',
-  todoist: '✅',
+  todoist: '🌀',
   gcal: '📅',
   shopify: '🛒',
   hubspot: '🧡',

@@ -79,13 +79,13 @@ This architecture implements **established, validated cognitive science** as sof
 
 | Theory | Research | Implementation | Match |
 |--------|----------|----------------|-------|
-| Global Workspace Theory | Baars (1988) | Context window competition | ✅ Strong |
-| Neuronal Global Workspace | Dehaene (2001) | Ignition threshold, 1% sparsity | ✅ Strong |
-| Working Memory Model | Baddeley (1974) | 7±2 chunks, specialized buffers | ✅ Strong |
-| Memory Consolidation | Born (2010) | Consolidation daemon = sleep | ✅ Strong |
-| Dual Process Theory | Kahneman (2011) | Reflex (System 1) vs Generation (System 2) | ✅ Strong |
-| Levels of Processing | Craik & Lockhart (1972) | L1/L2/L3 depth system | ✅ Strong |
-| Hebbian Learning | Hebb (1949) | Weight adjustment on use | ✅ Strong |
+| Global Workspace Theory | Baars (1988) | Context window competition | 🌀 Strong |
+| Neuronal Global Workspace | Dehaene (2001) | Ignition threshold, 1% sparsity | 🌀 Strong |
+| Working Memory Model | Baddeley (1974) | 7±2 chunks, specialized buffers | 🌀 Strong |
+| Memory Consolidation | Born (2010) | Consolidation daemon = sleep | 🌀 Strong |
+| Dual Process Theory | Kahneman (2011) | Reflex (System 1) vs Generation (System 2) | 🌀 Strong |
+| Levels of Processing | Craik & Lockhart (1972) | L1/L2/L3 depth system | 🌀 Strong |
+| Hebbian Learning | Hebb (1949) | Weight adjustment on use | 🌀 Strong |
 
 **Validation Score: 13/15 Strong Match, 2/15 Partial Match, 0/15 Mismatch**
 
@@ -284,7 +284,7 @@ Our context structure:
 - Log context: 1 chunk
 - Current query: 1 chunk
 - Generation space: 2 chunks
-Total: 7 chunks ✅
+Total: 7 chunks 🌀
 ```
 
 ### 5.3 Operating Parameters

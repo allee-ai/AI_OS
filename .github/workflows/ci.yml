@@ -25,12 +25,12 @@ jobs:
     
     - name: Smoke test backend imports
       run: |
-        python -c "from scripts.server import app; from chat import router; print('✅ Backend imports OK')"
+        python -c "from scripts.server import app; from chat import router; print('🌀 Backend imports OK')"
     
     - name: Check Nola agent import
       run: |
         cd Nola
-        python -c "from agent import get_agent; print('✅ Nola agent import OK')"
+        python -c "from agent import get_agent; print('🌀 Nola agent import OK')"
 
   frontend-check:
     runs-on: ubuntu-latest

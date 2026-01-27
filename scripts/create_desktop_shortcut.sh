@@ -27,7 +27,7 @@ StartupNotify=true
 EOF
     
     chmod +x "$HOME/Desktop/aios.desktop"
-    echo "✅ Created desktop shortcut: ~/Desktop/aios.desktop"
+    echo "🌀 Created desktop shortcut: ~/Desktop/aios.desktop"
     
 # Windows (Git Bash/WSL) - Create batch file
 elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
@@ -36,7 +36,7 @@ elif [[ "$OSTYPE" == "msys" ]] || [[ "$OSTYPE" == "cygwin" ]]; then
 cd /d "$SCRIPT_DIR"
 start cmd /k "./start.sh"
 EOF
-    echo "✅ Created desktop shortcut: ~/Desktop/AI OS.bat"
+    echo "🌀 Created desktop shortcut: ~/Desktop/AI OS.bat"
     
 else
     echo "⚠️ Unsupported OS type: $OSTYPE"

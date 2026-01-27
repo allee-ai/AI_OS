@@ -217,7 +217,7 @@ class MemoryService:
 - Testing requires mocking database
 - Tight coupling
 
-### ✅ GOOD: Separated Concerns
+### 🌀 GOOD: Separated Concerns
 ```python
 # linking_core: Pure scoring
 scores = linking_core.score_relevance(query, facts)

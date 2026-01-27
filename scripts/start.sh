@@ -70,10 +70,10 @@ case "$OS" in
             fi
             exit 1
         fi
-        echo -e "${GREEN}✅ Windows with Bash detected${NC}"
+        echo -e "${GREEN}🌀 Windows with Bash detected${NC}"
         ;;
     "macos"|"linux")
-        echo -e "${GREEN}✅ Unix-like system detected${NC}"
+        echo -e "${GREEN}🌀 Unix-like system detected${NC}"
         ;;
     *)
         echo -e "${RED}❌ Unsupported operating system: ${OS}${NC}"
@@ -122,7 +122,7 @@ wait_for_service() {
     echo -e "${YELLOW}⏳ Waiting for $name...${NC}"
     while [ $attempt -le $max ]; do
         if curl -s "$url" >/dev/null 2>&1; then
-            echo -e "${GREEN}✅ $name ready${NC}"
+            echo -e "${GREEN}🌀 $name ready${NC}"
             return 0
         fi
         sleep 1
@@ -289,7 +289,7 @@ cleanup() {
     if [ -n "$OLLAMA_PID" ]; then
         kill $OLLAMA_PID 2>/dev/null || true
     fi
-    echo -e "${GREEN}✅ Done${NC}"
+    echo -e "${GREEN}🌀 Done${NC}"
     
     # Handle GUI vs terminal cleanup
     if [ "$TERM_TYPE" = "gui" ]; then

@@ -21,7 +21,7 @@ The model learns to reference specific state fields:
 
 ### 3. Graceful Unknowns
 When asked about something not in state:
-- ✅ "I don't have that in my current context"
+- 🌀 "I don't have that in my current context"
 - ❌ Making up information
 
 ### 4. Identity Persistence Under Attack

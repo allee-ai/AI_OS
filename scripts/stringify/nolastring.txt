@@ -1469,9 +1469,9 @@ Then drag `Nola.app` to your:
 
 ## What You Get
 
-✅ **Modified start.sh** - Opens startup page at `http://localhost:3000/startup`  
-✅ **macOS App Bundle** - Professional app icon that launches Terminal + Nola  
-✅ **Startup Options Page** - Clean UI to select:
+🌀 **Modified start.sh** - Opens startup page at `http://localhost:3000/startup`  
+🌀 **macOS App Bundle** - Professional app icon that launches Terminal + Nola  
+🌀 **Startup Options Page** - Clean UI to select:
 - 👤 **Personal** vs 🎭 **Demo** data mode
 - 💻 **Local** vs 🐳 **Docker** build method  
 - ⚙️ **Developer mode** toggle
@@ -1522,7 +1522,7 @@ AI_OS now uses a **focus-based architecture** where the database learns key sequ
 - **Learning Loop:** Every query updates weights and sequence predictions
 
 📖 **Read the plan:** [docs/implementation/FOCUS_IMPLEMENTATION.md](docs/implementation/FOCUS_IMPLEMENTATION.md)  
-✅ **Quick checklist:** [docs/FOCUS_CHECKLIST.md](docs/FOCUS_CHECKLIST.md)  
+🌀 **Quick checklist:** [docs/FOCUS_CHECKLIST.md](docs/FOCUS_CHECKLIST.md)  
 📝 **Discovery notes:** [docs/DEV_NOTES.md](docs/DEV_NOTES.md) - Focus System Discovery section
 
 ---
@@ -2874,19 +2874,19 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### Identity Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ idv2 SQLite backend working, pulls facts by level, user/machine separation |
+| **Current** | 🌀 idv2 SQLite backend working, pulls facts by level, user/machine separation |
 | **Future** | Memory permanence logic, weight decay, consolidation daemon, "tomorrow queue" for deferred decisions |
 
 ### Log Thread  
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ Event logging to master.log, session tracking, basic temporal facts |
+| **Current** | 🌀 Event logging to master.log, session tracking, basic temporal facts |
 | **Future** | File→DB migration, relevance integration, pattern detection for reflex promotion |
 
 ### Form Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ Kernel browser integration working, human behavior mimicry, persistent profiles |
+| **Current** | 🌀 Kernel browser integration working, human behavior mimicry, persistent profiles |
 | **Future** | Tool registry expansion, email/calendar integration, sandbox environment, plugin architecture |
 
 ### Philosophy Thread
@@ -2904,7 +2904,7 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### LinkingCore (Utility)
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ Basic relevance.py with embedding similarity |
+| **Current** | 🌀 Basic relevance.py with embedding similarity |
 | **Future** | Key sequence learning, attention scoring, prompt builder, focus system integration |
 
 ---
@@ -2957,7 +2957,7 @@ agent/threads/
 
 ## Migration Plan
 
-### Phase 1: Thread Structure (COMPLETE ✅)
+### Phase 1: Thread Structure (COMPLETE 🌀)
 - [x] Create 6 thread directories
 - [x] Create adapter.py for each thread
 - [x] Create README.md for each thread
@@ -3057,12 +3057,12 @@ class ThreadAdapter:
 
 | Thread | Adapter | README | Wired | Tested |
 |--------|---------|--------|-------|--------|
-| Identity | ✅ | ✅ | ⏳ | ⏳ |
-| Log | ✅ | ✅ | ⏳ | ⏳ |
-| LinkingCore | ✅ | ✅ | ⏳ | ⏳ |
-| Form | ✅ | ✅ | ⏳ | ⏳ |
-| Philosophy | ✅ | ✅ | ⏳ | ⏳ |
-| Reflex | ✅ | ✅ | ⏳ | ⏳ |
+| Identity | 🌀 | 🌀 | ⏳ | ⏳ |
+| Log | 🌀 | 🌀 | ⏳ | ⏳ |
+| LinkingCore | 🌀 | 🌀 | ⏳ | ⏳ |
+| Form | 🌀 | 🌀 | ⏳ | ⏳ |
+| Philosophy | 🌀 | 🌀 | ⏳ | ⏳ |
+| Reflex | 🌀 | 🌀 | ⏳ | ⏳ |
 
 
 ================================================================================
@@ -3090,7 +3090,7 @@ FILE: agent/threads/REBUILD_CHECKLIST.md
 
 ---
 
-## Phase 1: Schema Foundation ✅ COMPLETE
+## Phase 1: Schema Foundation 🌀 COMPLETE
 **Profile:** `backend-developer`
 
 - [x] Finalize `schema.py` with universal table format
@@ -3120,7 +3120,7 @@ CREATE TABLE {thread}_{module} (
 
 ---
 
-## Phase 2: Seed Data Migration ✅ COMPLETE
+## Phase 2: Seed Data Migration 🌀 COMPLETE
 **Profile:** `backend-developer`
 
 - [x] Create `seed_data.py` to load initial data
@@ -3134,7 +3134,7 @@ CREATE TABLE {thread}_{module} (
 
 ---
 
-## Phase 3: Thread Adapters ✅ COMPLETE
+## Phase 3: Thread Adapters 🌀 COMPLETE
 **Profile:** `state-sync-developer`
 
 Created new v2 adapters that use `schema.py` for all data access:
@@ -3168,7 +3168,7 @@ class ThreadAdapter:
 
 ---
 
-## Phase 4: LinkingCore Attention ✅ COMPLETE
+## Phase 4: LinkingCore Attention 🌀 COMPLETE
 **Profile:** `ai-ml-engineer`
 
 - [x] Created `linking_core/scoring.py` as pure utility functions
@@ -3179,7 +3179,7 @@ class ThreadAdapter:
 
 ---
 
-## Phase 5: Subconscious Integration ✅ COMPLETE
+## Phase 5: Subconscious Integration 🌀 COMPLETE
 **Profile:** `ai-ml-engineer`
 
 - [x] Created `subconscious/orchestrator.py` with new `Subconscious` class
@@ -3191,7 +3191,7 @@ class ThreadAdapter:
 
 ---
 
-## Phase 6: API Updates ✅ COMPLETE
+## Phase 6: API Updates 🌀 COMPLETE
 **Profile:** `fastapi-developer`
 
 - [x] Updated `_get_identity_facts()` to try new `build_context()` first
@@ -3203,7 +3203,7 @@ class ThreadAdapter:
 
 ---
 
-## Phase 7: Cleanup ✅ COMPLETE
+## Phase 7: Cleanup 🌀 COMPLETE
 **Profile:** `backend-developer`
 
 Deleted deprecated files (~1,700 lines):
@@ -3254,7 +3254,7 @@ That's it. The universal format means no schema changes needed.
 
 ---
 
-## REBUILD COMPLETE ✅
+## REBUILD COMPLETE 🌀
 
 Thread system rebuild finished 2025-01-06.
 
@@ -3283,24 +3283,24 @@ FILE: agent/threads/THREAD_BROWSER_UI.md
 
 # Thread Browser UI Implementation
 
-**Status**: ✅ COMPLETE (implemented as ThreadsPage)  
+**Status**: 🌀 COMPLETE (implemented as ThreadsPage)  
 **Updated**: 2026-01-09
 
 **Goal:** Replace/augment the introspection panel with a full thread browser where you can click any thread, see its modules, and inspect/edit data.
 
-## Implementation ✅
+## Implementation 🌀
 
 The thread browser is implemented as `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
 
-- ✅ Thread tabs (identity, log, form, philosophy, reflex, linking_core)
-- ✅ Thread health display with status indicators
-- ✅ Identity flat table with L1/L2/L3 columns
-- ✅ Philosophy flat table (same schema as identity)
-- ✅ Edit/Delete actions on rows
-- ✅ Add Row form for identity and philosophy
-- ✅ Level selector (L1/L2/L3)
-- ✅ Log event viewer with filters and sorting
-- ✅ Add Event form for log thread
+- 🌀 Thread tabs (identity, log, form, philosophy, reflex, linking_core)
+- 🌀 Thread health display with status indicators
+- 🌀 Identity flat table with L1/L2/L3 columns
+- 🌀 Philosophy flat table (same schema as identity)
+- 🌀 Edit/Delete actions on rows
+- 🌀 Add Row form for identity and philosophy
+- 🌀 Level selector (L1/L2/L3)
+- 🌀 Log event viewer with filters and sorting
+- 🌀 Add Event form for log thread
 
 Accessible at `/threads` route.
 
@@ -3985,11 +3985,11 @@ Before Wednesday:
 
 Your demo is successful if:
 
-1. ✅ Browser launches and returns Live View URL
-2. ✅ Audience sees the automation in real-time
-3. ✅ At least one person asks "how does it work?"
-4. ✅ Someone asks for the GitHub link
-5. ✅ You make at least one technical connection
+1. 🌀 Browser launches and returns Live View URL
+2. 🌀 Audience sees the automation in real-time
+3. 🌀 At least one person asks "how does it work?"
+4. 🌀 Someone asks for the GitHub link
+5. 🌀 You make at least one technical connection
 
 ---
 
@@ -4147,7 +4147,7 @@ The canonical implementation details and migration plan for the state/database i
 
 # Database Integration Plan
 
-**Status:** ✅ IMPLEMENTED (see `agent/idv2/idv2.py`)  
+**Status:** 🌀 IMPLEMENTED (see `agent/idv2/idv2.py`)  
 **Last Updated:** 2025-12-23
 
 > **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See `agent/idv2/idreadme.md` for implementation details.
@@ -4612,7 +4612,7 @@ RESPONSE
 
 ---
 
-## Phase 1: Database Schema Migration ✅ COMPLETE
+## Phase 1: Database Schema Migration 🌀 COMPLETE
 
 ### 1.1 Add Weight Columns to Existing Tables
 - [x] Add `weight REAL DEFAULT 0.5` to identity tables (in `identity_flat`, `philosophy_flat`)
@@ -4833,9 +4833,9 @@ def should_save_memory(key, value):
 ## Rollout Strategy
 
 ### Week 1: Foundation (Phase 1-2)
-- Day 1-2: Schema migration, add weight columns ✅
-- Day 3-4: Build sequence learner ✅
-- Day 5-7: Build attention scorer and prompt builder ✅
+- Day 1-2: Schema migration, add weight columns 🌀
+- Day 3-4: Build sequence learner 🌀
+- Day 5-7: Build attention scorer and prompt builder 🌀
 
 ### Week 2: Memory Logic (Phase 3)
 - Day 1-3: Memory conflict detection
@@ -4887,8 +4887,8 @@ def should_save_memory(key, value):
 
 ## Next Immediate Steps
 
-1. ✅ Read this document
-2. ✅ Run schema migration on existing DB (`identity_flat`, `philosophy_flat` tables created)
+1. 🌀 Read this document
+2. 🌀 Run schema migration on existing DB (`identity_flat`, `philosophy_flat` tables created)
 3. [ ] Create `agent/subconscious/focus/` directory structure
 4. [ ] Implement `sequence_learner.py` first (core functionality)
 5. [ ] Write unit tests for sequence learning
@@ -5897,9 +5897,9 @@ start.bat
 ```
 
 That's it! The script handles everything:
-- ✅ Installs the AI brain (Ollama)
-- ✅ Sets up the chat interface
-- ✅ Opens your browser automatically
+- 🌀 Installs the AI brain (Ollama)
+- 🌀 Sets up the chat interface
+- 🌀 Opens your browser automatically
 
 > **First time?** The first launch downloads the AI model (~4GB). This only happens once.
 
@@ -6033,7 +6033,7 @@ Nola isn't just a chatbot — it's a **Cognitive Operating System** in developme
 ### The Roadmap
 
 See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
-- ✅ **Now:** Subconscious, memory threads, HEA context levels
+- 🌀 **Now:** Subconscious, memory threads, HEA context levels
 - 🔄 **Next:** Memory consolidation, philosophy constraints
 - 🚀 **Future:** Reflex automation, dream states, multi-model routing, enterprise integration
 
@@ -6193,9 +6193,9 @@ python eval/ai_battle.py --turns 50 --adversary "gpt-oss:120b-cloud" --judge "ki
 
 | 阶段 | 状态 | 描述 |
 |------|------|------|
-| 潜意识模块 | ✅ 完成 | 响应前组装上下文 |
-| 线程适配器 | ✅ 完成 | 可插拔架构 |
-| HEA 上下文层级 | ✅ 完成 | L1/L2/L3 动态过滤 |
+| 潜意识模块 | 🌀 完成 | 响应前组装上下文 |
+| 线程适配器 | 🌀 完成 | 可插拔架构 |
+| HEA 上下文层级 | 🌀 完成 | L1/L2/L3 动态过滤 |
 | 记忆整合 | 🔄 进行中 | 事实评分与晋升 |
 | 哲学线程 | 📋 计划中 | 伦理、边界、决心 |
 | 反射线程 | 📋 计划中 | 模式 → 自动化 |
@@ -6314,26 +6314,26 @@ Quick links for developers:
 - `agent/threads/*/README.md` — Per-thread canonical READMEs with implementation pointers
 
 If you need the full historical notes restored here, I can copy them back into `docs/DEV_NOTES.md` or leave them in the archive file.
-✅ Pinned deps with SHA256 hashes (requirements.lock)
-✅ Clean shutdown (trap SIGINT/SIGTERM)
-✅ System prompt logging with 1MB rotation
-✅ Provider toggle (ollama/http/mock)
-✅ .env.example with all knobs documented
-✅ Docker Compose with Ollama service
+🌀 Pinned deps with SHA256 hashes (requirements.lock)
+🌀 Clean shutdown (trap SIGINT/SIGTERM)
+🌀 System prompt logging with 1MB rotation
+🌀 Provider toggle (ollama/http/mock)
+🌀 .env.example with all knobs documented
+🌀 Docker Compose with Ollama service
 
 Test Suite Complete:
-✅ 23 tests passing (pytest tests/ -v)
-✅ test_agent.py (singleton, thread safety, provider, identity)
-✅ test_idv2.py (DB init, push/pull, level filter, migration)
-✅ test_hea.py (stimuli classification, context levels, tokens)
+🌀 23 tests passing (pytest tests/ -v)
+🌀 test_agent.py (singleton, thread safety, provider, identity)
+🌀 test_idv2.py (DB init, push/pull, level filter, migration)
+🌀 test_hea.py (stimuli classification, context levels, tokens)
 
 Database Panel Fixed (2025-12-26):
-✅ Updated DatabasePanel.tsx with context level selector (L1/L2/L3)
-✅ Updated HEATable.tsx to show single data column per level
-✅ Updated api.ts getIdentityHEA(contextLevel) with parameter
-✅ Added new getIdentityModule() API method
-✅ Styled context level buttons with descriptions
-✅ Added status badges and improved table layout
+🌀 Updated DatabasePanel.tsx with context level selector (L1/L2/L3)
+🌀 Updated HEATable.tsx to show single data column per level
+🌀 Updated api.ts getIdentityHEA(contextLevel) with parameter
+🌀 Added new getIdentityModule() API method
+🌀 Styled context level buttons with descriptions
+🌀 Added status badges and improved table layout
 
 Outstanding (Non-Blocking):
 [ ] README.zh.md (Chinese technical docs) - nice-to-have
@@ -6341,9 +6341,9 @@ Outstanding (Non-Blocking):
 [ ] Baseline transcript (eval/baselines/) - post-launch
 
 Focus System Discovery (2026-01-02):
-✅ Architecture insight: "Attention is all you need" → "Focus is all you need"
-✅ DB as control plane: Learns key sequences (after key A → key B)
-✅ LLM as data plane: Operates in pre-focused space
+🌀 Architecture insight: "Attention is all you need" → "Focus is all you need"
+🌀 DB as control plane: Learns key sequences (after key A → key B)
+🌀 LLM as data plane: Operates in pre-focused space
 
 === CORE ARCHITECTURAL INSIGHTS ===
 Last Updated: 2026-01-05
@@ -6448,9 +6448,9 @@ Monday Pre-Demo Checklist:
 [ ] Practice 30-second pitch until muscle memory
 [ ] Attendee LinkedIn research (identify 2-3 key connects)
 [ ] Kernel SDK deep-dive (onkernel.com/docs, understand unikernels)
-✅ Tables with weights = learned focus scores
-✅ Memory permanence logic: Detect conflicts, queue for confirmation
-✅ Implementation plan created: docs/FOCUS_IMPLEMENTATION.md
+🌀 Tables with weights = learned focus scores
+🌀 Memory permanence logic: Detect conflicts, queue for confirmation
+🌀 Implementation plan created: docs/FOCUS_IMPLEMENTATION.md
 
 Key Breakthrough:
 - DB performs semantic tokenization (key matching)
@@ -6469,18 +6469,18 @@ Next Phase:
 
 === BACKEND NOTES ===
 Last Updated: 2025-12-27
-Status: ✅ SUBCONSCIOUS INTEGRATION COMPLETE
+Status: 🌀 SUBCONSCIOUS INTEGRATION COMPLETE
 
 Subconscious Integration (2025-12-27):
-✅ Created agent/subconscious/ module with full architecture
-✅ ThreadInterface protocol defines adapters for internal modules
-✅ Built-in adapters: log_thread, temp_memory, identity
-✅ Background loops (consolidation, sync, health) implemented
-✅ Triggers (time, event, threshold) implemented
-✅ agent.py refactored to stateless - accepts consciousness_context param
-✅ agent_service.py wired to subconscious - calls get_consciousness_context()
-✅ Path resolution fixed for imports from backend directory
-✅ Full integration tested: context flows → agent responds with learned facts
+🌀 Created agent/subconscious/ module with full architecture
+🌀 ThreadInterface protocol defines adapters for internal modules
+🌀 Built-in adapters: log_thread, temp_memory, identity
+🌀 Background loops (consolidation, sync, health) implemented
+🌀 Triggers (time, event, threshold) implemented
+🌀 agent.py refactored to stateless - accepts consciousness_context param
+🌀 agent_service.py wired to subconscious - calls get_consciousness_context()
+🌀 Path resolution fixed for imports from backend directory
+🌀 Full integration tested: context flows → agent responds with learned facts
 
 Context Levels (HEA):
 - L1: ~10 tokens - Quick responses (identity core only)
@@ -6497,24 +6497,24 @@ Key Files Added/Modified:
 - agent/services/agent_service.py - Calls subconscious before agent.generate()
 
 Previous Architecture Simplification:
-✅ Removed redundant files: relevancev2.py (incomplete stub), chat_demo.py (unused TKinter)
-✅ Moved agent_service.py from backend/services/ to agent/services/ for centralized access
-✅ Deprecated utils.py conversation functions (append_to_conversation, load_conversation)
-✅ Unified conversation storage: Only agent_service.py handles JSON conversation logs
-✅ Simplified import paths: Removed complex relative path resolution
-✅ Updated config.py: Changed demo_agent_path to nola_path, updated app_name
-✅ Cleaned up backend/services/ directory (now empty, removed)
+🌀 Removed redundant files: relevancev2.py (incomplete stub), chat_demo.py (unused TKinter)
+🌀 Moved agent_service.py from backend/services/ to agent/services/ for centralized access
+🌀 Deprecated utils.py conversation functions (append_to_conversation, load_conversation)
+🌀 Unified conversation storage: Only agent_service.py handles JSON conversation logs
+🌀 Simplified import paths: Removed complex relative path resolution
+🌀 Updated config.py: Changed demo_agent_path to nola_path, updated app_name
+🌀 Cleaned up backend/services/ directory (now empty, removed)
 
 Path Resolution Fixes:
-✅ agent_service.py now uses simple parent directory navigation
-✅ chat.py and websockets.py updated to import from centralized services/
-✅ All imports point to single agent_service.py location
+🌀 agent_service.py now uses simple parent directory navigation
+🌀 chat.py and websockets.py updated to import from centralized services/
+🌀 All imports point to single agent_service.py location
 
 Conversation Storage Consolidation:
-✅ utils.py conversation functions marked deprecated with warnings
-✅ AgentService handles all conversation persistence to Stimuli/conversations/
-✅ Eliminated duplicate conversation logging systems
-✅ Maintained backward compatibility with deprecation warnings
+🌀 utils.py conversation functions marked deprecated with warnings
+🌀 AgentService handles all conversation persistence to Stimuli/conversations/
+🌀 Eliminated duplicate conversation logging systems
+🌀 Maintained backward compatibility with deprecation warnings
 
 File Reduction Summary:
 ❌ Removed: agent/relevancev2.py (19 lines, unused stub)
@@ -6527,21 +6527,21 @@ File Reduction Summary:
 Program Size Reduction: ~250 lines removed, ~30% cleaner backend structure
 
 Assessment Complete:
-✅ agent_service.py imports Nola correctly from new location
-✅ FastAPI starts without errors  
-✅ /health endpoint responds
-✅ /api/chat/message routes to Nola
-✅ Conversations save to agent/Stimuli/conversations/
+🌀 agent_service.py imports Nola correctly from new location
+🌀 FastAPI starts without errors  
+🌀 /health endpoint responds
+🌀 /api/chat/message routes to Nola
+🌀 Conversations save to agent/Stimuli/conversations/
 
 HEA Implementation Status:
-✅ machineID.py: Added extract_level_data() - filters JSON by level_1/level_2/level_3
-✅ user.py: Added extract_level_data() - same filtering logic
-✅ identity.py: sync_for_stimuli() now maps all 3 stimuli types:
+🌀 machineID.py: Added extract_level_data() - filters JSON by level_1/level_2/level_3
+🌀 user.py: Added extract_level_data() - same filtering logic
+🌀 identity.py: sync_for_stimuli() now maps all 3 stimuli types:
    - "realtime" → L1 (~10 tokens)
    - "conversational" → L2 (~50 tokens)  
    - "analytical" → L3 (~200 tokens)
-✅ push_machine/push_user() now filter data before syncing
-✅ Filtered data flows through: machineID.json → identity.json → Nola.json
+🌀 push_machine/push_user() now filter data before syncing
+🌀 Filtered data flows through: machineID.json → identity.json → Nola.json
 
 Data Flow Verified:
 1. React sends message → agent_service.py classifies stimuli_type
@@ -6554,13 +6554,13 @@ Data Flow Verified:
 Previous Issues Fixed:
 ❌ OLD: sync_for_stimuli() only handled L1/L2, missing L3
 ❌ OLD: push_machine/push_user pushed ALL data regardless of level
-✅ NEW: Full HEA level filtering now works
+🌀 NEW: Full HEA level filtering now works
 
 No blockers from backend.
 
 --- Recent Runtime Verification (2025-12-17) ---
 Last Run: 2025-12-17
-Status: ✅ Nola agent loaded
+Status: 🌀 Nola agent loaded
 
 Runtime Findings:
 - `agent_service` imported `Nola` successfully at runtime.
@@ -6571,7 +6571,7 @@ Notes / Issues:
 - Directory name: `Nola` (no trailing space)
 
 Assessment Checklist:
-- **agent_service.py imports Nola correctly**: ✅ (see file path above)
+- **agent_service.py imports Nola correctly**: 🌀 (see file path above)
 - **FastAPI starts without errors**: not checked in this run (previous verification exists)
 - **`/health` endpoint responds**: not checked in this run
 - **`/api/chat/message` routes to Nola**: not checked in this run
@@ -6590,17 +6590,17 @@ Dependencies / Environment:
 
 === FRONTEND NOTES ===
 Last Updated: 2025-12-15
-Status: ✅ READY
+Status: 🌀 READY
 
 Improvements Made:
-✅ Rebranded from "React Chat Demo" to "Nola"
-✅ New dark theme (deep blue gradient background)
-✅ Brain emoji avatar for Nola
-✅ Welcome state with suggestion chips for new users
-✅ Updated accent colors throughout (buttons, messages, inputs)
-✅ "Thinking..." instead of "Typing..." status
-✅ Footer updated: "Local-first • Your data stays on your machine"
-✅ TypeScript compiles without errors
+🌀 Rebranded from "React Chat Demo" to "Nola"
+🌀 New dark theme (deep blue gradient background)
+🌀 Brain emoji avatar for Nola
+🌀 Welcome state with suggestion chips for new users
+🌀 Updated accent colors throughout (buttons, messages, inputs)
+🌀 "Thinking..." instead of "Typing..." status
+🌀 Footer updated: "Local-first • Your data stays on your machine"
+🌀 TypeScript compiles without errors
 
 Components Updated:
 - App.tsx/App.css - Nola branding
@@ -6610,36 +6610,36 @@ Components Updated:
 
 === PRODUCT NOTES ===
 Last Updated: 2025-12-15
-Status: ✅ MVP COMPLETE
+Status: 🌀 MVP COMPLETE
 
 User Experience Verified:
-✅ 1-click start (./start.sh)
-✅ Nola responds with personality, not generic LLM
-✅ Knows user context from identity config
-✅ Conversations persist locally (privacy-first)
-✅ No duplicate messages in UI
+🌀 1-click start (./start.sh)
+🌀 Nola responds with personality, not generic LLM
+🌀 Knows user context from identity config
+🌀 Conversations persist locally (privacy-first)
+🌀 No duplicate messages in UI
 
 === STATE SYNC NOTES ===
 Last Updated: 2025-12-19
-Status: ✅ IDV2 DB BACKEND COMPLETE
+Status: 🌀 IDV2 DB BACKEND COMPLETE
 
 Identity Thread v2 Implementation (DB-backed):
-✅ Created agent/idv2/idv2.py with full SQLite backend
-✅ Implemented init_db() - creates identity_sections and identity_meta tables
-✅ Implemented seed_from_json() - migrates from identity_thread JSONs
-✅ Implemented push_section() - stores machineID/userID with L1/L2/L3 variants
-✅ Implemented pull_section() - retrieves section data by context level
-✅ Implemented push_identity() - aggregates sections and updates Nola.json
-✅ Implemented pull_identity() - retrieves merged identity by level
-✅ Implemented sync_for_stimuli() - maps stimuli types to context levels
-✅ Added migrate() CLI entrypoint for container startup
-✅ Added health_check() for startup validation
-✅ Context-aware storage: separate data_l1_json/data_l2_json/data_l3_json columns
-✅ Max 3-level nesting enforced via _extract_level_data()
-✅ v1 API compatibility maintained (same function signatures)
-✅ Metadata contract integration (create_metadata, should_sync, mark_synced)
-✅ Added DatabaseAgent helper (db_agent) for shared state.db connections
-✅ idv2 now uses db_agent connections; NOLA_JSON_COMPAT flag controls legacy Nola.json writes
+🌀 Created agent/idv2/idv2.py with full SQLite backend
+🌀 Implemented init_db() - creates identity_sections and identity_meta tables
+🌀 Implemented seed_from_json() - migrates from identity_thread JSONs
+🌀 Implemented push_section() - stores machineID/userID with L1/L2/L3 variants
+🌀 Implemented pull_section() - retrieves section data by context level
+🌀 Implemented push_identity() - aggregates sections and updates Nola.json
+🌀 Implemented pull_identity() - retrieves merged identity by level
+🌀 Implemented sync_for_stimuli() - maps stimuli types to context levels
+🌀 Added migrate() CLI entrypoint for container startup
+🌀 Added health_check() for startup validation
+🌀 Context-aware storage: separate data_l1_json/data_l2_json/data_l3_json columns
+🌀 Max 3-level nesting enforced via _extract_level_data()
+🌀 v1 API compatibility maintained (same function signatures)
+🌀 Metadata contract integration (create_metadata, should_sync, mark_synced)
+🌀 Added DatabaseAgent helper (db_agent) for shared state.db connections
+🌀 idv2 now uses db_agent connections; NOLA_JSON_COMPAT flag controls legacy Nola.json writes
 
 Database Schema:
 - identity_sections: key, data_l1_json, data_l2_json, data_l3_json, metadata_json
@@ -6648,19 +6648,19 @@ Database Schema:
 
 === DEVOPS NOTES ===
 Last Updated: 2025-12-22
-Status: ✅ CHECKLIST INFRA COMPLETE
+Status: 🌀 CHECKLIST INFRA COMPLETE
 
 Docker Integration (Steps 3-4):
-✅ Created backend/entrypoint.sh - DB migration + health check before uvicorn
-✅ Updated backend/Dockerfile - added entrypoint script with exec
-✅ Updated docker-compose.yml:
+🌀 Created backend/entrypoint.sh - DB migration + health check before uvicorn
+🌀 Updated backend/Dockerfile - added entrypoint script with exec
+🌀 Updated docker-compose.yml:
    - Added nola_memory volume mount at /app/data/db
    - Added IDENTITY_BACKEND=db env var
    - Added IDENTITY_DB_PATH=/app/data/db/identity.db
    - Added IDENTITY_SEED_DIR=/app/agent/identity_thread
-✅ Entrypoint checks IDENTITY_BACKEND and runs migration conditionally
-✅ Health check validates DB before starting server
-✅ Volumes persist across container restarts
+🌀 Entrypoint checks IDENTITY_BACKEND and runs migration conditionally
+🌀 Health check validates DB before starting server
+🌀 Volumes persist across container restarts
 
 Startup Flow:
 1. Container starts → entrypoint.sh
@@ -6671,29 +6671,29 @@ Startup Flow:
 6. Start uvicorn on port 8000
 
 --- Update 2025-12-22 ---
-Status: ✅ BACKEND INFRASTRUCTURE TASKS COMPLETE
-- ✅ Docker Ollama service + compose wiring; start-docker.sh pulls model inside container.
-- ✅ start.sh now offers Local vs Docker mode and will attempt macOS Docker Desktop install via Homebrew; default local flow unchanged.
-- ✅ Backend dependencies pinned with SHA256 hashes: generated requirements.lock, updated Dockerfile to use it for reproducible builds.
-- ✅ Path audit complete: All Python files use pathlib with __file__-relative resolution (BASE_DIR pattern). No hard-coded absolute paths found.
-- ✅ CI workflow created with backend import check + frontend build smoke tests; badge added to README.
-- ✅ System prompt logging with 1MB rotation to logs/nola.system.log.
-- ✅ Default model changed to qwen2.5:7b (CPU-friendly).
-- ✅ Provider toggle (ollama/http/mock) with env control.
+Status: 🌀 BACKEND INFRASTRUCTURE TASKS COMPLETE
+- 🌀 Docker Ollama service + compose wiring; start-docker.sh pulls model inside container.
+- 🌀 start.sh now offers Local vs Docker mode and will attempt macOS Docker Desktop install via Homebrew; default local flow unchanged.
+- 🌀 Backend dependencies pinned with SHA256 hashes: generated requirements.lock, updated Dockerfile to use it for reproducible builds.
+- 🌀 Path audit complete: All Python files use pathlib with __file__-relative resolution (BASE_DIR pattern). No hard-coded absolute paths found.
+- 🌀 CI workflow created with backend import check + frontend build smoke tests; badge added to README.
+- 🌀 System prompt logging with 1MB rotation to logs/nola.system.log.
+- 🌀 Default model changed to qwen2.5:7b (CPU-friendly).
+- 🌀 Provider toggle (ollama/http/mock) with env control.
 
 Dependency Management:
-✅ requirements.lock generated with pip-compile --generate-hashes
-✅ Dockerfile updated to install from requirements.lock (SHA256-verified)
-✅ pip-tools 7.5.2 installed in project venv for future updates
+🌀 requirements.lock generated with pip-compile --generate-hashes
+🌀 Dockerfile updated to install from requirements.lock (SHA256-verified)
+🌀 pip-tools 7.5.2 installed in project venv for future updates
 
 Path Audit Results:
-✅ agent.py: BASE_DIR = Path(__file__).resolve().parent (line 12)
-✅ agent_service.py: nola_path = os.path.dirname(os.path.dirname(__file__)) (line 18)
-✅ identity.py: IDENTITY_FILE = Path(__file__).parent / "identity.json" (line 9)
-✅ machineID.py: MACHINE_FILE = Path(__file__).parent / "machineID.json" (line 8)
-✅ user.py: USER_FILE = Path(__file__).parent / "user.json" (line 8)
-✅ idv2.py: DEFAULT_DB_PATH = Path(__file__).parent.parent.parent / "data" / "db" / "state.db" (line 36)
-✅ All paths are module-relative; no hard-coded /Users/, /home/, or absolute paths detected
+🌀 agent.py: BASE_DIR = Path(__file__).resolve().parent (line 12)
+🌀 agent_service.py: nola_path = os.path.dirname(os.path.dirname(__file__)) (line 18)
+🌀 identity.py: IDENTITY_FILE = Path(__file__).parent / "identity.json" (line 9)
+🌀 machineID.py: MACHINE_FILE = Path(__file__).parent / "machineID.json" (line 8)
+🌀 user.py: USER_FILE = Path(__file__).parent / "user.json" (line 8)
+🌀 idv2.py: DEFAULT_DB_PATH = Path(__file__).parent.parent.parent / "data" / "db" / "state.db" (line 36)
+🌀 All paths are module-relative; no hard-coded /Users/, /home/, or absolute paths detected
 
 Outstanding Checklist Items:
 [ ] README.zh (Chinese technical version) - GitHub Specialist + Frontend profiles
@@ -6720,7 +6720,7 @@ ARCHITECTURE:
                                          Inner/Outer Replay & Introspection
 
 ================================================================================
-PHASE 1: LOG THREAD FOUNDATION ✅ COMPLETE
+PHASE 1: LOG THREAD FOUNDATION 🌀 COMPLETE
 ================================================================================
 
 [x] Task 1.1: Create log_thread/ module structure (DevOps)
@@ -6728,7 +6728,7 @@ PHASE 1: LOG THREAD FOUNDATION ✅ COMPLETE
 [x] Task 1.3: Add events table to DB schema (Backend)
 
 ================================================================================
-PHASE 2: SHORT-TERM MEMORY ✅ COMPLETE
+PHASE 2: SHORT-TERM MEMORY 🌀 COMPLETE
 ================================================================================
 
 [x] Task 2.1: Create temp_memory/ short-term store (Backend)
@@ -6855,9 +6855,9 @@ Phase 4 Integration:
 - [x] agent.py logs system:startup
 - [x] agent_service.py logs conversation:start
 - [x] /api/database/events endpoints added
-- [x] Task 4.0: Subconscious Module ✅ COMPLETE
-- [x] Task 4.1b: Refactor agent.py to stateless ✅ COMPLETE
-- [x] Task 4.3: Wire agent_service → subconscious ✅ COMPLETE
+- [x] Task 4.0: Subconscious Module 🌀 COMPLETE
+- [x] Task 4.1b: Refactor agent.py to stateless 🌀 COMPLETE
+- [x] Task 4.3: Wire agent_service → subconscious 🌀 COMPLETE
 - [ ] Dynamic Tab UI (after above)
 
 Model Assessments Added:
@@ -6960,7 +6960,7 @@ FILES MODIFIED THIS SESSION:
 
 --- TASK 2.2: Wire _extract_facts() → temp_memory ---
 Profile: 🤖 AI/ML ENGINEER
-Status: [x] COMPLETE ✅
+Status: [x] COMPLETE 🌀
 Depends On: Task 2.1 (temp_memory store)
 Handoff To: 🤖 AI/ML Engineer (Task 3.1)
 
@@ -6986,7 +6986,7 @@ PHASE 3: CONSOLIDATION ENGINE
 
 --- TASK 3.1: Create fact importance scorer ---
 Profile: 🤖 AI/ML ENGINEER
-Status: [x] COMPLETE ✅
+Status: [x] COMPLETE 🌀
 Depends On: Task 2.2 (facts flowing to temp_memory)
 Handoff To: ⚙️ DevOps (Task 3.2)
 
@@ -7005,11 +7005,11 @@ Scoring Dimensions (1-5):
 
 Total = permanence*0.3 + relevance*0.3 + identity*0.4
 
-Tested: "coffee this morning"→1.60, "values clean code"→4.30 ✅
+Tested: "coffee this morning"→1.60, "values clean code"→4.30 🌀
 
 --- TASK 3.2: Build consolidation daemon ---
 Profile: ⚙️ DEVOPS/INFRASTRUCTURE
-Status: [x] COMPLETE ✅
+Status: [x] COMPLETE 🌀
 Depends On: Task 3.1 (scorer), Task 1.3 (events table)
 Handoff To: 🤖 AI/ML Engineer (Task 3.3)
 
@@ -7084,7 +7084,7 @@ PHASE 4: INTEGRATION
 
 --- TASK 4.0: Create Subconscious Module ---
 Profile: 💾 BACKEND DEVELOPER
-Status: [x] COMPLETE ✅
+Status: [x] COMPLETE 🌀
 Depends On: Task 3.2 (consolidation daemon exists)
 Handoff To: 💾 Backend Developer (Task 4.1b)
 
@@ -7117,10 +7117,10 @@ Context Levels:
   L3: "## Full Context State\n### thread_name\n- fact1\n..."
 
 Tested Output:
-  ✅ All 3 threads healthy (log_thread, temp_memory, identity)
-  ✅ L1 shows core identity facts
-  ✅ L2 shows memory + identity facts  
-  ✅ L3 shows thread-attributed facts
+  🌀 All 3 threads healthy (log_thread, temp_memory, identity)
+  🌀 L1 shows core identity facts
+  🌀 L2 shows memory + identity facts  
+  🌀 L3 shows thread-attributed facts
 
 Key Insight:
   "Subconscious builds state, agent just reads it."
@@ -7128,7 +7128,7 @@ Key Insight:
 
 --- TASK 4.1: Wire agent.py to log_thread ---
 Profile: 💾 BACKEND DEVELOPER
-Status: [x] COMPLETE ✅
+Status: [x] COMPLETE 🌀
 Depends On: Task 1.2 (logger API working)
 Handoff To: 💾 Backend Developer (Task 4.1b)
 
@@ -7237,7 +7237,7 @@ Once wired, facts from temp_memory appear in system prompt.
 Profile: 💾 BACKEND DEVELOPER
 Status: [ ] NOT STARTED
 Depends On: All Phase 3 tasks
-Handoff To: ✅ COMPLETE (merge to main)
+Handoff To: 🌀 COMPLETE (merge to main)
 
 Files to Create:
   - tests/test_consolidation.py
@@ -7257,19 +7257,19 @@ PROFILE WORK QUEUES
 ================================================================================
 
 ⚙️ DEVOPS/INFRASTRUCTURE QUEUE:
-  1. [1.1] Create log_thread/ structure ✅ DONE
-  2. [3.2] Build consolidation daemon ✅ DONE
+  1. [1.1] Create log_thread/ structure 🌀 DONE
+  2. [3.2] Build consolidation daemon 🌀 DONE
 
 💾 BACKEND DEVELOPER QUEUE:                    ⭐ ACTIVE
-  1. [4.0] Create subconscious module ✅ DONE
+  1. [4.0] Create subconscious module 🌀 DONE
   2. [4.1b] Refactor agent.py to stateless ← NEXT
   3. [4.3] Wire agent_service → subconscious
   4. [3.4] Add consolidation_history table
   5. [4.4] Write tests → handoff to DONE
 
 🤖 AI/ML ENGINEER QUEUE:
-  1. [2.2] Wire _extract_facts → temp_memory ✅ DONE
-  2. [3.1] Create fact scorer ✅ DONE
+  1. [2.2] Wire _extract_facts → temp_memory 🌀 DONE
+  2. [3.1] Create fact scorer 🌀 DONE
   3. [3.3] Implement summarizers (deferred until subconscious wired)
 
 ⚛️ REACT FRONTEND QUEUE:
@@ -7557,7 +7557,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 
 ---
 
-## ✅ Week 1: Foundation (Jan 2-8) — COMPLETE
+## 🌀 Week 1: Foundation (Jan 2-8) — COMPLETE
 
 ### Schema Migration
 - [x] Add weight columns to identity tables (via `fact_relevance` table)
@@ -7584,7 +7584,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 - [x] `get_associative_context()` - Combines embeddings + spread activation
 - [x] `_get_cooccurrence_boost()` - Co-occurrence scoring
 
-**Test:** Spread activation returns linked concepts ✅
+**Test:** Spread activation returns linked concepts 🌀
 
 ---
 
@@ -7697,7 +7697,7 @@ See [`implementation/FOCUS_IMPLEMENTATION.md`](implementation/FOCUS_IMPLEMENTATI
 
 ---
 
-## 🗂️ Thread Browser UI (Jan 8+) — ✅ COMPLETE
+## 🗂️ Thread Browser UI (Jan 8+) — 🌀 COMPLETE
 
 ### Implementation
 
@@ -7747,7 +7747,7 @@ Original mockup (implemented as ThreadsPage):
 
 **File:** `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`
 
-### API Endpoints ✅ COMPLETE
+### API Endpoints 🌀 COMPLETE
 - [x] GET `/api/introspection/threads/summary` - all threads overview
 - [x] GET `/api/introspection/threads/{thread}` - thread data
 - [x] GET `/api/introspection/threads/{thread}/{module}` - module data
@@ -7761,7 +7761,7 @@ Original mockup (implemented as ThreadsPage):
 - [x] DELETE `/api/introspection/philosophy/{key}` - delete philosophy row
 - [x] GET `/api/introspection/events` - log events with filters
 
-### State Management ✅
+### State Management 🌀
 - [x] `activeThread` - current thread tab
 - [x] `identityRows` / `philosophyRows` - flat table data
 - [x] `logEvents` - log thread data with filters
@@ -7792,7 +7792,7 @@ Original mockup (implemented as ThreadsPage):
 
 ---
 
-## 📡 Stimuli System (Jan 10) — ✅ COMPLETE
+## 📡 Stimuli System (Jan 10) — 🌀 COMPLETE
 
 ### Core Architecture
 - [x] `agent/Stimuli/router.py` — Universal API adapter
@@ -7849,7 +7849,7 @@ LLM cannot make routing errors. Only prose errors.
 
 ---
 
-## 💬 Chat Enhancements (Jan 9-10) — ✅ COMPLETE
+## 💬 Chat Enhancements (Jan 9-10) — 🌀 COMPLETE
 
 ### Markdown Rendering
 - [x] `react-markdown` + `remark-gfm` for assistant messages
@@ -7888,7 +7888,7 @@ LLM cannot make routing errors. Only prose errors.
 
 ---
 
-## 🧠 LLM Fact Extraction (Jan 10) — ✅ COMPLETE
+## 🧠 LLM Fact Extraction (Jan 10) — 🌀 COMPLETE
 
 ### New Approach (Replaces Regex Parsing)
 - [x] LLM generates key directly (no regex)
@@ -7906,7 +7906,7 @@ LLM cannot make routing errors. Only prose errors.
 
 ---
 
-## 📊 Training Data Pipeline (Jan 9-10) — ✅ COMPLETE
+## 📊 Training Data Pipeline (Jan 9-10) — 🌀 COMPLETE
 
 ### Auto-Generated Training Data
 - [x] `agent/training/logger.py` — Core logging module
@@ -8006,7 +8006,7 @@ The agent is stateless. Before each response, the subconscious assembles context
 
 ## Current State (Updated: 2026-01-08)
 
-### Completed ✅
+### Completed 🌀
 - **Thread System Migration** - Old idv2/log_thread replaced with unified `agent/threads/`
 - New thread schema: `{thread}_{module}` tables (e.g., `identity_user_profile`, `log_events`)
 - 5 threads operational: identity, log, reflex, philosophy, form, linking_core
@@ -8604,30 +8604,30 @@ Nola isn't a chatbot. It's a **Cognitive Operating System** — an open-source f
 
 ---
 
-## What's Working Now ✅
+## What's Working Now 🌀
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Subconscious Module** | ✅ Complete | Assembles context from all threads before each response |
-| **Thread Adapters** | ✅ Complete | Pluggable architecture (identity, memory, log, linking_core) |
-| **HEA Context Levels** | ✅ Complete | L1/L2/L3 dynamic context filtering |
-| **SQLite State Backend** | ✅ Complete | Replaced JSON for identity and facts storage |
-| **Stateless Agent** | ✅ Complete | Agent reads context, doesn't hold state |
-| **React Router UI** | ✅ Complete | OS-like navigation (Dashboard, Chat, Threads, Docs) |
-| **Identity CRUD API** | ✅ Complete | View/edit/delete identity entries via API |
-| **Sleep/Wake Cycles** | ✅ Complete | `wake()` initializes, `sleep()` triggers consolidation |
-| **Temp Memory Store** | ✅ Complete | Session facts with hierarchical keys |
-| **Event Logging** | ✅ Complete | Timeline of all system events |
-| **Spread Activation** | ✅ Complete | Associative memory via concept_links table |
-| **Hierarchical Keys** | ✅ Complete | Facts stored as `sarah.likes.blue` |
-| **Hebbian Learning** | ✅ Complete | Concepts that co-occur strengthen links |
-| **Test Suite** | ✅ 23 tests passing | Core functionality verified |
+| **Subconscious Module** | 🌀 Complete | Assembles context from all threads before each response |
+| **Thread Adapters** | 🌀 Complete | Pluggable architecture (identity, memory, log, linking_core) |
+| **HEA Context Levels** | 🌀 Complete | L1/L2/L3 dynamic context filtering |
+| **SQLite State Backend** | 🌀 Complete | Replaced JSON for identity and facts storage |
+| **Stateless Agent** | 🌀 Complete | Agent reads context, doesn't hold state |
+| **React Router UI** | 🌀 Complete | OS-like navigation (Dashboard, Chat, Threads, Docs) |
+| **Identity CRUD API** | 🌀 Complete | View/edit/delete identity entries via API |
+| **Sleep/Wake Cycles** | 🌀 Complete | `wake()` initializes, `sleep()` triggers consolidation |
+| **Temp Memory Store** | 🌀 Complete | Session facts with hierarchical keys |
+| **Event Logging** | 🌀 Complete | Timeline of all system events |
+| **Spread Activation** | 🌀 Complete | Associative memory via concept_links table |
+| **Hierarchical Keys** | 🌀 Complete | Facts stored as `sarah.likes.blue` |
+| **Hebbian Learning** | 🌀 Complete | Concepts that co-occur strengthen links |
+| **Test Suite** | 🌀 23 tests passing | Core functionality verified |
 
 ---
 
 ## The Roadmap
 
-### Phase 1: Memory Consolidation (✅ Foundation Complete)
+### Phase 1: Memory Consolidation (🌀 Foundation Complete)
 **Goal:** Facts don't just get stored — they get *promoted* based on importance.
 
 - [x] **Scoring Algorithm** — Rate facts on permanence, relevance, identity-centrality
@@ -8721,10 +8721,10 @@ Verification:  Run both, compare outputs for critical decisions
 - [ ] **Cost Optimization** — Local for simple, cloud for complex
 - [ ] **Multi-Model Consensus** — For high-stakes, get agreement from multiple models
 
-### Phase 6: Beyond Chat 🚀 — ✅ FOUNDATION COMPLETE (Stimuli System)
+### Phase 6: Beyond Chat 🚀 — 🌀 FOUNDATION COMPLETE (Stimuli System)
 **Goal:** Nola becomes a background presence, not a chat window.
 
-**✅ Implemented (Jan 10, 2026):**
+**🌀 Implemented (Jan 10, 2026):**
 - [x] **Stimuli Router** — Universal API adapter layer (`agent/Stimuli/router.py`)
 - [x] **YAML-Driven Sources** — Drop a config file, get an integration
 - [x] **20+ Pre-Built Sources** — Gmail, Slack, Discord, GitHub, Linear, Notion, etc.
@@ -9438,17 +9438,17 @@ When they ask technical questions:
 ## 💪 CONFIDENCE BOOSTERS
 
 **You've built**:
-- ✅ Full integration with production Kernel API
-- ✅ Human behavior mimicry (mouse jerks, typing)
-- ✅ Identity-driven content generation
-- ✅ Persistent profile management
-- ✅ Working chat interface with demo commands
+- 🌀 Full integration with production Kernel API
+- 🌀 Human behavior mimicry (mouse jerks, typing)
+- 🌀 Identity-driven content generation
+- 🌀 Persistent profile management
+- 🌀 Working chat interface with demo commands
 
 **You know**:
-- ✅ The tech stack (Unikraft, CDP, MCP)
-- ✅ The pricing model (GB-seconds, standby mode)
-- ✅ The competitive advantage (vs Selenium/Docker)
-- ✅ Your research angle (cognitive OS, sovereignty)
+- 🌀 The tech stack (Unikraft, CDP, MCP)
+- 🌀 The pricing model (GB-seconds, standby mode)
+- 🌀 The competitive advantage (vs Selenium/Docker)
+- 🌀 Your research angle (cognitive OS, sovereignty)
 
 **You're ready**.
 
@@ -9511,27 +9511,27 @@ FILE: docs/archive/checklist.md
 
 ## Core Requirements (Infrastructure & Backend)
 
-### ✅ 1. Reproducible one-liner
+### 🌀 1. Reproducible one-liner
 **Status:** COMPLETE  
 **Profile:** DevOps/Infrastructure  
 **Completed:** Default model set to `qwen2.5:7b`, start.sh offers Local/Docker mode with auto-install
 
-### ✅ 2. Pinned dependency versions
+### 🌀 2. Pinned dependency versions
 **Status:** COMPLETE  
 **Profile:** Backend Developer  
 **Completed:** Generated requirements.lock with SHA256 hashes, Dockerfile updated
 
-### ✅ 3. CI badge (GitHub Actions)
+### 🌀 3. CI badge (GitHub Actions)
 **Status:** COMPLETE  
 **Profile:** DevOps/Infrastructure  
 **Completed:** .github/workflows/ci.yml created, badge in README.md
 
-### ✅ 4. No hard-coded paths/secrets
+### 🌀 4. No hard-coded paths/secrets
 **Status:** COMPLETE  
 **Profile:** Backend Developer  
 **Completed:** All paths use pathlib with __file__ relative resolution
 
-### ✅ 5. Clean shutdown & logs
+### 🌀 5. Clean shutdown & logs
 **Status:** COMPLETE  
 **Profile:** DevOps/Infrastructure  
 **Completed:** System prompt logging to logs/nola.system.log with 1MB rotation
@@ -9548,7 +9548,7 @@ FILE: docs/archive/checklist.md
 
 ## Evaluation & Benchmark Requirements (Cross-Functional)
 
-### ✅ 7. Test Suite Setup
+### 🌀 7. Test Suite Setup
 **Status:** COMPLETE  
 **Lead Profile:** Backend Developer  
 **Supporting:** AI/ML Engineer  
@@ -9570,7 +9570,7 @@ FILE: docs/archive/checklist.md
 **Lead Profiles:** Cognitive Psychologist + AI/ML Engineer  
 **Supporting:** Computational Neuroscientist  
 
-#### Phase 1: Define Evaluation Criteria (Cognitive Psychologist) ✅
+#### Phase 1: Define Evaluation Criteria (Cognitive Psychologist) 🌀
 **Tasks:**
 - [x] Map psychological constructs to measurable metrics:
   - **Personality Consistency:** Does Nola maintain coherent traits across 50+ turns?
@@ -9581,9 +9581,9 @@ FILE: docs/archive/checklist.md
 - [x] Document expected behaviors for each context level
 - [x] Create edge-case scenarios (ambiguous stimuli, conflicting cues)
 
-**Deliverable:** ✅ `docs/evaluation_framework.md`
+**Deliverable:** 🌀 `docs/evaluation_framework.md`
 
-#### Phase 2: Build Benchmark Harness (AI/ML Engineer) ✅
+#### Phase 2: Build Benchmark Harness (AI/ML Engineer) 🌀
 **Tasks:**
 - [x] Create `eval/` directory structure
 - [x] Implement `duel.py` skeleton with CLI
@@ -9592,7 +9592,7 @@ FILE: docs/archive/checklist.md
 - [x] Transcript export paths configured
 - [ ] Full conversation loop execution (post-launch)
 
-**Deliverable:** ✅ Working `eval/duel.py`
+**Deliverable:** 🌀 Working `eval/duel.py`
 
 #### Phase 3: Neural Grounding (Computational Neuroscientist) ⏳
 **Tasks:**
@@ -9632,7 +9632,7 @@ FILE: docs/archive/checklist.md
 ---
 
 ## Next Actions (Prioritized)
-1. ~~**Backend Dev:** Run `pytest tests/` to validate test structure~~ ✅ DONE
+1. ~~**Backend Dev:** Run `pytest tests/` to validate test structure~~ 🌀 DONE
 2. **Post-Launch:** Run full `eval/duel.py` conversation loop
 3. **Post-Launch:** Generate baseline transcript
 4. **Nice-to-have:** README.zh Chinese documentation
@@ -9971,7 +9971,7 @@ FILE: docs/archive/tests.md
 
 ## 1. Test Categories
 
-### 1.1 Unit Tests (Automated) ✅ IMPLEMENTED
+### 1.1 Unit Tests (Automated) 🌀 IMPLEMENTED
 
 Core functionality verification. Run with `pytest tests/ -v`.
 
@@ -10618,7 +10618,7 @@ RESPONSE
 
 ---
 
-## Phase 1: Database Schema Migration ✅ COMPLETE
+## Phase 1: Database Schema Migration 🌀 COMPLETE
 
 ### 1.1 Add Weight Columns to Existing Tables
 - [x] Add `weight REAL DEFAULT 0.5` to identity tables (in `identity_flat`, `philosophy_flat`)
@@ -10839,9 +10839,9 @@ def should_save_memory(key, value):
 ## Rollout Strategy
 
 ### Week 1: Foundation (Phase 1-2)
-- Day 1-2: Schema migration, add weight columns ✅
-- Day 3-4: Build sequence learner ✅
-- Day 5-7: Build attention scorer and prompt builder ✅
+- Day 1-2: Schema migration, add weight columns 🌀
+- Day 3-4: Build sequence learner 🌀
+- Day 5-7: Build attention scorer and prompt builder 🌀
 
 ### Week 2: Memory Logic (Phase 3)
 - Day 1-3: Memory conflict detection
@@ -10893,8 +10893,8 @@ def should_save_memory(key, value):
 
 ## Next Immediate Steps
 
-1. ✅ Read this document
-2. ✅ Run schema migration on existing DB (`identity_flat`, `philosophy_flat` tables created)
+1. 🌀 Read this document
+2. 🌀 Run schema migration on existing DB (`identity_flat`, `philosophy_flat` tables created)
 3. [ ] Create `agent/subconscious/focus/` directory structure
 4. [ ] Implement `sequence_learner.py` first (core functionality)
 5. [ ] Write unit tests for sequence learning
@@ -10905,36 +10905,36 @@ def should_save_memory(key, value):
 FILE: docs/implementation/INTEGRATION_COMPLETE.md
 ================================================================================
 
-# ✅ Kernel Integration - COMPLETE
+# 🌀 Kernel Integration - COMPLETE
 
 ## What You Now Have
 
 ### 🎯 Core Functionality
-- ✅ Full Kernel browser automation service ([kernel_service.py](../agent/services/kernel_service.py))
-- ✅ Human behavior mimicry (mouse jerks, typing delays, typos)
-- ✅ Persistent profile management linked to Nola's identity
-- ✅ Content generation from identity database
-- ✅ Login and posting workflows with stealth mode
+- 🌀 Full Kernel browser automation service ([kernel_service.py](../agent/services/kernel_service.py))
+- 🌀 Human behavior mimicry (mouse jerks, typing delays, typos)
+- 🌀 Persistent profile management linked to Nola's identity
+- 🌀 Content generation from identity database
+- 🌀 Login and posting workflows with stealth mode
 
 ### 💬 Chat Integration
-- ✅ "do the facebook thing" command detection
-- ✅ "browser status" command for monitoring
-- ✅ "close browser" command for cleanup
-- ✅ Live View URL returned for real-time watching
-- ✅ Automatic content generation from Nola's personality
+- 🌀 "do the facebook thing" command detection
+- 🌀 "browser status" command for monitoring
+- 🌀 "close browser" command for cleanup
+- 🌀 Live View URL returned for real-time watching
+- 🌀 Automatic content generation from Nola's personality
 
 ### 📚 Documentation
-- ✅ Complete setup guide ([KERNEL_DEMO_SETUP.md](./KERNEL_DEMO_SETUP.md))
-- ✅ Demo script with talking points ([WEDNESDAY_DEMO_CARD.md](./WEDNESDAY_DEMO_CARD.md))
-- ✅ Technical architecture diagram ([LIVING_BODY_ARCHITECTURE.md](./LIVING_BODY_ARCHITECTURE.md))
-- ✅ Integration summary ([KERNEL_INTEGRATION_SUMMARY.md](./KERNEL_INTEGRATION_SUMMARY.md))
-- ✅ Pre-flight test script ([test_kernel_demo.py](../tests/test_kernel_demo.py))
+- 🌀 Complete setup guide ([KERNEL_DEMO_SETUP.md](./KERNEL_DEMO_SETUP.md))
+- 🌀 Demo script with talking points ([WEDNESDAY_DEMO_CARD.md](./WEDNESDAY_DEMO_CARD.md))
+- 🌀 Technical architecture diagram ([LIVING_BODY_ARCHITECTURE.md](./LIVING_BODY_ARCHITECTURE.md))
+- 🌀 Integration summary ([KERNEL_INTEGRATION_SUMMARY.md](./KERNEL_INTEGRATION_SUMMARY.md))
+- 🌀 Pre-flight test script ([test_kernel_demo.py](../tests/test_kernel_demo.py))
 
 ### ⚙️ Configuration
-- ✅ Dependencies added to requirements.txt
-- ✅ KERNEL_API_KEY configuration in .env.example
-- ✅ Quick-start script (./start_demo.sh)
-- ✅ Services README updated
+- 🌀 Dependencies added to requirements.txt
+- 🌀 KERNEL_API_KEY configuration in .env.example
+- 🌀 Quick-start script (./start_demo.sh)
+- 🌀 Services README updated
 
 ---
 
@@ -11076,11 +11076,11 @@ When people ask "why is this cool?", hit these points:
 
 Your demo is successful if:
 
-1. ✅ Browser launches and returns Live View URL
-2. ✅ Audience sees the automation in real-time
-3. ✅ At least one person asks "how does it work?"
-4. ✅ Someone asks for the GitHub link
-5. ✅ You make at least one technical connection
+1. 🌀 Browser launches and returns Live View URL
+2. 🌀 Audience sees the automation in real-time
+3. 🌀 At least one person asks "how does it work?"
+4. 🌀 Someone asks for the GitHub link
+5. 🌀 You make at least one technical connection
 
 **Bonus points if**: Someone offers to collaborate, test it, or introduce you to their team.
 
@@ -11111,13 +11111,13 @@ If people are interested:
 ## 🚀 You're Ready!
 
 You have:
-- ✅ Working integration with Kernel API
-- ✅ Professional documentation
-- ✅ Test scripts and validation
-- ✅ Demo script with talking points
-- ✅ Backup plans for common issues
-- ✅ Clear success criteria
-- ✅ Follow-up strategy
+- 🌀 Working integration with Kernel API
+- 🌀 Professional documentation
+- 🌀 Test scripts and validation
+- 🌀 Demo script with talking points
+- 🌀 Backup plans for common issues
+- 🌀 Clear success criteria
+- 🌀 Follow-up strategy
 
 **This is your moment to show what cognitive OS means.**
 
@@ -11136,7 +11136,7 @@ When your demo succeeds, you'll see:
 ```
 User: hey nola do the facebook thing
 
-Nola: ✅ Facebook demo complete!
+Nola: 🌀 Facebook demo complete!
 
 📺 Live View: https://browser-abc123.kernel.com/live
 🆔 Session: session_20260108_173045
@@ -11166,12 +11166,12 @@ This guide will help you set up Nola to control a Kernel browser for your Wednes
 Type: **"hey nola do the facebook thing"**
 
 Nola will:
-1. ✅ Launch a Kernel browser (with Live View)
-2. ✅ Navigate to a login page
-3. ✅ Login with human-like behavior (mouse jerks, typing delays)
-4. ✅ Generate post content from her identity/memory
-5. ✅ Post with realistic typing patterns
-6. ✅ Return the Live View URL so you can watch
+1. 🌀 Launch a Kernel browser (with Live View)
+2. 🌀 Navigate to a login page
+3. 🌀 Login with human-like behavior (mouse jerks, typing delays)
+4. 🌀 Generate post content from her identity/memory
+5. 🌀 Post with realistic typing patterns
+6. 🌀 Return the Live View URL so you can watch
 
 ---
 
@@ -11595,7 +11595,7 @@ Before Wednesday:
 ## 📊 Expected Demo Output
 
 ```
-✅ Facebook demo complete!
+🌀 Facebook demo complete!
 
 📺 Live View: https://browser-abc123.kernel.com/live
 🆔 Session: session_20260107_173045
@@ -11659,11 +11659,11 @@ Type "close browser" to end the session and save state.
 
 Your demo is successful if:
 
-1. ✅ Browser launches and Live View loads
-2. ✅ Mouse movements visible in Live View
-3. ✅ Content gets typed with delays
-4. ✅ Audience asks "how does it work?"
-5. ✅ At least one person asks for the code
+1. 🌀 Browser launches and Live View loads
+2. 🌀 Mouse movements visible in Live View
+3. 🌀 Content gets typed with delays
+4. 🌀 Audience asks "how does it work?"
+5. 🌀 At least one person asks for the code
 
 ---
 
@@ -11697,12 +11697,12 @@ Your demo is successful if:
 ## 🎉 You're Ready!
 
 You have:
-- ✅ Complete working integration
-- ✅ Human-like behavior mimicry
-- ✅ Persistent identity system
-- ✅ Professional documentation
-- ✅ Test scripts and guides
-- ✅ Demo talking points
+- 🌀 Complete working integration
+- 🌀 Human-like behavior mimicry
+- 🌀 Persistent identity system
+- 🌀 Professional documentation
+- 🌀 Test scripts and guides
+- 🌀 Demo talking points
 
 **Go show Union Hall what a cognitive OS can do!** 🚀
 
@@ -11715,24 +11715,24 @@ FILE: docs/implementation/THREAD_BROWSER_UI.md
 
 # Thread Browser UI Implementation
 
-**Status**: ✅ COMPLETE (implemented as ThreadsPage)  
+**Status**: 🌀 COMPLETE (implemented as ThreadsPage)  
 **Updated**: 2026-01-09
 
 **Goal:** Replace/augment the introspection panel with a full thread browser where you can click any thread, see its modules, and inspect/edit data.
 
-## Implementation ✅
+## Implementation 🌀
 
 The thread browser is implemented as `agent/react-chat-app/frontend/src/pages/ThreadsPage.tsx`:
 
-- ✅ Thread tabs (identity, log, philosophy, reflex, form, linking_core)
-- ✅ Thread health display with status indicators
-- ✅ Identity flat table with L1/L2/L3 columns
-- ✅ Philosophy flat table (same schema as identity)
-- ✅ Edit/Delete actions on rows
-- ✅ Add Row form for identity and philosophy
-- ✅ Level selector (L1/L2/L3)
-- ✅ Log event viewer with filters and sorting
-- ✅ Add Event form for log thread
+- 🌀 Thread tabs (identity, log, philosophy, reflex, form, linking_core)
+- 🌀 Thread health display with status indicators
+- 🌀 Identity flat table with L1/L2/L3 columns
+- 🌀 Philosophy flat table (same schema as identity)
+- 🌀 Edit/Delete actions on rows
+- 🌀 Add Row form for identity and philosophy
+- 🌀 Level selector (L1/L2/L3)
+- 🌀 Log event viewer with filters and sorting
+- 🌀 Add Event form for log thread
 
 Accessible at `/threads` route.
 
@@ -12427,7 +12427,7 @@ FILE: docs/implementation/database_integration_plan.md
 
 # Database Integration Plan
 
-**Status:** ✅ IMPLEMENTED (see `agent/idv2/idv2.py`)  
+**Status:** 🌀 IMPLEMENTED (see `agent/idv2/idv2.py`)  
 **Last Updated:** 2025-12-23
 
 > **Note:** This plan has been implemented as the `idv2` module. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and Docker volume persistence. See [idv2/idreadme.md](../agent/idv2/idreadme.md) for implementation details.
@@ -13537,7 +13537,7 @@ start.bat             # Windows
 ### Changed
 - `main.py`: Added stimuli router import and `/api/stimuli` route prefix
 - Phase 3 (Reflex Thread) documented as visual automation builder
-- Phase 6 (Beyond Chat) marked as ✅ FOUNDATION COMPLETE
+- Phase 6 (Beyond Chat) marked as 🌀 FOUNDATION COMPLETE
 
 ---
 
@@ -14344,10 +14344,10 @@ Conversation logs (agent/Stimuli/conversations/) demonstrate that 7B models with
 ### 5.3 User Control Validation
 
 **Current Implementation**:
-- ✅ Database values are user-editable (idv2 supports direct updates)
-- ✅ Weights can be manually set (including pruning to 0)
-- ✅ Export/import functionality exists (DB portability)
-- ✅ Users see actual database state (transparent)
+- 🌀 Database values are user-editable (idv2 supports direct updates)
+- 🌀 Weights can be manually set (including pruning to 0)
+- 🌀 Export/import functionality exists (DB portability)
+- 🌀 Users see actual database state (transparent)
 
 **User Experience**: "I can see what the system knows about me and change it" - transparency enables trust.
 
@@ -14404,7 +14404,7 @@ Conversation logs (agent/Stimuli/conversations/) demonstrate that 7B models with
 | Claude Projects | ❌ (opaque) | ✓ (partial) | ❌ | ❌ |
 | RAG systems | ❌ (chunks) | ❌ | ❌ | ❌ |
 | MemGPT | ✓ (via commands) | ✓ | ❌ | ❌ |
-| **AI_OS** | ✅ (direct edit) | ✅ (exact VALUES) | ✅ (weights+prune) | ✅ (continuous) |
+| **AI_OS** | 🌀 (direct edit) | 🌀 (exact VALUES) | 🌀 (weights+prune) | 🌀 (continuous) |
 
 ### 6.3 Limitations
 
@@ -14837,15 +14837,15 @@ Ratio preserved: 6-7 sub-units per major unit
 
 | Processing Type | Brain Region | Our Thread | Covered? |
 |-----------------|--------------|------------|----------|
-| Values/Goals | Prefrontal | Philosophy | ✅ |
-| Episodic Memory | Hippocampus | Log | ✅ |
-| Self/Other Model | Parietal/DMN | Identity | ✅ |
-| Action/Output | Motor | Form | ✅ |
-| Automatic/Habits | Basal Ganglia | Reflex | ✅ |
-| Emotion | Limbic | Philosophy (values) + Reflex (fast) | ✅ |
-| Language | Temporal/Broca | Form (production) + Identity (semantics) | ✅ |
+| Values/Goals | Prefrontal | Philosophy | 🌀 |
+| Episodic Memory | Hippocampus | Log | 🌀 |
+| Self/Other Model | Parietal/DMN | Identity | 🌀 |
+| Action/Output | Motor | Form | 🌀 |
+| Automatic/Habits | Basal Ganglia | Reflex | 🌀 |
+| Emotion | Limbic | Philosophy (values) + Reflex (fast) | 🌀 |
+| Language | Temporal/Broca | Form (production) + Identity (semantics) | 🌀 |
 | Perception | Occipital/Sensory | **INPUT** (not stored) | N/A |
-| Attention | Frontoparietal | **LinkingCore** (not a thread) | ✅ |
+| Attention | Frontoparietal | **LinkingCore** (not a thread) | 🌀 |
 
 ### Critical Insight:
 **Perception and Attention are PROCESSES, not STORAGE.**
@@ -14977,7 +14977,7 @@ SAME PATTERN: Major category → specialized sub-units
 ### To add capabilities:
 
 ❌ DON'T add new threads
-✅ DO add new modules to existing threads
+🌀 DO add new modules to existing threads
 
 Example - Want to track goals?
 ```python
@@ -15173,12 +15173,12 @@ FILE: docs/theory/LIVING_BODY_ARCHITECTURE.md
     ┌──────────────────────────────────────────────────────┐
     │  A 7B model with a persistent body that:             │
     │                                                       │
-    │  ✅ Navigates websites like a human                   │
-    │  ✅ Maintains identity across 12+ hour sessions       │
-    │  ✅ Generates contextual content from memory          │
-    │  ✅ Costs pennies per demo ($0.01 typical)            │
-    │  ✅ Provides live view for visual confirmation        │
-    │  ✅ Survives crashes, restarts, network issues        │
+    │  🌀 Navigates websites like a human                   │
+    │  🌀 Maintains identity across 12+ hour sessions       │
+    │  🌀 Generates contextual content from memory          │
+    │  🌀 Costs pennies per demo ($0.01 typical)            │
+    │  🌀 Provides live view for visual confirmation        │
+    │  🌀 Survives crashes, restarts, network issues        │
     │                                                       │
     │  = Cognitive OS with a Living Body                   │
     └──────────────────────────────────────────────────────┘
@@ -15318,11 +15318,11 @@ Specialized Threads → Relevance Competition → Context Window → Broadcast R
 
 | GWT Claim | Our Architecture | Match? |
 |-----------|-----------------|--------|
-| Multiple specialized processors | 5+ thread types (identity, philosophy, form, log, reflex) | ✅ |
-| Competition for access | `relevance_score()` determines context inclusion | ✅ |
-| Limited workspace capacity | 128k context window | ✅ |
-| Winner-take-all dynamics | Top-k scoring facts enter context | ✅ |
-| Global broadcast | Response influences all threads via consolidation | ✅ |
+| Multiple specialized processors | 5+ thread types (identity, philosophy, form, log, reflex) | 🌀 |
+| Competition for access | `relevance_score()` determines context inclusion | 🌀 |
+| Limited workspace capacity | 128k context window | 🌀 |
+| Winner-take-all dynamics | Top-k scoring facts enter context | 🌀 |
+| Global broadcast | Response influences all threads via consolidation | 🌀 |
 
 ### Numerical Comparison
 ```
@@ -15337,7 +15337,7 @@ Our Architecture:
 - Context assembly: <100ms
 ```
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15367,10 +15367,10 @@ context_window maintains content for full generation
 
 | Dehaene's Numbers | Our Architecture | Match? |
 |-------------------|-----------------|--------|
-| Ignition threshold: ~50ms sustained firing | Relevance threshold: 0.7+ | ✅ Analogous |
-| Prefrontal amplification: 3-5x | Weight multiplier in scoring | ✅ |
-| Workspace neurons: ~1-2% of cortex | Context tokens: ~1% of possible | ✅ |
-| Refractory period: ~500ms | Consolidation batching: ~500ms | ✅ |
+| Ignition threshold: ~50ms sustained firing | Relevance threshold: 0.7+ | 🌀 Analogous |
+| Prefrontal amplification: 3-5x | Weight multiplier in scoring | 🌀 |
+| Workspace neurons: ~1-2% of cortex | Context tokens: ~1% of possible | 🌀 |
+| Refractory period: ~500ms | Consolidation batching: ~500ms | 🌀 |
 
 ### The 1% Sparsity Match
 ```
@@ -15378,7 +15378,7 @@ Human cortex: 16 billion neurons, ~200 million in workspace = 1.25%
 Our system: 30k possible entries, ~300 in context = 1.0%
 ```
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15413,10 +15413,10 @@ Our context structure:
 - Log context: 1 chunk
 - Current query: 1 chunk
 - Generation space: 2 chunks
-Total: 7 chunks ✅
+Total: 7 chunks 🌀
 ```
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15445,12 +15445,12 @@ top_k = get_top_k(all_facts, k=50)  # Only top 50 of thousands
 
 | Kanerva's Model | Our Architecture | Match? |
 |-----------------|-----------------|--------|
-| Address space: 2^1000 | Embedding space: 768-dim continuous | ✅ Analogous |
-| ~1000 neurons per memory | ~100 tokens per fact | ✅ Order of magnitude |
-| Access radius: Hamming distance | Cosine similarity threshold | ✅ |
-| Sparse activation: 0.1% | Context inclusion: ~1% | ✅ |
+| Address space: 2^1000 | Embedding space: 768-dim continuous | 🌀 Analogous |
+| ~1000 neurons per memory | ~100 tokens per fact | 🌀 Order of magnitude |
+| Access radius: Hamming distance | Cosine similarity threshold | 🌀 |
+| Sparse activation: 0.1% | Context inclusion: ~1% | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15480,10 +15480,10 @@ consolidate(facts)  # Adjusts based on prediction errors
 
 | Free Energy Principle | Our Architecture | Match? |
 |----------------------|-----------------|--------|
-| Minimize prediction error | Maximize relevance score accuracy | ✅ |
-| Hierarchical predictions | Thread → Module → Fact hierarchy | ✅ |
+| Minimize prediction error | Maximize relevance score accuracy | 🌀 |
+| Hierarchical predictions | Thread → Module → Fact hierarchy | 🌀 |
 | Active inference (act to confirm predictions) | Query expansion, clarification | ⚠️ Partial |
-| Precision weighting | Confidence scores on facts | ✅ |
+| Precision weighting | Confidence scores on facts | 🌀 |
 
 **VALIDATION: ⚠️ PARTIAL MATCH** (Active inference not fully implemented)
 
@@ -15519,13 +15519,13 @@ for fact in promoted:
 
 | Sleep Research | Our Architecture | Match? |
 |----------------|-----------------|--------|
-| Consolidation window: 6-8 hours | Consolidation interval: configurable (1 hour default) | ✅ Scalable |
-| ~30% of memories consolidated | Threshold-based: ~30-40% at threshold=3.5 | ✅ |
-| SWS for declarative memory | Identity/Philosophy threads | ✅ |
-| REM for procedural memory | Reflex/Form threads | ✅ |
-| Pruning of irrelevant | Discard below threshold | ✅ |
+| Consolidation window: 6-8 hours | Consolidation interval: configurable (1 hour default) | 🌀 Scalable |
+| ~30% of memories consolidated | Threshold-based: ~30-40% at threshold=3.5 | 🌀 |
+| SWS for declarative memory | Identity/Philosophy threads | 🌀 |
+| REM for procedural memory | Reflex/Form threads | 🌀 |
+| Pruning of irrelevant | Discard below threshold | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15554,14 +15554,14 @@ def process_input(query):
 
 | Kahneman | Our Architecture | Match? |
 |----------|-----------------|--------|
-| System 1: <100ms | Reflex check: <10ms | ✅ |
-| System 2: 500ms+ | Full generation: 500ms-2s | ✅ |
-| System 1: No WM load | Reflex: No context assembly | ✅ |
-| System 2: WM intensive | Generation: Full 128k context | ✅ |
-| System 1 can be trained | Reflex shortcuts learnable | ✅ |
-| System 2 overrides System 1 | Low confidence → escalate to full processing | ✅ |
+| System 1: <100ms | Reflex check: <10ms | 🌀 |
+| System 2: 500ms+ | Full generation: 500ms-2s | 🌀 |
+| System 1: No WM load | Reflex: No context assembly | 🌀 |
+| System 2: WM intensive | Generation: Full 128k context | 🌀 |
+| System 1 can be trained | Reflex shortcuts learnable | 🌀 |
+| System 2 overrides System 1 | Low confidence → escalate to full processing | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15592,12 +15592,12 @@ def introspect(level):
 
 | AST Claim | Our Architecture | Match? |
 |-----------|-----------------|--------|
-| Brain models its own attention | `introspect()` returns attention state | ✅ |
-| Schema is simplified, not complete | Introspection is summarized, not raw DB | ✅ |
-| Schema enables attention control | Introspection feeds back to scoring | ✅ |
-| Awareness = attention schema | Nola "knows" what she's focused on | ✅ |
+| Brain models its own attention | `introspect()` returns attention state | 🌀 |
+| Schema is simplified, not complete | Introspection is summarized, not raw DB | 🌀 |
+| Schema enables attention control | Introspection feeds back to scoring | 🌀 |
+| Awareness = attention schema | Nola "knows" what she's focused on | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15664,12 +15664,12 @@ def periodic_decay():
 
 | Hebbian Rule | Our Architecture | Match? |
 |--------------|-----------------|--------|
-| Δw = η * pre * post | weight += learning_rate * relevance * success | ✅ |
-| LTP (long-term potentiation) | Weight increase on access | ✅ |
-| LTD (long-term depression) | Weight decay on non-use | ✅ |
-| Synaptic competition | Facts compete for context inclusion | ✅ |
+| Δw = η * pre * post | weight += learning_rate * relevance * success | 🌀 |
+| LTP (long-term potentiation) | Weight increase on access | 🌀 |
+| LTD (long-term depression) | Weight decay on non-use | 🌀 |
+| Synaptic competition | Facts compete for context inclusion | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15698,12 +15698,12 @@ def evaluate_response(candidate_response):
 
 | Somatic Markers | Our Architecture | Match? |
 |-----------------|-----------------|--------|
-| Fast emotional evaluation | Philosophy check before generation | ✅ |
-| Marks options as good/bad | Ethical bounds as hard constraints | ✅ |
-| Influences without replacing reason | Values weight outputs, don't override | ✅ |
-| Learned from experience | Philosophy thread can be updated | ✅ |
+| Fast emotional evaluation | Philosophy check before generation | 🌀 |
+| Marks options as good/bad | Ethical bounds as hard constraints | 🌀 |
+| Influences without replacing reason | Values weight outputs, don't override | 🌀 |
+| Learned from experience | Philosophy thread can be updated | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15741,12 +15741,12 @@ def assemble_context(query):
 
 | CLT Claim | Our Architecture | Match? |
 |-----------|-----------------|--------|
-| WM capacity: 4-7 items | ~7 thread contexts | ✅ |
-| Overload impairs performance | Exceeding 128k degrades output | ✅ |
-| Chunking helps | Facts are pre-chunked in threads | ✅ |
-| Expertise reduces load | High-weight facts = "expert knowledge" | ✅ |
+| WM capacity: 4-7 items | ~7 thread contexts | 🌀 |
+| Overload impairs performance | Exceeding 128k degrades output | 🌀 |
+| Chunking helps | Facts are pre-chunked in threads | 🌀 |
+| Expertise reduces load | High-weight facts = "expert knowledge" | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15783,12 +15783,12 @@ def score_fact(fact):
 
 | LoP Research | Our Architecture | Match? |
 |--------------|-----------------|--------|
-| Deeper = better retention | Higher identity score = higher weight | ✅ |
-| Self-reference effect | Identity facts weighted highest | ✅ |
-| Elaboration helps | Rich metadata = better retrieval | ✅ |
-| Maintenance rehearsal < Elaborative | Access count < relevance score | ✅ |
+| Deeper = better retention | Higher identity score = higher weight | 🌀 |
+| Self-reference effect | Identity facts weighted highest | 🌀 |
+| Elaboration helps | Rich metadata = better retrieval | 🌀 |
+| Maintenance rehearsal < Elaborative | Access count < relevance score | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15820,12 +15820,12 @@ def process_new_fact(fact):
 
 | Schema Theory | Our Architecture | Match? |
 |---------------|-----------------|--------|
-| Knowledge structures guide encoding | Threads determine fact storage | ✅ |
-| Schemas affect retrieval | Thread structure shapes context | ✅ |
-| Accommodation (schema change) | Thread content evolves | ✅ |
-| Assimilation (fit to schema) | Facts routed to matching thread | ✅ |
+| Knowledge structures guide encoding | Threads determine fact storage | 🌀 |
+| Schemas affect retrieval | Thread structure shapes context | 🌀 |
+| Accommodation (schema change) | Thread content evolves | 🌀 |
+| Assimilation (fit to schema) | Facts routed to matching thread | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15855,12 +15855,12 @@ def access_fact(fact):
 
 | MTT Claim | Our Architecture | Match? |
 |-----------|-----------------|--------|
-| Multiple traces per memory | access_count tracks retrievals | ✅ |
-| Recent traces stronger | last_accessed affects retrieval | ✅ |
-| Traces in hippocampus + cortex | temp_memory + permanent threads | ✅ |
-| Retrieval = re-encoding | Access can modify weight | ✅ |
+| Multiple traces per memory | access_count tracks retrievals | 🌀 |
+| Recent traces stronger | last_accessed affects retrieval | 🌀 |
+| Traces in hippocampus + cortex | temp_memory + permanent threads | 🌀 |
+| Retrieval = re-encoding | Access can modify weight | 🌀 |
 
-**VALIDATION: ✅ STRONG MATCH**
+**VALIDATION: 🌀 STRONG MATCH**
 
 ---
 
@@ -15868,21 +15868,21 @@ def access_fact(fact):
 
 | Theory | Match Level | Key Implementation |
 |--------|-------------|-------------------|
-| Global Workspace (Baars) | ✅ Strong | Context window competition |
-| Neuronal GW (Dehaene) | ✅ Strong | Ignition threshold, 1% sparsity |
-| Working Memory (Baddeley) | ✅ Strong | 7±2 chunks, specialized buffers |
-| Sparse Memory (Kanerva) | ✅ Strong | Embedding similarity, sparse activation |
+| Global Workspace (Baars) | 🌀 Strong | Context window competition |
+| Neuronal GW (Dehaene) | 🌀 Strong | Ignition threshold, 1% sparsity |
+| Working Memory (Baddeley) | 🌀 Strong | 7±2 chunks, specialized buffers |
+| Sparse Memory (Kanerva) | 🌀 Strong | Embedding similarity, sparse activation |
 | Predictive Processing (Friston) | ⚠️ Partial | Relevance prediction, weight updates |
-| Memory Consolidation (Born) | ✅ Strong | Consolidation daemon = sleep |
-| Dual Process (Kahneman) | ✅ Strong | Reflex (S1) vs Generation (S2) |
-| Attention Schema (Graziano) | ✅ Strong | Introspection system |
+| Memory Consolidation (Born) | 🌀 Strong | Consolidation daemon = sleep |
+| Dual Process (Kahneman) | 🌀 Strong | Reflex (S1) vs Generation (S2) |
+| Attention Schema (Graziano) | 🌀 Strong | Introspection system |
 | IIT (Tononi) | ⚠️ Partial | Integration architecture present |
-| Hebbian Learning | ✅ Strong | Weight adjustment on use |
-| Somatic Markers (Damasio) | ✅ Strong | Philosophy as emotional check |
-| Cognitive Load (Sweller) | ✅ Strong | Token budgets per thread |
-| Levels of Processing | ✅ Strong | L1/L2/L3 depth system |
-| Schema Theory (Bartlett) | ✅ Strong | Threads as schemas |
-| Multiple Trace (Nadel) | ✅ Strong | Access logging |
+| Hebbian Learning | 🌀 Strong | Weight adjustment on use |
+| Somatic Markers (Damasio) | 🌀 Strong | Philosophy as emotional check |
+| Cognitive Load (Sweller) | 🌀 Strong | Token budgets per thread |
+| Levels of Processing | 🌀 Strong | L1/L2/L3 depth system |
+| Schema Theory (Bartlett) | 🌀 Strong | Threads as schemas |
+| Multiple Trace (Nadel) | 🌀 Strong | Access logging |
 
 **Overall: 13/15 Strong Match, 2/15 Partial Match, 0/15 Mismatch**
 
@@ -17378,21 +17378,21 @@ This architecture does not propose new cognitive theory. It implements **establi
 
 | Theory | Research | Implementation | Validation |
 |--------|----------|----------------|------------|
-| Global Workspace Theory | Baars (1988) | Context window competition | ✅ Strong |
-| Neuronal Global Workspace | Dehaene (2001) | Ignition threshold, 1% sparsity | ✅ Strong |
-| Working Memory Model | Baddeley (1974) | 7±2 chunks, specialized buffers | ✅ Strong |
-| Sparse Distributed Memory | Kanerva (1988) | Embedding similarity, sparse activation | ✅ Strong |
+| Global Workspace Theory | Baars (1988) | Context window competition | 🌀 Strong |
+| Neuronal Global Workspace | Dehaene (2001) | Ignition threshold, 1% sparsity | 🌀 Strong |
+| Working Memory Model | Baddeley (1974) | 7±2 chunks, specialized buffers | 🌀 Strong |
+| Sparse Distributed Memory | Kanerva (1988) | Embedding similarity, sparse activation | 🌀 Strong |
 | Predictive Processing | Friston (2010) | Relevance prediction, weight updates | ⚠️ Partial |
-| Memory Consolidation | Born (2010) | Consolidation daemon = sleep | ✅ Strong |
-| Dual Process Theory | Kahneman (2011) | Reflex (System 1) vs Generation (System 2) | ✅ Strong |
-| Attention Schema Theory | Graziano (2013) | Introspection system | ✅ Strong |
+| Memory Consolidation | Born (2010) | Consolidation daemon = sleep | 🌀 Strong |
+| Dual Process Theory | Kahneman (2011) | Reflex (System 1) vs Generation (System 2) | 🌀 Strong |
+| Attention Schema Theory | Graziano (2013) | Introspection system | 🌀 Strong |
 | Integrated Information | Tononi (2004) | Cross-thread integration | ⚠️ Partial |
-| Hebbian Learning | Hebb (1949) | Weight adjustment on use | ✅ Strong |
-| Somatic Marker Hypothesis | Damasio (1994) | Philosophy thread as emotional check | ✅ Strong |
-| Cognitive Load Theory | Sweller (1988) | Token budgets per thread | ✅ Strong |
-| Levels of Processing | Craik & Lockhart (1972) | L1/L2/L3 depth system | ✅ Strong |
-| Schema Theory | Bartlett (1932) | Threads as cognitive schemas | ✅ Strong |
-| Multiple Trace Theory | Nadel (1997) | Access logging creates traces | ✅ Strong |
+| Hebbian Learning | Hebb (1949) | Weight adjustment on use | 🌀 Strong |
+| Somatic Marker Hypothesis | Damasio (1994) | Philosophy thread as emotional check | 🌀 Strong |
+| Cognitive Load Theory | Sweller (1988) | Token budgets per thread | 🌀 Strong |
+| Levels of Processing | Craik & Lockhart (1972) | L1/L2/L3 depth system | 🌀 Strong |
+| Schema Theory | Bartlett (1932) | Threads as cognitive schemas | 🌀 Strong |
+| Multiple Trace Theory | Nadel (1997) | Access logging creates traces | 🌀 Strong |
 
 **Validation Score: 13/15 Strong Match, 2/15 Partial Match, 0/15 Mismatch**
 
@@ -17713,10 +17713,10 @@ This eliminates:
 - ❌ Distribution mismatch (train ≠ production)
 
 And creates:
-- ✅ Perfect train/production alignment
-- ✅ Self-curating dataset (only confident actions)
-- ✅ Continuous improvement (more use = more data)
-- ✅ Zero marginal cost for training data
+- 🌀 Perfect train/production alignment
+- 🌀 Self-curating dataset (only confident actions)
+- 🌀 Continuous improvement (more use = more data)
+- 🌀 Zero marginal cost for training data
 
 **The append-only advantage:** When you add a new thread module, you ADD to training data, you don't CHANGE it. Previous training remains 100% valid. This eliminates the fundamental finetuning problem of knowledge decay.
 
@@ -18534,7 +18534,7 @@ The model learns to reference specific state fields:
 
 ### 3. Graceful Unknowns
 When asked about something not in state:
-- ✅ "I don't have that in my current context"
+- 🌀 "I don't have that in my current context"
 - ❌ Making up information
 
 ### 4. Identity Persistence Under Attack

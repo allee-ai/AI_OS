@@ -83,12 +83,12 @@ System-level reflexes:
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| `ReflexDashboard.tsx` | `frontend/src/components/ReflexDashboard.tsx` | ✅ Done |
-| Reflex tab in ThreadsPage | `ThreadsPage.tsx` | ✅ Done |
+| `ReflexDashboard.tsx` | `frontend/src/components/ReflexDashboard.tsx` | 🌀 Done |
+| Reflex tab in ThreadsPage | `ThreadsPage.tsx` | 🌀 Done |
 
 **Features**:
-- ✅ View all reflexes
-- ✅ Add new shortcuts
+- 🌀 View all reflexes
+- 🌀 Add new shortcuts
 - ⬜ Edit existing reflexes
 - ⬜ Test reflex matching
 

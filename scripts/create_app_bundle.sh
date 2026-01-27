@@ -85,7 +85,7 @@ else
     echo "🧠" > "AIOS.app/Contents/Resources/AppIcon.txt"
 fi
 
-echo "✅ Created AIOS.app bundle"
+echo "🌀 Created AIOS.app bundle"
 echo ""
 echo "🎯 Installation options:"
 echo "  1. Drag 'AIOS.app' to your Desktop"

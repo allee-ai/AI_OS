@@ -77,7 +77,7 @@ FILE: {relative_path}
     output_file = output_dir / "nolastring.txt"
     output_file.write_text(nola_string, encoding="utf-8")
     
-    print(f"✅ Collected {len(md_files)} markdown files")
+    print(f"🌀 Collected {len(md_files)} markdown files")
     print(f"📄 Output saved to: {output_file}")
     print(f"📊 Total size: {len(nola_string):,} characters")
     

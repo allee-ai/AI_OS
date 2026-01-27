@@ -85,7 +85,7 @@ export const ConsolidationDashboard = ({ config, status, message, onChangesMade,
       });
       const data = await res.json();
       if (res.ok) {
-        setLastResult(`✅ Processed ${data.facts_processed} facts: ${data.promoted_l2} to L2, ${data.promoted_l3} to L3, ${data.discarded} discarded`);
+        setLastResult(`🌀 Processed ${data.facts_processed} facts: ${data.promoted_l2} to L2, ${data.promoted_l3} to L3, ${data.discarded} discarded`);
         fetchPendingFacts();
       } else {
         setLastResult(`❌ Error: ${data.detail}`);

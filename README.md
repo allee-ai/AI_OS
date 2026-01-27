@@ -51,9 +51,9 @@ You can download AI OS in two ways:
 
 Simply double-click `run.command` (on Mac/Linux) or `run.bat` (on Windows) in the downloaded folder. This script handles everything:
 
-- ✅ Installs the LLM runtime (Ollama)
-- ✅ Starts the OS backend and chat interface
-- ✅ Opens your browser automatically
+- 🌀 Installs the LLM runtime (Ollama)
+- 🌀 Starts the OS backend and chat interface
+- 🌀 Opens your browser automatically
 
 > **First time?** The first launch downloads the AI model (~4GB). This only happens once.
 
@@ -169,7 +169,7 @@ The LLM is stateless and dumb. The OS makes it smart.
 ### The Roadmap
 
 See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
-- ✅ **Now:** Subconscious, memory threads, HEA context levels
+- 🌀 **Now:** Subconscious, memory threads, HEA context levels
 - 🔄 **Next:** Memory consolidation, philosophy constraints
 - 🚀 **Future:** Reflex automation, dream states, multi-model routing, enterprise integration
 

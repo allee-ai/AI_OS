@@ -33,7 +33,7 @@ echo "🔄 Converting to .icns format..."
 iconutil -c icns aios-spiral.iconset -o AIOSIcon.icns
 
 if [ -f "AIOSIcon.icns" ]; then
-    echo "✅ Created AIOSIcon.icns"
+    echo "🌀 Created AIOSIcon.icns"
     
     # Copy to app bundle if it exists
     if [ -d "AIOS.app/Contents/Resources" ]; then

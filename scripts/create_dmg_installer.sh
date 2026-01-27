@@ -86,7 +86,7 @@ rm -rf "$DMG_TEMP"
 rm -f "${DMG_NAME}-temp.dmg"
 
 echo ""
-echo "✅ Created: ${DMG_NAME}.dmg"
+echo "🌀 Created: ${DMG_NAME}.dmg"
 echo ""
 echo "📋 What users see when they open it:"
 echo "   ┌─────────────────────────────────┐"

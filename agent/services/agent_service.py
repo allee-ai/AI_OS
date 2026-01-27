@@ -53,7 +53,7 @@ try:
     _HAS_SUBCONSCIOUS = True
     # Wake the subconscious on module load (registers adapters, no loops)
     wake(start_loops=False)
-    print("✅ Subconscious awakened - context assembly enabled")
+    print("🌀 Subconscious awakened - context assembly enabled")
 except ImportError as e:
     _HAS_SUBCONSCIOUS = False
     get_consciousness_context = None
@@ -68,7 +68,7 @@ try:
     _kernel_service = get_kernel_service()
     KERNEL_AVAILABLE = _kernel_service is not None
     if KERNEL_AVAILABLE:
-        print("✅ Kernel service enabled - browser automation available")
+        print("🌀 Kernel service enabled - browser automation available")
 except ImportError:
     print("⚠️ KernelService not found. Browser automation disabled.")
     _kernel_service = None
@@ -76,7 +76,7 @@ except ImportError:
 
 try:
     from agent.agent import get_agent
-    print("✅ Successfully imported the agent agent")
+    print("🌀 Successfully imported the agent agent")
     AIOS_AVAILABLE = True
 except ImportError as e:
     print(f"❌ Warning: the agent agent not found: {e}")
@@ -88,7 +88,7 @@ except ImportError as e:
 try:
     from chat.schema import save_conversation, add_turn, get_conversation
     _HAS_CHAT_SCHEMA = True
-    print("✅ Chat schema enabled - conversations stored in DB")
+    print("🌀 Chat schema enabled - conversations stored in DB")
 except ImportError:
     _HAS_CHAT_SCHEMA = False
     print("⚠️ Chat schema not available - conversations disabled")
@@ -719,7 +719,7 @@ async def do_facebook_demo(agent: 'AgentService') -> str:
             return f"⚠️ Posting completed: {post_result.get('message', post_result['error'])}\n\n📺 Live View: {live_view_url}\n\n📝 Generated: {post_content}"
         
         # Success!
-        return f"""✅ Facebook demo complete!
+        return f"""🌀 Facebook demo complete!
 
 📺 **Live View:** {live_view_url}
 🆔 **Session:** {session_id}
@@ -799,7 +799,7 @@ async def close_kernel_browser() -> str:
     
     result = await _kernel_service.close_session()
     if result.get("success"):
-        return "✅ Browser session closed. Identity profile saved for next time!"
+        return "🌀 Browser session closed. Identity profile saved for next time!"
     else:
         return f"⚠️ {result.get('message', 'No active session')}"
 

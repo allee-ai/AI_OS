@@ -82,7 +82,7 @@ if command -v iconutil > /dev/null 2>&1 && [ -f "temp_icon/aios_512.png" ]; then
     # Convert to icns
     iconutil -c icns temp_icon/aios.iconset -o temp_icon/aios.icns
     
-    echo "✅ Created aios.icns icon file"
+    echo "🌀 Created aios.icns icon file"
 else
     echo "⚠️ iconutil not available or PNG not created"
     echo "📝 Will use fallback icon method"

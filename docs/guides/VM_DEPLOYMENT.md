@@ -167,7 +167,7 @@ SSH_PID=$!
 sleep 5
 
 if curl -s --max-time 10 "http://localhost:8000/" >/dev/null 2>&1; then
-    echo "✅ Connection established!"
+    echo "🌀 Connection established!"
     open "http://localhost:8000"
     wait $SSH_PID
 else

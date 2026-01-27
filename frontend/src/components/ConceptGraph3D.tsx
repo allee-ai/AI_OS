@@ -1515,7 +1515,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
       });
       if (!res.ok) throw new Error('Reindex failed');
       const data = await res.json();
-      setReindexResult(`✅ ${data.total_links} links`);
+      setReindexResult(`🌀 ${data.total_links} links`);
       fetchGraph();
     } catch (e) {
       setReindexResult('❌ Failed');
@@ -1724,7 +1724,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
               {reindexing ? '🔄 Indexing...' : '📊 Reindex'}
             </button>
             {reindexResult && (
-              <div style={{ marginTop: 6, fontSize: 10, color: reindexResult.includes('✅') ? '#88cc88' : '#ff6b6b' }}>
+              <div style={{ marginTop: 6, fontSize: 10, color: reindexResult.includes('🌀') ? '#88cc88' : '#ff6b6b' }}>
                 {reindexResult}
               </div>
             )}

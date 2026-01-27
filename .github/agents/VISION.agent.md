@@ -45,7 +45,7 @@ Look for "Ghost Code" — complex logic in backend files (e.g., `schema.py`, `co
 - 🖥️ `frontend/src/pages/ThreadsPage.tsx` (The current UI implementation)
 
 **Key Questions:**
-- ✅ **What's complete?** (e.g., L3->L1 consolidation, Portable Installer, HEA levels)
+- 🌀 **What's complete?** (e.g., L3->L1 consolidation, Portable Installer, HEA levels)
 - 🔄 **What's active?** (e.g., Linking Core, "Living Body" browser context)
 - ❌ **What's broken?** (Check `docs/logs/LOG.txt` or recent issue notes)
 
@@ -303,7 +303,7 @@ A side panel showing:
 - Click-to-view/edit concept link strengths between nodes
 
 **4. The Bottleneck: "The Missing Graph"**
-Fact weights are visible (✅). Concept links are not (❌). The Hebbian learning graph exists in SQLite but has no visual representation. This is the specific gap.
+Fact weights are visible (🌀). Concept links are not (❌). The Hebbian learning graph exists in SQLite but has no visual representation. This is the specific gap.
 
 #### 📋 Priority Queue
 **Tier 1: Do Immediately**
@@ -459,19 +459,19 @@ Everything else can wait. Documentation sync, table polish, new features—they 
 | Previous Ask (Jan 19) | Status | Notes |
 |:---|:---:|:---|
 | **Sync LOG.txt** | ❌ Still Dec 28 | CHANGELOG is Jan 20, LOG.txt stuck at Dec 28 |
-| **`/api/linking_core/graph` endpoint** | ✅ **BUILT** | Returns nodes, links, stats |
-| **`/api/linking_core/activate` endpoint** | ✅ **BUILT** | Spread activation with fuzzy matching |
-| **3D Force-directed Graph** | ✅ **BUILT** | 1774-line `ConceptGraph3D.tsx` with Three.js |
-| **Activation overlay** | ✅ **BUILT** | Nodes light up, typing triggers activation |
-| **Per-thread APIs** | ✅ **BUILT** | Each thread owns `/api/{thread}/` router |
+| **`/api/linking_core/graph` endpoint** | 🌀 **BUILT** | Returns nodes, links, stats |
+| **`/api/linking_core/activate` endpoint** | 🌀 **BUILT** | Spread activation with fuzzy matching |
+| **3D Force-directed Graph** | 🌀 **BUILT** | 1774-line `ConceptGraph3D.tsx` with Three.js |
+| **Activation overlay** | 🌀 **BUILT** | Nodes light up, typing triggers activation |
+| **Per-thread APIs** | 🌀 **BUILT** | Each thread owns `/api/{thread}/` router |
 
 **Verdict:** 🎉 **YOU LISTENED.** Three models asked for visualization. You built it. The "Brain Scan" exists.
 
 #### 🔍 Ghost Code Report (Updated)
 | Feature | Location | UI Exposure | Verdict |
 |---------|----------|-------------|---------|
-| `spread_activate()` | linking_core/schema.py | ✅ **ConceptGraph3D** | 🎉 Shipped |
-| `strengthen_concept_link()` | linking_core/schema.py | ✅ **Graph edges** | 🎉 Shipped |
+| `spread_activate()` | linking_core/schema.py | 🌀 **ConceptGraph3D** | 🎉 Shipped |
+| `strengthen_concept_link()` | linking_core/schema.py | 🌀 **Graph edges** | 🎉 Shipped |
 | `score_relevance()` breakdown | linking_core/schema.py | ❌ **None** | 🔥 Next target |
 | Consolidation events | consolidation_daemon.py | ❌ **None** | ⚡ Add feed |
 
@@ -509,7 +509,7 @@ You've achieved Level 1: Users can see the graph.
 You need Level 2: Users can see **why retrieval happened.**
 
 Imagine: User types "coffee" → 
-- Graph lights up (✅ you have this)
+- Graph lights up (🌀 you have this)
 - Side panel shows: "Retrieved 3 facts. Top fact: 'Sarah likes morning coffee' (embedding: 0.91, spread: 0.67, final: 0.82)" (❌ missing)
 
 **3. The 10x Feature: "Retrieval Inspector"**
@@ -550,7 +550,7 @@ Users can see the graph. Users can see activation. What they can't see is the sc
 
 #### Summary: What Changed Since Jan 19
 
-| Built ✅ | Still Missing ❌ |
+| Built 🌀 | Still Missing ❌ |
 |:---|:---|
 | ConceptGraph3D (1774 lines) | Score breakdown UI |
 | `/api/linking_core/graph` | Retrieval Inspector panel |
@@ -571,7 +571,7 @@ Users can see the graph. Users can see activation. What they can't see is the sc
 #### 🔄 Evolution Check (Then vs. Now)
 | Prediction (Jan 19) | Reality (Jan 21) | Accuracy |
 |:---|:---:|:---:|
-| "Dynamic Brain Scan" needed | **Built** (`ConceptGraph3D`) | ✅ Spot on |
+| "Dynamic Brain Scan" needed | **Built** (`ConceptGraph3D`) | 🌀 Spot on |
 | "Associative Surf" needed | **Partially Built** (Activation, but no click-to-surf) | ⚠️ In progress |
 | "Write-Only Log" bottleneck | **Still Exists** (Log is better, but still just a list) | ❌ Unsolved |
 
@@ -685,10 +685,10 @@ The graph is interactive, but only *on demand*. We need to bridge the gap betwee
 | **Consolidation Activity Feed** | ❌ **NOT BUILT** | Framework exists in `subconscious/loops.py`, logic is `pass` |
 
 **What WAS Built Since Jan 21:**
-- ✅ **Form Thread DB-Backed Tools** — Full CRUD + rename + action validation (519 lines)
-- ✅ **L1/L2/L3 Pattern** in Form (`registry.py` → `executor.py` → `executables/`)
-- ✅ **Tool execute functionality** in frontend
-- ✅ **Clean architecture** — per-thread API routers, fault isolation
+- 🌀 **Form Thread DB-Backed Tools** — Full CRUD + rename + action validation (519 lines)
+- 🌀 **L1/L2/L3 Pattern** in Form (`registry.py` → `executor.py` → `executables/`)
+- 🌀 **Tool execute functionality** in frontend
+- 🌀 **Clean architecture** — per-thread API routers, fault isolation
 
 **Verdict:** ⚠️ Session work was valuable (tools restructure), but the Jan 21 visualization asks were **ignored**. Same pattern as Jan 19→21. "Build infrastructure, skip visualization."
 
@@ -700,9 +700,9 @@ Previous assessment claimed `consolidation_daemon.py` was deleted. **WRONG.** It
 |:---|:---:|:---|:---|
 | `subconscious/loops.py` | 358 | `ConsolidationLoop`, `MemoryLoop`, `SyncLoop`, `HealthLoop` | ⚡ **Stubs** (`pass` inside) |
 | `subconscious/triggers.py` | 451 | `EventTrigger`, `ThresholdTrigger`, `TimeTrigger` | ⚡ **Framework**, not wired |
-| `subconscious/core.py` | 423 | `ThreadRegistry`, `SubconsciousCore` | ✅ Working |
-| `subconscious/orchestrator.py` | 256 | Aggregates thread introspections | ✅ Working |
-| `subconscious/temp_memory/store.py` | 380 | `Fact` dataclass, `temp_facts` table | ✅ Schema exists |
+| `subconscious/core.py` | 423 | `ThreadRegistry`, `SubconsciousCore` | 🌀 Working |
+| `subconscious/orchestrator.py` | 256 | Aggregates thread introspections | 🌀 Working |
+| `subconscious/temp_memory/store.py` | 380 | `Fact` dataclass, `temp_facts` table | 🌀 Schema exists |
 
 **The Real Gap:** Framework exists. Logic doesn't:
 ```python
@@ -798,11 +798,11 @@ But grep for `# TODO` and `pass` in subconscious/ — the actual work isn't done
 
 | Layer | Status |
 |:---|:---|
-| Database Schema | ✅ Complete |
-| API Endpoints | ✅ Complete |
-| Thread Adapters | ✅ Complete |
-| Background Loop Classes | ✅ Complete |
-| Trigger Framework | ✅ Complete |
+| Database Schema | 🌀 Complete |
+| API Endpoints | 🌀 Complete |
+| Thread Adapters | 🌀 Complete |
+| Background Loop Classes | 🌀 Complete |
+| Trigger Framework | 🌀 Complete |
 | **Loop Logic Bodies** | 🔥 **Empty (`pass`)** |
 | **Trigger Wiring** | 🔥 **Not Connected** |
 | UI Visualization | 😐 Partial (graph exists, no score breakdown) |

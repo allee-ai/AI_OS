@@ -53,7 +53,7 @@ try:
     # Save the split files
     train_df.to_json('train.jsonl', orient='records', lines=True)
     valid_df.to_json('valid.jsonl', orient='records', lines=True)
-    print(f'✅ Created train.jsonl ({len(train_df)} rows) and valid.jsonl ({len(valid_df)} rows)')
+    print(f'🌀 Created train.jsonl ({len(train_df)} rows) and valid.jsonl ({len(valid_df)} rows)')
 except Exception as e:
     print(f'❌ Error processing data: {e}')
     exit(1)
@@ -75,6 +75,6 @@ mlx_lm.lora \
     --train \
     --data . 
 
-echo "✅ Training Complete. Adapters saved in 'adapters/'."
+echo "🌀 Training Complete. Adapters saved in 'adapters/'."
 echo "   To test your new brain:"
 echo "   mlx_lm.lora --model mlx-community/Qwen2.5-1.5B-Instruct-4bit --adapter-path adapters --prompt '== STATE == ...'"

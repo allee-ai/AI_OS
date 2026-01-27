@@ -94,19 +94,19 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### Identity Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ SQLite backend working, pulls facts by level, user/machine separation |
+| **Current** | 🌀 SQLite backend working, pulls facts by level, user/machine separation |
 | **Future** | Memory permanence logic, weight decay, consolidation daemon, "tomorrow queue" for deferred decisions |
 
 ### Log Thread  
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ Event logging to master.log, session tracking, basic temporal facts |
+| **Current** | 🌀 Event logging to master.log, session tracking, basic temporal facts |
 | **Future** | File→DB migration, relevance integration, pattern detection for reflex promotion |
 
 ### Form Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ L1/L2/L3 tools architecture (registry → executor → executables), tool execution API, browser integration |
+| **Current** | 🌀 L1/L2/L3 tools architecture (registry → executor → executables), tool execution API, browser integration |
 | **Future** | Email/calendar integration, sandbox environment, plugin architecture |
 
 ### Philosophy Thread
@@ -124,7 +124,7 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### LinkingCore (Utility)
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ Basic relevance.py with embedding similarity |
+| **Current** | 🌀 Basic relevance.py with embedding similarity |
 | **Future** | Key sequence learning, attention scoring, prompt builder, focus system integration |
 
 ---
@@ -182,7 +182,7 @@ agent/threads/
 
 ## Migration Plan
 
-### Phase 1: Thread Structure (COMPLETE ✅)
+### Phase 1: Thread Structure (COMPLETE 🌀)
 - [x] Create 6 thread directories
 - [x] Create adapter.py for each thread
 - [x] Create README.md for each thread
@@ -281,9 +281,9 @@ class ThreadAdapter:
 
 | Thread | Adapter | README | Wired | Tested |
 |--------|---------|--------|-------|--------|
-| Identity | ✅ | ✅ | ⏳ | ⏳ |
-| Log | ✅ | ✅ | ⏳ | ⏳ |
-| LinkingCore | ✅ | ✅ | ⏳ | ⏳ |
-| Form | ✅ | ✅ | ⏳ | ⏳ |
-| Philosophy | ✅ | ✅ | ⏳ | ⏳ |
-| Reflex | ✅ | ✅ | ⏳ | ⏳ |
+| Identity | 🌀 | 🌀 | ⏳ | ⏳ |
+| Log | 🌀 | 🌀 | ⏳ | ⏳ |
+| LinkingCore | 🌀 | 🌀 | ⏳ | ⏳ |
+| Form | 🌀 | 🌀 | ⏳ | ⏳ |
+| Philosophy | 🌀 | 🌀 | ⏳ | ⏳ |
+| Reflex | 🌀 | 🌀 | ⏳ | ⏳ |

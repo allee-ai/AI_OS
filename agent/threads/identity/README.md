@@ -68,15 +68,15 @@ L3: "Jordan, software developer building AI_OS, prefers morning sessions" (~30 t
 
 | Component | Location | Status |
 |-----------|----------|--------|
-| `ProfilesPage.tsx` | `react-chat-app/frontend/src/pages/ProfilesPage.tsx` | ✅ Done |
-| Identity table | `ThreadsPage.tsx:217-231` | ✅ Done |
+| `ProfilesPage.tsx` | `react-chat-app/frontend/src/pages/ProfilesPage.tsx` | 🌀 Done |
+| Identity table | `ThreadsPage.tsx:217-231` | 🌀 Done |
 
 **Features**:
-- ✅ View all identity facts
-- ✅ Edit L1/L2/L3 values inline
-- ✅ Adjust weights
-- ✅ Add new facts
-- ✅ Filter by metadata_type (user/agent/machine/relationship)
+- 🌀 View all identity facts
+- 🌀 Edit L1/L2/L3 values inline
+- 🌀 Adjust weights
+- 🌀 Add new facts
+- 🌀 Filter by metadata_type (user/agent/machine/relationship)
 
 ---
 
@@ -103,7 +103,7 @@ Higher weight = retrieved more often = stays in working memory.
 
 # Database Integration Plan
 
-**Status:** ✅ IMPLEMENTED  
+**Status:** 🌀 IMPLEMENTED  
 **Last Updated:** 2026-01-20
 
 > **Note:** This plan has been implemented. The SQLite backend is operational with push/pull/sync operations, context-level filtering (L1/L2/L3), and persistent storage. See `agent/threads/schema.py` for implementation details.

@@ -29,7 +29,7 @@ echo ""
 
 # Check if image already exists
 if [ -f "aios-spiral.png" ]; then
-    echo "✅ Found aios-spiral.png - ready to convert!"
+    echo "🌀 Found aios-spiral.png - ready to convert!"
     echo "   Run: ./create_icon_from_image.sh"
 else
     echo "⏳ Waiting for aios-spiral.png to be saved..."

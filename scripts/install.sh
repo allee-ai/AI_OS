@@ -42,7 +42,7 @@ echo "🔍 Checking dependencies..."
 # Python
 if command -v python3 &> /dev/null; then
     PYTHON_VERSION=$(python3 --version)
-    echo "  ✅ Python: $PYTHON_VERSION"
+    echo "  🌀 Python: $PYTHON_VERSION"
 else
     echo "  ❌ Python 3 not found - please install from python.org"
 fi
@@ -50,7 +50,7 @@ fi
 # Node.js
 if command -v node &> /dev/null; then
     NODE_VERSION=$(node --version)
-    echo "  ✅ Node.js: $NODE_VERSION"
+    echo "  🌀 Node.js: $NODE_VERSION"
 else
     echo "  ❌ Node.js not found - please install from nodejs.org"
 fi
@@ -58,14 +58,14 @@ fi
 # npm
 if command -v npm &> /dev/null; then
     NPM_VERSION=$(npm --version)
-    echo "  ✅ npm: $NPM_VERSION"
+    echo "  🌀 npm: $NPM_VERSION"
 else
     echo "  ❌ npm not found"
 fi
 
 # Ollama (optional)
 if command -v ollama &> /dev/null; then
-    echo "  ✅ Ollama: installed"
+    echo "  🌀 Ollama: installed"
 else
     echo "  ⚠️ Ollama not found (optional - needed for local AI)"
     echo "     Install: brew install ollama"
@@ -103,7 +103,7 @@ touch ".aios_installed"
 
 echo ""
 echo "╔═══════════════════════════════════════════════════════════╗"
-echo "║                  ✅ Setup Complete!                       ║"
+echo "║                  🌀 Setup Complete!                       ║"
 echo "╚═══════════════════════════════════════════════════════════╝"
 echo ""
 echo "🎯 To start AI OS:"

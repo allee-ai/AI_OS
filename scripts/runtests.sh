@@ -36,7 +36,7 @@ print_header() {
 check_backend() {
     echo -e "${BLUE}Checking if the agent backend is running...${NC}"
     if curl -s "$AIOS_BACKEND/health" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Backend is running at $AIOS_BACKEND${NC}"
+        echo -e "${GREEN}🌀 Backend is running at $AIOS_BACKEND${NC}"
         return 0
     else
         echo -e "${YELLOW}⚠️  Backend not running. Starting it...${NC}"
@@ -44,7 +44,7 @@ check_backend() {
         BACKEND_PID=$!
         sleep 3
         if curl -s "$AIOS_BACKEND/health" > /dev/null 2>&1; then
-            echo -e "${GREEN}✅ Backend started (PID: $BACKEND_PID)${NC}"
+            echo -e "${GREEN}🌀 Backend started (PID: $BACKEND_PID)${NC}"
             return 0
         else
             echo -e "${RED}❌ Failed to start backend${NC}"
@@ -56,7 +56,7 @@ check_backend() {
 check_ollama() {
     echo -e "${BLUE}Checking if Ollama is running...${NC}"
     if curl -s "http://localhost:11434/api/tags" > /dev/null 2>&1; then
-        echo -e "${GREEN}✅ Ollama is running${NC}"
+        echo -e "${GREEN}🌀 Ollama is running${NC}"
         return 0
     else
         echo -e "${RED}❌ Ollama not running. Please start it first.${NC}"
@@ -71,7 +71,7 @@ run_unit_tests() {
     
     if python3 -m pytest tests/ -v --tb=short; then
         echo ""
-        echo -e "${GREEN}✅ Unit tests passed${NC}"
+        echo -e "${GREEN}🌀 Unit tests passed${NC}"
         return 0
     else
         echo ""
@@ -95,7 +95,7 @@ ct.run_coherence_test()
 "
     
     echo ""
-    echo -e "${GREEN}✅ Coherence test complete - transcript saved to eval/transcripts/${NC}"
+    echo -e "${GREEN}🌀 Coherence test complete - transcript saved to eval/transcripts/${NC}"
 }
 
 run_adversarial_test() {
@@ -115,7 +115,7 @@ ib.run_identity_battle($TURNS)
 "
     
     echo ""
-    echo -e "${GREEN}✅ Adversarial test complete - transcript saved to eval/transcripts/${NC}"
+    echo -e "${GREEN}🌀 Adversarial test complete - transcript saved to eval/transcripts/${NC}"
 }
 
 show_help() {
@@ -224,7 +224,7 @@ fi
 print_header "📊 TEST SUMMARY"
 
 if [ $FAILED -eq 0 ]; then
-    echo -e "${GREEN}✅ All tests completed successfully${NC}"
+    echo -e "${GREEN}🌀 All tests completed successfully${NC}"
 else
     echo -e "${RED}❌ Some tests failed${NC}"
 fi

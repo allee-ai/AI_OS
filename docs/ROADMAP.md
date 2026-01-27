@@ -9,8 +9,8 @@
 
 | Layer | Status | What's Working |
 |-------|--------|----------------|
-| **Core** | ✅ | Threads, HEA, SQLite backend, stateless agent |
-| **UI** | ✅ | React app, chat, thread visualization |
+| **Core** | 🌀 | Threads, HEA, SQLite backend, stateless agent |
+| **UI** | 🌀 | React app, chat, thread visualization |
 | **Integrations** | 🔄 | Stimuli system built, needs OAuth + polling daemon |
 | **Advanced** | 🔮 | Philosophy, Dreams, Reflex Builder (designed, not implemented) |
 
@@ -26,30 +26,30 @@ Nola isn't a chatbot. It's a **Cognitive Operating System** — an open-source f
 
 ---
 
-## What's Working Now ✅
+## What's Working Now 🌀
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Subconscious Module** | ✅ Complete | Assembles context from all threads before each response |
-| **Thread Adapters** | ✅ Complete | Pluggable architecture (identity, memory, log, linking_core) |
-| **HEA Context Levels** | ✅ Complete | L1/L2/L3 dynamic context filtering |
-| **SQLite State Backend** | ✅ Complete | Replaced JSON for identity and facts storage |
-| **Stateless Agent** | ✅ Complete | Agent reads context, doesn't hold state |
-| **React Router UI** | ✅ Complete | OS-like navigation (Dashboard, Chat, Threads, Docs) |
-| **Identity CRUD API** | ✅ Complete | View/edit/delete identity entries via API |
-| **Sleep/Wake Cycles** | ✅ Complete | `wake()` initializes, `sleep()` triggers consolidation |
-| **Temp Memory Store** | ✅ Complete | Session facts with hierarchical keys |
-| **Event Logging** | ✅ Complete | Timeline of all system events |
-| **Spread Activation** | ✅ Complete | Associative memory via concept_links table |
-| **Hierarchical Keys** | ✅ Complete | Facts stored as `sarah.likes.blue` |
-| **Hebbian Learning** | ✅ Complete | Concepts that co-occur strengthen links |
-| **Test Suite** | ✅ 23 tests passing | Core functionality verified |
+| **Subconscious Module** | 🌀 Complete | Assembles context from all threads before each response |
+| **Thread Adapters** | 🌀 Complete | Pluggable architecture (identity, memory, log, linking_core) |
+| **HEA Context Levels** | 🌀 Complete | L1/L2/L3 dynamic context filtering |
+| **SQLite State Backend** | 🌀 Complete | Replaced JSON for identity and facts storage |
+| **Stateless Agent** | 🌀 Complete | Agent reads context, doesn't hold state |
+| **React Router UI** | 🌀 Complete | OS-like navigation (Dashboard, Chat, Threads, Docs) |
+| **Identity CRUD API** | 🌀 Complete | View/edit/delete identity entries via API |
+| **Sleep/Wake Cycles** | 🌀 Complete | `wake()` initializes, `sleep()` triggers consolidation |
+| **Temp Memory Store** | 🌀 Complete | Session facts with hierarchical keys |
+| **Event Logging** | 🌀 Complete | Timeline of all system events |
+| **Spread Activation** | 🌀 Complete | Associative memory via concept_links table |
+| **Hierarchical Keys** | 🌀 Complete | Facts stored as `sarah.likes.blue` |
+| **Hebbian Learning** | 🌀 Complete | Concepts that co-occur strengthen links |
+| **Test Suite** | 🌀 23 tests passing | Core functionality verified |
 
 ---
 
 ## The Roadmap
 
-### Phase 1: Memory Consolidation (✅ Foundation Complete)
+### Phase 1: Memory Consolidation (🌀 Foundation Complete)
 **Goal:** Facts don't just get stored — they get *promoted* based on importance.
 
 - [x] **Scoring Algorithm** — Rate facts on permanence, relevance, identity-centrality
@@ -143,10 +143,10 @@ Verification:  Run both, compare outputs for critical decisions
 - [ ] **Cost Optimization** — Local for simple, cloud for complex
 - [ ] **Multi-Model Consensus** — For high-stakes, get agreement from multiple models
 
-### Phase 6: Beyond Chat 🚀 — ✅ FOUNDATION COMPLETE (Stimuli System)
+### Phase 6: Beyond Chat 🚀 — 🌀 FOUNDATION COMPLETE (Stimuli System)
 **Goal:** Agent becomes a background presence, not a chat window.
 
-**✅ Implemented (Jan 10, 2026):**
+**🌀 Implemented (Jan 10, 2026):**
 - [x] **Stimuli Router** — Universal API adapter layer (`agent/Stimuli/router.py`)
 - [x] **YAML-Driven Sources** — Drop a config file, get an integration
 - [x] **20+ Pre-Built Sources** — Gmail, Slack, Discord, GitHub, Linear, Notion, etc.

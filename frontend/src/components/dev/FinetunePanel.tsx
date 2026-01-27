@@ -22,7 +22,7 @@ export const FinetunePanel: React.FC = () => {
                 body: JSON.stringify(config)
             });
             if (res.ok) {
-                setLogs(prev => [...prev, "✅ Job started. Check terminal for heat/progress."]);
+                setLogs(prev => [...prev, "🌀 Job started. Check terminal for heat/progress."]);
                 setStatus('complete'); 
             } else {
                 throw new Error("Failed to start");

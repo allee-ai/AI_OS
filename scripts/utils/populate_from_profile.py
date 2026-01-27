@@ -38,7 +38,7 @@ def seed_identity_profile_types():
     ]
     for name, trust, priority, can_edit, desc in types:
         create_profile_type(name, trust, priority, can_edit, desc)
-    print(f"✅ Created {len(types)} identity profile types")
+    print(f"🌀 Created {len(types)} identity profile types")
 
 def seed_philosophy_profile_types():
     """Create philosophy profile types."""
@@ -50,7 +50,7 @@ def seed_philosophy_profile_types():
     ]
     for name, trust, priority, can_edit, desc in types:
         create_profile_type(name, trust, priority, can_edit, desc)
-    print(f"✅ Created {len(types)} philosophy profile types")
+    print(f"🌀 Created {len(types)} philosophy profile types")
 
 def seed_fact_types():
     """Create fact types."""
@@ -66,7 +66,7 @@ def seed_fact_types():
     ]
     for name, desc, weight in types:
         create_fact_type(name, desc, weight)
-    print(f"✅ Created {len(types)} fact types")
+    print(f"🌀 Created {len(types)} fact types")
 
 def seed_identity_profiles(data: dict):
     """Create identity profiles from Allee.json."""
@@ -207,7 +207,7 @@ def seed_identity_profiles(data: dict):
         weight=0.7
     )
     
-    print(f"✅ Created identity profiles with facts")
+    print(f"🌀 Created identity profiles with facts")
 
 def seed_philosophy_profiles(data: dict):
     """Create philosophy profiles from Allee.json."""
@@ -282,7 +282,7 @@ def seed_philosophy_profiles(data: dict):
         weight=0.8
     )
     
-    print(f"✅ Created philosophy profiles with facts")
+    print(f"🌀 Created philosophy profiles with facts")
 
 def main():
     """Main entry point."""
