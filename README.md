@@ -1,6 +1,8 @@
-# AI OS — A Control Layer for Your LLM
+# AI OS — A Cognitive Architecture for Local LLMs
 
-**Turn any local model into a personal AI that remembers, learns, and stays consistent. Private. Free. Yours.**
+**An open-source framework for building personal AI that remembers you. Private. Free. Early.**
+
+> 🚧 **Active Development** — Core works, edges are rough. Help us build the standard.
 
 ![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
@@ -11,13 +13,13 @@
 
 LLMs are powerful but unreliable. They hallucinate, forget, lose track of who they are, and treat every conversation like it's the first.
 
-AI OS fixes that. It's a management layer that wraps your local LLM and handles everything the model is bad at:
+AI OS is an architecture layer that wraps your local LLM and handles what models are bad at:
 
-- **Memory** — Persistent across sessions, organized by relevance
-- **Identity** — Consistent personality that can't be prompt-injected away  
-- **Learning** — Gets smarter from experience, not retraining
-- **Control** — LLM only handles language; the OS handles logic
-- **Background Loops** — Analyzes documents, indexes repos, and consolidates memory while idle
+- **Memory** — Persistent across sessions, organized by relevance ✅
+- **Identity** — Consistent personality stored structurally ✅
+- **Learning** — Extracts facts from conversations ✅ (consolidation WIP)
+- **Control** — LLM handles language; OS handles state ✅
+- **Background Loops** — Memory extraction working, consolidation in progress 🔄
 
 The LLM is the voice. The OS is the brain.
 
@@ -143,9 +145,9 @@ It's prompt engineering, but organized. You define who you (and your agent) are,
 |----------|-----------|------------|
 | **Context** | "Who am I talking to?" | Knows your name, job, projects, preferences |
 | **Continuity** | Every conversation starts fresh | Picks up where you left off, even weeks later |
-| **Consistency** | Personality drifts with prompting | Identity is structural, 
-| **Action** | Locked in chat box | Builds web tools, manages feeds, drafts in native apps (Email, Discord, Slack) |can't be manipulated |
-| **Learning** | Same quality forever | Gets better as it learns your patterns |
+| **Consistency** | Personality drifts with prompting | Identity is structural, can't be manipulated |
+| **Action** | Locked in chat box | Tool framework ready, integrations planned |
+| **Learning** | Same quality forever | Extracts and stores facts from conversations |
 
 ---
 
@@ -175,9 +177,9 @@ See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
 
 ---
 
-## Looking for Collaborators
+## Help Build This
 
-Built solo since April 2025. The architecture works. Now it needs to scale.
+Built solo since April 2025. The foundation works. Now it needs a community.
 
 **Looking for:**
 - **Python devs** — async, SQLite, state management

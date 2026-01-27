@@ -31,8 +31,8 @@ function App() {
     <BrowserRouter>
       {is_demo && (
         <div style={{
-          backgroundColor: '#ff9800',
-          color: '#000',
+          backgroundColor: '#4a9eff',
+          color: '#fff',
           textAlign: 'center',
           padding: '4px',
           fontSize: '0.8rem',
@@ -43,7 +43,7 @@ function App() {
           right: 0,
           zIndex: 9999
         }}>
-          ⚠️ DEMO MODE: Data will be reset on restart
+          🎮 DEMO MODE
         </div>
       )}
       <div className="app" style={is_demo ? { marginTop: '24px' } : {}}>        <Routes>

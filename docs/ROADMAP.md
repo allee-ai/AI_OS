@@ -1,7 +1,7 @@
-# Agent Roadmap — From Framework to Cognitive OS
+# AI OS Roadmap — Help Us Build This
 
-> **Status:** Active development. Looking for collaborators and backing.  
-> **Author's Note:** I've been building this solo since April 2025. The theory is proven, the foundation is solid, and with help, this could move 10x faster.
+> **Status:** Early release. Core works, edges are rough. Looking for collaborators.  
+> **Author's Note:** Built solo since April 2025. The architecture is solid, but this needs to be a community effort to reach its potential.
 
 ---
 
@@ -12,7 +12,7 @@
 | **Core** | 🌀 | Threads, HEA, SQLite backend, stateless agent |
 | **UI** | 🌀 | React app, chat, thread visualization |
 | **Integrations** | 🔄 | Feeds system built, needs OAuth + polling daemon |
-| **Advanced** | 🔮 | Philosophy, Dreams, Reflex Builder (designed, not implemented) |
+| **Advanced** | 🔮 | Philosophy thread exists. Reflex has API/schema. Visual builder planned. |
 
 **To contribute:** See [GitHub Issues](https://github.com/allee-ai/AI_OS/issues) for tagged tasks.
 
@@ -30,20 +30,21 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 | Component | Status | Description |
 |-----------|--------|-------------|
-| **Subconscious Module** | 🌀 Complete | Assembles context from all threads before each response |
-| **Thread Adapters** | 🌀 Complete | Pluggable architecture (identity, memory, log, linking_core) |
-| **HEA Context Levels** | 🌀 Complete | L1/L2/L3 dynamic context filtering |
-| **SQLite State Backend** | 🌀 Complete | Replaced JSON for identity and facts storage |
-| **Stateless Agent** | 🌀 Complete | Agent reads context, doesn't hold state |
-| **React Router UI** | 🌀 Complete | OS-like navigation (Dashboard, Chat, Threads, Docs) |
-| **Identity CRUD API** | 🌀 Complete | View/edit/delete identity entries via API |
-| **Sleep/Wake Cycles** | 🌀 Complete | `wake()` initializes, `sleep()` triggers consolidation |
-| **Temp Memory Store** | 🌀 Complete | Session facts with hierarchical keys |
-| **Event Logging** | 🌀 Complete | Timeline of all system events |
-| **Spread Activation** | 🌀 Complete | Associative memory via concept_links table |
-| **Hierarchical Keys** | 🌀 Complete | Facts stored as `sarah.likes.blue` |
-| **Hebbian Learning** | 🌀 Complete | Concepts that co-occur strengthen links |
-| **Test Suite** | 🌀 23 tests passing | Core functionality verified |
+| **Subconscious Module** | ✅ | Assembles context from all threads before each response |
+| **Thread Adapters** | ✅ | Pluggable architecture (identity, log, form, philosophy, reflex, linking_core) |
+| **HEA Context Levels** | ✅ | L1/L2/L3 dynamic context filtering |
+| **SQLite State Backend** | ✅ | WAL mode, 30s timeout, concurrent-safe |
+| **Stateless Agent** | ✅ | Agent reads context, doesn't hold state |
+| **React Router UI** | ✅ | OS-like navigation (Dashboard, Chat, Threads, Docs) |
+| **Identity CRUD API** | ✅ | View/edit/delete identity entries via API |
+| **Memory Extraction** | ✅ | LLM extracts facts from conversations |
+| **Temp Memory Store** | ✅ | Session facts with hierarchical keys |
+| **Event Logging** | ✅ | Timeline of all system events |
+| **Spread Activation** | ✅ | Associative memory via concept_links table |
+| **Hierarchical Keys** | ✅ | Facts stored as `sarah.likes.blue` |
+| **Hebbian Learning** | ✅ | Concepts that co-occur strengthen links |
+| **Test Suite** | ✅ | Core functionality verified |
+| **Consolidation Loop** | 🔄 | Memory promotion by score (WIP) |
 
 ---
 
@@ -53,11 +54,12 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 **Goal:** Facts don't just get stored — they get *promoted* based on importance.
 
 - [x] **Scoring Algorithm** — Rate facts on permanence, relevance, identity-centrality
-- [x] **Fact Relevance Table** — Multi-dimensional scoring (identity/log/form/philosophy)
+- [x] **Fact Relevance Table** — Multi-dimensional scoring per thread
 - [x] **Hierarchical Keys** — Facts stored as `sarah.likes.blue` for spread activation
 - [x] **Spread Activation** — Query "coffee" → activates sarah.* if linked
 - [x] **Hebbian Learning** — Concepts that co-occur strengthen links
-- [ ] **Promotion Thresholds** — Score ≥4.0 → L2, Score ≥3.0 → L3, <2.0 → discard
+- [x] **Memory Extraction** — LLM extracts facts after each conversation
+- [ ] **Consolidation Loop** — Promote/demote/discard based on scores (in progress)
 - [ ] **UI Feedback** — "Agent learned: [fact]" toasts after conversations
 
 ### Phase 2: Philosophy Thread
