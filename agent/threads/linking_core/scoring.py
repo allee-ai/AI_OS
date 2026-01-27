@@ -256,3 +256,67 @@ def cache_stats() -> Dict[str, Any]:
         "size": len(_EMBEDDING_CACHE),
         "ollama_available": _OLLAMA_AVAILABLE if _OLLAMA_CHECKED else "unknown",
     }
+
+
+# =============================================================================
+# Thread Summary Scoring
+# =============================================================================
+
+# Cached thread summaries + embeddings (populated on consolidation/wake)
+_THREAD_SUMMARIES: Dict[str, str] = {}
+_THREAD_EMBEDDINGS: Dict[str, np.ndarray] = {}
+
+
+def set_thread_summary(thread_name: str, summary: str) -> None:
+    """
+    Store a thread summary and compute its embedding.
+    
+    Called during consolidation to update thread summaries.
+    """
+    _THREAD_SUMMARIES[thread_name] = summary
+    
+    # Pre-compute embedding
+    emb = get_embedding(summary, use_cache=False)
+    if emb is not None:
+        _THREAD_EMBEDDINGS[thread_name] = emb
+
+
+def get_thread_summary(thread_name: str) -> Optional[str]:
+    """Get stored thread summary."""
+    return _THREAD_SUMMARIES.get(thread_name)
+
+
+def score_threads_by_embedding(query: str) -> Dict[str, float]:
+    """
+    Score all threads against query using embedding similarity.
+    
+    Args:
+        query: User query/message
+    
+    Returns:
+        Dict mapping thread_name → score (0-10 scale)
+    """
+    if not _THREAD_EMBEDDINGS:
+        return {}  # No summaries yet, fall back to keyword scoring
+    
+    query_emb = get_embedding(query)
+    if query_emb is None:
+        return {}  # Can't embed query, fall back
+    
+    scores = {}
+    for thread_name, thread_emb in _THREAD_EMBEDDINGS.items():
+        sim = cosine_similarity(query_emb, thread_emb)
+        # Convert 0-1 similarity to 0-10 scale
+        # Apply slight boost so relevant threads score higher
+        scores[thread_name] = min(10.0, sim * 12.0)  # 0.83 sim = 10.0
+    
+    return scores
+
+
+def get_thread_summary_stats() -> Dict[str, Any]:
+    """Get stats about cached thread summaries."""
+    return {
+        "threads_with_summaries": list(_THREAD_SUMMARIES.keys()),
+        "threads_with_embeddings": list(_THREAD_EMBEDDINGS.keys()),
+        "summary_count": len(_THREAD_SUMMARIES),
+    }

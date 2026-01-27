@@ -392,6 +392,9 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
           - 3.5-7: Tier 2 (profile metadata)
           - 7-10: Tier 3 (full facts with L1/L2/L3)
         
+        Uses embedding similarity when thread summaries are available,
+        falls back to keyword scoring otherwise.
+        
         Called by reflex thread or subconscious when needed.
         Does NOT decide when to run - that's reflex's job.
         
@@ -401,6 +404,30 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         Returns:
             Dict mapping thread_name -> relevance_score (0-10)
         """
+        # Try embedding-based scoring first (populated during consolidation)
+        try:
+            from agent.threads.linking_core.scoring import score_threads_by_embedding
+            emb_scores = score_threads_by_embedding(stimuli)
+            if emb_scores:
+                # Merge with keyword scores (70% embedding, 30% keyword)
+                keyword_scores = self._keyword_score_threads(stimuli)
+                scores = {}
+                for thread in set(emb_scores.keys()) | set(keyword_scores.keys()):
+                    e = emb_scores.get(thread, 5.0)
+                    k = keyword_scores.get(thread, 5.0)
+                    scores[thread] = 0.7 * e + 0.3 * k
+                self._last_scores = scores
+                return scores
+        except Exception:
+            pass
+        
+        # Fall back to pure keyword scoring
+        scores = self._keyword_score_threads(stimuli)
+        self._last_scores = scores
+        return scores
+    
+    def _keyword_score_threads(self, stimuli: str) -> Dict[str, float]:
+        """Keyword-based thread scoring (fallback)."""
         stimuli_lower = stimuli.lower()
         scores = {}
         

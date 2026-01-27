@@ -211,52 +211,65 @@ class FormThreadAdapter(BaseThreadAdapter):
             weight=0.4
         )
     
-    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Form introspection with capability awareness.
         
-        Returns facts like:
-        - "Available tools: browser, terminal, files"
-        - "Browser: open on github.com"
-        - "Recent action: executed terminal command"
+        Args:
+            context_level: HEA level (1=lean, 2=medium, 3=full)
+            query: Optional query for relevance filtering
+            threshold: Minimum weight for tools/actions (0-10 scale)
+        
+        Returns:
+            IntrospectionResult with facts like:
+                "form.tools.browser.description: Kernel browser automation"
+                "form.tools.browser.weight: 8.0"
+                "form.browser.url.value: github.com"
         """
         # Ensure tools are seeded on first introspection
         self.seed_tools()
         
         facts = []
+        min_weight = threshold / 10.0
         
-        # Tools - use formatted tools from tools.py for cleaner output
+        # Tools - use formatted tools from tools.py with dot notation
         if _HAS_TOOLS:
             available = get_available_tools()
-            if available:
+            for t in available:
+                if t.weight < min_weight:
+                    continue
+                    
+                path = f"form.tools.{t.name}"
+                
                 if context_level == 1:
-                    facts.append(f"Tools: {', '.join(t.name for t in available[:5])}...")
+                    facts.append(f"{path}.name: {t.name}")
+                    facts.append(f"{path}.weight: {t.weight}")
                 elif context_level == 2:
-                    # Group by category
-                    by_cat: Dict[str, List[str]] = {}
-                    for t in available:
-                        cat = t.category.value
-                        if cat not in by_cat:
-                            by_cat[cat] = []
-                        by_cat[cat].append(t.name)
-                    for cat, names in by_cat.items():
-                        facts.append(f"{cat.title()} tools: {', '.join(names)}")
+                    facts.append(f"{path}.description: {t.description}")
+                    facts.append(f"{path}.category: {t.category.value}")
+                    facts.append(f"{path}.weight: {t.weight}")
                 else:
                     # L3: Full details
-                    for t in available:
-                        facts.append(f"Tool {t.name}: {t.description} [{', '.join(t.actions[:3])}]")
+                    facts.append(f"{path}.description: {t.description}")
+                    facts.append(f"{path}.actions: {', '.join(t.actions[:3])}")
+                    facts.append(f"{path}.category: {t.category.value}")
+                    facts.append(f"{path}.weight: {t.weight}")
         else:
             # Fallback to DB lookup
             tools = self.get_tools(context_level)
-            tool_names = []
             for tool in tools:
                 meta = tool.get("metadata", {})
                 data = tool.get("data", {})
+                weight = tool.get("weight", 0.5)
+                
+                if weight < min_weight:
+                    continue
+                    
                 name = meta.get("name", tool.get("key", "").replace("tool_", ""))
                 if data.get("available", True):
-                    tool_names.append(name)
-            if tool_names:
-                facts.append(f"Available tools: {', '.join(tool_names)}")
+                    path = f"form.tools.{name}"
+                    facts.append(f"{path}.description: {meta.get('description', '')}")
+                    facts.append(f"{path}.weight: {weight}")
         
         # Browser state (L2+)
         if context_level >= 2:
@@ -265,18 +278,27 @@ class FormThreadAdapter(BaseThreadAdapter):
                 data = b.get("data", {})
                 url = data.get("url", "")
                 title = data.get("title", "")
+                session_id = data.get("session_id", "")
                 if url:
-                    facts.append(f"Browser: {title or url}")
+                    facts.append(f"form.browser.url.value: {url}")
+                    facts.append(f"form.browser.title.value: {title}")
+                    if session_id:
+                        facts.append(f"form.browser.session.value: {session_id}")
+                    facts.append(f"form.browser.weight: 6.0")
         
         # Action history (L3 only)
         if context_level >= 3:
             actions = self.get_action_history(3)
-            for action in actions:
+            for i, action in enumerate(actions):
                 data = action.get("data", {})
-                act = data.get("action", "")
-                tool = action.get("metadata", {}).get("tool", "")
+                meta = action.get("metadata", {})
+                act = meta.get("action", "")
+                tool = meta.get("tool", "")
+                success = data.get("success", False)
                 if act:
-                    facts.append(f"Recent: {tool} → {act}")
+                    facts.append(f"form.history.{i}.action: {tool} → {act}")
+                    facts.append(f"form.history.{i}.success: {success}")
+                    facts.append(f"form.history.{i}.weight: 4.0")
         
         return IntrospectionResult(
             facts=facts,

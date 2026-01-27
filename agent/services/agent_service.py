@@ -175,12 +175,13 @@ class AgentService:
                 
                 # Get consciousness context from subconscious (learned facts, identity, etc.)
                 # This is the complete, formatted context for the system prompt
+                # Pass user_message as query for relevance-based state assembly
                 consciousness_context = ""
                 if _HAS_SUBCONSCIOUS and get_consciousness_context:
                     # Map stimuli type to context level
                     level_map = {"realtime": 1, "conversational": 2, "analytical": 3}
                     context_level = level_map.get(stimuli_type, 2)
-                    consciousness_context = get_consciousness_context(level=context_level)
+                    consciousness_context = get_consciousness_context(level=context_level, query=user_message)
                     
                     # Log context assembly
                     if _HAS_UNIFIED_LOG:

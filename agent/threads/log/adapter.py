@@ -155,35 +155,64 @@ class LogThreadAdapter(BaseThreadAdapter):
         except Exception as e:
             return HealthReport.error(f"Log health check failed: {e}")
     
-    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Log introspection with temporal awareness.
         
-        Returns facts scaled by recency level.
+        Args:
+            context_level: HEA level (1=lean, 2=medium, 3=full)
+            query: Optional query for relevance filtering
+            threshold: Thread relevance score (0-10). Higher = more detail.
+                       For log, this increases event count rather than filtering.
+        
+        Returns:
+            IntrospectionResult with facts like:
+                "log.session.duration.value: 15 minutes"
+                "log.session.duration.weight: 8.0"
+                "log.events.0.message: discussed architecture"
+                "log.events.0.weight: 7.0"
         """
         facts = []
         
-        # Session info
+        # Session info (always included - high relevance for temporal context)
         duration = self.get_session_duration()
         if duration:
             if duration < 60:
-                facts.append(f"Session duration: {int(duration)} seconds")
+                duration_str = f"{int(duration)} seconds"
             elif duration < 3600:
-                facts.append(f"Session duration: {int(duration/60)} minutes")
+                duration_str = f"{int(duration/60)} minutes"
             else:
-                facts.append(f"Session duration: {duration/3600:.1f} hours")
+                duration_str = f"{duration/3600:.1f} hours"
+            facts.append(f"log.session.duration.value: {duration_str}")
+            facts.append(f"log.session.duration.weight: 8.0")
         
         if self._message_count > 0:
-            facts.append(f"Messages this session: {self._message_count}")
+            facts.append(f"log.session.messages.value: {self._message_count}")
+            facts.append(f"log.session.messages.weight: 7.0")
         
-        # Events based on recency level
-        event_limit = LOG_LIMITS.get(context_level, 100) // 10  # Show 1/10th in introspect
-        events = self.get_recent_events(event_limit)
-        for evt in events[:5]:  # Cap display at 5
+        # Events: higher threshold = MORE events (inverted from other threads)
+        # threshold 0-3.5 → 2 events, 3.5-7 → 5 events, 7-10 → 10 events
+        if threshold < 3.5:
+            event_count = 2
+        elif threshold < 7:
+            event_count = 5
+        else:
+            event_count = 10
+        
+        events = self.get_recent_events(event_count)
+        
+        for i, evt in enumerate(events):
+            event_type = evt.get("metadata", {}).get("type", "system")
+            # Clean event_type for display (remove colons, etc.)
+            event_type_clean = event_type.split(":")[0] if ":" in event_type else event_type
+            relevance = EVENT_TYPE_RELEVANCE.get(event_type_clean, 3)
+            
             data = evt.get("data", {})
             msg = data.get("message", "")
             if msg:
-                facts.append(f"Event: {msg[:50]}")
+                facts.append(f"log.events.{i}.message: {msg[:80]}")
+                facts.append(f"log.events.{i}.type: {event_type}")
+                facts.append(f"log.events.{i}.weight: {relevance}")
         
         return IntrospectionResult(
             facts=facts,

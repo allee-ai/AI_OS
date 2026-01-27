@@ -168,35 +168,80 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         
         return None
     
-    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Reflex introspection with pattern awareness.
         
-        Returns facts like:
-        - "Quick responses: hello, goodbye, thanks"
-        - "Shortcuts: /help, /status"
+        Args:
+            context_level: HEA level (1=lean, 2=medium, 3=full)
+            query: Optional query for relevance filtering
+            threshold: Minimum weight for patterns (0-10 scale)
+        
+        Returns:
+            IntrospectionResult with facts like:
+                "reflex.greetings.hello.response: Hi there!"
+                "reflex.greetings.hello.weight: 8.0"
+                "reflex.shortcuts.help.trigger: /help"
         """
         facts = []
+        min_weight = threshold / 10.0
         
-        # Greetings (L1+)
+        # Greetings with dot notation
         greetings = self.get_greetings(context_level)
-        greeting_keys = [g.get("key", "") for g in greetings if g.get("key")]
+        for g in greetings:
+            key = g.get("key", "")
+            weight = g.get("weight", 0.8)
+            
+            if weight < min_weight:
+                continue
+                
+            data = g.get("data", {})
+            response = data.get("value", "")
+            
+            if key:
+                path = f"reflex.greetings.{key}"
+                facts.append(f"{path}.response: {response[:50] if response else ''}")
+                facts.append(f"{path}.weight: {weight}")
         
-        if greeting_keys:
-            facts.append(f"Quick responses: {', '.join(greeting_keys[:5])}")
-        
-        # Shortcuts (L2+)
+        # Shortcuts (L2+) with dot notation
         if context_level >= 2:
             shortcuts = self.get_shortcuts(context_level)
-            shortcut_triggers = []
             for s in shortcuts:
+                key = s.get("key", "")
+                weight = s.get("weight", 0.5)
+                
+                if weight < min_weight:
+                    continue
+                    
                 data = s.get("data", {})
                 trigger = data.get("trigger", "")
+                response = data.get("response", "")
+                
                 if trigger:
-                    shortcut_triggers.append(trigger)
-            
-            if shortcut_triggers:
-                facts.append(f"Shortcuts: {', '.join(shortcut_triggers[:5])}")
+                    # Clean key for path
+                    safe_key = key.replace("/", "_").replace(" ", "_") if key else trigger.replace("/", "_")
+                    path = f"reflex.shortcuts.{safe_key}"
+                    facts.append(f"{path}.trigger: {trigger}")
+                    facts.append(f"{path}.response: {response[:50] if response else ''}")
+                    facts.append(f"{path}.weight: {weight}")
+        
+        # System reflexes (L3 only) with dot notation
+        if context_level >= 3:
+            system = self.get_system_reflexes(context_level)
+            for r in system:
+                key = r.get("key", "")
+                weight = r.get("weight", 0.5)
+                
+                if weight < min_weight:
+                    continue
+                    
+                data = r.get("data", {})
+                action = data.get("action", "")
+                
+                if key:
+                    path = f"reflex.system.{key}"
+                    facts.append(f"{path}.action: {action}")
+                    facts.append(f"{path}.weight: {weight}")
         
         return IntrospectionResult(
             facts=facts,

@@ -101,23 +101,57 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             weight=weight
         )
     
-    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Identity introspection with structured output.
         
-        Returns facts at the requested HEA level.
-        If query provided, filters by relevance using LinkingCore.
+        Returns facts at the requested HEA level, filtered by weight threshold.
+        Facts are formatted with dot notation for addressability.
+        
+        Args:
+            context_level: HEA level (1=lean, 2=medium, 3=full)
+            query: Optional query for relevance filtering
+            threshold: Minimum weight for facts to be included (0-10 scale)
+        
+        Returns:
+            IntrospectionResult with facts like:
+                "identity.agent.name.value: Nola"
+                "identity.agent.name.weight: 10.0"
         """
         relevant_concepts = []
         
-        # Get raw data
-        rows = self.get_data(level=context_level)
+        # Convert 0-10 threshold to 0-1 weight scale
+        min_weight = threshold / 10.0
+        
+        # Get raw data filtered by weight
+        rows = self.get_data(level=context_level, min_weight=min_weight)
         
         # If query provided, filter by relevance
         if query:
             rows, relevant_concepts = self._filter_by_relevance(rows, query, context_level)
         
-        facts = [f"{row['key']}: {row['value']}" for row in rows]
+        # Format facts with dot notation
+        facts = []
+        for row in rows:
+            profile_id = row.get('profile_id', 'unknown')
+            key = row.get('key', 'unknown')
+            value = row.get('value', '')
+            weight = row.get('weight', 0.5)
+            
+            # Build dot notation path: identity.{profile}.{key}
+            # profile_id is like "self.agent" or "user.primary"
+            # We want: identity.agent.name or identity.user.name
+            profile_parts = profile_id.split('.')
+            if len(profile_parts) >= 2:
+                profile_short = profile_parts[1]  # "agent" or "primary" -> "user"
+                if profile_short == "primary":
+                    profile_short = "user"
+            else:
+                profile_short = profile_id
+            
+            path = f"identity.{profile_short}.{key}"
+            facts.append(f"{path}.value: {value}")
+            facts.append(f"{path}.weight: {weight}")
         
         # Get health
         health_report = self.health()

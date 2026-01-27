@@ -89,13 +89,15 @@ def get_connection(readonly: bool = False) -> sqlite3.Connection:
     
     if not readonly:
         db_path.parent.mkdir(parents=True, exist_ok=True)
-        conn = sqlite3.connect(str(db_path), check_same_thread=False)
+        conn = sqlite3.connect(str(db_path), check_same_thread=False, timeout=30.0)
     else:
         uri = f"file:{db_path}?mode=ro"
-        conn = sqlite3.connect(uri, uri=True, check_same_thread=False)
+        conn = sqlite3.connect(uri, uri=True, check_same_thread=False, timeout=30.0)
     
     conn.row_factory = sqlite3.Row
     conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 30000")  # 30 second timeout for locks
+    conn.execute("PRAGMA journal_mode = WAL")    # Write-Ahead Logging for better concurrency
     return conn
 
 

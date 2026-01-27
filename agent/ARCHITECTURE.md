@@ -130,9 +130,17 @@ Each thread is now a self-contained module with a standard interface:
 
 **Purpose**: Embodiment & Capabilities. Answers "WHAT can I do?". Manages tools and actions.
 
-**Schema (`schema.py`):**
-- **`form_tool_registry`**: Available capabilities.
-- **`form_action_history`**: Log of physical actions taken.
+**Architecture**: L1/L2/L3 pattern
+- **L1 (Registry)**: Tool definitions, metadata (`tools/registry.py`)
+- **L2 (Executor)**: Execution engine, error handling (`tools/executor.py`)
+- **L3 (Executables)**: Actual Python implementations (`tools/executables/*.py`)
+
+**API (`api.py`):**
+- `GET /api/form/tools` — List all tools
+- `POST /api/form/tools/{name}/execute` — Execute a tool action
+- `GET /api/form/tools/{name}/code` — Get executable source
+
+**Executable Interface**: Each tool implements `run(action: str, params: dict) -> Any`
 
 #### 4. Philosophy Thread (`agent/threads/philosophy/`)
 

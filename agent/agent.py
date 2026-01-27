@@ -68,9 +68,10 @@ class Agent:
         self.bootstrap()
         
         # Get context from subconscious if not provided
+        # Pass user_input as query for relevance-based state assembly
         if consciousness_context is None and _HAS_SUBCONSCIOUS:
             try:
-                consciousness_context = get_consciousness_context(level=context_level)
+                consciousness_context = get_consciousness_context(level=context_level, query=user_input)
             except Exception:
                 consciousness_context = ""
         

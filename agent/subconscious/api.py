@@ -6,10 +6,11 @@ The aggregation layer - calls all threads and combines their state.
 This is the ONLY introspection endpoint needed. It replaces introspection.py.
 
 Endpoints:
-    GET /api/subconscious/state     - Full state from all threads
-    GET /api/subconscious/health    - Health status from all threads  
-    GET /api/subconscious/context   - Context string for system prompt
-    POST /api/subconscious/record   - Record an interaction
+    GET /api/subconscious/build_state  - Build STATE block (primary endpoint)
+    GET /api/subconscious/state        - Full state from all threads (legacy)
+    GET /api/subconscious/health       - Health status from all threads  
+    GET /api/subconscious/context      - Context string for system prompt
+    POST /api/subconscious/record      - Record an interaction
 """
 
 from fastapi import APIRouter, Query
@@ -29,6 +30,44 @@ class InteractionRecord(BaseModel):
     user_message: str
     agent_response: str
     metadata: Optional[Dict[str, Any]] = None
+
+
+# ─────────────────────────────────────────────────────────────
+# Primary Endpoint: STATE + ASSESS
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/build_state")
+async def build_state(
+    query: Optional[str] = Query(None, description="The assess block content")
+):
+    """
+    Build STATE block from all threads, ordered by relevance.
+    
+    This is the primary state assembly endpoint for the architecture:
+        state_t+1 = f(state_t, assess)
+    
+    The query parameter is the "assess block" - what you're assessing against state:
+    - User message (conversation)
+    - File chunk (reading)
+    - Memory segment (consolidation)
+    - External data (sync)
+    - Own state (reflection)
+    
+    Returns:
+        {
+            "state": "== STATE ==\\n\\nidentity - 8.2\\n...",
+            "query": "the assess block",
+            "char_count": N
+        }
+    """
+    sub = get_subconscious()
+    state_str = sub.build_state(query=query or "")
+    
+    return {
+        "state": state_str,
+        "query": query,
+        "char_count": len(state_str)
+    }
 
 
 # ─────────────────────────────────────────────────────────────

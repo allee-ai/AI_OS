@@ -5,6 +5,57 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-26 — STATE + ASSESS Architecture & Embedding-Based Scoring
+
+### Architecture: STATE + ASSESS Model
+- **Core Equation**: `state_t+1 = f(state_t, assess)` — one architecture, different assess sources
+- **Three-Step Flow**: `score(query) → build_state(scores, query) → agent.generate(state, query)`
+- **Unified Pattern**: Same STATE building for conversation, file processing, memory loops, self-reflection
+- **Clean Separation**: Subconscious builds STATE, agent.generate() IS the assess step (LLM evaluates query against state)
+
+### Feature: Separated Scoring & State Building
+- **`score(query)`**: Returns thread relevance scores `{identity: 9.0, log: 5.0, ...}`
+- **`build_state(scores, query)`**: Builds STATE block from scores with dot notation
+- **`get_state(query)`**: Convenience method combining both
+- **Score Thresholds**: 0-3.5 = L1 (lean), 3.5-7 = L2 (medium), 7-10 = L3 (full)
+
+### Feature: Chat Summary for Query Building
+- **New Column**: `summary` column added to `convos` table
+- **`update_summary(session_id, summary)`**: Store conversation summary at session close
+- **`build_query(session_id, recent_turns=3)`**: Builds query string from summary + recent turns
+- **Query Flow**: `chat.build_query() → subconscious.score() → subconscious.build_state() → agent.generate()`
+
+### Feature: Embedding-Based Thread Scoring
+- **Thread Summaries**: ConsolidationLoop generates summaries from each thread's introspection
+- **Pre-computed Embeddings**: Summaries embedded via nomic-embed-text during consolidation
+- **Hybrid Scoring**: 70% embedding similarity + 30% keyword matching for thread relevance
+- **On Wake/Sleep**: Summaries updated during consolidation, cached for fast scoring
+
+### Architecture: ConsolidationLoop Implementation
+- **`_update_thread_summaries()`**: Generates thread summaries and caches embeddings (~850ms)
+- **`_consolidate()`**: Runs summary updates + stub for temp_memory promotion
+- **Scoring Infrastructure**: `set_thread_summary()`, `get_thread_summary()`, `score_threads_by_embedding()`
+
+### Performance: State Building Latency
+- **`score()`**: ~0ms (dict lookups)
+- **`build_state()`**: ~13ms (DB reads + string formatting)
+- **Full pipeline**: ~12ms for ~3.8KB of state
+- **Embedding scoring**: ~15ms per query after summaries cached
+
+### Files Changed
+- `agent/subconscious/orchestrator.py` — Added `score()`, refactored `build_state()`, added `get_state()`
+- `agent/subconscious/loops.py` — Implemented ConsolidationLoop with thread summary generation
+- `agent/threads/linking_core/scoring.py` — Added thread summary storage and embedding-based scoring
+- `agent/threads/linking_core/adapter.py` — Updated `score_threads()` to use embedding scoring
+- `chat/schema.py` — Added `summary` column, `update_summary()`, `get_summary()`, `build_query()`
+- `agent/threads/*/adapter.py` — All adapters support threshold param and dot notation output
+
+### Scripts Added
+- `scripts/utils/bench_state.py` — Benchmark state building latency
+- `scripts/utils/test_consolidation.py` — Test thread summary generation and embedding scoring
+
+---
+
 ## 2026-01-23 — Architecture Hardening + Doc Consolidation
 
 ### Documentation: Consolidation (9 files → 4 active)

@@ -76,6 +76,12 @@ def init_profiles(conn: Optional[sqlite3.Connection] = None) -> None:
         )
     """)
     
+    # Migration: Add protected column if it doesn't exist (for existing databases)
+    cur.execute("PRAGMA table_info(profiles)")
+    columns = [row[1] for row in cur.fetchall()]
+    if "protected" not in columns:
+        cur.execute("ALTER TABLE profiles ADD COLUMN protected BOOLEAN DEFAULT FALSE")
+    
     # Core protected profiles - exist by default, cannot be deleted from UI
     core_profiles = [
         ("self.agent", "self", "Agent", True),
@@ -161,6 +167,12 @@ def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
     
     cur.execute("CREATE INDEX IF NOT EXISTS idx_profile_facts_weight ON profile_facts(weight DESC)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_profile_facts_type ON profile_facts(fact_type)")
+    
+    # Migration: Add protected column if it doesn't exist (for existing databases)
+    cur.execute("PRAGMA table_info(profile_facts)")
+    columns = [row[1] for row in cur.fetchall()]
+    if "protected" not in columns:
+        cur.execute("ALTER TABLE profile_facts ADD COLUMN protected BOOLEAN DEFAULT FALSE")
     
     # Core fact keys for self.agent (values empty - user fills in)
     agent_facts = [
@@ -268,25 +280,28 @@ def create_profile(profile_id: str, type_name: str, display_name: str = "") -> N
 def get_profiles(type_name: str = None) -> List[Dict]:
     """Get all profiles, optionally filtered by type."""
     conn = get_connection(readonly=False)
-    cur = conn.cursor()
-    init_profiles(conn)
-    
-    if type_name:
-        cur.execute("""
-            SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
-            FROM profiles p
-            JOIN profile_types pt ON p.type_name = pt.type_name
-            WHERE p.type_name = ?
-            ORDER BY p.created_at
-        """, (type_name,))
-    else:
-        cur.execute("""
-            SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
-            FROM profiles p
-            JOIN profile_types pt ON p.type_name = pt.type_name
-            ORDER BY pt.trust_level DESC, p.created_at
-        """)
-    return [dict(row) for row in cur.fetchall()]
+    try:
+        cur = conn.cursor()
+        init_profiles(conn)
+        
+        if type_name:
+            cur.execute("""
+                SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
+                FROM profiles p
+                JOIN profile_types pt ON p.type_name = pt.type_name
+                WHERE p.type_name = ?
+                ORDER BY p.created_at
+            """, (type_name,))
+        else:
+            cur.execute("""
+                SELECT p.*, pt.trust_level, pt.context_priority, pt.can_edit
+                FROM profiles p
+                JOIN profile_types pt ON p.type_name = pt.type_name
+                ORDER BY pt.trust_level DESC, p.created_at
+            """)
+        return [dict(row) for row in cur.fetchall()]
+    finally:
+        conn.close()
 
 
 def delete_profile(profile_id: str) -> bool:
@@ -397,31 +412,34 @@ def pull_profile_facts(
 ) -> List[Dict]:
     """Pull facts, optionally filtered by profile and/or fact type."""
     conn = get_connection(readonly=False)
-    cur = conn.cursor()
-    init_profile_facts(conn)
-    
-    query = """
-        SELECT pf.*, p.display_name, p.type_name, pt.trust_level
-        FROM profile_facts pf
-        JOIN profiles p ON pf.profile_id = p.profile_id
-        JOIN profile_types pt ON p.type_name = pt.type_name
-        WHERE pf.weight >= ?
-    """
-    params = [min_weight]
-    
-    if profile_id:
-        query += " AND pf.profile_id = ?"
-        params.append(profile_id)
-    
-    if fact_type:
-        query += " AND pf.fact_type = ?"
-        params.append(fact_type)
-    
-    query += " ORDER BY pf.weight DESC, pf.key LIMIT ?"
-    params.append(limit)
-    
-    cur.execute(query, params)
-    return [dict(row) for row in cur.fetchall()]
+    try:
+        cur = conn.cursor()
+        init_profile_facts(conn)
+        
+        query = """
+            SELECT pf.*, p.display_name, p.type_name, pt.trust_level
+            FROM profile_facts pf
+            JOIN profiles p ON pf.profile_id = p.profile_id
+            JOIN profile_types pt ON p.type_name = pt.type_name
+            WHERE pf.weight >= ?
+        """
+        params = [min_weight]
+        
+        if profile_id:
+            query += " AND pf.profile_id = ?"
+            params.append(profile_id)
+        
+        if fact_type:
+            query += " AND pf.fact_type = ?"
+            params.append(fact_type)
+        
+        query += " ORDER BY pf.weight DESC, pf.key LIMIT ?"
+        params.append(limit)
+        
+        cur.execute(query, params)
+        return [dict(row) for row in cur.fetchall()]
+    finally:
+        conn.close()
 
 
 def update_fact_weight(profile_id: str, key: str, weight: float) -> None:

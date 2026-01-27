@@ -6,11 +6,26 @@ interface Tool {
   description: string;
   category: string;
   actions: string[];
+  run_file: string;
+  run_type: string;
+  path: string | null;
+  exists: boolean;
   requires_env: string[];
   weight: number;
   enabled: boolean;
   available: boolean;
   code?: string;
+}
+
+interface ExecuteResult {
+  tool_name: string;
+  action: string;
+  status: string;
+  output: unknown;
+  error: string | null;
+  duration_ms: number;
+  timestamp: string;
+  success: boolean;
 }
 
 interface Category {
@@ -61,6 +76,12 @@ export const ToolDashboard = () => {
   // Filter state
   const [filterCategory, setFilterCategory] = useState<string>('all');
   const [filterAvailable, setFilterAvailable] = useState<'all' | 'available' | 'unavailable'>('all');
+  
+  // Execute/test state
+  const [selectedAction, setSelectedAction] = useState<string>('');
+  const [executeParams, setExecuteParams] = useState<string>('{}');
+  const [executing, setExecuting] = useState(false);
+  const [executeResult, setExecuteResult] = useState<ExecuteResult | null>(null);
 
   const fetchTools = useCallback(async () => {
     try {
@@ -106,8 +127,49 @@ export const ToolDashboard = () => {
     if (activeTool) {
       fetchToolDetail(activeTool);
       setEditing(false);
+      setExecuteResult(null);
+      setSelectedAction('');
+      setExecuteParams('{}');
     }
   }, [activeTool, fetchToolDetail]);
+
+  const executeTool = async () => {
+    if (!activeTool || !selectedAction) return;
+    
+    setExecuting(true);
+    setExecuteResult(null);
+    
+    try {
+      let params = {};
+      try {
+        params = JSON.parse(executeParams);
+      } catch {
+        // Invalid JSON, use empty object
+      }
+      
+      const res = await fetch(`${API_BASE}/api/form/tools/${activeTool}/execute`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: selectedAction, params }),
+      });
+      
+      const result = await res.json();
+      setExecuteResult(result);
+    } catch (err) {
+      setExecuteResult({
+        tool_name: activeTool,
+        action: selectedAction,
+        status: 'error',
+        output: null,
+        error: String(err),
+        duration_ms: 0,
+        timestamp: new Date().toISOString(),
+        success: false,
+      });
+    } finally {
+      setExecuting(false);
+    }
+  };
 
   const handleDelete = async (name: string) => {
     if (!confirm(`Delete tool "${name}"? This will remove the code from tools.py.`)) return;
@@ -293,7 +355,9 @@ export const ToolDashboard = () => {
                       onClick={() => setActiveTool(tool.name)}
                     >
                       <div className="tool-info">
-                        <span className="tool-name">{tool.name}</span>
+                        <span className="tool-name">
+                          {tool.exists ? '✓' : '○'} {tool.name}
+                        </span>
                         <span className="tool-desc">{tool.description.slice(0, 40)}...</span>
                       </div>
                       <div className={`status-dot ${tool.available ? 'available' : 'unavailable'}`} />
@@ -403,7 +467,12 @@ export const ToolDashboard = () => {
 
                 {/* Handler Code */}
                 <div className="detail-section code-section">
-                  <h3>Handler Code (Python)</h3>
+                  <h3>
+                    Executable Code
+                    <span className="code-path">
+                      {toolDetail.run_file ? `executables/${toolDetail.run_file}` : 'No file'}
+                    </span>
+                  </h3>
                   {editing ? (
                     <textarea
                       value={editForm.code || ''}
@@ -411,21 +480,87 @@ export const ToolDashboard = () => {
                       rows={15}
                       className="code-editor"
                       spellCheck={false}
-                      placeholder={`@register_handler("${toolDetail.name}")
-def handle_${toolDetail.name.replace(/-/g, '_')}(action: str, params: Dict[str, Any]) -> ToolResult:
-    """Handle ${toolDetail.name} operations."""
-    # Your code here
-    return ToolResult(
-        status=ExecutionStatus.SUCCESS,
-        tool="${toolDetail.name}",
-        action=action,
-        output="Result",
-    )`}
+                      placeholder={`"""
+${toolDetail.name} Tool
+"""
+
+from typing import Any, Dict
+
+
+def run(action: str, params: Dict[str, Any]) -> Any:
+    """Execute a ${toolDetail.name} action."""
+    
+    if action == "${toolDetail.actions[0] || 'example'}":
+        # Your implementation here
+        return {"status": "success"}
+    
+    raise ValueError(f"Unknown action: {action}")`}
                     />
                   ) : toolDetail.code ? (
                     <pre className="code-block">{toolDetail.code}</pre>
                   ) : (
-                    <p className="no-code">No handler code defined. Edit to add Python code.</p>
+                    <p className="no-code">
+                      {toolDetail.exists 
+                        ? 'Loading executable code...' 
+                        : `No executable file found. Create: executables/${toolDetail.run_file || toolDetail.name + '.py'}`}
+                    </p>
+                  )}
+                </div>
+
+                {/* Execution Environment */}
+                <div className="detail-section execute-section">
+                  <h3>🧪 Test Environment</h3>
+                  <div className="execute-controls">
+                    <div className="execute-row">
+                      <select 
+                        value={selectedAction} 
+                        onChange={(e) => setSelectedAction(e.target.value)}
+                        className="action-select"
+                      >
+                        <option value="">Select action...</option>
+                        {toolDetail.actions.map(action => (
+                          <option key={action} value={action}>{action}</option>
+                        ))}
+                      </select>
+                      <button 
+                        className="run-btn"
+                        onClick={executeTool}
+                        disabled={!selectedAction || executing || !toolDetail.available}
+                      >
+                        {executing ? '⏳ Running...' : '▶ Run'}
+                      </button>
+                    </div>
+                    <div className="params-row">
+                      <label>Params (JSON):</label>
+                      <textarea
+                        value={executeParams}
+                        onChange={(e) => setExecuteParams(e.target.value)}
+                        rows={3}
+                        className="params-editor"
+                        placeholder='{"key": "value"}'
+                        spellCheck={false}
+                      />
+                    </div>
+                  </div>
+                  
+                  {executeResult && (
+                    <div className={`execute-result ${executeResult.success ? 'success' : 'error'}`}>
+                      <div className="result-header">
+                        <span className="result-status">
+                          {executeResult.success ? '✓' : '✗'} {executeResult.status}
+                        </span>
+                        <span className="result-duration">{executeResult.duration_ms.toFixed(1)}ms</span>
+                      </div>
+                      {executeResult.error ? (
+                        <pre className="result-error">{executeResult.error}</pre>
+                      ) : (
+                        <pre className="result-output">
+                          {typeof executeResult.output === 'object' 
+                            ? JSON.stringify(executeResult.output, null, 2)
+                            : String(executeResult.output)}
+                        </pre>
+                      )}
+                    </div>
                   )}
                 </div>
               </div>

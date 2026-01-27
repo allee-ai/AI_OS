@@ -2,46 +2,66 @@
 Subconscious Orchestrator
 =========================
 
-The orchestrator that builds STATE + CONTEXT blocks from all threads.
-Each thread owns its introspection - Subconscious just aggregates.
+The orchestrator that builds STATE from all threads.
+
+Core equation: state_t+1 = f(state_t, assess)
+
+Two-step flow in subconscious:
+    1. score(query) → thread scores
+    2. build_state(scores, query) → STATE block
+
+Then agent.generate(STATE, query) IS the assess step.
+The LLM receives state + assess block and produces output.
 
 Usage:
-    from agent.subconscious.orchestrator import Subconscious
+    from agent.subconscious.orchestrator import get_subconscious
     
-    sub = Subconscious()
-    context = sub.build_context(level=2, query="Tell me about yourself")
-    # Returns: {"state": {...}, "context": [...]}
+    sub = get_subconscious()
+    scores = sub.score("who are you")
+    state = sub.build_state(scores, "who are you")
+    # Then: agent.generate(user_input, state) - this IS assess
 
 Architecture:
-    - Each thread has .introspect(level, query) method
-    - Subconscious calls all threads and aggregates results
-    - LinkingCore filtering happens INSIDE each thread
+    - score() uses LinkingCore to score all threads for relevance
+    - build_state() orders threads by score, calls introspect with threshold
+    - agent.generate() IS assess - LLM evaluates query against state
 """
 
-from typing import Dict, List, Any, Optional
+from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timezone
 import json
 
 
-# Thread list
-THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
+# Thread list (linking_core excluded - it scores, doesn't contribute facts)
+THREADS = ["identity", "log", "form", "philosophy", "reflex"]
+
+# Score thresholds for context levels
+# Score determines: (1) block order, (2) L1/L2/L3 level, (3) fact weight threshold
+SCORE_THRESHOLDS = {
+    "L1": 3.5,   # 0 - 3.5: L1 (lean), only high-weight facts
+    "L2": 7.0,   # 3.5 - 7: L2 (medium)
+    "L3": 10.0,  # 7 - 10: L3 (full)
+}
 
 
 class Subconscious:
     """
-    The orchestrator that aggregates context from all threads.
+    The orchestrator that builds STATE from all threads.
     
-    Key insight: Each thread owns its own introspection.
-    Subconscious just:
-    - Calls each thread.introspect(level, query)
-    - Aggregates results into STATE block
-    - Returns combined context
+    Core equation: state_t+1 = f(state_t, assess)
+    
+    Key insight: 
+    - STATE is assembled from threads, ordered by relevance
+    - Each thread filters its facts by the score threshold
+    - Facts use dot notation for addressability
+    - The same STATE structure works for conversation, consolidation, reading, etc.
     """
     
     def __init__(self):
         self._last_context_time: Optional[str] = None
         self._last_query: Optional[str] = None
         self._adapters: Dict[str, Any] = {}
+        self._linking_core = None
     
     def _get_adapter(self, thread_name: str):
         """Lazy-load thread adapters. Each import is fully isolated."""
@@ -92,6 +112,159 @@ class Subconscious:
             else:
                 self._adapters[thread_name] = None
         return self._adapters.get(thread_name)
+    
+    def _get_linking_core(self):
+        """Get the LinkingCore adapter for scoring."""
+        if self._linking_core is None:
+            try:
+                from agent.threads.linking_core.adapter import LinkingCoreThreadAdapter
+                self._linking_core = LinkingCoreThreadAdapter()
+            except Exception as e:
+                print(f"⚠️ Failed to load linking_core: {e}")
+        return self._linking_core
+    
+    def score(self, query: str = "") -> Dict[str, float]:
+        """
+        Score all threads for relevance to query.
+        
+        Step 1 of the flow: score(query) → scores
+        
+        Args:
+            query: The input to score against (user message, file chunk, etc.)
+        
+        Returns:
+            Dict mapping thread_name → relevance_score (0-10)
+            
+            Example:
+                {"identity": 9.0, "log": 5.0, "form": 4.0, ...}
+        """
+        linking_core = self._get_linking_core()
+        if linking_core and query:
+            scores = linking_core.score_threads(query)
+        else:
+            # Default scores if linking_core unavailable or no query
+            scores = {t: 5.0 for t in THREADS}
+        
+        # Ensure all threads have a score (default 5.0)
+        for thread in THREADS:
+            if thread not in scores:
+                scores[thread] = 5.0
+        
+        return scores
+    
+    def build_state(self, scores: Dict[str, float], query: str = "") -> str:
+        """
+        Build STATE block from thread scores.
+        
+        Step 2 of the flow: build_state(scores) → STATE
+        
+        Args:
+            scores: Thread relevance scores from score()
+            query: Optional query for thread introspection filtering
+        
+        Returns:
+            Formatted STATE block string:
+            
+            == STATE ==
+            
+            identity - 8.2
+            identity.agent.name.value: Nola
+            identity.agent.name.weight: 10.0
+            
+            log - 5.5
+            log.events.0.message: discussed architecture
+            
+            == END STATE ==
+        """
+        # Order by score (highest first)
+        ordered_threads: List[Tuple[str, float]] = sorted(
+            scores.items(), 
+            key=lambda x: x[1], 
+            reverse=True
+        )
+        
+        # Build state blocks
+        lines = ["== STATE ==", ""]
+        
+        for thread_name, score in ordered_threads:
+            if thread_name == "linking_core":
+                continue  # linking_core scores, doesn't contribute facts
+                
+            adapter = self._get_adapter(thread_name)
+            if not adapter:
+                continue
+            
+            # Determine level from score
+            if score < SCORE_THRESHOLDS["L1"]:
+                level = 1
+            elif score < SCORE_THRESHOLDS["L2"]:
+                level = 2
+            else:
+                level = 3
+            
+            # Use score as threshold
+            threshold = score
+            
+            try:
+                # Call introspect with threshold
+                result = adapter.introspect(
+                    context_level=level, 
+                    query=query,
+                    threshold=threshold
+                )
+                result_dict = result.to_dict()
+                facts = result_dict.get("facts", [])
+                
+                if facts:
+                    # Thread header with score
+                    lines.append(f"{thread_name} - {score:.1f}")
+                    
+                    # Facts (already formatted with dot notation by adapter)
+                    for fact in facts:
+                        lines.append(fact)
+                    
+                    lines.append("")  # Blank line between threads
+                    
+            except TypeError:
+                # Adapter doesn't support threshold yet - fall back to old signature
+                try:
+                    result = adapter.introspect(context_level=level, query=query)
+                    result_dict = result.to_dict()
+                    facts = result_dict.get("facts", [])
+                    
+                    if facts:
+                        lines.append(f"{thread_name} - {score:.1f}")
+                        for fact in facts:
+                            lines.append(fact)
+                        lines.append("")
+                except Exception as e:
+                    print(f"⚠️ {thread_name} introspect failed: {e}")
+                    
+            except Exception as e:
+                print(f"⚠️ {thread_name} introspect failed: {e}")
+        
+        lines.append("== END STATE ==")
+        
+        # Track timing
+        self._last_context_time = datetime.now(timezone.utc).isoformat()
+        self._last_query = query
+        
+        return "\n".join(lines)
+    
+    def get_state(self, query: str = "") -> str:
+        """
+        Convenience method: score + build_state in one call.
+        
+        For when you just need the STATE block without intermediate access.
+        
+        Args:
+            query: The input to build state for
+        
+        Returns:
+            Formatted STATE block string
+        """
+        scores = self.score(query)
+        return self.build_state(scores, query)
     
     def build_context(
         self,
@@ -245,8 +418,29 @@ def get_subconscious() -> Subconscious:
     return _SUBCONSCIOUS
 
 
+def build_state(query: str = "") -> str:
+    """
+    Convenience function: score(query) + build_state(scores, query).
+    
+    This is the primary state assembly function for the architecture.
+    Agent.generate(state, query) IS the assess step.
+    
+    Flow:
+        scores = score(query)
+        state = build_state(scores, query)
+        response = agent.generate(state, query)  ← this IS assess
+    
+    Args:
+        query: The assess block content (user message, file chunk, etc.)
+    
+    Returns:
+        Formatted STATE block string with dot notation facts.
+    """
+    return get_subconscious().get_state(query)
+
+
 def build_context(level: int = 2, query: str = "", threads: Optional[List[str]] = None) -> Dict[str, Any]:
-    """Convenience function to build context."""
+    """Convenience function to build context (legacy)."""
     return get_subconscious().build_context(level, query, threads)
 
 

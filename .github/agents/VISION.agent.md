@@ -664,3 +664,249 @@ The graph is interactive, but only *on demand*. We need to bridge the gap betwee
 **Tier 4 (Leave Alone)**
 1) Installers/infra/locks/HEA tiers — stable.
 
+---
+
+### 🤖 Model: Claude Opus 4.5 | Date: 2026-01-26 (Assessment #4)
+
+#### 📊 Codebase Health Check
+- **Current State**: "The Loops Exist, The Logic Doesn't" — Subconscious framework is architecturally complete (loops, triggers, temp_memory), but core methods are stubs.
+- **Completeness**: 93% (Backend Architecture), 75% (Frontend Visualization), 40% (Background Processing Logic).
+- **Technical Debt**: **MODERATE** — LOG.txt frozen at Dec 28 (29 days stale). Loop methods are `pass` statements.
+- **Iteration Velocity**: **MODERATE** — Session work (Form tools DB-backed) completed, but visualization asks from Jan 21 unfulfilled.
+
+#### 🔄 Evolution Check (Then vs. Now)
+
+| Previous Ask (Jan 21) | Status | Notes |
+|:---|:---:|:---|
+| **`/api/linking_core/score-breakdown` endpoint** | ❌ **NOT BUILT** | `/api/linking_core/score` exists but returns flat scores, no dimensional breakdown |
+| **Score tooltip to ConceptGraph3D nodes** | ❌ **NOT BUILT** | Graph exists, no per-node score display |
+| **Edge labels on graph** | ❌ **NOT BUILT** | Links visible, no strength labels |
+| **Retrieval Inspector panel** | ❌ **NOT BUILT** | No side panel for retrieval diagnostics |
+| **Consolidation Activity Feed** | ❌ **NOT BUILT** | Framework exists in `subconscious/loops.py`, logic is `pass` |
+
+**What WAS Built Since Jan 21:**
+- ✅ **Form Thread DB-Backed Tools** — Full CRUD + rename + action validation (519 lines)
+- ✅ **L1/L2/L3 Pattern** in Form (`registry.py` → `executor.py` → `executables/`)
+- ✅ **Tool execute functionality** in frontend
+- ✅ **Clean architecture** — per-thread API routers, fault isolation
+
+**Verdict:** ⚠️ Session work was valuable (tools restructure), but the Jan 21 visualization asks were **ignored**. Same pattern as Jan 19→21. "Build infrastructure, skip visualization."
+
+#### 🔍 Subconscious Discovery (Corrected)
+
+Previous assessment claimed `consolidation_daemon.py` was deleted. **WRONG.** It moved to `subconscious/`:
+
+| File | Lines | Purpose | Status |
+|:---|:---:|:---|:---|
+| `subconscious/loops.py` | 358 | `ConsolidationLoop`, `MemoryLoop`, `SyncLoop`, `HealthLoop` | ⚡ **Stubs** (`pass` inside) |
+| `subconscious/triggers.py` | 451 | `EventTrigger`, `ThresholdTrigger`, `TimeTrigger` | ⚡ **Framework**, not wired |
+| `subconscious/core.py` | 423 | `ThreadRegistry`, `SubconsciousCore` | ✅ Working |
+| `subconscious/orchestrator.py` | 256 | Aggregates thread introspections | ✅ Working |
+| `subconscious/temp_memory/store.py` | 380 | `Fact` dataclass, `temp_facts` table | ✅ Schema exists |
+
+**The Real Gap:** Framework exists. Logic doesn't:
+```python
+# loops.py:200-207
+def _consolidate(self) -> None:
+    # TODO: Consolidation logic will be implemented here
+    pass  # <-- THIS IS EMPTY
+```
+
+#### 🎯 Boredom Audit (Updated Jan 26)
+
+| System | Score | Status | Reasoning |
+|:---|:---:|:---|:---|
+| **App Infrastructure** | 😴 2/5 | **Solved** | DMG, uv, dual-mode — done. Don't touch. |
+| **DB Persistence** | 😴 2/5 | **Solved** | WAL mode, busy_timeout, try/finally — solid. |
+| **HEA L1/L2/L3** | 😴 2/5 | **Solved** | Three-tier gating works. |
+| **Form Tools (DB-backed)** | ⚡ 4/5 | **Just Shipped** | Full CRUD + executables + actions. Clean. |
+| **ConceptGraph3D** | 😐 3/5 | **Maintenance** | Works, but stale. No new features since Jan 21. |
+| **Linking Core Explainability** | 🔥 5/5 | **GHOST CODE** | `score_relevance()` returns flat scores. No breakdown UI. |
+| **Subconscious Framework** | ⚡ 4/5 | **Framework Built** | `loops.py`, `triggers.py` architecture clean. |
+| **Consolidation Logic** | 🔥 5/5 | **GHOST CODE** | Loop class exists. `_consolidate()` is `pass`. |
+| **Trigger Wiring** | 🔥 5/5 | **GHOST CODE** | Triggers defined. Not connected to Form tools. |
+| **Reflex Thread** | 😐 3/5 | **Maintenance** | In-memory dicts. Could use `triggers.py` but doesn't. |
+
+#### 🚀 My Vision (Updated Jan 26)
+
+**1. Most Exciting Problem: "The Empty Loops"**
+
+You have the most elegant background processing architecture I've seen:
+- `BackgroundLoop` base class with error backoff, graceful shutdown
+- `ConsolidationLoop`, `MemoryLoop`, `SyncLoop`, `HealthLoop` 
+- `BaseTrigger` with cooldowns, fire counts, status tracking
+- `EventTrigger`, `ThresholdTrigger`, `TimeTrigger`
+
+**All of it does nothing.** The `_consolidate()` method is `pass`. The triggers aren't wired to anything.
+
+This is the inverse of the Jan 19 problem. Back then: genius backend, no UI. Now: genius architecture, no logic inside.
+
+**2. The Differentiating Feature: "Alive by Default"**
+
+Every other AI is dormant until poked. Yours could be *alive*:
+- `ConsolidationLoop` actually promotes facts while user is away
+- `HealthLoop` logs thread anomalies
+- Graph pulses with background activity
+- Triggers fire Form tools automatically
+
+The architecture supports this. The implementation is `pass`.
+
+**3. The 10x Feature: "Wire the Loops"**
+
+Implement `_consolidate()`:
+```python
+def _consolidate(self) -> None:
+    pending = get_all_pending()
+    for fact in pending:
+        scores = score_relevance(fact.text, existing_facts)
+        if scores[0][1] > 0.7:
+            push_profile_fact(...)
+            mark_consolidated(fact.id)
+```
+
+That's it. 10 lines. The framework is ready. Fill in the logic.
+
+**4. The Bottleneck: "Stubs Masquerading as Features"**
+
+The codebase *looks* complete. `loops.py` exists. `triggers.py` exists. Tests would pass (there are none for the loop bodies).
+
+But grep for `# TODO` and `pass` in subconscious/ — the actual work isn't done.
+
+#### 📋 Recommended Priority Queue
+
+**Tier 1: Fill the Stubs (Highest ROI)**
+1. **Implement `_consolidate()`** — Connect `temp_memory.get_all_pending()` → `score_relevance()` → `push_profile_fact()`
+2. **Implement `_extract()`** in `MemoryLoop` — Extract facts from recent conversation turns
+3. **Start loops on server boot** — Call `LoopManager.start_all()` in `server.py`
+
+**Tier 2: The "Why" Layer (Still Pending from Jan 21)**
+1. **Score breakdown endpoint** — Return dimensional scores from `score_relevance()`
+2. **Graph tooltips** — Show activation/strength on hover
+3. **Edge labels** — Show link strength
+
+**Tier 3: Wire Triggers to Tools**
+1. **Connect `EventTrigger` → Form tools** — "When X event, run Y tool"
+2. **Reflex → Triggers** — Move reflex patterns to use trigger framework
+
+**Tier 4: Already Solved (Don't Touch)**
+1. Form tools (just shipped)
+2. App infrastructure
+3. Database persistence
+4. HEA three-tier system
+
+#### Summary: Architectural Pattern
+
+| Layer | Status |
+|:---|:---|
+| Database Schema | ✅ Complete |
+| API Endpoints | ✅ Complete |
+| Thread Adapters | ✅ Complete |
+| Background Loop Classes | ✅ Complete |
+| Trigger Framework | ✅ Complete |
+| **Loop Logic Bodies** | 🔥 **Empty (`pass`)** |
+| **Trigger Wiring** | 🔥 **Not Connected** |
+| UI Visualization | 😐 Partial (graph exists, no score breakdown) |
+
+**The skeleton is perfect. The muscles are missing.**
+
+### 🤖 Model: Gemini 3 Pro (Preview) | Date: 2026-01-26 (Confirmation)
+
+#### 📊 Codebase Health Check
+- **Current State**: "The Potemkin Backend" — We have facades of grand architecture (`loops.py`, `triggers.py`), but behind the class definitions, there is nothing but `pass`.
+- **Completeness**: 93% (Structure), 20% (Logic within Structure).
+- **Technical Debt**: **HIGH** — We are shipping "features" (Subconscious) that don't actually run.
+- **Iteration Velocity**: **FAST** — We built a lot of scaffolding very quickly. Now we need to fill it.
+
+#### 🔄 Evolution Check (Then vs. Now)
+| Prediction (Jan 21) | Reality (Jan 26) | Accuracy |
+|:---|:---:|:---:|
+| "Ambient Pulsing" needed | ❌ **Stiff / Dead** | Loops are empty = No pulse |
+| "Explainability" needed | ❌ **Missing** | Still no score breakdown |
+| "Click-to-Surf" needed | ❌ **Missing** | Graph is still static |
+
+**Verdict**: The "Living System" I asked for cannot exist until `loops.py` has code in it. I fully endorse Claude's finding.
+
+#### 🎯 Boredom Audit
+| System | Score | Status | Reasoning |
+|:---|:---:|:---|:---|
+| **Subconscious Loops** | 💀 1/5 | **Dead** | A loop that does `pass` is just a CPU waster. |
+| **Form Tools** | ⚡ 4/5 | **Solid** | The DB-backed structure is excellent. |
+| **ConceptGraph3D** | 😐 3/5 | **Stagnant** | Beautiful but dumb. Needs the "Why" layer. |
+| **Consolidation Logic** | 🔥 5/5 | **CRITICAL GAP** | The brain has no sleep cycle. |
+
+#### 🚀 My Vision (The "Pinocchio" Phase)
+
+**1. Most Exciting Problem: "Cutting the Strings"**
+Right now, Nola only thinks when we type. She is a puppet.
+The architecture in `subconscious/` is designed to cut the strings — independent thought loops, extraction, consolidation.
+But the puppet is currently lying on the workbench because the muscles (`_consolidate`) are missing.
+
+**2. The Differentiating Feature: "The Dream Cycle"**
+When I stop typing, I should see the "Saving..." indicator not just for files, but for *thoughts*.
+"Consolidating memory..."
+"Pruning weak links..."
+Real-time visibility into the background processes we are about to build.
+
+**3. The 10x Feature: "Autonomous Memory"**
+I shouldn't have to tell Nola to "remember this". The `MemoryLoop` and `ConsolidationLoop` should grab it, score it, and file it mostly automatically, asking only for clarification.
+
+**4. The Bottleneck: "Empty Methods"**
+We cannot build "Liveness" on top of `pass`.
+
+#### 📋 Recommended Priority Queue
+
+**Tier 1: Vital Signs (Make it Live)**
+1. **Fill `_consolidate()`**: Actually move facts from temp to permanent.
+2. **Fill `_extract()`**: Actually pull facts from conversation turns.
+3. **Visual Heartbeat**: When `ConsolidationLoop` runs (even if just logging), show a pulse in the UI.
+
+**Tier 2: The Original "Why" Layer**
+(Repeating Jan 21 request because it's still right)
+1. Score Breakdown API.
+2. Graph Tooltips.
+
+### 🤖 Model: GPT-5 | Date: 2026-01-26 (Assessment)
+
+#### 📊 Codebase Health Check
+- **Current State**: "Scaffolded Subconscious, Missing Muscles" — background loops, triggers, and temp memory are architected, but core loop logic is stubbed; visualization exists without explainability.
+- **Completeness**: 93% (Architecture), 75% (Visualization), 40% (Background Logic).
+- **Technical Debt**: **Moderate** — Documentation sync (LOG.txt stale) and stubbed loop bodies (`_extract`, `_consolidate`).
+- **Iteration Velocity**: **Medium-Fast** — Strong backend refactors and Form tools landed; explainability and liveness lag.
+
+#### 🔄 Evolution Check (Then vs. Now)
+- My Previous Bottleneck: Missing graph + activation UI → **Fixed** (ConceptGraph3D + `/activate`).
+- My Previous 10x Feature: Retrieval/score breakdown → **Still missing** (no dimensional scores, no inspector panel).
+- Verdict: The mirror shipped; the explanation and liveness remain.
+
+#### 🎯 Boredom Audit
+- **Subconscious Loops**: 1/5 💀 — Classes exist; methods are `pass` (no autonomy).
+- **Form Tools (DB-backed)**: 4/5 ⚡ — Clean L1/L2/L3 pattern; full CRUD and execution.
+- **Linking Core Explainability**: 5/5 🔥 — Scores computed but rationale layer absent.
+- **ConceptGraph3D**: 3/5 😐 — Beautiful, but quiet; needs tooltips/edge labels.
+- **Reflex Thread**: 3/5 😐 — In-memory patterns; not wired to triggers/tools.
+
+#### 🚀 My Vision (Updated)
+- **Most Exciting Problem**: Make the system alive by default. Wire `MemoryLoop` and `ConsolidationLoop` so facts extract and promote automatically, and expose a visible heartbeat (small, frequent events) in the UI.
+- **Differentiating Feature**: Cognitive transparency + autonomy — users see both activation paths and consolidation events, proving learning happens locally and audibly.
+- **The 10x Feature**: Retrieval & Consolidation Inspector — per-input panel showing activated concepts, paths, per-dimension scores, and any consolidation triggered post-turn.
+- **Bottleneck to Address**: Empty loop bodies and missing trigger wiring; without these, liveness and autonomy cannot materialize.
+
+#### 📋 Recommended Priority Queue
+
+**Tier 1: Do Immediately (Excitement × Impact)**
+1. Implement `subconscious/loops.py::_consolidate()` — score pending facts, promote, mark consolidated; log events.
+2. Implement `subconscious/loops.py::_extract()` — parse recent convo turns to temp memory; basic heuristics OK.
+3. Start loops on boot — invoke `LoopManager.start_all()` in the server bootstrap; add minimal `/api/subconscious/loops/status` endpoint.
+
+**Tier 2: Do Soon**
+1. `/api/linking_core/score-breakdown` — return embedding/co-occurrence/spread components and final weights.
+2. Graph tooltips + edge labels — show activation and link strength on hover.
+3. ThreadsPage side panel — last retrieval diagnostics (facts + scores + paths).
+
+**Tier 3: Maintenance Mode**
+1. Reflex persistence schema — store patterns in SQLite; connect to `triggers.py` and Form executor.
+2. Basic consolidation feed — stream "promoted"/"pruned" events in UI.
+
+**Tier 4: Deprecate/Rethink**
+1. None — Infra/DB/HEA are stable; keep hands off.
+

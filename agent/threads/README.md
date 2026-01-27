@@ -106,8 +106,8 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### Form Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | ✅ Kernel browser integration working, human behavior mimicry, persistent profiles |
-| **Future** | Tool registry expansion, email/calendar integration, sandbox environment, plugin architecture |
+| **Current** | ✅ L1/L2/L3 tools architecture (registry → executor → executables), tool execution API, browser integration |
+| **Future** | Email/calendar integration, sandbox environment, plugin architecture |
 
 ### Philosophy Thread
 | Aspect | Status |
@@ -157,8 +157,13 @@ agent/threads/
 ├── form/                    # TOOL USE, ACTIONS
 │   ├── __init__.py
 │   ├── adapter.py           # FormThreadAdapter
+│   ├── api.py               # FastAPI routes
+│   ├── schema.py            # DB ops, tool CRUD
 │   ├── README.md
-│   └── modules/             # (future: tool_registry, mcp_actions)
+│   └── tools/               # L1/L2/L3 architecture
+│       ├── registry.py      # L1: Tool definitions
+│       ├── executor.py      # L2: Execution engine
+│       └── executables/     # L3: Python implementations
 │
 ├── philosophy/              # VALUES, REASONING
 │   ├── __init__.py

@@ -185,7 +185,10 @@ class ConsolidationLoop(BackgroundLoop):
     """
     Periodically runs the consolidation daemon.
     
-    Scores temp_memory facts and promotes high-scoring ones to long-term storage.
+    On each cycle:
+    1. Generate/update thread summaries for embedding-based scoring
+    2. Score temp_memory facts and promote high-scoring ones
+    3. Decay old/low-weight items
     """
     
     def __init__(self, interval: float = 300.0):  # 5 minutes
@@ -197,13 +200,67 @@ class ConsolidationLoop(BackgroundLoop):
         super().__init__(config, self._consolidate)
     
     def _consolidate(self) -> None:
-        """Run consolidation - promotes approved facts to identity/philosophy."""
-        # TODO: Consolidation logic will be implemented here
+        """Run consolidation - update summaries and promote facts."""
+        # Step 1: Update thread summaries for embedding-based scoring
+        self._update_thread_summaries()
+        
+        # Step 2: Promote approved facts (TODO)
         # 1. Get approved facts from temp_memory
         # 2. Score them for relevance/importance
         # 3. Promote high-scoring facts to identity or philosophy thread
         # 4. Mark as consolidated in temp_memory
-        pass
+    
+    def _update_thread_summaries(self) -> None:
+        """
+        Generate summaries for each thread and cache embeddings.
+        
+        This enables embedding-based thread scoring on wake.
+        """
+        try:
+            from agent.threads.linking_core.scoring import set_thread_summary
+            from agent.threads import get_all_threads
+            
+            for thread in get_all_threads():
+                thread_name = getattr(thread, '_name', str(thread))
+                
+                # Skip linking_core itself
+                if thread_name == 'linking_core':
+                    continue
+                
+                # Get thread's introspection to build summary
+                try:
+                    if hasattr(thread, 'introspect'):
+                        # Get L2 level for summary (not too detailed)
+                        result = thread.introspect(context_level=2, query="", threshold=5.0)
+                        if result and hasattr(result, 'facts') and result.facts:
+                            # Take up to 10 most important facts
+                            summary_facts = result.facts[:10]
+                            summary = ' '.join(summary_facts)
+                            
+                            if summary:
+                                set_thread_summary(thread_name, summary)
+                            
+                            if summary:
+                                set_thread_summary(thread_name, summary)
+                except Exception as e:
+                    # Debug: print error
+                    import sys
+                    print(f"Error getting introspect for {thread_name}: {e}", file=sys.stderr)
+                    continue
+            
+            # Log completion
+            try:
+                from agent.threads.log import log_event
+                log_event(
+                    "system:consolidation",
+                    "consolidation_loop",
+                    "Updated thread summaries for embedding scoring"
+                )
+            except:
+                pass
+        except Exception as e:
+            import sys
+            print(f"Consolidation error: {e}", file=sys.stderr)
 
 
 class SyncLoop(BackgroundLoop):

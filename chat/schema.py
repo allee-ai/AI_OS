@@ -45,9 +45,16 @@ def init_convos_tables():
             weight REAL DEFAULT 0.5,
             turn_count INTEGER DEFAULT 0,
             indexed BOOLEAN DEFAULT FALSE,
-            state_snapshot_json TEXT
+            state_snapshot_json TEXT,
+            summary TEXT
         )
     """)
+    
+    # Migration: add summary column if missing
+    cur.execute("PRAGMA table_info(convos)")
+    columns = [col[1] for col in cur.fetchall()]
+    if 'summary' not in columns:
+        cur.execute("ALTER TABLE convos ADD COLUMN summary TEXT")
     
     # Index for listing
     cur.execute("""
@@ -195,7 +202,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
     
     # Get conversation
     cur.execute("""
-        SELECT id, session_id, channel, name, started, last_updated, archived, weight, turn_count, state_snapshot_json
+        SELECT id, session_id, channel, name, started, last_updated, archived, weight, turn_count, state_snapshot_json, summary
         FROM convos WHERE session_id = ?
     """, (session_id,))
     row = cur.fetchone()
@@ -206,6 +213,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
     
     convo_id = row[0]
     state_snapshot = json.loads(row[9]) if row[9] else None
+    summary = row[10]
     
     # Get turns
     cur.execute("""
@@ -239,6 +247,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
         "turn_count": row[8],
         "turns": turns,
         "state_snapshot": state_snapshot,
+        "summary": summary,
     }
 
 
@@ -410,6 +419,100 @@ def mark_conversation_indexed(session_id: str) -> bool:
     conn.commit()
     conn.close()
     return updated
+
+
+# =============================================================================
+# Summary & Query Building
+# =============================================================================
+
+def update_summary(session_id: str, summary: str) -> bool:
+    """
+    Update conversation summary. Called at session close.
+    
+    Args:
+        session_id: Conversation identifier
+        summary: LLM-generated summary of the conversation
+    
+    Returns:
+        True if updated successfully
+    """
+    conn = get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        UPDATE convos SET summary = ?, last_updated = CURRENT_TIMESTAMP
+        WHERE session_id = ?
+    """, (summary, session_id))
+    updated = cur.rowcount > 0
+    conn.commit()
+    conn.close()
+    return updated
+
+
+def get_summary(session_id: str) -> Optional[str]:
+    """Get conversation summary."""
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    cur.execute("SELECT summary FROM convos WHERE session_id = ?", (session_id,))
+    row = cur.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def build_query(session_id: str, recent_turns: int = 3) -> str:
+    """
+    Build query string for relevance scoring.
+    
+    query = summary + recent_turns
+    
+    This is what gets passed to subconscious.score() to determine
+    which threads are relevant to the current conversation.
+    
+    Args:
+        session_id: Conversation identifier
+        recent_turns: Number of recent turns to include (default 3)
+    
+    Returns:
+        Query string combining summary and recent messages
+    """
+    conn = get_connection(readonly=True)
+    cur = conn.cursor()
+    
+    # Get convo id and summary
+    cur.execute("SELECT id, summary FROM convos WHERE session_id = ?", (session_id,))
+    row = cur.fetchone()
+    if not row:
+        conn.close()
+        return ""
+    
+    convo_id, summary = row
+    
+    # Get recent turns
+    cur.execute("""
+        SELECT user_message, assistant_message 
+        FROM convo_turns 
+        WHERE convo_id = ? 
+        ORDER BY turn_index DESC 
+        LIMIT ?
+    """, (convo_id, recent_turns))
+    
+    turns = cur.fetchall()
+    conn.close()
+    
+    # Build query: summary + recent (reversed to chronological order)
+    parts = []
+    
+    if summary:
+        parts.append(f"[summary] {summary}")
+    
+    for user_msg, asst_msg in reversed(turns):
+        if user_msg:
+            parts.append(f"user: {user_msg}")
+        if asst_msg:
+            # Truncate long assistant messages
+            asst_preview = asst_msg[:200] + "..." if len(asst_msg) > 200 else asst_msg
+            parts.append(f"assistant: {asst_preview}")
+    
+    return "\n".join(parts)
 
 
 # =============================================================================

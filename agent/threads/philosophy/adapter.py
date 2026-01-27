@@ -121,20 +121,31 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         except Exception:
             return facts[:top_k]
     
-    def introspect(self, context_level: int = 2, query: str = None) -> IntrospectionResult:
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Philosophy introspection with values and constraints.
         
-        Returns facts like:
-        - "I value: helpfulness, honesty, transparency"
-        - "I must not: cause harm, deceive users"
-        - "My approach: step-by-step reasoning"
+        Args:
+            context_level: HEA level (1=lean, 2=medium, 3=full)
+            query: Optional query for relevance filtering
+            threshold: Minimum weight for facts to be included (0-10 scale)
+        
+        Returns:
+            IntrospectionResult with facts like:
+                "philosophy.core.honesty.value: always direct"
+                "philosophy.core.honesty.weight: 9.5"
         """
         facts = []
         relevant_concepts = []
         
+        # Convert 0-10 threshold to 0-1 weight scale
+        min_weight = threshold / 10.0
+        
         # Get all philosophy facts
         all_facts = pull_philosophy_profile_facts()
+        
+        # Filter by weight threshold
+        all_facts = [f for f in all_facts if f.get('weight', 0.5) >= min_weight]
         
         # Filter by relevance if query provided
         if query:
@@ -147,36 +158,22 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         # Get level-appropriate value column
         level_col = {1: 'l1_value', 2: 'l2_value', 3: 'l3_value'}.get(context_level, 'l2_value')
         
-        # Build facts from profile data
-        values = []
-        bounds = []
-        approaches = []
-        
+        # Build facts with dot notation
         for f in all_facts:
-            key = f.get('key', '')
+            key = f.get('key', 'unknown')
             value = f.get(level_col) or f.get('l2_value', '')
-            fact_type = (f.get('fact_type') or '').lower()
+            weight = f.get('weight', 0.5)
+            fact_type = (f.get('fact_type') or 'general').lower().replace(' ', '_')
+            profile_id = f.get('profile_id', 'agent.core')
             
-            if 'value' in fact_type:
-                values.append(key.replace('_', ' '))
-            elif any(x in fact_type for x in ['bound', 'constraint', 'ethic']):
-                if value:
-                    bounds.append(value[:50])
-            elif any(x in fact_type for x in ['reasoning', 'style', 'approach']):
-                if value:
-                    approaches.append(value)
-            else:
-                # Generic philosophy fact
-                if value:
-                    facts.append(f"{key.replace('_', ' ')}: {value}")
-        
-        if values:
-            facts.insert(0, f"I value: {', '.join(values[:5])}")
-        if bounds:
-            facts.append(f"Constraints: {'; '.join(bounds[:3])}")
-        if context_level >= 2 and approaches:
-            for a in approaches[:2]:
-                facts.append(f"Approach: {a}")
+            # Build path: philosophy.{profile_short}.{key}
+            profile_parts = profile_id.split('.')
+            profile_short = profile_parts[1] if len(profile_parts) >= 2 else profile_id
+            
+            if value:
+                path = f"philosophy.{profile_short}.{key}"
+                facts.append(f"{path}.value: {value}")
+                facts.append(f"{path}.weight: {weight}")
         
         return IntrospectionResult(
             facts=facts,

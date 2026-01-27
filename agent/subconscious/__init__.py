@@ -171,7 +171,7 @@ def get_context(level: int = 2) -> Dict[str, Any]:
     return core.get_context(level)
 
 
-def get_consciousness_context(level: int = 2) -> str:
+def get_consciousness_context(level: int = 2, query: str = "") -> str:
     """
     Format context as a string for system prompt injection.
     
@@ -179,18 +179,21 @@ def get_consciousness_context(level: int = 2) -> str:
     generating a response. Returns a formatted string that can
     be prepended to the system prompt.
     
+    Now uses build_state() - the unified STATE + ASSESS architecture.
+    
     Args:
-        level: Context detail level (1=minimal, 2=moderate, 3=full)
+        level: Context detail level (1=minimal, 2=moderate, 3=full) - maps to default scores
+        query: The assess block content (user message, etc.) - for relevance scoring
     
     Returns:
-        Formatted string suitable for system prompt
+        Formatted STATE block string with dot notation facts
     
     Example:
-        context = get_consciousness_context(level=2)
+        context = get_consciousness_context(level=2, query=user_input)
         system_prompt = f"{context}\\n\\n{base_system_prompt}"
     """
-    core = get_core()
-    return core.get_consciousness_context(level)
+    from .orchestrator import build_state
+    return build_state(query=query)
 
 
 def get_status() -> Dict[str, Any]:
