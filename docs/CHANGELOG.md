@@ -5,6 +5,40 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-27 — Consolidation Loop with Hybrid Approval
+
+### Feature: Fact Consolidation Pipeline
+- **Hybrid Approval**: Facts scored for confidence; high confidence (≥0.7) auto-approves, low confidence requires human review
+- **Duplicate Detection**: Embedding-based similarity check rejects duplicates (≥0.85 similarity)
+- **Fact Classification**: Routes facts to appropriate thread:
+  - **Identity Thread**: Personal facts (name, preferences, location, work, hobbies)
+  - **Philosophy Thread**: Beliefs, values, principles, ethics, worldview
+
+### Feature: Temp Memory Status Tracking
+- **Status Column**: Facts now track status: `pending`, `approved`, `pending_review`, `consolidated`, `rejected`
+- **Confidence Score**: Each fact stores its calculated confidence (0.0-1.0)
+- **New Functions**: `get_pending_review()`, `update_fact_status()`, `approve_fact()`, `reject_fact()`, `get_approved_pending()`
+- **Enhanced Stats**: `get_stats()` now includes `pending_review` and `approved` counts
+
+### Feature: Smart Key Generation
+- **Category Detection**: Auto-detects fact category (identity, preferences, professional, beliefs, values, ethics)
+- **Hierarchical Keys**: Generates keys like `user.preferences.python` or `philosophy.values.honesty`
+- **Stop Word Filtering**: Removes common words to create meaningful keys
+
+### Tests: 28 New Consolidation Tests
+- Fact classification (identity vs philosophy)
+- Key generation for both threads
+- Confidence scoring behavior
+- Status validation and exports
+
+### Files Changed
+- `agent/subconscious/loops.py` — Implemented `_consolidate()`, `_score_and_triage_pending()`, `_promote_approved_facts()`, `_classify_fact_destination()`, `_generate_key()`
+- `agent/subconscious/temp_memory/store.py` — Added `status`, `confidence_score` columns; new status functions
+- `agent/subconscious/temp_memory/__init__.py` — Export new functions
+- `tests/test_consolidation.py` — New test file with 28 tests
+
+---
+
 ## 2026-01-27 — Linking Core UI + Conversation Context Scoring
 
 ### Feature: Linking Core Thread in UI

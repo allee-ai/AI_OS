@@ -456,7 +456,19 @@ class ConsolidationLoop(BackgroundLoop):
     1. Generate/update thread summaries for embedding-based scoring
     2. Score temp_memory facts and promote high-scoring ones
     3. Decay old/low-weight items
+    
+    Hybrid Approval System:
+    - Facts with confidence >= threshold are auto-approved
+    - Facts with confidence < threshold require user review
+    - Approved facts are promoted to long-term memory
     """
+    
+    # Confidence threshold for auto-approval (0.0-1.0)
+    # Below this requires human review
+    AUTO_APPROVE_THRESHOLD = 0.7
+    
+    # Duplicate similarity threshold - above this, consider it a duplicate
+    DUPLICATE_THRESHOLD = 0.85
     
     def __init__(self, interval: float = 300.0):  # 5 minutes
         config = LoopConfig(
@@ -467,15 +479,360 @@ class ConsolidationLoop(BackgroundLoop):
         super().__init__(config, self._consolidate)
     
     def _consolidate(self) -> None:
-        """Run consolidation - update summaries and promote facts."""
+        """Run consolidation - score facts and promote approved ones."""
         # Step 1: Update thread summaries for embedding-based scoring
         self._update_thread_summaries()
         
-        # Step 2: Promote approved facts (TODO)
-        # 1. Get approved facts from temp_memory
-        # 2. Score them for relevance/importance
-        # 3. Promote high-scoring facts to identity or philosophy thread
-        # 4. Mark as consolidated in temp_memory
+        # Step 2: Score pending facts and set their status
+        self._score_and_triage_pending()
+        
+        # Step 3: Promote approved facts to long-term memory
+        self._promote_approved_facts()
+    
+    def _score_and_triage_pending(self) -> None:
+        """
+        Score pending facts and set status based on confidence.
+        
+        - High confidence → auto-approve
+        - Low confidence → pending_review (requires user approval)
+        - Duplicate of existing → reject
+        """
+        try:
+            from agent.subconscious.temp_memory import (
+                get_all_pending, update_fact_status
+            )
+            from agent.threads.identity.schema import pull_profile_facts
+            from agent.threads.linking_core.scoring import (
+                get_embedding, cosine_similarity, keyword_fallback_score
+            )
+            
+            # Get all pending facts (not yet triaged)
+            pending = get_all_pending()
+            if not pending:
+                return
+            
+            # Get existing facts for duplicate checking
+            existing_facts = pull_profile_facts(limit=500)
+            existing_texts = [
+                f"{f.get('key', '')} {f.get('l1_value', '')} {f.get('l2_value', '')} {f.get('l3_value', '')}"
+                for f in existing_facts
+            ]
+            
+            for fact in pending:
+                # Skip already triaged facts
+                if fact.status != 'pending':
+                    continue
+                
+                try:
+                    confidence = self._calculate_confidence(
+                        fact.text,
+                        existing_texts,
+                        get_embedding,
+                        cosine_similarity,
+                        keyword_fallback_score
+                    )
+                    
+                    # Determine status based on confidence
+                    if confidence < 0:
+                        # Negative score means duplicate
+                        new_status = 'rejected'
+                    elif confidence >= self.AUTO_APPROVE_THRESHOLD:
+                        new_status = 'approved'
+                    else:
+                        new_status = 'pending_review'
+                    
+                    update_fact_status(fact.id, new_status, abs(confidence))
+                    
+                except Exception as e:
+                    import sys
+                    print(f"Error scoring fact {fact.id}: {e}", file=sys.stderr)
+                    # On error, mark for review
+                    update_fact_status(fact.id, 'pending_review', 0.0)
+            
+        except Exception as e:
+            import sys
+            print(f"Error in _score_and_triage_pending: {e}", file=sys.stderr)
+    
+    def _calculate_confidence(
+        self,
+        fact_text: str,
+        existing_texts: list,
+        get_embedding,
+        cosine_similarity,
+        keyword_fallback_score
+    ) -> float:
+        """
+        Calculate confidence score for a fact.
+        
+        Returns:
+            0.0-1.0 for valid facts (higher = more confident)
+            -1.0 for duplicates
+        """
+        if not fact_text:
+            return 0.0
+        
+        # Check for duplicates
+        fact_emb = get_embedding(fact_text)
+        
+        for existing in existing_texts:
+            if not existing.strip():
+                continue
+            
+            if fact_emb is not None:
+                existing_emb = get_embedding(existing)
+                if existing_emb is not None:
+                    similarity = cosine_similarity(fact_emb, existing_emb)
+                    if similarity >= self.DUPLICATE_THRESHOLD:
+                        return -1.0  # Duplicate
+            else:
+                # Keyword fallback
+                similarity = keyword_fallback_score(fact_text, existing)
+                if similarity >= self.DUPLICATE_THRESHOLD:
+                    return -1.0  # Duplicate
+        
+        # Calculate confidence based on:
+        # 1. Length (very short facts are less trustworthy)
+        # 2. Specificity (contains concrete details)
+        # 3. Structure (proper hierarchical key)
+        
+        confidence = 0.5  # Base confidence
+        
+        # Length factor
+        word_count = len(fact_text.split())
+        if word_count >= 3:
+            confidence += 0.1
+        if word_count >= 5:
+            confidence += 0.1
+        
+        # Specificity factor (contains names, numbers, concrete nouns)
+        import re
+        if re.search(r'\b[A-Z][a-z]+\b', fact_text):  # Capitalized words
+            confidence += 0.1
+        if re.search(r'\d+', fact_text):  # Numbers
+            confidence += 0.05
+        
+        # Source quality (explicit > conversation > inferred)
+        # This would come from fact.source but we don't have it here
+        # Could be enhanced later
+        
+        return min(1.0, max(0.0, confidence))
+    
+    def _promote_approved_facts(self) -> None:
+        """
+        Promote approved facts to long-term memory.
+        Routes to identity or philosophy thread based on fact type.
+        """
+        try:
+            from agent.subconscious.temp_memory import (
+                get_approved_pending, mark_consolidated
+            )
+            from agent.threads.identity.schema import (
+                push_profile_fact, create_profile, get_profiles,
+                create_fact_type, get_fact_types
+            )
+            from agent.threads.philosophy.schema import (
+                push_philosophy_profile_fact
+            )
+            
+            approved = get_approved_pending()
+            if not approved:
+                return
+            
+            # Ensure default user profile exists (for identity facts)
+            try:
+                profiles = get_profiles()
+                user_exists = any(p.get('profile_id') == 'user' for p in profiles)
+                if not user_exists:
+                    create_profile("user", "human", "User")
+            except Exception:
+                pass
+            
+            # Ensure "learned" fact type exists
+            try:
+                fact_types = get_fact_types()
+                learned_exists = any(ft.get('fact_type') == 'learned' for ft in fact_types)
+                if not learned_exists:
+                    create_fact_type("learned", "Auto-learned from conversation", 0.5)
+            except Exception:
+                pass
+            
+            identity_count = 0
+            philosophy_count = 0
+            
+            for fact in approved:
+                try:
+                    # Detect fact type: identity vs philosophy
+                    fact_destination = self._classify_fact_destination(fact.text)
+                    
+                    # Generate key
+                    if fact.hier_key:
+                        key = fact.hier_key
+                    else:
+                        key = self._generate_key(fact.text, fact_destination)
+                    
+                    if fact_destination == "philosophy":
+                        # Route to philosophy thread
+                        push_philosophy_profile_fact(
+                            profile_id="core.values",
+                            key=key,
+                            l1_value=fact.text[:100],
+                            l2_value=fact.text[:250] if len(fact.text) > 100 else None,
+                            l3_value=fact.text if len(fact.text) > 250 else None,
+                            weight=fact.confidence_score or 0.5
+                        )
+                        philosophy_count += 1
+                    else:
+                        # Route to identity thread (default)
+                        push_profile_fact(
+                            profile_id="user",
+                            key=key,
+                            fact_type="learned",
+                            l1_value=fact.text[:100],
+                            l2_value=fact.text[:250] if len(fact.text) > 100 else None,
+                            l3_value=fact.text if len(fact.text) > 250 else None,
+                            weight=fact.confidence_score or 0.5
+                        )
+                        identity_count += 1
+                    
+                    # Mark as consolidated
+                    mark_consolidated(fact.id)
+                    
+                except Exception as e:
+                    import sys
+                    print(f"Error promoting fact {fact.id}: {e}", file=sys.stderr)
+            
+            # Log the consolidation
+            total = identity_count + philosophy_count
+            if total > 0:
+                try:
+                    from agent.threads.log import log_event
+                    log_event(
+                        "system:consolidation",
+                        "facts_promoted",
+                        f"Promoted {total} facts ({identity_count} identity, {philosophy_count} philosophy)"
+                    )
+                except:
+                    pass
+                    
+        except Exception as e:
+            import sys
+            print(f"Error in _promote_approved_facts: {e}", file=sys.stderr)
+    
+    def _classify_fact_destination(self, fact_text: str) -> str:
+        """
+        Classify whether a fact belongs in identity or philosophy thread.
+        
+        Identity: Personal details, preferences, biographical info
+        Philosophy: Beliefs, values, principles, worldview
+        
+        Returns:
+            "identity" or "philosophy"
+        """
+        text_lower = fact_text.lower()
+        
+        # Philosophy indicators: beliefs, values, principles
+        philosophy_signals = [
+            'believe', 'belief', 'think that', 'feel that',
+            'value', 'values', 'important to me',
+            'principle', 'principles',
+            'philosophy', 'worldview',
+            'should', 'ought', 'must',
+            'right', 'wrong', 'good', 'bad', 'evil',
+            'fair', 'unfair', 'justice', 'ethical', 'moral',
+            'meaning', 'purpose', 'matters',
+            'truth', 'honest', 'integrity',
+            'freedom', 'liberty', 'autonomy',
+            'respect', 'dignity', 'compassion',
+            'always try to', 'never want to',
+            'my view on', 'my stance on',
+        ]
+        
+        # Identity indicators: personal facts
+        identity_signals = [
+            'my name', 'i am', "i'm", 'called',
+            'i live', 'i work', 'my job', 'my career',
+            'i like', 'i love', 'i prefer', 'i enjoy', 'favorite',
+            'i have', 'i own',
+            'my age', 'years old', 'born',
+            'my email', 'my phone', 'contact',
+            'my family', 'my wife', 'my husband', 'my kids',
+            'i studied', 'my degree', 'my school',
+            'my hobby', 'hobbies', 'free time',
+        ]
+        
+        philosophy_score = sum(1 for signal in philosophy_signals if signal in text_lower)
+        identity_score = sum(1 for signal in identity_signals if signal in text_lower)
+        
+        # Philosophy needs stronger signal since identity is default
+        if philosophy_score >= 2 or (philosophy_score >= 1 and identity_score == 0):
+            return "philosophy"
+        
+        return "identity"
+    
+    def _generate_key(self, fact_text: str, destination: str = "identity") -> str:
+        """
+        Generate a hierarchical key from fact text.
+        
+        Examples:
+            Identity: "User likes Python" → "user.preferences.python"
+            Philosophy: "I believe in honesty" → "values.honesty"
+        """
+        import re
+        
+        text_lower = fact_text.lower()
+        
+        if destination == "philosophy":
+            # Philosophy categories
+            if any(w in text_lower for w in ['believe', 'belief', 'think that']):
+                category = "beliefs"
+            elif any(w in text_lower for w in ['value', 'important', 'matters']):
+                category = "values"
+            elif any(w in text_lower for w in ['principle', 'always', 'never']):
+                category = "principles"
+            elif any(w in text_lower for w in ['should', 'ought', 'right', 'wrong']):
+                category = "ethics"
+            elif any(w in text_lower for w in ['meaning', 'purpose', 'life']):
+                category = "worldview"
+            else:
+                category = "stance"
+            prefix = "philosophy"
+        else:
+            # Identity categories
+            if any(w in text_lower for w in ['name', 'called', 'i am', "i'm"]):
+                category = "identity"
+            elif any(w in text_lower for w in ['like', 'love', 'prefer', 'enjoy', 'favorite']):
+                category = "preferences"
+            elif any(w in text_lower for w in ['work', 'job', 'career', 'profession']):
+                category = "professional"
+            elif any(w in text_lower for w in ['hobby', 'hobbies', 'free time', 'weekend']):
+                category = "hobbies"
+            elif any(w in text_lower for w in ['live', 'city', 'country', 'from']):
+                category = "location"
+            else:
+                category = "general"
+            prefix = "user"
+        
+        # Extract key words (remove stop words)
+        stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
+                      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+                      'would', 'could', 'should', 'may', 'might', 'must', 'shall',
+                      'i', 'me', 'my', 'myself', 'we', 'our', 'you', 'your', 'he',
+                      'she', 'it', 'they', 'them', 'their', 'this', 'that', 'these',
+                      'those', 'and', 'but', 'or', 'so', 'for', 'to', 'of', 'in',
+                      'on', 'at', 'by', 'with', 'about', 'user', 'really', 'very',
+                      'believe', 'think', 'feel', 'value', 'important'}
+        
+        words = re.findall(r'\b[a-z]+\b', text_lower)
+        keywords = [w for w in words if w not in stop_words][:3]
+        
+        if keywords:
+            detail = "_".join(keywords)
+        else:
+            # Fallback: use hash of text
+            import hashlib
+            detail = hashlib.md5(fact_text.encode()).hexdigest()[:8]
+        
+        return f"{prefix}.{category}.{detail}"
     
     def _update_thread_summaries(self) -> None:
         """

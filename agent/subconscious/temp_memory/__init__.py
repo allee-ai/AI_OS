@@ -11,6 +11,11 @@ from .store import (
     mark_consolidated,
     clear_session,
     get_stats,
+    get_pending_review,
+    update_fact_status,
+    approve_fact,
+    reject_fact,
+    get_approved_pending,
     Fact,
 )
 
@@ -22,5 +27,10 @@ __all__ = [
     "mark_consolidated",
     "clear_session",
     "get_stats",
+    "get_pending_review",
+    "update_fact_status",
+    "approve_fact",
+    "reject_fact",
+    "get_approved_pending",
     "Fact",
 ]

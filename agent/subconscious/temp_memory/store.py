@@ -52,6 +52,8 @@ class Fact:
     source: str  # "conversation", "explicit", "inferred"
     session_id: str
     consolidated: bool = False
+    status: str = "pending"  # pending, approved, pending_review, consolidated, rejected
+    confidence_score: Optional[float] = None  # 0.0-1.0, used for auto-approval threshold
     score_json: Optional[str] = None  # JSON of importance scores once computed
     hier_key: Optional[str] = None  # Hierarchical key (e.g., "sarah.likes.blue")
     metadata_json: Optional[str] = None  # Additional metadata as JSON
@@ -61,6 +63,7 @@ class Fact:
     
     @classmethod
     def from_row(cls, row: sqlite3.Row) -> "Fact":
+        keys = row.keys()
         return cls(
             id=row["id"],
             text=row["text"],
@@ -68,9 +71,11 @@ class Fact:
             source=row["source"],
             session_id=row["session_id"],
             consolidated=bool(row["consolidated"]),
+            status=row["status"] if "status" in keys else "pending",
+            confidence_score=row["confidence_score"] if "confidence_score" in keys else None,
             score_json=row["score_json"],
-            hier_key=row["hier_key"] if "hier_key" in row.keys() else None,
-            metadata_json=row["metadata_json"] if "metadata_json" in row.keys() else None
+            hier_key=row["hier_key"] if "hier_key" in keys else None,
+            metadata_json=row["metadata_json"] if "metadata_json" in keys else None
         )
 
 
@@ -87,6 +92,8 @@ def _ensure_table() -> None:
             source TEXT NOT NULL,
             session_id TEXT NOT NULL,
             consolidated INTEGER DEFAULT 0,
+            status TEXT DEFAULT 'pending',
+            confidence_score REAL,
             score_json TEXT,
             hier_key TEXT,
             metadata_json TEXT,
@@ -112,6 +119,12 @@ def _ensure_table() -> None:
         ON temp_facts(hier_key)
     """)
     
+    # Index for status lookups
+    cursor.execute("""
+        CREATE INDEX IF NOT EXISTS idx_temp_facts_status 
+        ON temp_facts(status)
+    """)
+    
     # Add columns if they don't exist (migration for existing DBs)
     try:
         cursor.execute("ALTER TABLE temp_facts ADD COLUMN hier_key TEXT")
@@ -120,6 +133,16 @@ def _ensure_table() -> None:
     
     try:
         cursor.execute("ALTER TABLE temp_facts ADD COLUMN metadata_json TEXT")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cursor.execute("ALTER TABLE temp_facts ADD COLUMN status TEXT DEFAULT 'pending'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
+    
+    try:
+        cursor.execute("ALTER TABLE temp_facts ADD COLUMN confidence_score REAL")
     except sqlite3.OperationalError:
         pass  # Column already exists
     
@@ -371,9 +394,126 @@ def get_stats() -> dict:
         cursor.execute("SELECT COUNT(DISTINCT session_id) FROM temp_facts")
         sessions = cursor.fetchone()[0]
         
+        # Count by status
+        cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE status = 'pending_review'")
+        pending_review = cursor.fetchone()[0]
+        
+        cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE status = 'approved'")
+        approved = cursor.fetchone()[0]
+        
         return {
             "pending": pending,
             "consolidated": consolidated,
             "total": pending + consolidated,
-            "sessions": sessions
+            "sessions": sessions,
+            "pending_review": pending_review,
+            "approved": approved
         }
+
+
+def get_pending_review() -> List[Fact]:
+    """
+    Get all facts that need human review (confidence below threshold).
+    
+    Returns:
+        List of Fact objects with status='pending_review'
+    """
+    with _db_lock:
+        _ensure_table()
+        
+        conn = get_connection(readonly=True)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT * FROM temp_facts 
+            WHERE status = 'pending_review' AND consolidated = 0
+            ORDER BY created_at ASC
+        """)
+        
+        return [Fact.from_row(row) for row in cursor.fetchall()]
+
+
+def update_fact_status(fact_id: int, status: str, confidence_score: Optional[float] = None) -> bool:
+    """
+    Update the status of a fact.
+    
+    Args:
+        fact_id: Database ID of the fact
+        status: New status ('pending', 'approved', 'pending_review', 'consolidated', 'rejected')
+        confidence_score: Optional confidence score to set
+    
+    Returns:
+        True if fact was found and updated, False otherwise
+    """
+    valid_statuses = {'pending', 'approved', 'pending_review', 'consolidated', 'rejected'}
+    if status not in valid_statuses:
+        raise ValueError(f"Invalid status '{status}'. Must be one of: {valid_statuses}")
+    
+    with _db_lock:
+        conn = get_connection()
+        cursor = conn.cursor()
+        
+        if confidence_score is not None:
+            cursor.execute("""
+                UPDATE temp_facts 
+                SET status = ?, confidence_score = ?
+                WHERE id = ?
+            """, (status, confidence_score, fact_id))
+        else:
+            cursor.execute("""
+                UPDATE temp_facts 
+                SET status = ?
+                WHERE id = ?
+            """, (status, fact_id))
+        
+        conn.commit()
+        return cursor.rowcount > 0
+
+
+def approve_fact(fact_id: int) -> bool:
+    """
+    Approve a fact for consolidation (user reviewed and approved).
+    
+    Args:
+        fact_id: Database ID of the fact
+    
+    Returns:
+        True if fact was found and approved
+    """
+    return update_fact_status(fact_id, 'approved')
+
+
+def reject_fact(fact_id: int) -> bool:
+    """
+    Reject a fact (user reviewed and decided not to keep).
+    
+    Args:
+        fact_id: Database ID of the fact
+    
+    Returns:
+        True if fact was found and rejected
+    """
+    return update_fact_status(fact_id, 'rejected')
+
+
+def get_approved_pending() -> List[Fact]:
+    """
+    Get facts that are approved but not yet consolidated.
+    These are ready to be pushed to long-term memory.
+    
+    Returns:
+        List of Fact objects with status='approved' and consolidated=0
+    """
+    with _db_lock:
+        _ensure_table()
+        
+        conn = get_connection(readonly=True)
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT * FROM temp_facts 
+            WHERE status = 'approved' AND consolidated = 0
+            ORDER BY created_at ASC
+        """)
+        
+        return [Fact.from_row(row) for row in cursor.fetchall()]
