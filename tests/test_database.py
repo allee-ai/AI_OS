@@ -107,3 +107,46 @@ class TestConcurrency:
             t.join()
         
         assert len(errors) == 0, f"Concurrency errors: {errors}"
+    
+    def test_connection_with_closing_context(self):
+        """Connection should work with contextlib.closing() pattern."""
+        from contextlib import closing
+        from data.db import get_connection
+        
+        # This is the pattern we use throughout the codebase
+        with closing(get_connection()) as conn:
+            result = conn.execute("SELECT 1").fetchone()
+            assert result[0] == 1
+        
+        # Connection should be closed after context
+        # (attempting to use it would raise error)
+    
+    def test_concurrent_writes_with_closing(self):
+        """Multiple threads writing with closing() should not deadlock."""
+        from contextlib import closing
+        from data.db import get_connection
+        
+        errors = []
+        
+        def write_db(i):
+            try:
+                with closing(get_connection()) as conn:
+                    # Use a test table that doesn't affect real data
+                    conn.execute("CREATE TABLE IF NOT EXISTS _test_concurrent (id INTEGER)")
+                    conn.execute("INSERT INTO _test_concurrent VALUES (?)", (i,))
+                    conn.commit()
+            except Exception as e:
+                errors.append(e)
+        
+        threads = [threading.Thread(target=write_db, args=(i,)) for i in range(5)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+        
+        # Cleanup
+        with closing(get_connection()) as conn:
+            conn.execute("DROP TABLE IF EXISTS _test_concurrent")
+            conn.commit()
+        
+        assert len(errors) == 0, f"Concurrent write errors: {errors}"

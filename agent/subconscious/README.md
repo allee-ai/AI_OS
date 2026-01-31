@@ -150,3 +150,16 @@ class MyThreadAdapter(ThreadInterface):
 - **agent.py**: Accepts `consciousness_context` param, builds `== CURRENT AWARENESS ==` section
 - **agent_service.py**: Calls `wake()` on import, `get_consciousness_context()` before generate
 - **contract.py**: Metadata protocol shared with other modules for sync decisions
+
+---
+
+## Frontend Module
+
+Located at `frontend/src/modules/subconscious/`:
+
+```
+subconscious/
+└── index.ts                # Module exports (placeholder)
+```
+
+*Subconscious visualization is shown within the Threads module dashboards.*

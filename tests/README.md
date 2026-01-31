@@ -19,7 +19,7 @@ You don't need to run tests for normal use. These are for developers to verify A
 pytest tests/ -v
 
 # Specific file
-pytest tests/test_agent.py -v
+pytest tests/test_api.py -v
 
 # With coverage
 pytest tests/ --cov=agent --cov-report=html
@@ -29,9 +29,12 @@ pytest tests/ --cov=agent --cov-report=html
 
 | File | What It Tests |
 |------|---------------|
-| `test_agent.py` | Singleton pattern, thread safety, provider toggle |
-| `test_idv2.py` | Database operations, level filtering, migration |
-| `test_hea.py` | Feeds classification, context levels, token budgets |
+| `test_api.py` | API endpoints (health, chat, identity, philosophy, subconscious) |
+| `test_database.py` | SQLite connections, WAL mode, closing context managers |
+| `test_threads.py` | Thread adapters (identity, log, form, philosophy, reflex, linking) |
+| `test_subconscious.py` | Thread scoring, state building, context injection |
+| `test_memory_loop.py` | Memory consolidation and recall |
+| `test_consolidation.py` | Memory consolidation logic |
 | `conftest.py` | Shared fixtures |
 
 ### Writing New Tests

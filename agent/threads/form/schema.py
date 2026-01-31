@@ -10,6 +10,7 @@ import json
 import os
 import time
 import importlib.util
+from contextlib import closing
 from typing import Dict, Any, List, Optional
 from pathlib import Path
 from datetime import datetime
@@ -31,8 +32,7 @@ RUN_TYPE_EXTENSIONS = {
 
 def init_form_tools_table() -> None:
     """Create form_tools table if it doesn't exist."""
-    conn = get_connection()
-    try:
+    with closing(get_connection()) as conn:
         conn.execute("""
             CREATE TABLE IF NOT EXISTS form_tools (
                 name TEXT PRIMARY KEY,
@@ -51,8 +51,6 @@ def init_form_tools_table() -> None:
         """)
         conn.execute("CREATE INDEX IF NOT EXISTS idx_form_tools_category ON form_tools(category)")
         conn.commit()
-    finally:
-        conn.close()
 
 
 def _ensure_table() -> None:
@@ -63,23 +61,20 @@ def _ensure_table() -> None:
 def get_tools() -> List[Dict[str, Any]]:
     """Get all tools from database."""
     _ensure_table()
-    conn = get_connection(readonly=True)
-    try:
+    with closing(get_connection(readonly=True)) as conn:
         rows = conn.execute("""
             SELECT name, description, category, actions, run_file, run_type,
                    requires_env, weight, enabled, allowed, created_at, updated_at
             FROM form_tools ORDER BY weight DESC, name ASC
         """).fetchall()
-        return [_row_to_tool(row) for row in rows]
-    finally:
-        conn.close()
+        result = [_row_to_tool(row) for row in rows]
+    return result
 
 
 def get_tool(name: str) -> Optional[Dict[str, Any]]:
     """Get a single tool by name."""
     _ensure_table()
-    conn = get_connection(readonly=True)
-    try:
+    with closing(get_connection(readonly=True)) as conn:
         row = conn.execute("""
             SELECT name, description, category, actions, run_file, run_type,
                    requires_env, weight, enabled, allowed, created_at, updated_at
@@ -89,9 +84,7 @@ def get_tool(name: str) -> Optional[Dict[str, Any]]:
             return None
         tool = _row_to_tool(row)
         tool["code"] = get_executable_code(name)
-        return tool
-    finally:
-        conn.close()
+    return tool
 
 
 def _row_to_tool(row) -> Dict[str, Any]:
@@ -145,17 +138,17 @@ def add_tool(
         ext = RUN_TYPE_EXTENSIONS.get(run_type.lower(), ".py")
         run_file = f"{name.replace('-', '_')}{ext}"
     
-    conn = get_connection()
     try:
-        conn.execute("""
-            INSERT INTO form_tools (name, description, category, actions, run_file, run_type, requires_env, weight, enabled, allowed)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        """, (
-            name, description, category.lower(), json.dumps(actions),
-            run_file, run_type, json.dumps(requires_env), weight,
-            1 if enabled else 0, 1 if allowed else 0
-        ))
-        conn.commit()
+        with closing(get_connection()) as conn:
+            conn.execute("""
+                INSERT INTO form_tools (name, description, category, actions, run_file, run_type, requires_env, weight, enabled, allowed)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                name, description, category.lower(), json.dumps(actions),
+                run_file, run_type, json.dumps(requires_env), weight,
+                1 if enabled else 0, 1 if allowed else 0
+            ))
+            conn.commit()
         
         # Create executable file
         if code:
@@ -166,8 +159,6 @@ def add_tool(
         return True
     except sqlite3.IntegrityError:
         return False
-    finally:
-        conn.close()
 
 
 def update_tool(
@@ -218,8 +209,7 @@ def update_tool(
     if updates:
         updates.append("updated_at = CURRENT_TIMESTAMP")
         params.append(name)
-        conn = get_connection()
-        try:
+        with closing(get_connection()) as conn:
             result = conn.execute(
                 f"UPDATE form_tools SET {', '.join(updates)} WHERE name = ?",
                 params
@@ -227,8 +217,6 @@ def update_tool(
             conn.commit()
             if result.rowcount == 0:
                 return False
-        finally:
-            conn.close()
     
     if code is not None:
         save_executable_code(name, code)
@@ -239,8 +227,7 @@ def update_tool(
 def delete_tool(name: str) -> bool:
     """Delete a tool and its executable file."""
     _ensure_table()
-    conn = get_connection()
-    try:
+    with closing(get_connection()) as conn:
         row = conn.execute("SELECT run_file FROM form_tools WHERE name = ?", (name,)).fetchone()
         if not row:
             return False
@@ -253,17 +240,14 @@ def delete_tool(name: str) -> bool:
             exec_path = EXECUTABLES_DIR / row["run_file"]
             if exec_path.exists():
                 exec_path.unlink()
-        
-        return True
-    finally:
-        conn.close()
+    
+    return True
 
 
 def rename_tool(old_name: str, new_name: str) -> bool:
     """Rename a tool and its executable file."""
     _ensure_table()
-    conn = get_connection()
-    try:
+    with closing(get_connection()) as conn:
         row = conn.execute("SELECT run_file, run_type FROM form_tools WHERE name = ?", (old_name,)).fetchone()
         if not row:
             return False
@@ -288,29 +272,24 @@ def rename_tool(old_name: str, new_name: str) -> bool:
             new_path = EXECUTABLES_DIR / new_run_file
             if old_path.exists() and not new_path.exists():
                 old_path.rename(new_path)
-        
-        return True
-    finally:
-        conn.close()
+    
+    return True
 
 
 def get_executable_code(tool_name: str) -> Optional[str]:
     """Get the code content of a tool's executable."""
-    conn = get_connection(readonly=True)
-    try:
+    with closing(get_connection(readonly=True)) as conn:
         row = conn.execute("SELECT run_file FROM form_tools WHERE name = ?", (tool_name,)).fetchone()
         if not row or not row["run_file"]:
             return None
         exec_path = EXECUTABLES_DIR / row["run_file"]
-        return exec_path.read_text() if exec_path.exists() else None
-    finally:
-        conn.close()
+        result = exec_path.read_text() if exec_path.exists() else None
+    return result
 
 
 def save_executable_code(tool_name: str, code: str) -> bool:
     """Save code to a tool's executable file."""
-    conn = get_connection()
-    try:
+    with closing(get_connection()) as conn:
         row = conn.execute("SELECT run_file FROM form_tools WHERE name = ?", (tool_name,)).fetchone()
         if not row or not row["run_file"]:
             return False
@@ -318,9 +297,7 @@ def save_executable_code(tool_name: str, code: str) -> bool:
         (EXECUTABLES_DIR / row["run_file"]).write_text(code)
         conn.execute("UPDATE form_tools SET updated_at = CURRENT_TIMESTAMP WHERE name = ?", (tool_name,))
         conn.commit()
-        return True
-    finally:
-        conn.close()
+    return True
 
 
 def _create_stub_executable(name: str, run_file: str, run_type: str, actions: List[str]) -> None:

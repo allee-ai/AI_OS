@@ -164,29 +164,30 @@ def _get_service_config(service_id: str) -> Optional[Dict[str, Any]]:
 def _save_service_config(service_id: str, config: ServiceConfig) -> bool:
     """Save service config to database."""
     try:
+        from contextlib import closing
         from data.db import get_connection
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            CREATE TABLE IF NOT EXISTS service_config (
-                service_id TEXT PRIMARY KEY,
-                enabled INTEGER DEFAULT 1,
-                settings_json TEXT DEFAULT '{}',
-                updated_at TEXT DEFAULT CURRENT_TIMESTAMP
-            )
-        """)
-        
-        cursor.execute("""
-            INSERT INTO service_config (service_id, enabled, settings_json, updated_at)
-            VALUES (?, ?, ?, CURRENT_TIMESTAMP)
-            ON CONFLICT(service_id) DO UPDATE SET
-                enabled = excluded.enabled,
-                settings_json = excluded.settings_json,
-                updated_at = CURRENT_TIMESTAMP
-        """, (service_id, int(config.enabled), json.dumps(config.settings)))
-        
-        conn.commit()
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS service_config (
+                    service_id TEXT PRIMARY KEY,
+                    enabled INTEGER DEFAULT 1,
+                    settings_json TEXT DEFAULT '{}',
+                    updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+                )
+            """)
+            
+            cursor.execute("""
+                INSERT INTO service_config (service_id, enabled, settings_json, updated_at)
+                VALUES (?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(service_id) DO UPDATE SET
+                    enabled = excluded.enabled,
+                    settings_json = excluded.settings_json,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (service_id, int(config.enabled), json.dumps(config.settings)))
+            
+            conn.commit()
         return True
     except Exception as e:
         print(f"Error saving service config: {e}")

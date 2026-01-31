@@ -158,10 +158,10 @@ async def startup_event():
 async def shutdown_event():
     """Clean shutdown - checkpoint SQLite WAL to prevent lock issues."""
     try:
+        from contextlib import closing
         from data.db import get_connection
-        conn = get_connection()
-        conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
-        conn.close()
+        with closing(get_connection()) as conn:
+            conn.execute("PRAGMA wal_checkpoint(TRUNCATE)")
         print("[Shutdown] Database checkpointed")
     except Exception as e:
         print(f"[Shutdown] Checkpoint failed: {e}")

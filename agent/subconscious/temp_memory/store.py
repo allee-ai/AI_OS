@@ -30,6 +30,7 @@ Usage:
 """
 
 import threading
+from contextlib import closing
 from dataclasses import dataclass, asdict
 from datetime import datetime, timezone
 from typing import List, Optional
@@ -81,72 +82,72 @@ class Fact:
 
 def _ensure_table() -> None:
     """Ensure the temp_facts table exists."""
-    conn = get_connection()
-    cursor = conn.cursor()
-    
-    cursor.execute("""
-        CREATE TABLE IF NOT EXISTS temp_facts (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            text TEXT NOT NULL,
-            timestamp TEXT NOT NULL,
-            source TEXT NOT NULL,
-            session_id TEXT NOT NULL,
-            consolidated INTEGER DEFAULT 0,
-            status TEXT DEFAULT 'pending',
-            confidence_score REAL,
-            score_json TEXT,
-            hier_key TEXT,
-            metadata_json TEXT,
-            created_at TEXT DEFAULT CURRENT_TIMESTAMP
-        )
-    """)
-    
-    # Index for finding pending facts
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_temp_facts_pending 
-        ON temp_facts(consolidated, created_at)
-    """)
-    
-    # Index for session lookups
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_temp_facts_session 
-        ON temp_facts(session_id)
-    """)
-    
-    # Index for hierarchical key lookups
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_temp_facts_hier_key 
-        ON temp_facts(hier_key)
-    """)
-    
-    # Index for status lookups
-    cursor.execute("""
-        CREATE INDEX IF NOT EXISTS idx_temp_facts_status 
-        ON temp_facts(status)
-    """)
-    
-    # Add columns if they don't exist (migration for existing DBs)
-    try:
-        cursor.execute("ALTER TABLE temp_facts ADD COLUMN hier_key TEXT")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    
-    try:
-        cursor.execute("ALTER TABLE temp_facts ADD COLUMN metadata_json TEXT")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    
-    try:
-        cursor.execute("ALTER TABLE temp_facts ADD COLUMN status TEXT DEFAULT 'pending'")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    
-    try:
-        cursor.execute("ALTER TABLE temp_facts ADD COLUMN confidence_score REAL")
-    except sqlite3.OperationalError:
-        pass  # Column already exists
-    
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS temp_facts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text TEXT NOT NULL,
+                timestamp TEXT NOT NULL,
+                source TEXT NOT NULL,
+                session_id TEXT NOT NULL,
+                consolidated INTEGER DEFAULT 0,
+                status TEXT DEFAULT 'pending',
+                confidence_score REAL,
+                score_json TEXT,
+                hier_key TEXT,
+                metadata_json TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        
+        # Index for finding pending facts
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_pending 
+            ON temp_facts(consolidated, created_at)
+        """)
+        
+        # Index for session lookups
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_session 
+            ON temp_facts(session_id)
+        """)
+        
+        # Index for hierarchical key lookups
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_hier_key 
+            ON temp_facts(hier_key)
+        """)
+        
+        # Index for status lookups
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_status 
+            ON temp_facts(status)
+        """)
+        
+        # Add columns if they don't exist (migration for existing DBs)
+        try:
+            cursor.execute("ALTER TABLE temp_facts ADD COLUMN hier_key TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute("ALTER TABLE temp_facts ADD COLUMN metadata_json TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute("ALTER TABLE temp_facts ADD COLUMN status TEXT DEFAULT 'pending'")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        try:
+            cursor.execute("ALTER TABLE temp_facts ADD COLUMN confidence_score REAL")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+        
+        conn.commit()
 
 
 def add_fact(
@@ -181,16 +182,16 @@ def add_fact(
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            INSERT INTO temp_facts (text, timestamp, source, session_id, consolidated, hier_key, metadata_json)
-            VALUES (?, ?, ?, ?, 0, ?, ?)
-        """, (text, timestamp, source, session_id, hier_key, metadata_json))
-        
-        fact_id = cursor.lastrowid
-        conn.commit()
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO temp_facts (text, timestamp, source, session_id, consolidated, hier_key, metadata_json)
+                VALUES (?, ?, ?, ?, 0, ?, ?)
+            """, (text, timestamp, source, session_id, hier_key, metadata_json))
+            
+            fact_id = cursor.lastrowid
+            conn.commit()
         
         # Log the extraction
         try:
@@ -234,24 +235,24 @@ def get_facts(limit: int = 100, include_consolidated: bool = False) -> List[Fact
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection(readonly=True)
-        cursor = conn.cursor()
-        
-        if include_consolidated:
-            cursor.execute("""
-                SELECT * FROM temp_facts 
-                ORDER BY created_at DESC 
-                LIMIT ?
-            """, (limit,))
-        else:
-            cursor.execute("""
-                SELECT * FROM temp_facts 
-                WHERE consolidated = 0
-                ORDER BY created_at DESC 
-                LIMIT ?
-            """, (limit,))
-        
-        return [Fact.from_row(row) for row in cursor.fetchall()]
+        with closing(get_connection(readonly=True)) as conn:
+            cursor = conn.cursor()
+            
+            if include_consolidated:
+                cursor.execute("""
+                    SELECT * FROM temp_facts 
+                    ORDER BY created_at DESC 
+                    LIMIT ?
+                """, (limit,))
+            else:
+                cursor.execute("""
+                    SELECT * FROM temp_facts 
+                    WHERE consolidated = 0
+                    ORDER BY created_at DESC 
+                    LIMIT ?
+                """, (limit,))
+            
+            return [Fact.from_row(row) for row in cursor.fetchall()]
 
 
 def get_session_facts(session_id: str, include_consolidated: bool = False) -> List[Fact]:
@@ -268,23 +269,23 @@ def get_session_facts(session_id: str, include_consolidated: bool = False) -> Li
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection(readonly=True)
-        cursor = conn.cursor()
-        
-        if include_consolidated:
-            cursor.execute("""
-                SELECT * FROM temp_facts 
-                WHERE session_id = ?
-                ORDER BY created_at ASC
-            """, (session_id,))
-        else:
-            cursor.execute("""
-                SELECT * FROM temp_facts 
-                WHERE session_id = ? AND consolidated = 0
-                ORDER BY created_at ASC
-            """, (session_id,))
-        
-        return [Fact.from_row(row) for row in cursor.fetchall()]
+        with closing(get_connection(readonly=True)) as conn:
+            cursor = conn.cursor()
+            
+            if include_consolidated:
+                cursor.execute("""
+                    SELECT * FROM temp_facts 
+                    WHERE session_id = ?
+                    ORDER BY created_at ASC
+                """, (session_id,))
+            else:
+                cursor.execute("""
+                    SELECT * FROM temp_facts 
+                    WHERE session_id = ? AND consolidated = 0
+                    ORDER BY created_at ASC
+                """, (session_id,))
+            
+            return [Fact.from_row(row) for row in cursor.fetchall()]
 
 
 def get_all_pending() -> List[Fact]:
@@ -298,16 +299,16 @@ def get_all_pending() -> List[Fact]:
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection(readonly=True)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT * FROM temp_facts 
-            WHERE consolidated = 0
-            ORDER BY created_at ASC
-        """)
-        
-        return [Fact.from_row(row) for row in cursor.fetchall()]
+        with closing(get_connection(readonly=True)) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM temp_facts 
+                WHERE consolidated = 0
+                ORDER BY created_at ASC
+            """)
+            
+            return [Fact.from_row(row) for row in cursor.fetchall()]
 
 
 def mark_consolidated(fact_id: int, score_json: Optional[str] = None) -> bool:
@@ -322,24 +323,24 @@ def mark_consolidated(fact_id: int, score_json: Optional[str] = None) -> bool:
         True if fact was found and updated, False otherwise
     """
     with _db_lock:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        if score_json:
-            cursor.execute("""
-                UPDATE temp_facts 
-                SET consolidated = 1, score_json = ?
-                WHERE id = ?
-            """, (score_json, fact_id))
-        else:
-            cursor.execute("""
-                UPDATE temp_facts 
-                SET consolidated = 1
-                WHERE id = ?
-            """, (fact_id,))
-        
-        conn.commit()
-        return cursor.rowcount > 0
+        with closing(get_connection()) as conn:
+            with conn:
+                cursor = conn.cursor()
+                
+                if score_json:
+                    cursor.execute("""
+                        UPDATE temp_facts 
+                        SET consolidated = 1, score_json = ?
+                        WHERE id = ?
+                    """, (score_json, fact_id))
+                else:
+                    cursor.execute("""
+                        UPDATE temp_facts 
+                        SET consolidated = 1
+                        WHERE id = ?
+                    """, (fact_id,))
+                
+                return cursor.rowcount > 0
 
 
 def clear_session(session_id: str, only_consolidated: bool = True) -> int:
@@ -354,22 +355,22 @@ def clear_session(session_id: str, only_consolidated: bool = True) -> int:
         Number of facts deleted
     """
     with _db_lock:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        if only_consolidated:
-            cursor.execute("""
-                DELETE FROM temp_facts 
-                WHERE session_id = ? AND consolidated = 1
-            """, (session_id,))
-        else:
-            cursor.execute("""
-                DELETE FROM temp_facts 
-                WHERE session_id = ?
-            """, (session_id,))
-        
-        conn.commit()
-        return cursor.rowcount
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            
+            if only_consolidated:
+                cursor.execute("""
+                    DELETE FROM temp_facts 
+                    WHERE session_id = ? AND consolidated = 1
+                """, (session_id,))
+            else:
+                cursor.execute("""
+                    DELETE FROM temp_facts 
+                    WHERE session_id = ?
+                """, (session_id,))
+            
+            conn.commit()
+            return cursor.rowcount
 
 
 def get_stats() -> dict:
@@ -382,33 +383,33 @@ def get_stats() -> dict:
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection(readonly=True)
-        cursor = conn.cursor()
+        with closing(get_connection(readonly=True)) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE consolidated = 0")
+            pending = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE consolidated = 1")
+            consolidated = cursor.fetchone()[0]
+            
+            cursor.execute("SELECT COUNT(DISTINCT session_id) FROM temp_facts")
+            sessions = cursor.fetchone()[0]
+            
+            # Count by status
+            cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE status = 'pending_review'")
+            pending_review = cursor.fetchone()[0]
         
-        cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE consolidated = 0")
-        pending = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE consolidated = 1")
-        consolidated = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(DISTINCT session_id) FROM temp_facts")
-        sessions = cursor.fetchone()[0]
-        
-        # Count by status
-        cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE status = 'pending_review'")
-        pending_review = cursor.fetchone()[0]
-        
-        cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE status = 'approved'")
-        approved = cursor.fetchone()[0]
-        
-        return {
-            "pending": pending,
-            "consolidated": consolidated,
-            "total": pending + consolidated,
-            "sessions": sessions,
-            "pending_review": pending_review,
-            "approved": approved
-        }
+            cursor.execute("SELECT COUNT(*) FROM temp_facts WHERE status = 'approved'")
+            approved = cursor.fetchone()[0]
+            
+            return {
+                "pending": pending,
+                "consolidated": consolidated,
+                "total": pending + consolidated,
+                "sessions": sessions,
+                "pending_review": pending_review,
+                "approved": approved
+            }
 
 
 def get_pending_review() -> List[Fact]:
@@ -421,16 +422,16 @@ def get_pending_review() -> List[Fact]:
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection(readonly=True)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT * FROM temp_facts 
-            WHERE status = 'pending_review' AND consolidated = 0
-            ORDER BY created_at ASC
-        """)
-        
-        return [Fact.from_row(row) for row in cursor.fetchall()]
+        with closing(get_connection(readonly=True)) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM temp_facts 
+                WHERE status = 'pending_review' AND consolidated = 0
+                ORDER BY created_at ASC
+            """)
+            
+            return [Fact.from_row(row) for row in cursor.fetchall()]
 
 
 def update_fact_status(fact_id: int, status: str, confidence_score: Optional[float] = None) -> bool:
@@ -450,24 +451,24 @@ def update_fact_status(fact_id: int, status: str, confidence_score: Optional[flo
         raise ValueError(f"Invalid status '{status}'. Must be one of: {valid_statuses}")
     
     with _db_lock:
-        conn = get_connection()
-        cursor = conn.cursor()
-        
-        if confidence_score is not None:
-            cursor.execute("""
-                UPDATE temp_facts 
-                SET status = ?, confidence_score = ?
-                WHERE id = ?
-            """, (status, confidence_score, fact_id))
-        else:
-            cursor.execute("""
-                UPDATE temp_facts 
-                SET status = ?
-                WHERE id = ?
-            """, (status, fact_id))
-        
-        conn.commit()
-        return cursor.rowcount > 0
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            
+            if confidence_score is not None:
+                cursor.execute("""
+                    UPDATE temp_facts 
+                    SET status = ?, confidence_score = ?
+                    WHERE id = ?
+                """, (status, confidence_score, fact_id))
+            else:
+                cursor.execute("""
+                    UPDATE temp_facts 
+                    SET status = ?
+                    WHERE id = ?
+                """, (status, fact_id))
+            
+            conn.commit()
+            return cursor.rowcount > 0
 
 
 def approve_fact(fact_id: int) -> bool:
@@ -507,13 +508,13 @@ def get_approved_pending() -> List[Fact]:
     with _db_lock:
         _ensure_table()
         
-        conn = get_connection(readonly=True)
-        cursor = conn.cursor()
-        
-        cursor.execute("""
-            SELECT * FROM temp_facts 
-            WHERE status = 'approved' AND consolidated = 0
-            ORDER BY created_at ASC
-        """)
-        
-        return [Fact.from_row(row) for row in cursor.fetchall()]
+        with closing(get_connection(readonly=True)) as conn:
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                SELECT * FROM temp_facts 
+                WHERE status = 'approved' AND consolidated = 0
+                ORDER BY created_at ASC
+            """)
+            
+            return [Fact.from_row(row) for row in cursor.fetchall()]

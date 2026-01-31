@@ -5,6 +5,48 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-31 — Frontend Restructure + Database Lock Fix
+
+### Refactor: Frontend Module Reorganization
+- **Module-Based Structure**: Reorganized frontend to mirror backend structure
+- **New Directory Layout**: `frontend/src/modules/` now contains:
+  - `chat/` — Chat components, hooks, services, types (mirrors `chat/`)
+  - `threads/` — Thread UIs with sub-modules: `identity/`, `philosophy/`, `reflex/`, `form/`, `linking_core/`, `log/` (mirrors `agent/threads/`)
+  - `services/` — Service dashboards (mirrors `agent/services/`)
+  - `feeds/` — Feeds page (mirrors `Feeds/`)
+  - `workspace/` — Workspace components (mirrors `workspace/`)
+  - `docs/` — Documentation viewer (mirrors `docs/`)
+  - `finetune/` — Training UI (mirrors `finetune/`)
+  - `eval/` — Battle Arena placeholder (mirrors `eval/`)
+  - `subconscious/` — Orchestrator UI placeholder (mirrors `agent/subconscious/`)
+- **Shared Components**: `frontend/src/shared/` for reusable components (Sidebar, SelectWithAdd, Dashboard, ContactPage)
+- **Barrel Exports**: Each module has `index.ts` for clean imports
+- **App.tsx Updated**: All imports now use new module paths
+- **Internal Imports Fixed**: ChatContainer, ModelSelector, MessageInput, etc. use correct relative paths
+
+### Files Created
+- `frontend/RESTRUCTURE_PLAN.md` — Migration plan and file mapping reference
+- `frontend/src/modules/*/index.ts` — Module barrel exports
+- `frontend/src/modules/services/components/index.ts` — Services components barrel
+- `frontend/src/shared/index.ts` — Shared component exports
+- `frontend/src/shared/utils/constants.ts` — Shared constants
+
+### Fix: SQLite Database Lock Errors
+- **Connection Leak Fix**: Added `contextlib.closing()` to ensure connections close after use
+- **Files Fixed**:
+  - `agent/threads/identity/schema.py` — `push_profile_fact()` now uses context manager
+  - `agent/threads/philosophy/schema.py` — `push_philosophy_profile_fact()` now uses context manager  
+  - `agent/subconscious/temp_memory/store.py` — `mark_consolidated()` now uses context manager
+- **Foreign Key Fix**: Changed `profile_id="user"` to `profile_id="primary_user"` in `loops.py` to match existing profiles
+
+### Documentation: Module READMEs
+- `chat/README.md` — Chat module overview (API, schema, imports)
+- `eval/README.md` — Simplified to focus on eval module status
+- `Feeds/README.md` — Simplified to focus on feeds module status
+- `finetune/README.md` — Simplified to focus on finetune module status
+
+---
+
 ## 2026-01-27 — Consolidation Loop with Hybrid Approval
 
 ### Feature: Fact Consolidation Pipeline

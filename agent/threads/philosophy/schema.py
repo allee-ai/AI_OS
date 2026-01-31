@@ -10,6 +10,7 @@ Tables:
 """
 
 import sqlite3
+from contextlib import closing
 from typing import List, Dict, Optional
 
 # Database connection from central location
@@ -122,25 +123,26 @@ def init_philosophy_fact_types(conn: sqlite3.Connection = None) -> None:
 
 def get_philosophy_fact_types() -> List[Dict]:
     """Get all philosophy fact types."""
-    conn = get_connection(readonly=True)
-    init_philosophy_fact_types(conn)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM philosophy_fact_types ORDER BY fact_type")
-    return [dict(row) for row in cur.fetchall()]
+    with closing(get_connection(readonly=True)) as conn:
+        init_philosophy_fact_types(conn)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM philosophy_fact_types ORDER BY fact_type")
+        result = [dict(row) for row in cur.fetchall()]
+    return result
 
 
 def create_philosophy_fact_type(fact_type: str, description: str = "", default_weight: float = 0.5) -> None:
     """Create or update a philosophy fact type."""
-    conn = get_connection()
-    init_philosophy_fact_types(conn)
-    conn.cursor().execute("""
-        INSERT INTO philosophy_fact_types (fact_type, description, default_weight)
-        VALUES (?, ?, ?)
-        ON CONFLICT(fact_type) DO UPDATE SET
-            description = excluded.description,
-            default_weight = excluded.default_weight
-    """, (fact_type, description, default_weight))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        init_philosophy_fact_types(conn)
+        conn.cursor().execute("""
+            INSERT INTO philosophy_fact_types (fact_type, description, default_weight)
+            VALUES (?, ?, ?)
+            ON CONFLICT(fact_type) DO UPDATE SET
+                description = excluded.description,
+                default_weight = excluded.default_weight
+        """, (fact_type, description, default_weight))
+        conn.commit()
 
 
 # ============================================================================
@@ -149,22 +151,23 @@ def create_philosophy_fact_type(fact_type: str, description: str = "", default_w
 
 def create_philosophy_profile_type(type_name: str, description: str = "", priority: int = 5) -> None:
     """Create or update a philosophy profile type."""
-    conn = get_connection()
-    init_philosophy_profile_types(conn)
-    conn.cursor().execute("""
-        INSERT INTO philosophy_profile_types (type_name, description, priority) VALUES (?, ?, ?)
-        ON CONFLICT(type_name) DO UPDATE SET description=excluded.description, priority=excluded.priority
-    """, (type_name, description, priority))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        init_philosophy_profile_types(conn)
+        conn.cursor().execute("""
+            INSERT INTO philosophy_profile_types (type_name, description, priority) VALUES (?, ?, ?)
+            ON CONFLICT(type_name) DO UPDATE SET description=excluded.description, priority=excluded.priority
+        """, (type_name, description, priority))
+        conn.commit()
 
 
 def get_philosophy_profile_types() -> List[Dict]:
     """Get all philosophy profile types."""
-    conn = get_connection(readonly=False)
-    init_philosophy_profile_types(conn)
-    cur = conn.cursor()
-    cur.execute("SELECT * FROM philosophy_profile_types ORDER BY priority DESC")
-    return [dict(row) for row in cur.fetchall()]
+    with closing(get_connection(readonly=False)) as conn:
+        init_philosophy_profile_types(conn)
+        cur = conn.cursor()
+        cur.execute("SELECT * FROM philosophy_profile_types ORDER BY priority DESC")
+        result = [dict(row) for row in cur.fetchall()]
+    return result
 
 
 # ============================================================================
@@ -173,47 +176,48 @@ def get_philosophy_profile_types() -> List[Dict]:
 
 def create_philosophy_profile(profile_id: str, type_name: str, display_name: str = "", description: str = "") -> None:
     """Create or update a philosophy profile."""
-    conn = get_connection()
-    init_philosophy_profiles(conn)
-    conn.cursor().execute("""
-        INSERT INTO philosophy_profiles (profile_id, type_name, display_name, description) VALUES (?, ?, ?, ?)
-        ON CONFLICT(profile_id) DO UPDATE SET 
-            type_name=excluded.type_name, 
-            display_name=excluded.display_name, 
-            description=excluded.description
-    """, (profile_id, type_name, display_name or profile_id.split('.')[-1], description))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        init_philosophy_profiles(conn)
+        conn.cursor().execute("""
+            INSERT INTO philosophy_profiles (profile_id, type_name, display_name, description) VALUES (?, ?, ?, ?)
+            ON CONFLICT(profile_id) DO UPDATE SET 
+                type_name=excluded.type_name, 
+                display_name=excluded.display_name, 
+                description=excluded.description
+        """, (profile_id, type_name, display_name or profile_id.split('.')[-1], description))
+        conn.commit()
 
 
 def get_philosophy_profiles(type_name: str = None) -> List[Dict]:
     """Get all philosophy profiles, optionally filtered by type."""
-    conn = get_connection(readonly=False)
-    init_philosophy_profiles(conn)
-    cur = conn.cursor()
-    if type_name:
-        cur.execute("""
-            SELECT p.*, pt.priority, pt.description as type_description
-            FROM philosophy_profiles p 
-            JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
-            WHERE p.type_name = ? ORDER BY p.created_at
-        """, (type_name,))
-    else:
-        cur.execute("""
-            SELECT p.*, pt.priority, pt.description as type_description
-            FROM philosophy_profiles p 
-            JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
-            ORDER BY pt.priority DESC, p.created_at
-        """)
-    return [dict(row) for row in cur.fetchall()]
+    with closing(get_connection(readonly=False)) as conn:
+        init_philosophy_profiles(conn)
+        cur = conn.cursor()
+        if type_name:
+            cur.execute("""
+                SELECT p.*, pt.priority, pt.description as type_description
+                FROM philosophy_profiles p 
+                JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+                WHERE p.type_name = ? ORDER BY p.created_at
+            """, (type_name,))
+        else:
+            cur.execute("""
+                SELECT p.*, pt.priority, pt.description as type_description
+                FROM philosophy_profiles p 
+                JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+                ORDER BY pt.priority DESC, p.created_at
+            """)
+        result = [dict(row) for row in cur.fetchall()]
+    return result
 
 
 def delete_philosophy_profile(profile_id: str) -> bool:
     """Delete a philosophy profile and all its facts."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM philosophy_profile_facts WHERE profile_id = ?", (profile_id,))
-    cur.execute("DELETE FROM philosophy_profiles WHERE profile_id = ?", (profile_id,))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM philosophy_profile_facts WHERE profile_id = ?", (profile_id,))
+        cur.execute("DELETE FROM philosophy_profiles WHERE profile_id = ?", (profile_id,))
+        conn.commit()
     return True
 
 
@@ -230,58 +234,60 @@ def push_philosophy_profile_fact(
     weight: float = 0.5
 ) -> None:
     """Create or update a philosophy fact."""
-    conn = get_connection()
-    init_philosophy_profile_facts(conn)
-    conn.cursor().execute("""
-        INSERT INTO philosophy_profile_facts (profile_id, key, l1_value, l2_value, l3_value, weight, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(profile_id, key) DO UPDATE SET
-            l1_value = excluded.l1_value,
-            l2_value = excluded.l2_value,
-            l3_value = excluded.l3_value,
-            weight = excluded.weight,
-            access_count = access_count + 1,
-            last_accessed = CURRENT_TIMESTAMP,
-            updated_at = CURRENT_TIMESTAMP
-    """, (profile_id, key, l1_value, l2_value, l3_value, weight))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        with conn:
+            init_philosophy_profile_facts(conn)
+            conn.cursor().execute("""
+                INSERT INTO philosophy_profile_facts (profile_id, key, l1_value, l2_value, l3_value, weight, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(profile_id, key) DO UPDATE SET
+                    l1_value = excluded.l1_value,
+                    l2_value = excluded.l2_value,
+                    l3_value = excluded.l3_value,
+                    weight = excluded.weight,
+                    access_count = access_count + 1,
+                    last_accessed = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (profile_id, key, l1_value, l2_value, l3_value, weight))
 
 
 def pull_philosophy_profile_facts(profile_id: str = None, min_weight: float = 0.0, limit: int = 100) -> List[Dict]:
     """Pull philosophy facts, optionally filtered by profile."""
-    conn = get_connection(readonly=False)
-    init_philosophy_profile_facts(conn)
-    cur = conn.cursor()
-    
-    if profile_id:
-        cur.execute("""
-            SELECT pf.*, p.display_name, p.type_name, pt.priority
-            FROM philosophy_profile_facts pf
-            JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
-            JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
-            WHERE pf.profile_id = ? AND pf.weight >= ?
-            ORDER BY pf.weight DESC, pf.key LIMIT ?
-        """, (profile_id, min_weight, limit))
-    else:
-        cur.execute("""
-            SELECT pf.*, p.display_name, p.type_name, pt.priority
-            FROM philosophy_profile_facts pf
-            JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
-            JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
-            WHERE pf.weight >= ?
-            ORDER BY pt.priority DESC, pf.weight DESC, pf.key LIMIT ?
-        """, (min_weight, limit))
-    
-    return [dict(row) for row in cur.fetchall()]
+    with closing(get_connection(readonly=False)) as conn:
+        init_philosophy_profile_facts(conn)
+        cur = conn.cursor()
+        
+        if profile_id:
+            cur.execute("""
+                SELECT pf.*, p.display_name, p.type_name, pt.priority
+                FROM philosophy_profile_facts pf
+                JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
+                JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+                WHERE pf.profile_id = ? AND pf.weight >= ?
+                ORDER BY pf.weight DESC, pf.key LIMIT ?
+            """, (profile_id, min_weight, limit))
+        else:
+            cur.execute("""
+                SELECT pf.*, p.display_name, p.type_name, pt.priority
+                FROM philosophy_profile_facts pf
+                JOIN philosophy_profiles p ON pf.profile_id = p.profile_id
+                JOIN philosophy_profile_types pt ON p.type_name = pt.type_name
+                WHERE pf.weight >= ?
+                ORDER BY pt.priority DESC, pf.weight DESC, pf.key LIMIT ?
+            """, (min_weight, limit))
+        
+        result = [dict(row) for row in cur.fetchall()]
+    return result
 
 
 def delete_philosophy_profile_fact(profile_id: str, key: str) -> bool:
     """Delete a specific philosophy fact."""
-    conn = get_connection()
-    cur = conn.cursor()
-    cur.execute("DELETE FROM philosophy_profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
-    conn.commit()
-    return cur.rowcount > 0
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("DELETE FROM philosophy_profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
+        conn.commit()
+        deleted = cur.rowcount > 0
+    return deleted
 
 
 # ============================================================================

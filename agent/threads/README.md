@@ -287,3 +287,41 @@ class ThreadAdapter:
 | Form | 🌀 | 🌀 | ⏳ | ⏳ |
 | Philosophy | 🌀 | 🌀 | ⏳ | ⏳ |
 | Reflex | 🌀 | 🌀 | ⏳ | ⏳ |
+
+---
+
+## Frontend Module
+
+Located at `frontend/src/modules/threads/`:
+
+```
+threads/
+├── index.ts                          # Module exports
+├── pages/
+│   ├── ThreadsPage.tsx               # Main threads dashboard
+│   ├── ThreadsPage.css
+│   ├── ProfilesPage.tsx              # Identity/Philosophy profile editor
+│   └── ProfilesPage.css
+├── form/
+│   ├── index.ts
+│   └── components/
+│       ├── ToolDashboard.tsx         # Form thread tools view
+│       └── ToolDashboard.css
+├── reflex/
+│   ├── index.ts
+│   └── components/
+│       ├── ReflexDashboard.tsx       # Reflex patterns editor
+│       └── ReflexDashboard.css
+├── linking_core/
+│   ├── index.ts
+│   └── components/
+│       └── ConceptGraph3D.tsx        # 3D concept visualization
+├── hooks/
+│   └── useIntrospection.ts           # Thread state polling
+├── services/
+│   └── introspectionService.ts       # API client
+├── types/
+│   └── introspection.ts              # TypeScript interfaces
+└── utils/
+    └── constants.ts                  # API config
+```

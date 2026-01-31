@@ -178,35 +178,35 @@ class MemoryLoop(BackgroundLoop):
         import json
         import re
         import os
+        from contextlib import closing
         
         # 1. Get recent conversation turns since last_processed_turn_id
         try:
             from data.db import get_connection
-            conn = get_connection(readonly=True)
-            cur = conn.cursor()
-            
-            # Get unprocessed turns
-            if self._last_processed_turn_id:
-                cur.execute("""
-                    SELECT ct.id, ct.user_message, ct.assistant_message, c.session_id
-                    FROM convo_turns ct
-                    JOIN convos c ON ct.convo_id = c.id
-                    WHERE ct.id > ?
-                    ORDER BY ct.id ASC
-                    LIMIT 10
-                """, (self._last_processed_turn_id,))
-            else:
-                # First run - get last 10 turns
-                cur.execute("""
-                    SELECT ct.id, ct.user_message, ct.assistant_message, c.session_id
-                    FROM convo_turns ct
-                    JOIN convos c ON ct.convo_id = c.id
-                    ORDER BY ct.id DESC
-                    LIMIT 10
-                """)
-            
-            turns = cur.fetchall()
-            conn.close()
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                
+                # Get unprocessed turns
+                if self._last_processed_turn_id:
+                    cur.execute("""
+                        SELECT ct.id, ct.user_message, ct.assistant_message, c.session_id
+                        FROM convo_turns ct
+                        JOIN convos c ON ct.convo_id = c.id
+                        WHERE ct.id > ?
+                        ORDER BY ct.id ASC
+                        LIMIT 10
+                    """, (self._last_processed_turn_id,))
+                else:
+                    # First run - get last 10 turns
+                    cur.execute("""
+                        SELECT ct.id, ct.user_message, ct.assistant_message, c.session_id
+                        FROM convo_turns ct
+                        JOIN convos c ON ct.convo_id = c.id
+                        ORDER BY ct.id DESC
+                        LIMIT 10
+                    """)
+                
+                turns = cur.fetchall()
             
             if not turns:
                 return  # Nothing to process
@@ -684,7 +684,7 @@ class ConsolidationLoop(BackgroundLoop):
                     else:
                         # Route to identity thread (default)
                         push_profile_fact(
-                            profile_id="user",
+                            profile_id="primary_user",
                             key=key,
                             fact_type="learned",
                             l1_value=fact.text[:100],

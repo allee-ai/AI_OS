@@ -12,6 +12,7 @@ Tables:
 
 import sqlite3
 import threading
+from contextlib import closing
 from typing import List, Dict, Optional
 
 # Database connection from central location
@@ -57,6 +58,7 @@ def init_profile_types(conn: Optional[sqlite3.Connection] = None) -> None:
     
     if own_conn:
         conn.commit()
+        conn.close()
 
 
 def init_profiles(conn: Optional[sqlite3.Connection] = None) -> None:
@@ -99,6 +101,7 @@ def init_profiles(conn: Optional[sqlite3.Connection] = None) -> None:
     
     if own_conn:
         conn.commit()
+        conn.close()
 
 
 def init_fact_types(conn: Optional[sqlite3.Connection] = None) -> None:
@@ -135,6 +138,7 @@ def init_fact_types(conn: Optional[sqlite3.Connection] = None) -> None:
     
     if own_conn:
         conn.commit()
+        conn.close()
 
 
 def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
@@ -206,6 +210,7 @@ def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
     
     if own_conn:
         conn.commit()
+        conn.close()
 
 
 def ensure_initialized() -> None:
@@ -217,12 +222,12 @@ def ensure_initialized() -> None:
     with _init_lock:
         if _initialized:  # Double-check after acquiring lock
             return
-        conn = get_connection()
-        init_profile_types(conn)
-        init_profiles(conn)
-        init_fact_types(conn)
-        init_profile_facts(conn)
-        conn.commit()
+        with closing(get_connection()) as conn:
+            init_profile_types(conn)
+            init_profiles(conn)
+            init_fact_types(conn)
+            init_profile_facts(conn)
+            conn.commit()
         _initialized = True
 
 
@@ -239,42 +244,43 @@ def create_profile_type(
 ) -> None:
     """Create or update a profile type."""
     ensure_initialized()
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("""
-        INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
-        VALUES (?, ?, ?, ?, ?)
-        ON CONFLICT(type_name) DO UPDATE SET
-            trust_level = excluded.trust_level,
-            context_priority = excluded.context_priority,
-            can_edit = excluded.can_edit,
-            description = excluded.description
-    """, (type_name, trust_level, context_priority, can_edit, description))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("""
+            INSERT INTO profile_types (type_name, trust_level, context_priority, can_edit, description)
+            VALUES (?, ?, ?, ?, ?)
+            ON CONFLICT(type_name) DO UPDATE SET
+                trust_level = excluded.trust_level,
+                context_priority = excluded.context_priority,
+                can_edit = excluded.can_edit,
+                description = excluded.description
+        """, (type_name, trust_level, context_priority, can_edit, description))
+        conn.commit()
 
 
 def get_profile_types() -> List[Dict]:
     """Get all profile types."""
     ensure_initialized()
-    conn = get_connection(readonly=True)
-    cur = conn.cursor()
-    
-    cur.execute("SELECT * FROM profile_types ORDER BY trust_level DESC")
-    return [dict(row) for row in cur.fetchall()]
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM profile_types ORDER BY trust_level DESC")
+        result = [dict(row) for row in cur.fetchall()]
+    return result
 
 
 def delete_profile_type(type_name: str) -> bool:
     """Delete a profile type (only if no profiles use it)."""
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("SELECT COUNT(*) FROM profiles WHERE type_name = ?", (type_name,))
-    if cur.fetchone()[0] > 0:
-        return False
-    
-    cur.execute("DELETE FROM profile_types WHERE type_name = ?", (type_name,))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT COUNT(*) FROM profiles WHERE type_name = ?", (type_name,))
+        if cur.fetchone()[0] > 0:
+            return False
+        
+        cur.execute("DELETE FROM profile_types WHERE type_name = ?", (type_name,))
+        conn.commit()
     return True
 
 
@@ -285,17 +291,17 @@ def delete_profile_type(type_name: str) -> bool:
 def create_profile(profile_id: str, type_name: str, display_name: str = "") -> None:
     """Create or update a profile."""
     ensure_initialized()
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("""
-        INSERT INTO profiles (profile_id, type_name, display_name)
-        VALUES (?, ?, ?)
-        ON CONFLICT(profile_id) DO UPDATE SET
-            type_name = excluded.type_name,
-            display_name = excluded.display_name
-    """, (profile_id, type_name, display_name or profile_id.split('.')[-1]))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("""
+            INSERT INTO profiles (profile_id, type_name, display_name)
+            VALUES (?, ?, ?)
+            ON CONFLICT(profile_id) DO UPDATE SET
+                type_name = excluded.type_name,
+                display_name = excluded.display_name
+        """, (profile_id, type_name, display_name or profile_id.split('.')[-1]))
+        conn.commit()
 
 
 def get_profiles(type_name: str = None) -> List[Dict]:
@@ -327,18 +333,18 @@ def get_profiles(type_name: str = None) -> List[Dict]:
 
 def delete_profile(profile_id: str) -> bool:
     """Delete a profile and all its facts (only if not protected)."""
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    # Check if protected
-    cur.execute("SELECT protected FROM profiles WHERE profile_id = ?", (profile_id,))
-    row = cur.fetchone()
-    if row and row[0]:
-        return False  # Cannot delete protected profile
-    
-    cur.execute("DELETE FROM profile_facts WHERE profile_id = ?", (profile_id,))
-    cur.execute("DELETE FROM profiles WHERE profile_id = ?", (profile_id,))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        # Check if protected
+        cur.execute("SELECT protected FROM profiles WHERE profile_id = ?", (profile_id,))
+        row = cur.fetchone()
+        if row and row[0]:
+            return False  # Cannot delete protected profile
+        
+        cur.execute("DELETE FROM profile_facts WHERE profile_id = ?", (profile_id,))
+        cur.execute("DELETE FROM profiles WHERE profile_id = ?", (profile_id,))
+        conn.commit()
     return True
 
 
@@ -349,40 +355,41 @@ def delete_profile(profile_id: str) -> bool:
 def create_fact_type(fact_type: str, description: str = "", default_weight: float = 0.5) -> None:
     """Create or update a fact type."""
     ensure_initialized()
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("""
-        INSERT INTO fact_types (fact_type, description, default_weight)
-        VALUES (?, ?, ?)
-        ON CONFLICT(fact_type) DO UPDATE SET
-            description = excluded.description,
-            default_weight = excluded.default_weight
-    """, (fact_type, description, default_weight))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("""
+            INSERT INTO fact_types (fact_type, description, default_weight)
+            VALUES (?, ?, ?)
+            ON CONFLICT(fact_type) DO UPDATE SET
+                description = excluded.description,
+                default_weight = excluded.default_weight
+        """, (fact_type, description, default_weight))
+        conn.commit()
 
 
 def get_fact_types() -> List[Dict]:
     """Get all fact types."""
     ensure_initialized()
-    conn = get_connection(readonly=True)
-    cur = conn.cursor()
-    
-    cur.execute("SELECT * FROM fact_types ORDER BY fact_type")
-    return [dict(row) for row in cur.fetchall()]
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT * FROM fact_types ORDER BY fact_type")
+        result = [dict(row) for row in cur.fetchall()]
+    return result
 
 
 def delete_fact_type(fact_type: str) -> bool:
     """Delete a fact type (only if no facts use it)."""
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("SELECT COUNT(*) FROM profile_facts WHERE fact_type = ?", (fact_type,))
-    if cur.fetchone()[0] > 0:
-        return False
-    
-    cur.execute("DELETE FROM fact_types WHERE fact_type = ?", (fact_type,))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("SELECT COUNT(*) FROM profile_facts WHERE fact_type = ?", (fact_type,))
+        if cur.fetchone()[0] > 0:
+            return False
+        
+        cur.execute("DELETE FROM fact_types WHERE fact_type = ?", (fact_type,))
+        conn.commit()
     return True
 
 
@@ -400,29 +407,29 @@ def push_profile_fact(
     weight: float = None
 ) -> None:
     """Push a fact to a profile with L1/L2/L3 verbosity levels."""
-    ensure_initialized()
-    conn = get_connection()
-    cur = conn.cursor()
     
-    if weight is None:
-        cur.execute("SELECT default_weight FROM fact_types WHERE fact_type = ?", (fact_type,))
-        row = cur.fetchone()
-        weight = row[0] if row else 0.5
-    
-    cur.execute("""
-        INSERT INTO profile_facts (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight, updated_at)
-        VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
-        ON CONFLICT(profile_id, key) DO UPDATE SET
-            fact_type = excluded.fact_type,
-            l1_value = excluded.l1_value,
-            l2_value = excluded.l2_value,
-            l3_value = excluded.l3_value,
-            weight = excluded.weight,
-            access_count = access_count + 1,
-            last_accessed = CURRENT_TIMESTAMP,
-            updated_at = CURRENT_TIMESTAMP
-    """, (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        with conn:
+            cur = conn.cursor()
+            
+            if weight is None:
+                cur.execute("SELECT default_weight FROM fact_types WHERE fact_type = ?", (fact_type,))
+                row = cur.fetchone()
+                weight = row[0] if row else 0.5
+            
+            cur.execute("""
+                INSERT INTO profile_facts (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
+                ON CONFLICT(profile_id, key) DO UPDATE SET
+                    fact_type = excluded.fact_type,
+                    l1_value = excluded.l1_value,
+                    l2_value = excluded.l2_value,
+                    l3_value = excluded.l3_value,
+                    weight = excluded.weight,
+                    access_count = access_count + 1,
+                    last_accessed = CURRENT_TIMESTAMP,
+                    updated_at = CURRENT_TIMESTAMP
+            """, (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight))
 
 
 def pull_profile_facts(
@@ -465,31 +472,32 @@ def pull_profile_facts(
 
 def update_fact_weight(profile_id: str, key: str, weight: float) -> None:
     """Update the weight of a specific fact."""
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    cur.execute("""
-        UPDATE profile_facts 
-        SET weight = ?, updated_at = CURRENT_TIMESTAMP
-        WHERE profile_id = ? AND key = ?
-    """, (weight, profile_id, key))
-    conn.commit()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("""
+            UPDATE profile_facts 
+            SET weight = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE profile_id = ? AND key = ?
+        """, (weight, profile_id, key))
+        conn.commit()
 
 
 def delete_profile_fact(profile_id: str, key: str) -> bool:
     """Delete a specific fact (only if not protected)."""
-    conn = get_connection()
-    cur = conn.cursor()
-    
-    # Check if protected
-    cur.execute("SELECT protected FROM profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
-    row = cur.fetchone()
-    if row and row[0]:
-        return False  # Cannot delete protected fact
-    
-    cur.execute("DELETE FROM profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
-    conn.commit()
-    return cur.rowcount > 0
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        
+        # Check if protected
+        cur.execute("SELECT protected FROM profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
+        row = cur.fetchone()
+        if row and row[0]:
+            return False  # Cannot delete protected fact
+        
+        cur.execute("DELETE FROM profile_facts WHERE profile_id = ? AND key = ?", (profile_id, key))
+        conn.commit()
+        deleted = cur.rowcount > 0
+    return deleted
 
 
 # ============================================================================
