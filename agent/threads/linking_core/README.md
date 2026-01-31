@@ -6,148 +6,90 @@
 
 ---
 
-The Linking Core is not a data store — it's the **relevance engine** that determines what's important *right now*.
+## Description
 
-## Purpose
+The Linking Core is not a data store — it's the **relevance engine** that determines what's important *right now*. While other threads store facts (identity, philosophy, form), Linking Core contains the **equations and algorithms** that score and select which facts surface in context.
 
-While other threads store facts (identity, philosophy, form), Linking Core contains the **equations and algorithms** that score and select which facts surface in context.
+---
 
-## Core Concept: Spread Activation
+## Architecture
 
-When a concept is activated (e.g., user mentions "Sarah"), activation spreads to linked concepts:
+<!-- ARCHITECTURE:linking_core -->
+### Core Concept: Spread Activation
+
+When a concept is activated, activation spreads to linked concepts:
 
 ```
 [sarah] ──0.8──→ [sarah.likes.blue]
        ──0.6──→ [sarah.works.coffee_shop]  
-       ──0.3──→ [sarah.mentioned.coffee]
-                      │
-                      └──0.5──→ [coffee]
 ```
 
-This mimics how human memory works: thinking of a person activates related memories.
+### The Math
 
----
-
-## The Math
-
-### 1. Hebbian Learning (Link Strengthening)
-
-**"Neurons that fire together, wire together"**
-
-When two concepts co-occur (mentioned together in conversation), their link strengthens:
-
+**1. Hebbian Learning** — "Neurons that fire together, wire together"
 ```
 new_strength = old_strength + (1.0 - old_strength) × learning_rate
 ```
 
-| Scenario | old_strength | learning_rate | new_strength |
-|----------|--------------|---------------|--------------|
-| First co-occurrence | 0.0 | 0.1 | 0.10 |
-| Second co-occurrence | 0.1 | 0.1 | 0.19 |
-| After 10 co-occurrences | 0.65 | 0.1 | 0.69 |
-| Strongly linked | 0.9 | 0.1 | 0.91 |
-
-**Key property**: Asymptotic approach to 1.0 — links can never exceed maximum strength, and strengthening slows as links become strong.
-
-**Implementation**: `link_concepts()` in schema.py
-
----
-
-### 2. Spread Activation
-
-When the user mentions a concept, activation spreads through the link graph:
-
+**2. Spread Activation** — Multi-hop through the graph
 ```
 target_activation = source_activation × link_strength
 ```
 
-**Multi-hop spreading** (default max_hops=1):
-```
-sarah (1.0) ──0.8──→ coffee (0.8) ──0.6──→ morning (0.48)
-                                          ↑ below threshold, stops
-```
-
-**Hierarchical activation** (prefix matching):
-```
-sarah (1.0) → sarah.likes.* (0.8)
-            → sarah.works.* (0.8)
-            → sarah.mentioned.* (0.8)
-```
-
-Children of activated concepts get 80% activation automatically.
-
-**Implementation**: `spread_activate()` in schema.py
-
----
-
-### 3. Temporal Decay
-
-Links that aren't reinforced fade over time:
-
+**3. Temporal Decay** — Links that aren't reinforced fade
 ```
 new_strength = old_strength × decay_rate^days
 ```
 
-| decay_rate | After 7 days | After 30 days | After 90 days |
-|------------|--------------|---------------|---------------|
-| 0.95 | 0.70 | 0.21 | 0.01 |
-| 0.98 | 0.87 | 0.55 | 0.16 |
-| 0.99 | 0.93 | 0.74 | 0.41 |
+### Tables
 
-**Pruning**: Links below `min_strength` (default 0.05) are deleted.
+| Table | Purpose |
+|-------|---------|
+| `concept_links` | Learned associations (the graph) |
+| `concept_activations` | Current activation levels |
+| `fact_relevance` | Multi-dimensional scores per fact |
 
-**Implementation**: `decay_concept_links()` in schema.py
+### Multi-Dimensional Scoring
 
----
-
-### 4. Co-occurrence Boost
-
-Facts that have appeared together with current context get a relevance boost:
-
-```
-boosted_score = base_score × (1 + cooccur_boost)
-```
-
-Where `cooccur_boost` is 0.0–0.3 based on how often this fact has appeared with the current conversation's concepts.
-
-**Implementation**: `_get_cooccurrence_boost()` in adapter.py
+| Dimension | Source | Description |
+|-----------|--------|-------------|
+| identity_score | Identity | Goal/value alignment |
+| log_score | Log | Recency |
+| form_score | Form | Semantic similarity |
+| philosophy_score | Philosophy | Emotional salience |
+| reflex_score | Reflex | Access frequency |
+| cooccurrence_score | LinkingCore | Co-occurrence |
+<!-- /ARCHITECTURE:linking_core -->
 
 ---
 
-### 5. Multi-Dimensional Scoring (fact_relevance table)
+## Roadmap
 
-Each fact has scores from multiple threads:
+<!-- ROADMAP:linking_core -->
+### Ready for contributors
+- [ ] **Graph visualization** — Interactive concept map in UI
+- [ ] **Decay tuning** — Configurable decay rates per category
+- [ ] **Activation history** — Track what surfaced over time
+- [ ] **Concept merging** — Deduplicate similar concepts
 
-| Dimension | Thread | Description | Range |
-|-----------|--------|-------------|-------|
-| `identity_score` | Identity | Goal/value alignment | 0.0–1.0 |
-| `log_score` | Log | Recency (when last accessed) | 0.0–1.0 |
-| `form_score` | Form | Semantic similarity | 0.0–1.0 |
-| `philosophy_score` | Philosophy | Emotional salience | 0.0–1.0 |
-| `reflex_score` | Reflex | Access frequency | 0.0–1.0 |
-| `cooccurrence_score` | LinkingCore | Co-occurrence with context | 0.0–1.0 |
-
-**Final score** (computed by LinkingCore):
-```
-final_score = weighted_sum(all_scores)
-```
-
-This is **auditable** — every component score is stored and queryable.
+### Starter tasks
+- [ ] Show top activated concepts in sidebar
+- [ ] Add concept search
+<!-- /ROADMAP:linking_core -->
 
 ---
 
-## Tables
+## Changelog
 
-### `concept_links`
-Learned associations between concepts (the graph):
+<!-- CHANGELOG:linking_core -->
+### 2026-01-27
+- Hebbian learning with asymptotic strength growth
+- Multi-dimensional fact scoring
 
-| Column | Type | Description |
-|--------|------|-------------|
-| `concept_a` | TEXT | First concept (alphabetically ordered) |
-| `concept_b` | TEXT | Second concept |
-| `strength` | REAL | Link strength 0.0–1.0 |
-| `fire_count` | INT | Times co-occurred |
-| `last_fired` | TIMESTAMP | Last co-occurrence |
+### 2026-01-20
+- Spread activation with max_hops parameter
+- Temporal decay with configurable rate
+<!-- /CHANGELOG:linking_core -->
 
 ### `fact_relevance`
 Multi-dimensional scoring matrix:

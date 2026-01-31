@@ -1,55 +1,71 @@
 # Workspace Module
 
-The **Workspace** module manages user files within AI OS. It provides file upload, organization, and retrieval so the agent can reference user documents during conversations.
-
-## Architecture
-
-```
-workspace/
-├── __init__.py          # Module exports
-├── api.py               # FastAPI endpoints
-└── schema.py            # SQLite tables for file metadata
-```
-
-## API Endpoints
-
-- `GET /api/workspace/files` - List all files
-- `POST /api/workspace/upload` - Upload a file
-- `DELETE /api/workspace/files/{id}` - Delete a file
-- `POST /api/workspace/folders` - Create folder
-- `PUT /api/workspace/move` - Move/rename files
-
-## Status
-
-- [x] File upload and storage
-- [x] Folder organization
-- [ ] Full-text search within files
-- [ ] Agent file reference integration
+File management for AI OS — upload, organize, and reference user documents.
 
 ---
 
-## Frontend Module
+## Description
 
-Located at `frontend/src/modules/workspace/`:
+The Workspace module manages user files within AI OS. It provides file upload, organization, and retrieval so the agent can reference user documents during conversations.
+
+---
+
+## Architecture
+
+<!-- ARCHITECTURE:workspace -->
+### Directory Structure
 
 ```
 workspace/
-├── index.ts                    # Module exports
-├── pages/
-│   └── WorkspacePage.tsx       # Main workspace view
-├── components/
-│   ├── WorkspacePanel.tsx      # File browser panel
-│   ├── WorkspacePanel.css
-│   ├── WorkspaceLayout.tsx     # Layout wrapper
-│   ├── WorkspaceLayout.css
-│   ├── FileExplorer.tsx        # File tree component
-│   └── FileExplorer.css
-├── hooks/
-│   └── useWorkspace.ts         # File state management
-├── services/
-│   └── workspaceApi.ts         # API client
-├── types/
-│   └── workspace.ts            # TypeScript interfaces
-└── utils/
-    └── constants.ts            # API config
+├── api.py               # FastAPI endpoints
+└── schema.py            # SQLite tables for metadata
 ```
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| GET | `/api/workspace/files` | List all files |
+| POST | `/api/workspace/upload` | Upload a file |
+| DELETE | `/api/workspace/files/{id}` | Delete a file |
+| POST | `/api/workspace/folders` | Create folder |
+| PUT | `/api/workspace/move` | Move/rename files |
+
+### Status
+
+| Feature | Status |
+|---------|--------|
+| File upload | ✅ |
+| Folder organization | ✅ |
+| Full-text search | 🔜 |
+| Agent reference integration | 🔜 |
+<!-- /ARCHITECTURE:workspace -->
+
+---
+
+## Roadmap
+
+<!-- ROADMAP:workspace -->
+### Ready for contributors
+- [ ] **Full-text search** — Search within file contents
+- [ ] **Agent reference** — Agent cites specific files
+- [ ] **Version history** — Track file changes
+- [ ] **Sharing** — Share files with external users
+
+### Starter tasks
+- [ ] Add file preview (markdown, code)
+- [ ] Show file metadata (size, modified)
+<!-- /ROADMAP:workspace -->
+
+---
+
+## Changelog
+
+<!-- CHANGELOG:workspace -->
+### 2026-01-27
+- File upload and folder organization
+- FastAPI endpoints for CRUD
+
+### 2026-01-20
+- SQLite schema for file metadata
+<!-- /CHANGELOG:workspace -->

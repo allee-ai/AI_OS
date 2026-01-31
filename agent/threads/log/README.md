@@ -6,23 +6,22 @@
 
 ---
 
-## Purpose
+## Description
 
 Log provides temporal awareness — a timeline of events, sessions, and patterns. Unlike other threads that store "what is true", Log stores "what has occurred". This is how Agent knows "we talked about this yesterday" or "you've been working for 2 hours."
 
 ---
 
-## Database Schema
+## Architecture
 
-### Tables
+<!-- ARCHITECTURE:log -->
+### Database Schema
 
 | Table | Purpose |
 |-------|---------|
 | `unified_events` | Central event timeline |
 | `log_events` | System events (errors, starts) |
 | `log_sessions` | Conversation sessions |
-
-### unified_events
 
 ```sql
 CREATE TABLE unified_events (
@@ -38,116 +37,74 @@ CREATE TABLE unified_events (
 )
 ```
 
----
-
-## Adapter Methods
+### Adapter Methods
 
 | Method | Purpose |
 |--------|---------|
 | `get_data(level, limit)` | Get events by recency level |
 | `start_session()` | Start a new conversation session |
 | `log_event(event_type, source, message, weight)` | Log a system event |
-| `record_message()` | Increment message count for session |
-| `get_session_duration()` | Get current session duration in seconds |
-| `get_recent_events(limit)` | Get recent events by timestamp |
-| `get_recent_sessions(limit)` | Get recent sessions |
+| `record_message()` | Increment message count |
+| `get_session_duration()` | Current session duration |
 | `introspect(context_level, query, threshold)` | Build STATE block contribution |
 | `health()` | Health check with event counts |
 
----
-
-## Context Levels (Recency-Based)
-
-Log uses **recency**, not depth. Levels determine how far back to look:
+### Context Levels (Recency-Based)
 
 | Level | Events | Use Case |
 |-------|--------|----------|
-| **L1** | 10 most recent | Quick glance at activity |
-| **L2** | 100 most recent | Conversation-scale history |
+| **L1** | 10 most recent | Quick glance |
+| **L2** | 100 most recent | Conversation-scale |
 | **L3** | 1000 most recent | Full timeline |
 
-```python
-LOG_LIMITS = {1: 10, 2: 100, 3: 1000}
-```
+### Event Types
 
----
-
-## Event Types
-
-| Type | Relevance Score | Purpose |
-|------|-----------------|---------|
-| `convo` | 8 | Conversation events (direct interaction) |
-| `memory` | 7 | Memory/reflection events (cognitive) |
-| `user_action` | 6 | User actions in UI |
+| Type | Relevance | Purpose |
+|------|-----------|---------|
+| `convo` | 8 | Conversation events |
+| `memory` | 7 | Memory/reflection |
+| `user_action` | 6 | UI actions |
 | `file` | 4 | File operations |
-| `system` | 2 | System events (background) |
-| `activation` | 1 | Spread activation (technical) |
+| `system` | 2 | System events |
 
----
-
-## Output Format
-
-Facts are formatted with dot notation for the STATE block:
+### Output Format
 
 ```
 log.session.duration: 15 minutes
 log.session.messages: 8
 log.events.0: discussed architecture [conversation]
-log.events.1: user opened settings [user_action]
-log.events.2: file saved: notes.md [file]
 ```
+<!-- /ARCHITECTURE:log -->
 
 ---
 
-## Integration Points
+## Roadmap
 
-| Thread | Integration |
-|--------|-------------|
-| **Subconscious** | Calls `introspect()` to build STATE block |
-| **Identity** | Session tracks who's talking |
-| **Linking Core** | Events trigger concept co-occurrence |
-| **Philosophy** | Can track ethical decisions over time |
+<!-- ROADMAP:log -->
+### Ready for contributors
+- [ ] **Timeline visualization** — Interactive event timeline in UI
+- [ ] **Session analytics** — Duration, message count, topic clusters
+- [ ] **Event search** — Full-text search across event history
+- [ ] **Export/import** — JSON/CSV export of event history
 
----
-
-## Weight Semantics
-
-| Weight | Meaning | Examples |
-|--------|---------|----------|
-| 0.8+ | Important events | User messages, errors |
-| 0.5-0.7 | Standard events | System actions |
-| 0.3-0.5 | Background events | Health checks |
-| <0.3 | Technical events | Activation patterns |
-
-Higher weight = more likely to surface in context.
-
-Weight represents **significance**, not permanence:
-
-- **0.7+**: Important events (user corrections, errors, milestones)
-- **0.3-0.6**: Normal events (messages, tool uses)
-- **0.1-0.2**: Routine events (system wakes, heartbeats)
+### Starter tasks
+- [ ] Add event type icons in UI
+- [ ] Show session summary on conversation start
+<!-- /ROADMAP:log -->
 
 ---
 
-## Integration Points
+## Changelog
 
-| Thread | Integration |
-|--------|-------------|
-| **Identity** | Log records when identity facts change |
-| **Form** | Action history tracked with timestamps |
-| **Philosophy** | Log can track ethical decisions over time |
-| **Reflex** | Track pattern frequency for 10x promotion |
-| **Linking Core** | Temporal proximity affects relevance scoring |
+<!-- CHANGELOG:log -->
+### 2026-01-27
+- Unified events table consolidates all event sources
+- Recency-based context levels (L1=10, L2=100, L3=1000)
 
----
-
-## Usage Examples
-
-```python
-from agent.threads.schema import log_event, get_events
-
-# Log a conversation start
-log_event("convo", "Conversation started with Jordan",
+### 2026-01-20
+- Session tracking with duration and message count
+- Event relevance scoring by type
+<!-- /CHANGELOG:log -->
           {"context_level": 2}, source="local", session_id="abc123")
 
 # Log a memory extraction

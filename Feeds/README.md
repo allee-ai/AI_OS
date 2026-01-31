@@ -2,38 +2,30 @@
 
 > 🚧 **In Development** — The universal router is being tested.
 
-The **Feeds** module manages external data streams entering and leaving the AI OS. It abstracts various platforms (Email, Slack, SMS) into a unified message format so the Agent Core doesn't need platform-specific logic.
+Universal inbox for external data streams — Email, Slack, SMS, and more.
 
-## Goals
+---
 
-1.  **Unified Inbox**: Treat all inputs (chat, email, code comments) as "Messages" with a standard schema.
-2.  **Config-Driven**: Add new integrations via YAML without writing Python adapters.
-3.  **Draft-First**: AI generates drafts in the native platform (Gmail drafts, Slack unsent), never sending automatically.
+## Description
+
+The Feeds module manages external data streams entering and leaving AI OS. It abstracts various platforms into a unified message format so the Agent Core doesn't need platform-specific logic. The goal is config-driven integrations via YAML, with draft-first responses (never auto-sending).
+
+---
 
 ## Architecture
 
+<!-- ARCHITECTURE:feeds -->
+### Directory Structure
+
 ```
 Feeds/
-├── router.py          # The main message bus
-├── api.py             # FastAPI endpoints used by the frontend
-├── sources/           # YAML configurations for external APIs
-│   ├── gmail.yaml     # (Planned)
-│   ├── slack.yaml     # (Planned)
-│   └── _template.yaml # structure for new sources
-└── __init__.py
+├── router.py          # Main message bus
+├── api.py             # FastAPI endpoints
+└── sources/           # YAML configurations
+    └── _template.yaml # Structure for new sources
 ```
 
-## Status
-
-- [x] **Router Logic**: `router.py` can load and parse YAML configs.
-- [x] **API Endpoints**: Basic CRUD for messages.
-- [ ] **Auth Handlers**: OAuth2 flow for Gmail/Slack.
-- [ ] **Polling**: Background loop to fetch new messages.
-- [ ] **Draft Push**: Writing back to external APIs.
-
-## Usage (Planned)
-
-The goal is to allow adding a new source by simply dropping a YAML file:
+### Source Configuration
 
 ```yaml
 # sources/slack.yaml
@@ -45,21 +37,44 @@ auth:
   token_env: SLACK_BOT_TOKEN
 pull:
   endpoint: https://slack.com/api/conversations.history
-  mapping:
-    messages: "$.messages"
-    body: "$.text"
 ```
+
+### Status
+
+| Feature | Status |
+|---------|--------|
+| Router Logic | ✅ |
+| API Endpoints | ✅ |
+| Auth Handlers | 🔜 |
+| Polling | 🔜 |
+| Draft Push | 🔜 |
+<!-- /ARCHITECTURE:feeds -->
 
 ---
 
-## Frontend Module
+## Roadmap
 
-Located at `frontend/src/modules/feeds/`:
+<!-- ROADMAP:feeds -->
+### Ready for contributors
+- [ ] **Gmail adapter** — OAuth2 flow, draft creation
+- [ ] **Slack adapter** — Bot token auth, message polling
+- [ ] **SMS adapter** — Twilio integration
+- [ ] **Discord adapter** — Bot token, channel watching
 
-```
-feeds/
-├── index.ts                # Module exports
-└── pages/
-    ├── FeedsPage.tsx       # Main feeds view
-    └── FeedsPage.css       # Styles
-```
+### Starter tasks
+- [ ] Create gmail.yaml from template
+- [ ] Add feed status indicators in UI
+<!-- /ROADMAP:feeds -->
+
+---
+
+## Changelog
+
+<!-- CHANGELOG:feeds -->
+### 2026-01-27
+- YAML-driven source configuration
+- Router message bus
+
+### 2026-01-20
+- Basic API endpoints for message CRUD
+<!-- /CHANGELOG:feeds -->

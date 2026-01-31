@@ -348,3 +348,49 @@ class TestExports:
         
         assert 'pending_review' in stats
         assert 'approved' in stats
+
+
+class TestAddFact:
+    """Test add_fact function and its log_event integration."""
+    
+    def test_add_fact_logs_event_with_correct_signature(self):
+        """add_fact should call log_event with correct parameters (regression test)."""
+        with patch('agent.threads.log.log_event') as mock_log:
+            from agent.subconscious.temp_memory import add_fact
+            
+            fact = add_fact(
+                session_id="test-session",
+                text="User likes coffee",
+                source="conversation",
+                metadata={"category": "preference"}
+            )
+            
+            # Verify log_event was called with named parameters, not positional
+            mock_log.assert_called_once()
+            call_kwargs = mock_log.call_args.kwargs
+            
+            # These are the expected parameters for log_event
+            assert 'event_type' in call_kwargs
+            assert 'data' in call_kwargs
+            assert 'metadata' in call_kwargs
+            assert 'source' in call_kwargs
+            assert 'session_id' in call_kwargs
+            
+            # fact_id should be in metadata, NOT as a direct kwarg
+            assert 'fact_id' not in call_kwargs
+            assert 'fact_id' in call_kwargs['metadata']
+    
+    def test_add_fact_returns_fact_object(self):
+        """add_fact should return a valid Fact object."""
+        from agent.subconscious.temp_memory import add_fact, Fact
+        
+        fact = add_fact(
+            session_id="test-session-2",
+            text="Test fact",
+            source="test"
+        )
+        
+        assert isinstance(fact, Fact)
+        assert fact.text == "Test fact"
+        assert fact.session_id == "test-session-2"
+        assert fact.source == "test"

@@ -6,7 +6,7 @@
 
 ---
 
-## Purpose
+## Description
 
 Identity provides the foundation for all reasoning. Before "what should I do?" comes "who am I?" and "who is asking?". Without identity anchoring, agents drift into incoherent personas.
 
@@ -17,9 +17,10 @@ The identity thread manages:
 
 ---
 
-## Database Schema
+## Architecture
 
-### Tables
+<!-- ARCHITECTURE:identity -->
+### Database Schema
 
 | Table | Purpose |
 |-------|---------|
@@ -28,50 +29,31 @@ The identity thread manages:
 | `fact_types` | Types of facts (name, email, preference, relationship, etc.) |
 | `profile_facts` | The actual facts with L1/L2/L3 values |
 
-### profile_facts
-
 ```sql
 CREATE TABLE profile_facts (
     profile_id TEXT NOT NULL,
-    key TEXT NOT NULL,               -- 'name', 'likes', 'relationship'
-    fact_type TEXT NOT NULL,         -- FK to fact_types
+    key TEXT NOT NULL,
+    fact_type TEXT NOT NULL,
     l1_value TEXT,                   -- Brief (5-10 tokens)
     l2_value TEXT,                   -- Standard (20-50 tokens)
     l3_value TEXT,                   -- Detailed (100+ tokens)
-    weight REAL DEFAULT 0.5,         -- 0.0-1.0 importance
+    weight REAL DEFAULT 0.5,
     protected BOOLEAN DEFAULT FALSE,
     access_count INTEGER DEFAULT 0,
     PRIMARY KEY (profile_id, key)
 )
 ```
 
----
-
-## Adapter Methods
+### Adapter Methods
 
 | Method | Purpose |
 |--------|---------|
 | `get_data(level, min_weight, limit)` | Get facts across all profiles |
-| `get_context_string(level, token_budget)` | Formatted string for prompts |
 | `set_fact(profile_id, key, l1, l2, l3, fact_type, weight)` | Create/update a fact |
 | `introspect(context_level, query, threshold)` | Build STATE block contribution |
 | `health()` | Health check with fact counts |
-| `score_relevance(fact, context)` | Score fact importance |
-| `get_module_data(module, level)` | Get facts for a specific profile |
 
-### introspect()
-
-The main interface for subconscious integration. Returns `IntrospectionResult` with:
-- `facts`: List of dot-notation facts like `identity.dad.name: Robert`
-- `relevant_concepts`: Concepts extracted from query
-- `context_level`: HEA level used
-- `health`: Thread health status
-
-Facts are filtered by `_filter_by_relevance()` using LinkingCore spread activation.
-
----
-
-## Context Levels (HEA)
+### Context Levels (HEA)
 
 | Level | Content | Token Budget |
 |-------|---------|--------------|
@@ -79,90 +61,57 @@ Facts are filtered by `_filter_by_relevance()` using LinkingCore spread activati
 | **L2** | L1 + top profiles with key facts | ~50 tokens |
 | **L3** | L2 + detailed facts, relationships | ~200 tokens |
 
-### L1/L2/L3 Value Example
-
-```
-profile: family.dad
-key: name
-
-l1_value: "Robert"
-l2_value: "Robert, your father"  
-l3_value: "Robert, your father, retired engineer who lives in Ohio"
-```
-
----
-
-## Output Format
-
-Facts are formatted with dot notation for the STATE block:
+### Output Format
 
 ```
 identity.machine.name: Nola - a personal AI
 identity.primary_user.name: Jamie
 identity.dad.relationship: Your father, retired engineer
-identity.dad.likes: fishing, woodworking
 ```
 
----
-
-## Relevance Filtering
-
-When a query is provided, `_filter_by_relevance()` uses LinkingCore to filter:
-
-1. Extract concepts from query ("dad" -> `["dad", "father", "family"]`)
-2. Run spread activation to get related concepts
-3. Filter facts where profile_id, key, or value match any activated concept
-
-Example: Query "dad" activates `family.dad.*` facts.
-
----
-
-## Core Profiles
-
-Two protected profiles are created by default:
-
-| Profile ID | Type | Purpose |
-|------------|------|---------|
-| `machine` | machine | The agent itself (name, OS, capabilities) |
-| `primary_user` | user | The main user (name, email, preferences) |
-
-Additional profiles use compound IDs: `family.dad`, `friend.alex`, `acquaintance.coworker`
-
----
-
-## API Endpoints
+### API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
 | GET | `/api/identity/profiles` | List all profiles |
 | GET | `/api/identity/profiles/{id}` | Get profile with facts |
-| POST | `/api/identity/profiles` | Create profile |
-| DELETE | `/api/identity/profiles/{id}` | Delete profile (if not protected) |
-| GET | `/api/identity/facts` | List all facts |
 | POST | `/api/identity/facts` | Create/update fact |
+| DELETE | `/api/identity/profiles/{id}` | Delete (if not protected) |
+<!-- /ARCHITECTURE:identity -->
 
 ---
 
-## Integration Points
+## Roadmap
 
-| Thread | Integration |
-|--------|-------------|
-| **Subconscious** | Calls `introspect()` to build STATE block |
-| **Linking Core** | Scores relevance, spread activation for filtering |
-| **Log** | Records when identity facts are accessed |
-| **Philosophy** | Identity informs value application |
-| **Form** | User preferences affect tool behavior |
+<!-- ROADMAP:identity -->
+### Ready for contributors
+- [ ] **Family/contacts UI** — Add/edit family members from dashboard
+- [ ] **Trust level indicators** — Visual badges for trust levels in UI
+- [ ] **Relationship graph** — D3 visualization of user's social network
+- [ ] **Profile photos** — Avatar upload and display
+- [ ] **Import from contacts** — Pull from phone/Google contacts
+
+### Technical debt
+- [ ] Batch fact updates (currently one-at-a-time)
+- [ ] Fact history/versioning
+<!-- /ROADMAP:identity -->
 
 ---
 
-## Weight Semantics
+## Changelog
 
-| Weight | Meaning | Examples |
-|--------|---------|----------|
-| 0.9+ | Core identity | name, role |
-| 0.6-0.8 | Important facts | occupation, email |
-| 0.3-0.5 | Contextual | current project, preferences |
-| <0.3 | Peripheral | mentioned once |
+<!-- CHANGELOG:identity -->
+### 2026-01-27
+- Profile-based schema with L1/L2/L3 values
+- Protected core profiles (machine, primary_user)
+- Relevance filtering via LinkingCore
 
-Higher weight = retrieved more often at lower HEA levels.
+### 2026-01-23
+- Protected profiles created in schema init (no seed files)
+- Quick accessors: `get_agent_name()`, `get_user_name()`
+
+### 2026-01-20
+- Self-contained API router at `/api/identity/`
+- Introspect returns dot-notation facts
+<!-- /CHANGELOG:identity -->
 

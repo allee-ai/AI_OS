@@ -5,7 +5,13 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
-## 2026-01-31 — Frontend Restructure + Database Lock Fix
+## 2026-01-31 — Frontend Restructure + Database Lock Fix + log_event Fix
+
+### Fix: log_event() Signature Mismatch in temp_memory
+- **Bug**: `add_fact()` called `log_event()` with incorrect parameters (`fact_id`, `fact_source`, `hier_key` as kwargs)
+- **Fix**: Changed to use named parameters matching actual signature, moved extra data into `metadata` dict
+- **Files Fixed**: `agent/subconscious/temp_memory/store.py`
+- **Test Added**: `tests/test_consolidation.py::TestAddFact` — Regression test ensures correct log_event signature
 
 ### Refactor: Frontend Module Reorganization
 - **Module-Based Structure**: Reorganized frontend to mirror backend structure
@@ -933,6 +939,195 @@ start.bat             # Windows
 - Created `Feeds/` folder for external feeds control
 - Thread system: `personal` → `machineID`, `work` → `userID`
 - Conversation file handling with chat IDs and names
+
+---
+
+<!-- MANAGED BELOW — Module changelogs auto-sync from module READMEs -->
+
+## Module Changelogs
+
+### Identity Thread
+<!-- INCLUDE:identity:CHANGELOG -->
+_Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
+
+### 2026-01-27
+- Profile-based schema with L1/L2/L3 values
+- Protected core profiles (machine, primary_user)
+- Relevance filtering via LinkingCore
+
+### 2026-01-23
+- Protected profiles created in schema init (no seed files)
+- Quick accessors: `get_agent_name()`, `get_user_name()`
+
+### 2026-01-20
+- Self-contained API router at `/api/identity/`
+- Introspect returns dot-notation facts
+<!-- /INCLUDE:identity:CHANGELOG -->
+
+### Philosophy Thread
+<!-- INCLUDE:philosophy:CHANGELOG -->
+_Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md)_
+
+### 2026-01-27
+- Profile-based schema with L1/L2/L3 values
+- Relevance filtering via LinkingCore
+
+### 2026-01-20
+- Self-contained API router at `/api/philosophy/`
+- Introspect returns dot-notation facts
+<!-- /INCLUDE:philosophy:CHANGELOG -->
+
+### Log Thread
+<!-- INCLUDE:log:CHANGELOG -->
+_Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
+
+### 2026-01-27
+- Unified events table consolidates all event sources
+- Recency-based context levels (L1=10, L2=100, L3=1000)
+
+### 2026-01-20
+- Session tracking with duration and message count
+- Event relevance scoring by type
+<!-- /INCLUDE:log:CHANGELOG -->
+
+### Form Thread
+<!-- INCLUDE:form:CHANGELOG -->
+_Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
+
+### 2026-01-27
+- L1/L2/L3 tool architecture
+- Executable hot-reload support
+
+### 2026-01-20
+- Tool registry with categories
+- API execution with result tracking
+<!-- /INCLUDE:form:CHANGELOG -->
+
+### Reflex Thread
+<!-- INCLUDE:reflex:CHANGELOG -->
+_Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
+
+### 2026-01-27
+- Three-tier reflex cascade (system → user → social)
+- Pattern matching with weight priorities
+
+### 2026-01-20
+- Greeting and shortcut tables
+- Basic pattern matching
+<!-- /INCLUDE:reflex:CHANGELOG -->
+
+### Linking Core
+<!-- INCLUDE:linking_core:CHANGELOG -->
+_Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/README.md)_
+
+### 2026-01-27
+- Hebbian learning with asymptotic strength growth
+- Multi-dimensional fact scoring
+
+### 2026-01-20
+- Spread activation with max_hops parameter
+- Temporal decay with configurable rate
+<!-- /INCLUDE:linking_core:CHANGELOG -->
+
+### Subconscious
+<!-- INCLUDE:subconscious:CHANGELOG -->
+_Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
+
+### 2026-01-27
+- Three background loops: Consolidation, Sync, Health
+- HEA context levels (L1/L2/L3)
+
+### 2026-01-20
+- ThreadRegistry with adapter protocol
+- `get_consciousness_context()` assembles state
+<!-- /INCLUDE:subconscious:CHANGELOG -->
+
+### Temp Memory
+<!-- INCLUDE:temp_memory:CHANGELOG -->
+_Source: [agent/subconscious/temp_memory/README.md](agent/subconscious/temp_memory/README.md)_
+
+### 2026-01-27
+- Fixed log_event integration (correct parameter signature)
+- Added regression tests in test_consolidation.py
+
+### 2026-01-20
+- Multi-status fact lifecycle
+- Integration with unified_events timeline
+<!-- /INCLUDE:temp_memory:CHANGELOG -->
+
+### Services
+<!-- INCLUDE:services:CHANGELOG -->
+_Source: [agent/services/README.md](agent/services/README.md)_
+
+### 2026-01-27
+- Consciousness context assembly via subconscious
+- Kernel browser integration
+
+### 2026-01-20
+- Agent runtime with message pipeline
+- FastAPI endpoints for agent control
+<!-- /INCLUDE:services:CHANGELOG -->
+
+### Chat
+<!-- INCLUDE:chat:CHANGELOG -->
+_Source: [chat/README.md](chat/README.md)_
+
+### 2026-01-27
+- Multi-provider import system
+- Message ratings for fine-tuning
+
+### 2026-01-20
+- Real-time WebSocket chat
+- Conversation CRUD operations
+<!-- /INCLUDE:chat:CHANGELOG -->
+
+### Feeds
+<!-- INCLUDE:feeds:CHANGELOG -->
+_Source: [Feeds/README.md](Feeds/README.md)_
+
+### 2026-01-27
+- YAML-driven source configuration
+- Router message bus
+
+### 2026-01-20
+- Basic API endpoints for message CRUD
+<!-- /INCLUDE:feeds:CHANGELOG -->
+
+### Workspace
+<!-- INCLUDE:workspace:CHANGELOG -->
+_Source: [workspace/README.md](workspace/README.md)_
+
+### 2026-01-27
+- File upload and folder organization
+- FastAPI endpoints for CRUD
+
+### 2026-01-20
+- SQLite schema for file metadata
+<!-- /INCLUDE:workspace:CHANGELOG -->
+
+### Finetune
+<!-- INCLUDE:finetune:CHANGELOG -->
+_Source: [finetune/README.md](finetune/README.md)_
+
+### 2026-01-27
+- MLX configuration for Apple Silicon
+- JSONL data format defined
+
+### 2026-01-20
+- Initial fine-tuning concept
+<!-- /INCLUDE:finetune:CHANGELOG -->
+
+### Eval
+<!-- INCLUDE:eval:CHANGELOG -->
+_Source: [eval/README.md](eval/README.md)_
+
+### 2026-01-27
+- Battle types defined
+- API endpoints planned
+
+### 2026-01-20
+- Initial eval concept
+<!-- /INCLUDE:eval:CHANGELOG -->
 
 
 

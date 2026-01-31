@@ -7,7 +7,13 @@ echo "🧹 Cleaning SQLite temp files..."
 find . -name "*.db-shm" -type f -delete
 find . -name "*.db-wal" -type f -delete
 
-echo "📦 Staging all changes..."
+echo "� Syncing module docs to root docs..."
+# Sync docs if Python is available and the sync script exists
+if command -v python3 &> /dev/null && [ -f "scripts/sync_docs.py" ]; then
+    python3 scripts/sync_docs.py 2>/dev/null || echo "  (sync skipped - no changes or missing deps)"
+fi
+
+echo "�📦 Staging all changes..."
 git add .
 
 # Check if a message was provided as an argument

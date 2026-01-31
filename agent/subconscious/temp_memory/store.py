@@ -197,13 +197,15 @@ def add_fact(
         try:
             from agent.threads.log import log_event
             log_event(
-                "memory:extract",
-                "temp_memory",
-                f"Added fact: {text[:50]}...",
-                fact_id=fact_id,
-                session_id=session_id,
-                fact_source=source,  # renamed to avoid conflict with log_event's source param
-                hier_key=hier_key
+                event_type="memory:extract",
+                data=f"Added fact: {text[:50]}...",
+                metadata={
+                    "fact_id": fact_id,
+                    "fact_source": source,
+                    "hier_key": hier_key
+                },
+                source="temp_memory",
+                session_id=session_id
             )
         except ImportError:
             pass  # log_thread not available
