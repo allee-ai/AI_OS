@@ -118,4 +118,110 @@ async def list_training_data():
             "size": f.stat().st_size,
             "lines": sum(1 for _ in open(f))
         })
+    
+    # Also check auto_generated folder
+    auto_dir = FINETUNE_DIR / "auto_generated"
+    if auto_dir.exists():
+        for f in auto_dir.glob("*.jsonl"):
+            files.append({
+                "name": f"auto_generated/{f.name}",
+                "size": f.stat().st_size,
+                "lines": sum(1 for _ in open(f))
+            })
+    
     return {"files": files}
+
+
+# ─────────────────────────────────────────────────────────────
+# Export Endpoints - Pull from all threads
+# ─────────────────────────────────────────────────────────────
+
+@router.post("/export")
+async def export_all_training_data():
+    """
+    Export training data from all threads.
+    
+    This is the full neuroplasticity pipeline:
+    1. Consolidates LONG-potentiated concept links
+    2. Exports each thread's data to module-specific JSONL
+    3. Combines into unified training dataset
+    """
+    results = {}
+    
+    # 1. Consolidate concept links (SHORT → LONG promotion)
+    try:
+        from agent.threads.linking_core.schema import consolidate_links
+        consolidation = consolidate_links(fire_threshold=5, strength_threshold=0.5)
+        results["consolidation"] = consolidation
+    except Exception as e:
+        results["consolidation"] = {"error": str(e)}
+    
+    # 2. Export from each thread
+    threads = ["linking_core", "identity", "philosophy", "log", "reflex", "form"]
+    
+    for thread in threads:
+        try:
+            module = __import__(f"agent.threads.{thread}.train", fromlist=["export_training_data"])
+            export_result = module.export_training_data()
+            results[thread] = export_result
+        except Exception as e:
+            results[thread] = {"error": str(e)}
+    
+    # 3. Combine into unified dataset
+    try:
+        combined_path = FINETUNE_DIR / "aios_combined.jsonl"
+        total_examples = 0
+        
+        with open(combined_path, 'w') as combined:
+            for thread in threads:
+                thread_file = FINETUNE_DIR / f"{thread}_train.jsonl"
+                if thread_file.exists():
+                    with open(thread_file) as f:
+                        for line in f:
+                            combined.write(line)
+                            total_examples += 1
+        
+        results["combined"] = {
+            "path": str(combined_path),
+            "total_examples": total_examples
+        }
+    except Exception as e:
+        results["combined"] = {"error": str(e)}
+    
+    return {
+        "status": "exported",
+        "results": results
+    }
+
+
+@router.get("/export/stats")
+async def get_export_stats():
+    """Get stats about exportable data from all threads."""
+    stats = {}
+    
+    threads = ["linking_core", "identity", "philosophy", "log", "reflex", "form"]
+    
+    for thread in threads:
+        try:
+            module = __import__(f"agent.threads.{thread}.train", fromlist=["get_export_stats"])
+            stats[thread] = module.get_export_stats()
+        except Exception as e:
+            stats[thread] = {"error": str(e)}
+    
+    return {"stats": stats}
+
+
+@router.post("/export/{thread}")
+async def export_thread_training_data(thread: str):
+    """Export training data from a specific thread."""
+    valid_threads = ["linking_core", "identity", "philosophy", "log", "reflex", "form"]
+    
+    if thread not in valid_threads:
+        raise HTTPException(status_code=400, detail=f"Invalid thread. Must be one of: {valid_threads}")
+    
+    try:
+        module = __import__(f"agent.threads.{thread}.train", fromlist=["export_training_data"])
+        result = module.export_training_data()
+        return {"status": "exported", "thread": thread, "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

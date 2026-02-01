@@ -11,7 +11,11 @@
 
 AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source framework that gives any LLM a persistent identity, hierarchical memory, and the ability to *grow* through experience rather than retraining.
 
-**The core insight:** Structure beats scale. A 7B model with proper cognitive architecture outperforms a 100B model with flat context.
+**The problem:** If you want memory, identity, context management, and background processing for a local LLM, you're currently stitching together 5+ libraries and writing glue code. There's no integrated package.
+
+**What AI OS provides:** One system with all the cognitive architecture pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
+
+**The hypothesis we're testing:** Structure helps scale. A smaller model with well-organized context *might* match a larger model with flat context for certain tasks (identity coherence, fact recall, personality stability). This isn't proven — it's the bet we're exploring.
 
 ### Current State
 
@@ -169,6 +173,15 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/README.md)_
 
 ### Ready for contributors
+- [ ] **Universal linking** — `create_link(row, row)` for any database row:
+  - Link docs to profiles, facts to facts, convos to concepts
+  - Works like tags but with weighted relationships
+  - Implicit linking: agent auto-suggests links during conversation
+- [ ] **Graph density improvements** — Current visual is too dense:
+  - Smaller node size, dynamic scaling based on activation
+  - Hover for full info (dot notation, source, activation score)
+  - Cluster similar concepts, expand on click
+  - Zoom levels that hide/show detail appropriately
 - [ ] **Graph visualization** — Interactive concept map in UI
 - [ ] **Decay tuning** — Configurable decay rates per category
 - [ ] **Activation history** — Track what surfaced over time
@@ -177,6 +190,7 @@ _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/READM
 ### Starter tasks
 - [ ] Show top activated concepts in sidebar
 - [ ] Add concept search
+- [ ] Node info panel on hover/click
 <!-- /INCLUDE:linking_core:ROADMAP -->
 
 ---
@@ -187,6 +201,14 @@ _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/READM
 _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 
 ### Ready for contributors
+- [ ] **Loop Editor Dashboard** — Visual editor for background loops:
+  - View running loops with status indicators
+  - Edit loop parameters (interval, enabled/disabled)
+  - Live logs per loop
+- [ ] **Implicit COT Loops** — Chain-of-thought background reasoning:
+  - Set max iterations per loop
+  - Configure max tokens per iteration
+  - Cutoff conditions (confidence threshold, diminishing returns)
 - [ ] **Context compression** — Smarter token budgeting per thread
 - [ ] **Priority queue** — Urgent facts surface first
 - [ ] **Dream mode** — Background processing during idle
@@ -195,6 +217,7 @@ _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 ### Starter tasks
 - [ ] Add loop status indicators in UI
 - [ ] Configurable loop intervals
+- [ ] Loop execution history view
 <!-- /INCLUDE:subconscious:ROADMAP -->
 
 ---
@@ -223,6 +246,11 @@ _Source: [agent/subconscious/temp_memory/README.md](agent/subconscious/temp_memo
 _Source: [chat/README.md](chat/README.md)_
 
 ### Ready for contributors
+- [ ] **Import pipeline repair** — Fix and improve `import_convos.py` reliability
+- [ ] **Smart import helper** — Chat-aware LLM that assists with import errors at runtime ("this file failed, here's why, let me fix it")
+- [ ] **Conversation archiving** — Archive old convos without deleting, restore on demand
+- [ ] **Import directory organization** — Separate imports by source (`imported/claude/`, `imported/gpt/`, `imported/copilot/`)
+- [ ] **Sidebar directory visibility** — Show import folders in sidebar, collapsible by source
 - [ ] **Conversation search** — Full-text search across history
 - [ ] **Branching** — Create conversation forks
 - [ ] **Export** — Export to markdown/JSON
@@ -231,6 +259,7 @@ _Source: [chat/README.md](chat/README.md)_
 ### Starter tasks
 - [ ] Add conversation summary generation
 - [ ] Show message timestamps
+- [ ] Import source badges on conversation cards
 <!-- /INCLUDE:chat:ROADMAP -->
 
 ---
@@ -259,14 +288,18 @@ _Source: [Feeds/README.md](Feeds/README.md)_
 _Source: [workspace/README.md](workspace/README.md)_
 
 ### Ready for contributors
+- [ ] **File rendering** — Type-aware rendering for JSON, PY, DOCX, MD, and more
+- [ ] **In-browser editing** — Edit files directly in workspace UI with syntax highlighting
+- [ ] **Auto-summarization** — Generate L1/L2 summaries on upload, append to `summary` column for fast retrieval
 - [ ] **Full-text search** — Search within file contents
-- [ ] **Agent reference** — Agent cites specific files
-- [ ] **Version history** — Track file changes
+- [ ] **Agent reference** — Agent cites specific files in responses
+- [ ] **Version history** — Track file changes over time
 - [ ] **Sharing** — Share files with external users
 
 ### Starter tasks
 - [ ] Add file preview (markdown, code)
 - [ ] Show file metadata (size, modified)
+- [ ] File type icons in list view
 <!-- /INCLUDE:workspace:ROADMAP -->
 
 ---
@@ -295,6 +328,11 @@ _Source: [finetune/README.md](finetune/README.md)_
 _Source: [eval/README.md](eval/README.md)_
 
 ### Ready for contributors
+- [ ] **Battle Arena UI** — Three-panel layout:
+  - **Left**: STATE preview + prompt input
+  - **Center**: Judge settings (model, criteria, scoring weights)
+  - **Right**: Cloud opponent config (edit system prompt, edit input, select model)
+- [ ] **Auto-battle mode** — Watch battles run automatically, live-updating results
 - [ ] **Battle orchestration** — Run battles end-to-end
 - [ ] **Identity evaluator** — Prompt injection tests
 - [ ] **Memory evaluator** — Multi-session recall
@@ -303,6 +341,7 @@ _Source: [eval/README.md](eval/README.md)_
 ### Starter tasks
 - [ ] Create identity test cases
 - [ ] Add battle result visualization
+- [ ] Judge model selector dropdown
 <!-- /INCLUDE:eval:ROADMAP -->
 
 ---
@@ -322,3 +361,142 @@ _Source: [agent/services/README.md](agent/services/README.md)_
 - [ ] Add response time metrics
 - [ ] Show context token count in UI
 <!-- /INCLUDE:services:ROADMAP -->
+---
+
+## Program-Wide Features
+
+> _These features span the entire application and don't belong to a single module._
+
+### Onboarding & First Run
+- [ ] **Onboarding wizard** — Guided setup on first launch:
+  - Name your agent
+  - Set your name and basic profile
+  - Configure model preferences
+  - Quick identity import (optional)
+
+### Context-Aware Mini Chat
+- [ ] **Module helper chat** — Floating mini chat window:
+  - **Separate window** — Doesn't interfere with main UI
+  - **Context reset on page switch** — Fresh context for each module
+  - **Module-aware** — Loads relevant `.md` docs for current page (threads, form, subconscious, etc.)
+  - **Smart cloud model** — Uses fast cloud model (not local) for instant help
+  - **No state, just context** — Helper doesn't remember you, just knows the module
+  - **Continuously upgradeable** — Easy to improve helper prompts and context
+  - **Designed not to see data** — literally only meta-aware
+
+### UI/UX
+- [ ] **Keyboard shortcuts** — Power user navigation
+- [ ] **Dark/light theme toggle** — Already partially implemented
+- [ ] **Mobile responsive** — Tablet/phone layouts
+
+---
+
+## GitHub & Community Management
+
+> _Ideas for managing the repository and community using AI._
+
+### Issue Management
+- [ ] **LLM issue creation** — Natural language to GitHub issue:
+  - "I have an idea for..." → Creates properly formatted issue
+  - Auto-labels based on content (bug, feature, module)
+  - Links to relevant files/modules
+- [ ] **Issue Q&A bot** — Respond to "how do I..." questions:
+  - Searches codebase for answers
+  - Points to relevant docs/code
+  - Escalates complex questions to maintainers
+
+### Vision Loop (Continuous Improvement)
+- [ ] **Vision agent integration** — Hook into `.github/agents/VISION.agent.md`:
+  - For each module, load module specs
+  - Generate improvement ideas → post to Discussions
+  - Weekly vision summaries
+- [ ] **Multi-model discussions** — The "skin in the game" bridge:
+  - Claude and GPT can both provide input via API
+  - Each model has a "voice" in Discussions
+  - Creates collaborative AI development loop
+  - OpenAI and Anthropic models discussing architecture = 🔥
+
+### Contributor Experience
+- [ ] **Auto-assign issues** — Match issues to contributor skills
+- [ ] **PR review assistant** — AI-assisted code review
+- [ ] **Documentation gap detector** — Find undocumented features
+
+---
+
+## AI-Native Development Loop
+
+> _The innovation moat: an open platform where humans AND AI models collaborate on cognitive architecture._
+
+### The Insight
+
+**Why put your AI architecture idea anywhere else?**
+
+AI OS becomes the default destination for cognitive architecture innovation because:
+1. **Your ideas get seen** — By contributors, researchers, AND the AI models themselves
+2. **Models have skin in the game** — Claude, GPT, Gemini all participate in Discussions
+3. **Ideas become code faster** — Roadmap → Issues → PRs is automated
+4. **Credit is preserved** — Your idea, your name, tracked through implementation
+
+### The Daily Flow
+
+```
+┌─────────────────────────────────────────────────────────────────┐
+│  ANYONE (maintainer, contributor, researcher, lurker)          │
+│  └──▶ Posts idea to Discussion (natural language)              │
+│                         │                                       │
+│                         ▼                                       │
+│  ┌─────────────────────────────────────────────────────────┐   │
+│  │  IDEA ROUTER                                             │   │
+│  │  - Parses idea into structured format                    │   │
+│  │  - Maps to module(s)                                     │   │
+│  │  - Estimates complexity                                  │   │
+│  │  - Tags relevant maintainers                             │   │
+│  └─────────────────────────────────────────────────────────┘   │
+│                         │                                       │
+│         ┌───────────────┼───────────────┐                      │
+│         ▼               ▼               ▼                      │
+│   ┌──────────┐   ┌──────────┐   ┌──────────────┐              │
+│   │ Claude   │   │ GPT      │   │ Community    │              │
+│   │ weighs in│   │ weighs in│   │ votes/comments│              │
+│   └──────────┘   └──────────┘   └──────────────┘              │
+│         │               │               │                      │
+│         └───────────────┴───────────────┘                      │
+│                         │                                       │
+│                         ▼                                       │
+│   ┌─────────────────────────────────────────────────────────┐  │
+│   │  PROMOTION PIPELINE                                      │  │
+│   │  Discussion (idea) → Roadmap (planned) → Issue (assigned)│  │
+│   │  → PR (implemented) → Changelog (shipped)                │  │
+│   └─────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────┘
+```
+
+### Implementation
+
+- [ ] **Idea Discussions board** — Structured template for cognitive architecture proposals
+- [ ] **Model voices** — Scheduled API calls to Claude/GPT to comment on new Discussions
+- [ ] **Idea-to-Issue pipeline** — Approved ideas auto-create GitHub Issues with full context
+- [ ] **Roadmap sync** — Issues auto-populate module roadmaps
+- [ ] **Attribution tracking** — Original idea author credited through to CHANGELOG
+- [ ] **Domain tagging** — Ideas tagged by cognitive domain (memory, identity, attention, etc.)
+- [ ] **Upvote weighting** — Community + model votes determine priority
+
+### Why This Wins
+
+| Traditional OSS | AI-Native Development |
+|-----------------|----------------------|
+| Ideas in Issues (unstructured) | Ideas in Discussions (structured, debated) |
+| Maintainer bottleneck | AI triage + community consensus |
+| Ideas get lost | Ideas tracked through implementation |
+| One perspective | Multiple AI models + humans |
+| Slow feedback | Real-time model input |
+
+### The Moat
+
+Once this exists:
+- **Researchers** post here because models respond
+- **Builders** post here because ideas become code
+- **Models** "watch" here because it's where the action is
+- **Everyone else** follows the gravity
+
+**First-mover advantage in AI-assisted open source.**

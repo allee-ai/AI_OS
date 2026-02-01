@@ -1,8 +1,9 @@
 import { useEffect, useState, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useSearchParams } from 'react-router-dom';
 import './ThreadsPage.css';
 import { ToolDashboard } from '../form';
 import { ReflexDashboard } from '../reflex';
+import SubconsciousDashboard from '../../subconscious/components/SubconsciousDashboard';
 import IdentityProfilesPage from '../identity/pages/ProfilesPage';
 import PhilosophyProfilesPage from '../philosophy/pages/ProfilesPage';
 import { ConceptGraph3D } from '../linking_core';
@@ -53,6 +54,7 @@ const THREAD_ICONS: Record<string, string> = {
   reflex: '⚡',
   form: '🔧',
   linking_core: '🔗',
+  subconscious: '🧠',
 };
 
 // Threads that display documentation instead of data tables
@@ -178,19 +180,27 @@ export const ThreadsPage = () => {
     }
   };
 
+  const [searchParams] = useSearchParams();
+  const tabParam = searchParams.get('tab');
+
   useEffect(() => {
     fetch('http://localhost:8000/api/subconscious/threads')
       .then(res => res.json())
       .then(data => {
         setThreads(data.threads || {});
         setLoading(false);
-        const firstWithData = Object.values(data.threads || {}).find((t: any) => t.has_data);
-        if (firstWithData) {
-          setActiveThread((firstWithData as ThreadHealth).name);
+        // Check URL param first, then find first with data
+        if (tabParam && Object.keys(data.threads || {}).includes(tabParam)) {
+          setActiveThread(tabParam);
+        } else {
+          const firstWithData = Object.values(data.threads || {}).find((t: any) => t.has_data);
+          if (firstWithData) {
+            setActiveThread((firstWithData as ThreadHealth).name);
+          }
         }
       })
       .catch(() => setLoading(false));
-  }, []);
+  }, [tabParam]);
 
   useEffect(() => {
     if (!activeThread) return;
@@ -222,7 +232,7 @@ export const ThreadsPage = () => {
     } else if (activeThread === 'log') {
       fetchLogEvents();
       setDataLoading(false);
-    } else if (activeThread === 'form' || activeThread === 'reflex' || activeThread === 'linking_core') {
+    } else if (activeThread === 'form' || activeThread === 'reflex' || activeThread === 'linking_core' || activeThread === 'subconscious') {
       // These threads have their own dashboards that fetch their own data
       setDataLoading(false);
     } else {
@@ -420,7 +430,7 @@ export const ThreadsPage = () => {
               </div>
               {renderReadme()}
             </>
-          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'philosophy' && activeThread !== 'linking_core' && activeThread !== 'form' && activeThread !== 'reflex' ? (
+          ) : totalItems === 0 && !DOC_THREADS.has(activeThread) && activeThread !== 'identity' && activeThread !== 'philosophy' && activeThread !== 'linking_core' && activeThread !== 'form' && activeThread !== 'reflex' && activeThread !== 'subconscious' ? (
             <div className="empty-state">
               <p>No data in {activeThread}</p>
               <p className="muted">{threads[activeThread]?.message}</p>
@@ -450,6 +460,8 @@ export const ThreadsPage = () => {
                     ? <ToolDashboard />
                     : activeThread === 'reflex'
                     ? <ReflexDashboard />
+                    : activeThread === 'subconscious'
+                    ? <SubconsciousDashboard />
                     : renderGenericView()}
                 </>
               )}

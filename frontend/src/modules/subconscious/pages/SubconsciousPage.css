@@ -1,0 +1,35 @@
+.subconscious-page {
+  min-height: 100vh;
+  background: var(--bg);
+  color: var(--text);
+  padding: 40px 48px;
+}
+
+.subconscious-header {
+  margin-bottom: 24px;
+}
+
+.back-link {
+  color: var(--text-muted);
+  text-decoration: none;
+  font-size: 0.875rem;
+  display: inline-block;
+  margin-bottom: 0.5rem;
+}
+
+.back-link:hover {
+  color: var(--primary);
+}
+
+.subconscious-header h1 {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.header-desc {
+  margin: 0.25rem 0 0 0;
+  color: var(--text-muted);
+  font-size: 0.875rem;
+}

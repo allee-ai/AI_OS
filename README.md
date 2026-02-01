@@ -21,6 +21,8 @@ AI OS is an architecture layer that wraps your local LLM and handles what models
 - **Control** — LLM handles language; OS handles state ✅
 - **Background Loops** — Memory extraction working, consolidation in progress 🔄
 
+**The pain point we solve:** These pieces exist separately — RAG libraries, prompt templates, memory plugins, identity frameworks — but nowhere in one integrated package for local LLMs. AI OS is that package.
+
 The LLM is the voice. The OS is the brain.
 
 ---
@@ -206,6 +208,82 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 
 - **GitHub Issues:** [Report bugs or request features](https://github.com/allee-ai/AI_OS/issues)
 - **Discussions:** Share how you're using Agent
+
+---
+
+## Built With & Thanks To
+
+AI OS stands on the shoulders of giants. Deep gratitude to the tools, models, and communities that make this possible:
+
+### 🦙 Runtime & Models
+
+| | What | How It Powers AI OS |
+|---|------|---------------------|
+| [**Ollama**](https://ollama.ai) | Local LLM runtime | The engine. One-click model downloads, fast inference, no cloud required. AI OS wouldn't exist without Ollama making local LLMs accessible. |
+| [**Llama**](https://llama.meta.com) (Meta) | Open-weight foundation models | The voice. Llama 2/3 models are the default conversational backbone. Meta's decision to open-source changed everything. |
+| [**Qwen**](https://qwenlm.github.io) (Alibaba) | Efficient multilingual models | Fast local option. Qwen 2 1.5B runs great on laptops for quick responses. |
+| [**Mistral**](https://mistral.ai) | High-quality open models | Power option. Mistral 7B punches way above its weight for complex reasoning. |
+| [**Phi**](https://huggingface.co/microsoft/phi-2) (Microsoft) | Small but mighty models | Efficiency research. Phi models prove small can be smart. |
+| [**nomic-embed-text**](https://www.nomic.ai) | Open embedding model | The glue. Powers semantic search and concept similarity scoring. |
+
+### 🧠 Development Partners
+
+| | What | How They Helped |
+|---|------|----------------|
+| [**Claude**](https://anthropic.com) (Anthropic) | Advanced reasoning model | Pair programming. Claude helped implement the thread system and debug async loops. Great at explaining why code doesn't work. |
+| [**GPT-4/5**](https://openai.com) (OpenAI) | Frontier AI models | Pair programming. GPT helped with FastAPI patterns and React component structure. |
+| [**Gemini**](https://deepmind.google/technologies/gemini/) (Google) | Multimodal AI | UX review. Gemini audited the UI and identified features that existed in backend but weren't exposed to users. |
+
+### 💻 Development Environment
+
+| | What | How We Use It |
+|---|------|---------------|
+| [**VS Code**](https://code.visualstudio.com) | Open-source editor | The workshop. All AI OS development happens here. |
+| [**GitHub Copilot**](https://github.com/features/copilot) | AI pair programmer | Tool builder. Copilot accelerates Form thread development — use it to build your own AI OS tools. |
+| [**Cursor**](https://cursor.sh) | AI-native IDE | Deep integration. Agent-assisted refactoring and architecture work. |
+
+### 🔧 Infrastructure
+
+| | What | Role |
+|---|------|------|
+| [**FastAPI**](https://fastapi.tiangolo.com) | Python web framework | Backend API — async, typed, fast |
+| [**React**](https://react.dev) | UI framework | Frontend — responsive, component-based |
+| [**Three.js**](https://threejs.org) | 3D graphics | Concept graph visualization |
+| [**SQLite**](https://sqlite.org) | Embedded database | All state storage — portable, no server |
+| [**uv**](https://github.com/astral-sh/uv) | Fast Python package manager | Dependency management — 10-100x faster than pip |
+
+### 🌐 Community & Research
+
+| | Contribution |
+|---|--------------|
+| [**Hugging Face**](https://huggingface.co) | Model hub, transformers library, community |
+| [**r/LocalLLaMA**](https://reddit.com/r/LocalLLaMA) | Local AI community, testing, feedback |
+| [**LangChain**](https://langchain.com) | Patterns for LLM applications (we diverge but learned from) |
+| **Cognitive Science Literature** | Hebbian learning, spread activation, episodic memory research |
+
+### 📜 Theoretical Foundations
+
+**Nothing here is new.** AI OS applies well-established cognitive science to LLM context management. The bet is that these proven patterns transfer usefully to AI systems — but that's a hypothesis under testing, not a claim.
+
+| Research | What It Proved | How AI OS Applies It |
+|----------|----------------|---------------------|
+| **Hebbian Learning** (Hebb, 1949) | "Neurons that fire together, wire together" | Concepts accessed together get stronger links. Established neuroscience. |
+| **Spread Activation** (Collins & Loftus, 1975) | Memory retrieval follows associative paths | Related concepts activate when one is accessed. Textbook cognitive psych. |
+| **Working Memory** (Baddeley, 1986) | Attention has hierarchical capacity limits | L1/L2/L3 token budgets mirror proven memory architecture. |
+
+**What needs testing:** Whether these patterns actually improve LLM coherence over long interactions. We have anecdotal evidence (it *feels* better), not rigorous benchmarks yet. Help us build those.
+
+### 🤝 Missing Something?
+
+If we're using your work and didn't credit it properly, or if you want to collaborate:
+
+**Open a Discussion or reach out.** We're trying to build in the open and credit accurately.
+
+---
+
+## License
+
+MIT — Use it, fork it, build on it. Just don't claim you wrote it from scratch.
 
 ---
 

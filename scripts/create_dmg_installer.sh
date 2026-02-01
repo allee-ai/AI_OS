@@ -1,6 +1,6 @@
 #!/bin/bash
 # Create a distributable DMG installer for AI OS
-# Creates the classic "drag to Applications" experience
+# Creates an installer that downloads AI OS to ~/AI_OS
 
 set -e
 
@@ -14,10 +14,14 @@ cd "$SCRIPT_DIR"
 
 echo "📦 Creating AI OS DMG Installer..."
 
-# Make sure AIOS.app exists
-if [ ! -d "AIOS.app" ]; then
-    echo "🔨 Building AIOS.app first..."
-    ./create_app_bundle.sh
+# Build the installer app
+echo "🔨 Building Install AI OS.app..."
+chmod +x create_installer_app.sh
+./create_installer_app.sh
+
+if [ ! -d "Install AI OS.app" ]; then
+    echo "❌ Failed to create installer app"
+    exit 1
 fi
 
 # Create a temporary directory for DMG contents
@@ -25,13 +29,39 @@ DMG_TEMP="dmg_staging"
 rm -rf "$DMG_TEMP"
 mkdir -p "$DMG_TEMP"
 
-# Copy the app bundle
-echo "📁 Copying AIOS.app..."
-cp -R "AIOS.app" "$DMG_TEMP/"
+# Copy the installer app
+echo "📁 Copying Install AI OS.app..."
+cp -R "Install AI OS.app" "$DMG_TEMP/"
 
-# Create Applications symlink for drag-and-drop install
-echo "🔗 Creating Applications shortcut..."
-ln -s /Applications "$DMG_TEMP/Applications"
+# Create a README
+cat > "$DMG_TEMP/README.txt" << 'EOF'
+╔═══════════════════════════════════════════════════════════╗
+║              🧠 AI OS - Installation Guide                ║
+╚═══════════════════════════════════════════════════════════╝
+
+1. Double-click "Install AI OS" to begin installation
+
+2. The installer will:
+   - Download AI OS to your home folder (~/AI_OS)
+   - Check for required software (Python, Node.js, Ollama)
+   - Help you install anything missing
+   - Create AIOS.app in your Applications folder
+
+3. First run will download AI models (~4GB) - this only happens once
+
+REQUIREMENTS:
+- macOS 10.15 or later
+- Internet connection (for download)
+- ~8GB free disk space
+
+WHAT GETS INSTALLED:
+- ~/AI_OS/           - The AI OS code and data
+- /Applications/AIOS.app - Easy launcher
+
+NEED HELP?
+- GitHub: https://github.com/allee-ai/AI_OS
+- Issues: https://github.com/allee-ai/AI_OS/issues
+EOF
 
 # Remove old DMG if exists
 rm -f "${DMG_NAME}.dmg"
@@ -56,12 +86,12 @@ tell application "Finder"
         set current view of container window to icon view
         set toolbar visible of container window to false
         set statusbar visible of container window to false
-        set bounds of container window to {400, 100, 900, 400}
+        set bounds of container window to {400, 100, 850, 380}
         set viewOptions to the icon view options of container window
         set arrangement of viewOptions to not arranged
         set icon size of viewOptions to 100
-        set position of item "AIOS.app" of container window to {125, 150}
-        set position of item "Applications" of container window to {375, 150}
+        set position of item "Install AI OS.app" of container window to {225, 130}
+        set position of item "README.txt" of container window to {380, 220}
         close
         open
         update without registering applications
@@ -91,8 +121,15 @@ echo ""
 echo "📋 What users see when they open it:"
 echo "   ┌─────────────────────────────────┐"
 echo "   │                                 │"
-echo "   │    [AIOS.app]  →  [Applications]│"
-echo "   │                                 │"
-echo "   └─────────────────────────────────┘"
+echo "   │        [Install AI OS.app]          │"
+echo "   │                                     │"
+echo "   │              README.txt             │"
+echo "   │                                     │"
+echo "   └─────────────────────────────────────┘"
 echo ""
-echo "🚀 Share ${DMG_NAME}.dmg - users just drag & drop to install!"
+echo "📦 The installer will:"
+echo "   1. Clone AI OS to ~/AI_OS"
+echo "   2. Check/install dependencies"  
+echo "   3. Create AIOS.app in /Applications"
+echo ""
+echo "🚀 Share ${DMG_NAME}.dmg - one double-click to install!"

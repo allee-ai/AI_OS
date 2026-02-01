@@ -12,6 +12,7 @@ import { WorkspacePage } from './modules/workspace/pages/WorkspacePage'
 import { DocsPage } from './modules/docs/pages/DocsPage'
 import { SettingsPage } from './modules/services/pages/SettingsPage'
 import { DevDashboard } from './modules/finetune/pages/DevDashboard'
+import { SubconsciousPage } from './modules/subconscious'
 import './App.css'
 
 // App mode hook - inlined for simplicity
@@ -74,6 +75,7 @@ function App() {
           <Route path="/workspace" element={<WorkspacePage />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/dev" element={<DevDashboard />} />
+          <Route path="/subconscious" element={<SubconsciousPage />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />

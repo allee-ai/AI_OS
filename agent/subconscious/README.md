@@ -73,6 +73,14 @@ class ThreadInterface(Protocol):
 
 <!-- ROADMAP:subconscious -->
 ### Ready for contributors
+- [ ] **Loop Editor Dashboard** — Visual editor for background loops:
+  - View running loops with status indicators
+  - Edit loop parameters (interval, enabled/disabled)
+  - Live logs per loop
+- [ ] **Implicit COT Loops** — Chain-of-thought background reasoning:
+  - Set max iterations per loop
+  - Configure max tokens per iteration
+  - Cutoff conditions (confidence threshold, diminishing returns)
 - [ ] **Context compression** — Smarter token budgeting per thread
 - [ ] **Priority queue** — Urgent facts surface first
 - [ ] **Dream mode** — Background processing during idle
@@ -81,6 +89,7 @@ class ThreadInterface(Protocol):
 ### Starter tasks
 - [ ] Add loop status indicators in UI
 - [ ] Configurable loop intervals
+- [ ] Loop execution history view
 <!-- /ROADMAP:subconscious -->
 
 ---
@@ -88,6 +97,12 @@ class ThreadInterface(Protocol):
 ## Changelog
 
 <!-- CHANGELOG:subconscious -->
+### 2026-01-31
+- SubconsciousDashboard frontend component
+- `/subconscious` standalone route
+- API: `/loops`, `/temp-facts`, `/potentiation`, `/consolidate` endpoints
+- Light theme CSS with proper variables
+
 ### 2026-01-27
 - Three background loops: Consolidation, Sync, Health
 - HEA context levels (L1/L2/L3)

@@ -67,6 +67,15 @@ new_strength = old_strength × decay_rate^days
 
 <!-- ROADMAP:linking_core -->
 ### Ready for contributors
+- [ ] **Universal linking** — `create_link(row, row)` for any database row:
+  - Link docs to profiles, facts to facts, convos to concepts
+  - Works like tags but with weighted relationships
+  - Implicit linking: agent auto-suggests links during conversation
+- [ ] **Graph density improvements** — Current visual is too dense:
+  - Smaller node size, dynamic scaling based on activation
+  - Hover for full info (dot notation, source, activation score)
+  - Cluster similar concepts, expand on click
+  - Zoom levels that hide/show detail appropriately
 - [ ] **Graph visualization** — Interactive concept map in UI
 - [ ] **Decay tuning** — Configurable decay rates per category
 - [ ] **Activation history** — Track what surfaced over time
@@ -75,6 +84,7 @@ new_strength = old_strength × decay_rate^days
 ### Starter tasks
 - [ ] Show top activated concepts in sidebar
 - [ ] Add concept search
+- [ ] Node info panel on hover/click
 <!-- /ROADMAP:linking_core -->
 
 ---
@@ -82,6 +92,12 @@ new_strength = old_strength × decay_rate^days
 ## Changelog
 
 <!-- CHANGELOG:linking_core -->
+### 2026-01-31
+- Potentiation column: SHORT/LONG memory stages
+- `consolidate_links()` promotes high-fire links to LONG
+- `get_potentiation_stats()` for dashboard
+- `train.py` exports concept graph to JSONL
+
 ### 2026-01-27
 - Hebbian learning with asymptotic strength growth
 - Multi-dimensional fact scoring

@@ -55,6 +55,11 @@ eval/
 
 <!-- ROADMAP:eval -->
 ### Ready for contributors
+- [ ] **Battle Arena UI** — Three-panel layout:
+  - **Left**: STATE preview + prompt input
+  - **Center**: Judge settings (model, criteria, scoring weights)
+  - **Right**: Cloud opponent config (edit system prompt, edit input, select model)
+- [ ] **Auto-battle mode** — Watch battles run automatically, live-updating results
 - [ ] **Battle orchestration** — Run battles end-to-end
 - [ ] **Identity evaluator** — Prompt injection tests
 - [ ] **Memory evaluator** — Multi-session recall
@@ -63,6 +68,7 @@ eval/
 ### Starter tasks
 - [ ] Create identity test cases
 - [ ] Add battle result visualization
+- [ ] Judge model selector dropdown
 <!-- /ROADMAP:eval -->
 
 ---

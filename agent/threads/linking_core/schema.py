@@ -49,14 +49,22 @@ def init_concept_links_table(conn: Optional[sqlite3.Connection] = None) -> None:
             fire_count INTEGER DEFAULT 1,
             last_fired TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
             created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            potentiation TEXT DEFAULT 'SHORT',
             PRIMARY KEY (concept_a, concept_b)
         )
     """)
+    
+    # Add potentiation column if missing (migration for existing DBs)
+    try:
+        cur.execute("ALTER TABLE concept_links ADD COLUMN potentiation TEXT DEFAULT 'SHORT'")
+    except sqlite3.OperationalError:
+        pass  # Column already exists
     
     # Indexes for fast spread activation queries
     cur.execute("CREATE INDEX IF NOT EXISTS idx_concept_a ON concept_links(concept_a)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_concept_b ON concept_links(concept_b)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_concept_strength ON concept_links(strength DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_concept_potentiation ON concept_links(potentiation)")
     
     if own_conn:
         conn.commit()
@@ -154,6 +162,108 @@ def decay_concept_links(decay_rate: float = 0.95, min_strength: float = 0.05) ->
         
         conn.commit()
     return pruned
+
+
+def consolidate_links(fire_threshold: int = 5, strength_threshold: float = 0.5) -> Dict[str, Any]:
+    """
+    Consolidation pass — promote frequently-fired links from SHORT to LONG potentiation.
+    
+    This is the "sleep" phase for the concept graph:
+    - SHORT links that have fired enough become LONG (stable memories)
+    - LONG links are candidates for finetune export
+    
+    Args:
+        fire_threshold: Minimum fire_count to promote to LONG
+        strength_threshold: Minimum strength to promote to LONG
+    
+    Returns:
+        {"promoted": int, "total_long": int, "total_short": int}
+    """
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_concept_links_table(conn)
+        
+        # Promote high-fire SHORT links to LONG
+        cur.execute("""
+            UPDATE concept_links 
+            SET potentiation = 'LONG'
+            WHERE potentiation = 'SHORT' 
+              AND fire_count >= ? 
+              AND strength >= ?
+        """, (fire_threshold, strength_threshold))
+        promoted = cur.rowcount
+        
+        # Count totals
+        cur.execute("SELECT COUNT(*) FROM concept_links WHERE potentiation = 'LONG'")
+        total_long = cur.fetchone()[0]
+        
+        cur.execute("SELECT COUNT(*) FROM concept_links WHERE potentiation = 'SHORT'")
+        total_short = cur.fetchone()[0]
+        
+        conn.commit()
+    
+    return {
+        "promoted": promoted,
+        "total_long": total_long,
+        "total_short": total_short
+    }
+
+
+def get_long_links(limit: int = 500) -> List[Dict[str, Any]]:
+    """
+    Get all LONG-potentiated links for finetune export.
+    
+    These are stable, consolidated memories ready to become training data.
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT concept_a, concept_b, strength, fire_count, last_fired, created_at
+            FROM concept_links
+            WHERE potentiation = 'LONG'
+            ORDER BY strength DESC, fire_count DESC
+            LIMIT ?
+        """, (limit,))
+        
+        links = []
+        for row in cur.fetchall():
+            links.append({
+                "concept_a": row[0],
+                "concept_b": row[1],
+                "strength": row[2],
+                "fire_count": row[3],
+                "last_fired": row[4],
+                "created_at": row[5],
+                "potentiation": "LONG"
+            })
+    
+    return links
+
+
+def get_potentiation_stats() -> Dict[str, Any]:
+    """Get statistics on link potentiation states."""
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        
+        cur.execute("""
+            SELECT potentiation, COUNT(*), AVG(strength), AVG(fire_count)
+            FROM concept_links
+            GROUP BY potentiation
+        """)
+        
+        stats = {"SHORT": {"count": 0, "avg_strength": 0, "avg_fires": 0},
+                 "LONG": {"count": 0, "avg_strength": 0, "avg_fires": 0}}
+        
+        for row in cur.fetchall():
+            pot = row[0] or "SHORT"
+            stats[pot] = {
+                "count": row[1],
+                "avg_strength": round(row[2] or 0, 3),
+                "avg_fires": round(row[3] or 0, 1)
+            }
+    
+    return stats
 
 
 # ─────────────────────────────────────────────────────────────

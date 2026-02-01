@@ -214,3 +214,107 @@ async def get_identity_facts(level: int = Query(2, ge=1, le=3)):
     sub = get_subconscious()
     facts = sub.get_identity_facts(level=level)
     return {"facts": facts, "count": len(facts)}
+
+
+# ─────────────────────────────────────────────────────────────
+# Loop Status Endpoints
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/loops")
+async def get_loops_status():
+    """
+    Get status of all background loops.
+    
+    Returns loop name, status, interval, last run, run count, errors.
+    """
+    try:
+        from .loops import create_default_loops, LoopManager
+        
+        # Get or create the global loop manager
+        # Note: In production, this should be a singleton
+        manager = create_default_loops()
+        stats = manager.get_stats()
+        
+        return {
+            "loops": stats,
+            "count": len(stats)
+        }
+    except Exception as e:
+        return {
+            "loops": [],
+            "error": str(e)
+        }
+
+
+@router.get("/loops/{loop_name}")
+async def get_loop_status(loop_name: str):
+    """Get status of a specific loop."""
+    try:
+        from .loops import create_default_loops
+        
+        manager = create_default_loops()
+        loop = manager.get_loop(loop_name)
+        
+        if not loop:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+        
+        return loop.stats
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/temp-facts")
+async def get_temp_facts_summary():
+    """Get summary of temp_facts for dashboard."""
+    try:
+        from .temp_memory import get_stats, get_all_pending
+        
+        stats = get_stats()
+        pending = get_all_pending()
+        
+        # Count by status
+        by_status = {}
+        for fact in pending:
+            status = fact.status if hasattr(fact, 'status') else 'pending'
+            by_status[status] = by_status.get(status, 0) + 1
+        
+        return {
+            "stats": stats,
+            "by_status": by_status,
+            "pending_count": len(pending),
+            "recent": [{"id": f.id, "text": f.text[:100], "status": f.status} 
+                      for f in pending[:10]]
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.get("/potentiation")
+async def get_potentiation_status():
+    """Get concept link potentiation stats (SHORT vs LONG)."""
+    try:
+        from agent.threads.linking_core.schema import get_potentiation_stats, consolidate_links
+        
+        stats = get_potentiation_stats()
+        
+        return {
+            "potentiation": stats,
+            "ready_for_export": stats.get("LONG", {}).get("count", 0)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.post("/consolidate")
+async def trigger_consolidation():
+    """Manually trigger consolidation of concept links."""
+    try:
+        from agent.threads.linking_core.schema import consolidate_links
+        
+        result = consolidate_links(fire_threshold=5, strength_threshold=0.5)
+        return {"status": "consolidated", "result": result}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))

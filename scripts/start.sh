@@ -154,13 +154,19 @@ if [ "$MODEL_PROVIDER" = "ollama" ]; then
         sleep 3
     fi
 
-    # Auto-pull configured model
-    echo -e "${YELLOW}  → Ensuring model '${MODEL_NAME}' is available...${NC}"
-    ollama pull "$MODEL_NAME" >/dev/null 2>&1 || true
-    
+# Auto-pull configured model (show progress - first download is ~4GB)
+    echo -e "${YELLOW}  → Checking model '${MODEL_NAME}'...${NC}"
+    if ! ollama list | grep -q "$MODEL_NAME"; then
+        echo -e "${YELLOW}  → Downloading '${MODEL_NAME}' (first run only, ~4GB)...${NC}"
+        ollama pull "$MODEL_NAME"
+    fi
+     
     # Auto-pull embedding model (needed for memory consolidation)
-    echo -e "${YELLOW}  → Ensuring embedding model 'nomic-embed-text' is available...${NC}"
-    ollama pull nomic-embed-text >/dev/null 2>&1 || true
+    echo -e "${YELLOW}  → Checking embedding model...${NC}"
+    if ! ollama list | grep -q "nomic-embed-text"; then
+        echo -e "${YELLOW}  → Downloading 'nomic-embed-text' (first run only, ~275MB)...${NC}"
+        ollama pull nomic-embed-text
+    fi
     
     echo -e "${GREEN}  ✓ Ollama running (${MODEL_NAME} + embeddings)${NC}"
 else

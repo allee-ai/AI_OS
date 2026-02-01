@@ -5,6 +5,90 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-01-31 — DMG Installer + Cleanup + Attribution
+
+### Installer: Proper DMG Download Flow
+- **Created**: `scripts/create_installer_app.sh` — Builds "Install AI OS.app"
+- **Updated**: `scripts/create_dmg_installer.sh` — Now creates downloader-based DMG
+- **Flow**: User opens DMG → runs installer → clones repo to `~/AI_OS` → creates `/Applications/AIOS.app`
+- **Features**: 
+  - Checks/installs dependencies (Python, Node, Ollama)
+  - Handles existing installations (update prompt)
+  - Creates absolute-path launcher in Applications
+  - First-run model download with visible progress
+
+### Fix: Model Download Progress
+- **Problem**: `start.sh` hid model download with `>/dev/null`, users saw frozen terminal
+- **Fix**: Now shows download progress and checks if models exist before pulling
+- **File**: `scripts/start.sh`
+
+### Documentation: Honesty Audit
+- **README**: Reframed "Architecture Partners" → "Development Partners" (Claude/GPT as pair programming tools, not co-architects)
+- **README**: Added "Nothing here is new" disclaimer to Theoretical Foundations
+- **README**: Added "The pain point we solve" — all pieces in one integrated package
+- **ROADMAP**: Changed "Structure beats scale" claim → "The hypothesis we're testing"
+- **VISION.agent.md**: Removed "first local AI with genuine episodic memory" overclaim
+
+### Documentation: Attribution Section
+- **Added**: Comprehensive "Built With & Thanks To" section to README
+- **Categories**: Runtime & Models, Development Partners, Development Environment, Infrastructure, Community & Research, Theoretical Foundations
+- **Credits**: Ollama, Llama, Qwen, Mistral, Phi, nomic-embed, Claude, GPT, Gemini, VS Code, Copilot, Cursor, FastAPI, React, Three.js, SQLite, uv, Hugging Face, r/LocalLLaMA
+
+### Cleanup: Scripts Directory
+- **Deleted**: Built artifacts (`AIOS.app`, `Install AI OS.app`, `AIOS-Installer.dmg`, `.aios_installed`)
+- **Deleted**: Superseded scripts (`create_desktop_shortcut.sh`, `create_icon.sh`, `setup_spiral_icon.sh`)
+- **Deleted**: VM scripts (`connect_vm_aios.sh`, `create_vm_desktop_app.sh`, `install-vm.sh`, `test_install_loop.sh`)
+- **Deleted**: Unused utilities (`scripts/utils/` — bench_state.py, import_vscode_conversations.py, populate_from_profile.py, stringify/, test_consolidation.py)
+- **Deleted**: `seed_demo.sql` (demo DB is git-tracked)
+- **Moved**: `runtests.sh`, `reset_demo.sh` → `tests/`
+- **Result**: `scripts/` reduced from 31 to 10 items
+
+### Files Changed
+- `scripts/start.sh` — Model download progress fix
+- `scripts/create_installer_app.sh` — New
+- `scripts/create_dmg_installer.sh` — Rewritten for download flow
+- `README.md` — Attribution section, honesty edits, pain point framing
+- `docs/ROADMAP.md` — Hypothesis framing
+- `.github/agents/VISION.agent.md` — Removed overclaim
+- `assets/AIOS-Installer.dmg` — New proper installer
+
+---
+
+## 2026-01-31 — Roadmap Expansion + Docs Agent Profile
+
+### Documentation: Module Roadmap Updates
+- **Workspace**: Added file rendering (JSON/PY/DOCX), in-browser editing, auto L1/L2 summarization
+- **Chat**: Added import pipeline repair, smart import helper, archiving, directory organization (`imported/claude/`, `imported/gpt/`)
+- **Eval**: Added Battle Arena UI spec (three-panel: STATE+prompt | judge settings | cloud opponent config), auto-battle mode
+- **Subconscious**: Added Loop Editor Dashboard, implicit COT loops with iteration/token/cutoff settings
+- **Linking Core**: Added universal `create_link(row, row)` for cross-entity linking, graph density improvements (smaller nodes, hover info)
+
+### Documentation: Program-Wide Features (New Section)
+- **Onboarding wizard** — Guided first-run setup
+- **Module helper chat** — Context-aware mini chat that resets per page, loads module docs, uses fast cloud model
+
+### Documentation: GitHub & Community Management (New Section)
+- **LLM issue creation** — Natural language to formatted issues
+- **Vision agent integration** — Continuous improvement loop via Discussions
+- **Multi-model discussions** — Claude/GPT collaboration bridge (AI "skin in the game")
+
+### Agent Profile: docs.agent.md
+- **Created**: `.github/agents/docs.agent.md` — Documentation orchestrator profile
+- **Purpose**: Multi-doc sync for roadmap, changelog, and module README updates
+- **Pipeline**: Source (module READMEs) → Aggregate (ROADMAP.md) → History (CHANGELOG.md)
+- **Include markers**: Documents the `<!-- INCLUDE:{module}:ROADMAP -->` system
+
+### Files Changed
+- `workspace/README.md` — 3 new roadmap items
+- `chat/README.md` — 5 new roadmap items  
+- `eval/README.md` — 2 new roadmap items
+- `agent/subconscious/README.md` — 2 new roadmap items
+- `agent/threads/linking_core/README.md` — 2 new roadmap items
+- `docs/ROADMAP.md` — 2 new sections (Program-Wide, GitHub Management)
+- `.github/agents/docs.agent.md` — New agent profile
+
+---
+
 ## 2026-01-31 — Frontend Restructure + Database Lock Fix + log_event Fix
 
 ### Fix: log_event() Signature Mismatch in temp_memory
@@ -1020,6 +1104,12 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 <!-- INCLUDE:linking_core:CHANGELOG -->
 _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/README.md)_
 
+### 2026-01-31
+- Potentiation column: SHORT/LONG memory stages
+- `consolidate_links()` promotes high-fire links to LONG
+- `get_potentiation_stats()` for dashboard
+- `train.py` exports concept graph to JSONL
+
 ### 2026-01-27
 - Hebbian learning with asymptotic strength growth
 - Multi-dimensional fact scoring
@@ -1032,6 +1122,12 @@ _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/READM
 ### Subconscious
 <!-- INCLUDE:subconscious:CHANGELOG -->
 _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
+
+### 2026-01-31
+- SubconsciousDashboard frontend component
+- `/subconscious` standalone route
+- API: `/loops`, `/temp-facts`, `/potentiation`, `/consolidate` endpoints
+- Light theme CSS with proper variables
 
 ### 2026-01-27
 - Three background loops: Consolidation, Sync, Health
@@ -1108,6 +1204,11 @@ _Source: [workspace/README.md](workspace/README.md)_
 ### Finetune
 <!-- INCLUDE:finetune:CHANGELOG -->
 _Source: [finetune/README.md](finetune/README.md)_
+
+### 2026-01-31
+- Export pipeline: `/api/finetune/export` aggregates all threads
+- Per-thread `train.py` pattern (identity, philosophy, log, reflex, form, linking_core)
+- Combined JSONL output at `finetune/combined_train.jsonl`
 
 ### 2026-01-27
 - MLX configuration for Apple Silicon

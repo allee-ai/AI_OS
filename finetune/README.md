@@ -67,6 +67,11 @@ finetune/
 ## Changelog
 
 <!-- CHANGELOG:finetune -->
+### 2026-01-31
+- Export pipeline: `/api/finetune/export` aggregates all threads
+- Per-thread `train.py` pattern (identity, philosophy, log, reflex, form, linking_core)
+- Combined JSONL output at `finetune/combined_train.jsonl`
+
 ### 2026-01-27
 - MLX configuration for Apple Silicon
 - JSONL data format defined
