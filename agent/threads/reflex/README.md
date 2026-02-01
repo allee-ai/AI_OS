@@ -12,6 +12,16 @@ Reflex handles learned automaticity. Patterns that repeat become "muscle memory"
 
 ---
 
+## Changelog
+
+### 2026-02-01: Executor Foundation
+- **Schema**: Completed reflex_triggers table with Feed event integration
+- **Executor**: Created ReflexExecutor class for trigger → tool execution
+- **Tool Registry**: Foundation for executable tools in tools/executables/
+- **Form Integration**: Connected to Form Thread for tool execution
+
+---
+
 ## Architecture
 
 <!-- ARCHITECTURE:reflex -->
@@ -106,7 +116,15 @@ If no match → proceed to full context assembly.
 ## Changelog
 
 <!-- CHANGELOG:reflex -->
-### 2026-02-01
+### 2026-02-01: Executor Foundation & Feed Integration
+- **Executor Class**: Created ReflexExecutor for trigger → tool execution pipeline
+- **Feed Integration**: Triggers now respond to Feed event emissions (email, github, discord)
+- **Tool Registry**: Foundation for executable tools in tools/executables/
+- **Form Integration**: Connected to Form Thread for standardized tool execution
+- **Schema Complete**: reflex_triggers table with conditions, actions, enabled status
+- **API Endpoints**: Full CRUD operations for trigger management
+
+### 2026-01-27
 - Added `reflex_triggers` SQLite table for feed → tool automations
 - New trigger CRUD endpoints (create, read, update, delete, toggle)
 - Trigger executor integrates with Form tools

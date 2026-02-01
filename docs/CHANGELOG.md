@@ -5,6 +5,37 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-02-01 — Feeds Architecture & Daemon Setup
+
+### Infrastructure: Production-Ready Daemon
+- **LaunchAgent**: `com.aios.server.plist` for auto-start on login, auto-restart on crash
+- **Install Script**: `install_daemon.sh` with status, logs, restart commands
+- **HTTP Logging**: Middleware logs all requests to `log_server` table with timing, client info
+- **Server Monitoring**: `/api/log/server/stats` endpoint for error rates, avg duration, top paths
+
+### Feeds: YAML → Python Module Migration  
+- **Architecture**: Converted all feed configs from YAML to Python modules with adapters
+- **Email Module**: Multi-provider support (Gmail, Outlook, Proton) with unified OAuth flow
+- **GitHub Module**: 6 event types (issues, PRs, mentions, pushes) with OAuth integration  
+- **Discord Module**: Converted from YAML, added OAuth and bot adapter
+- **Viewers**: Native React components (EmailViewer with provider tabs, GithubViewer, DiscordViewer)
+- **API**: Updated OAuth endpoints with provider parameter support
+- **Events**: Centralized event emission system connecting to Reflex triggers
+
+### Reflex: Executor Foundation
+- **ReflexExecutor**: Core class for trigger → tool execution pipeline
+- **Feed Integration**: Triggers now respond to Feed event emissions
+- **Tool Registry**: Foundation for executable tools in `tools/executables/`
+- **Form Integration**: Connected to Form Thread for standardized tool execution
+
+### Log: Database Logging System
+- **New Tables**: `log_system` (daemon logs) and `log_server` (HTTP logs)
+- **Helper Functions**: `log_system_event()`, `log_server_request()`, query functions
+- **API Endpoints**: `/api/log/daemon`, `/api/log/server`, server statistics
+- **Monitoring**: Agent can now query server health and performance metrics
+
+---
+
 ## 2026-01-31 — DMG Installer + Cleanup + Attribution
 
 ### Installer: Proper DMG Download Flow
@@ -351,9 +382,9 @@ core = get_core_identity()  # {'agent_name': '...', 'agent_role': '...', 'user_n
 
 ### Security: Pre-Public Audit
 - **API Keys**: Cleared Kernel API key from `.env` file
-- **Personal Identifiers**: Replaced "Cade Roden" with "Allee" in all tracked files
+- **Personal Identifiers**: Replaced "allee Roden" with "Allee" in all tracked files
 - **VM IP Addresses**: Replaced hardcoded 159.203.95.51 with `YOUR_VM_IP` placeholder in docs
-- **Local Paths**: Converted `/Users/cade/Desktop` to relative paths throughout codebase
+- **Local Paths**: Converted `/Users/allee/Desktop` to relative paths throughout codebase
 
 ### Architecture: Conversation Storage Migration (JSON → SQLite)
 - **New Module**: Created `agent/react-chat-app/backend/api/chatschema.py` with:
@@ -602,7 +633,7 @@ core = get_core_identity()  # {'agent_name': '...', 'agent_role': '...', 'user_n
 - **Architecture**: Replaced monolithic `identity_flat` with extensible profile system.
 - **Schema**: Added 4 new tables in `schema.py`:
   - `profile_types`: User-defined types (admin, family, friend) with trust levels.
-  - `profiles`: Instances like `admin.cade`, `family.mom`.
+  - `profiles`: Instances like `admin.allee`, `family.mom`.
   - `fact_types`: Categories (name, birthday, preference) with default weights.
   - `profile_facts`: Key-value facts with **visible, editable weights**.
 - **API**: New `/api/profiles` endpoints for CRUD operations.
@@ -660,7 +691,7 @@ core = get_core_identity()  # {'agent_name': '...', 'agent_role': '...', 'user_n
   - `OPENAI_API_KEY` (for fallback/Elaris)
   - `KERNEL_API_KEY` (browser automation)
   - `LINEAR_API_KEY` (task management)
-- **`agent/identity.json`**: Fixed hardcoded `/Users/cade/...` path → relative `./identity_thread/identity.json`
+- **`agent/identity.json`**: Fixed hardcoded `/Users/allee/...` path → relative `./identity_thread/identity.json`
 - **`README.md`**: Added Step 2 for copying `.env.example` before first run
 
 ### Clone & Run Instructions
@@ -1065,6 +1096,13 @@ _Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md
 <!-- INCLUDE:log:CHANGELOG -->
 _Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
 
+### 2026-02-01: Database Logging System
+- **New Tables**: Added `log_system` (daemon logs) and `log_server` (HTTP logs) 
+- **Helper Functions**: `log_system_event()`, `log_server_request()`, query functions
+- **API Endpoints**: `/api/log/daemon`, `/api/log/server`, `/api/log/server/stats`
+- **HTTP Middleware**: Auto-logging all requests with timing, client info, errors
+- **Monitoring**: Server statistics endpoint for error rates, avg duration, top paths
+
 ### 2026-01-27
 - Unified events table consolidates all event sources
 - Recency-based context levels (L1=10, L2=100, L3=1000)
@@ -1091,9 +1129,21 @@ _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 <!-- INCLUDE:reflex:CHANGELOG -->
 _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 
+### 2026-02-01: Executor Foundation & Feed Integration
+- **Executor Class**: Created ReflexExecutor for trigger → tool execution pipeline
+- **Feed Integration**: Triggers now respond to Feed event emissions (email, github, discord)
+- **Tool Registry**: Foundation for executable tools in tools/executables/
+- **Form Integration**: Connected to Form Thread for standardized tool execution
+- **Schema Complete**: reflex_triggers table with conditions, actions, enabled status
+- **API Endpoints**: Full CRUD operations for trigger management
+
 ### 2026-01-27
-- Three-tier reflex cascade (system → user → social)
-- Pattern matching with weight priorities
+- Added `reflex_triggers` SQLite table for feed → tool automations
+- New trigger CRUD endpoints (create, read, update, delete, toggle)
+- Trigger executor integrates with Form tools
+- Condition matching with operators (eq, contains, regex, etc.)
+- Auto-execution when feed events are emitted
+- Trigger test endpoint for manual testing
 
 ### 2026-01-20
 - Greeting and shortcut tables
@@ -1180,6 +1230,16 @@ _Source: [chat/README.md](chat/README.md)_
 ### Feeds
 <!-- INCLUDE:feeds:CHANGELOG -->
 _Source: [Feeds/README.md](Feeds/README.md)_
+
+### 2026-02-01: Module System & Multi-Provider Support
+- **YAML → Python**: Converted all feed configs to Python modules with adapters
+- **Email Module**: Multi-provider support (Gmail, Outlook, Proton) with unified OAuth
+- **GitHub Module**: 6 event types (issues, PRs, mentions, pushes) with OAuth integration
+- **Discord Module**: Converted from YAML, added OAuth flow and bot adapter
+- **Viewers**: Native viewer components (EmailViewer with provider tabs, GithubViewer, DiscordViewer)
+- **API**: Updated OAuth endpoints with provider parameter support
+- **Events**: Centralized event emission system with feed registry
+- **Secrets**: Encrypted storage for OAuth tokens and API keys
 
 ### 2026-01-27
 - YAML-driven source configuration

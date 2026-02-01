@@ -12,6 +12,17 @@ The Feeds module manages external data streams entering and leaving AI OS. It ab
 
 ---
 
+## Changelog
+
+### 2026-02-01: Module System Migration
+- **YAML → Python**: Converted all feed configs from YAML to Python modules
+- **Email Module**: Multi-provider support (Gmail, Outlook, Proton) with unified OAuth
+- **GitHub Module**: 6 event types with OAuth integration
+- **Discord Module**: Converted from YAML, added OAuth flow
+- **Viewers**: Created native viewer components (EmailViewer with provider tabs, GithubViewer, DiscordViewer)
+- **API**: Updated OAuth endpoints to support provider parameter for email
+- **Events**: New centralized event emission system
+
 ## Architecture
 
 <!-- ARCHITECTURE:feeds -->
@@ -129,14 +140,15 @@ tokens = get_oauth_tokens("gmail")
 ## Changelog
 
 <!-- CHANGELOG:feeds -->
-### 2026-02-01
-- Modular feed architecture (gmail/, discord/ directories)
-- Event system with registry and handlers
-- Encrypted secrets storage (Fernet encryption)
-- Gmail OAuth2 flow with token refresh
-- Discord bot adapter with event types
-- Feed events auto-trigger Reflex automations
-- New API endpoints for secrets, OAuth, events
+### 2026-02-01: Module System & Multi-Provider Support
+- **YAML → Python**: Converted all feed configs to Python modules with adapters
+- **Email Module**: Multi-provider support (Gmail, Outlook, Proton) with unified OAuth
+- **GitHub Module**: 6 event types (issues, PRs, mentions, pushes) with OAuth integration
+- **Discord Module**: Converted from YAML, added OAuth flow and bot adapter
+- **Viewers**: Native viewer components (EmailViewer with provider tabs, GithubViewer, DiscordViewer)
+- **API**: Updated OAuth endpoints with provider parameter support
+- **Events**: Centralized event emission system with feed registry
+- **Secrets**: Encrypted storage for OAuth tokens and API keys
 
 ### 2026-01-27
 - YAML-driven source configuration

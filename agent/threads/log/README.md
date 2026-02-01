@@ -12,6 +12,17 @@ Log provides temporal awareness — a timeline of events, sessions, and patterns
 
 ---
 
+## Changelog
+
+### 2026-02-01: Database Logging System
+- **New Tables**: Added `log_system` (daemon logs) and `log_server` (HTTP logs) 
+- **Helper Functions**: `log_system_event()`, `log_server_request()`, query functions
+- **API Endpoints**: `/api/log/daemon`, `/api/log/server`, `/api/log/server/stats`
+- **HTTP Middleware**: Auto-logging all requests with timing, client info, errors
+- **Monitoring**: Server statistics endpoint for error rates, avg duration, top paths
+
+---
+
 ## Architecture
 
 <!-- ARCHITECTURE:log -->
