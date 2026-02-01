@@ -119,22 +119,24 @@ def init_fact_types(conn: Optional[sqlite3.Connection] = None) -> None:
         )
     """)
     
-    # Seed defaults
-    cur.execute("SELECT COUNT(*) FROM fact_types")
-    if cur.fetchone()[0] == 0:
-        defaults = [
-            ("name", "Display name", 0.9),
-            ("email", "Email address", 0.6),
-            ("location", "Location or timezone", 0.5),
-            ("occupation", "Job or role", 0.6),
-            ("note", "Freeform notes", 0.3),
-            ("os", "Operating system", 0.5),
-            ("hardware", "Hardware specs", 0.4),
-        ]
-        cur.executemany("""
-            INSERT INTO fact_types (fact_type, description, default_weight)
-            VALUES (?, ?, ?)
-        """, defaults)
+    # Seed defaults (INSERT OR IGNORE for existing databases)
+    defaults = [
+        ("name", "Full name", 0.9),
+        ("email", "Email address", 0.7),
+        ("phone", "Phone number", 0.6),
+        ("location", "City/region/timezone", 0.5),
+        ("occupation", "Job title or role", 0.6),
+        ("organization", "Company or affiliation", 0.5),
+        ("relationship", "Relationship to user", 0.7),
+        ("birthday", "Birthday or age", 0.4),
+        ("note", "Freeform notes", 0.3),
+        ("os", "Operating system", 0.5),
+        ("hardware", "Hardware specs", 0.4),
+    ]
+    cur.executemany("""
+        INSERT OR IGNORE INTO fact_types (fact_type, description, default_weight)
+        VALUES (?, ?, ?)
+    """, defaults)
     
     if own_conn:
         conn.commit()
@@ -179,12 +181,14 @@ def init_profile_facts(conn: Optional[sqlite3.Connection] = None) -> None:
     if "protected" not in columns:
         cur.execute("ALTER TABLE profile_facts ADD COLUMN protected BOOLEAN DEFAULT FALSE")
     
-    # Preset empty facts for primary_user
+    # Preset empty facts for primary_user (contact info)
     user_facts = [
         ("primary_user", "name", "name", 0.9),
-        ("primary_user", "email", "email", 0.6),
+        ("primary_user", "email", "email", 0.7),
+        ("primary_user", "phone", "phone", 0.6),
         ("primary_user", "location", "location", 0.5),
         ("primary_user", "occupation", "occupation", 0.6),
+        ("primary_user", "organization", "organization", 0.5),
         ("primary_user", "notes", "note", 0.3),
     ]
     
@@ -289,10 +293,14 @@ def delete_profile_type(type_name: str) -> bool:
 # ============================================================================
 
 def create_profile(profile_id: str, type_name: str, display_name: str = "") -> None:
-    """Create or update a profile."""
+    """Create or update a profile with preset contact facts."""
     ensure_initialized()
     with closing(get_connection()) as conn:
         cur = conn.cursor()
+        
+        # Check if profile already exists
+        cur.execute("SELECT COUNT(*) FROM profiles WHERE profile_id = ?", (profile_id,))
+        is_new = cur.fetchone()[0] == 0
         
         cur.execute("""
             INSERT INTO profiles (profile_id, type_name, display_name)
@@ -301,6 +309,26 @@ def create_profile(profile_id: str, type_name: str, display_name: str = "") -> N
                 type_name = excluded.type_name,
                 display_name = excluded.display_name
         """, (profile_id, type_name, display_name or profile_id.split('.')[-1]))
+        
+        # Add preset contact facts for new profiles
+        if is_new:
+            preset_facts = [
+                (profile_id, "name", "name", 0.9),
+                (profile_id, "email", "email", 0.7),
+                (profile_id, "phone", "phone", 0.6),
+                (profile_id, "location", "location", 0.5),
+                (profile_id, "occupation", "occupation", 0.6),
+                (profile_id, "organization", "organization", 0.5),
+                (profile_id, "relationship", "relationship", 0.7),
+                (profile_id, "notes", "note", 0.3),
+            ]
+            for pid, key, fact_type, weight in preset_facts:
+                cur.execute("""
+                    INSERT OR IGNORE INTO profile_facts 
+                    (profile_id, key, fact_type, weight)
+                    VALUES (?, ?, ?, ?)
+                """, (pid, key, fact_type, weight))
+        
         conn.commit()
 
 

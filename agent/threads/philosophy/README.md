@@ -85,6 +85,14 @@ philosophy.bound.harm_reduction: minimize harm
 ## Changelog
 
 <!-- CHANGELOG:philosophy -->
+### 2026-02-01
+- Added edit button (✏️) next to stances for inline editing
+- Added edit modal with L1/L2/L3 fields, type selector, weight slider
+- Added `ThemedSelect` component for consistent dropdown styling
+- Added PUT endpoint for editing stances (`api.py`)
+- Added `PhilosophyFactUpdate` model for partial updates
+- Updated `SelectWithAdd` to use CSS theme variables
+
 ### 2026-01-27
 - Profile-based schema with L1/L2/L3 values
 - Relevance filtering via LinkingCore

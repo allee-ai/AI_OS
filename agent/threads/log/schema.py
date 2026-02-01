@@ -9,6 +9,8 @@ Tables:
 - unified_events: All system/user events with timeline
 - log_events: Module-specific event storage
 - log_sessions: Session metadata
+- log_system: Daemon/infrastructure logs
+- log_server: HTTP requests, errors, performance (agent-monitorable)
 """
 
 import sqlite3
@@ -60,6 +62,71 @@ def init_event_log_table(conn: Optional[sqlite3.Connection] = None) -> None:
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_time ON unified_events(timestamp DESC)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_session ON unified_events(session_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_source ON unified_events(source)")
+    
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def init_system_log_table(conn: Optional[sqlite3.Connection] = None) -> None:
+    """
+    Create system/daemon log table.
+    For infrastructure: daemon lifecycle, crashes, restarts.
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS log_system (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            level TEXT NOT NULL DEFAULT 'info',
+            source TEXT NOT NULL DEFAULT 'daemon',
+            message TEXT NOT NULL,
+            metadata_json TEXT,
+            pid INTEGER
+        )
+    """)
+    
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_system_time ON log_system(timestamp DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_system_level ON log_system(level)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_system_source ON log_system(source)")
+    
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def init_server_log_table(conn: Optional[sqlite3.Connection] = None) -> None:
+    """
+    Create server log table.
+    HTTP requests, errors, performance - agent can monitor and respond.
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS log_server (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            level TEXT NOT NULL DEFAULT 'info',
+            method TEXT,
+            path TEXT,
+            status_code INTEGER,
+            duration_ms REAL,
+            client_ip TEXT,
+            user_agent TEXT,
+            error TEXT,
+            metadata_json TEXT
+        )
+    """)
+    
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_server_time ON log_server(timestamp DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_server_level ON log_server(level)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_server_path ON log_server(path)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_server_status ON log_server(status_code)")
     
     if own_conn:
         conn.commit()
@@ -570,3 +637,308 @@ def search_events(query: str, limit: int = 50) -> List[Dict[str, Any]]:
             return results
         except sqlite3.OperationalError:
             return []
+
+
+# ============================================================================
+# System Log Functions (Daemon/Infrastructure)
+# ============================================================================
+
+def log_system_event(
+    level: str,
+    message: str,
+    source: str = "daemon",
+    metadata: Dict[str, Any] = None,
+    pid: int = None
+) -> int:
+    """
+    Log a system/daemon event.
+    
+    Args:
+        level: "debug" | "info" | "warning" | "error" | "critical"
+        message: What happened
+        source: Where from ("daemon", "scheduler", "watcher", etc)
+        metadata: Additional context
+        pid: Process ID (auto-detected if not provided)
+    
+    Returns:
+        Log entry ID
+    """
+    import os
+    
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_system_log_table(conn)
+        
+        metadata_json = json.dumps(metadata) if metadata else None
+        actual_pid = pid or os.getpid()
+        
+        cur.execute("""
+            INSERT INTO log_system (level, source, message, metadata_json, pid)
+            VALUES (?, ?, ?, ?, ?)
+        """, (level, source, message, metadata_json, actual_pid))
+        
+        log_id = cur.lastrowid
+        conn.commit()
+    return log_id
+
+
+def get_system_logs(
+    level: str = None,
+    source: str = None,
+    since: str = None,
+    limit: int = 100
+) -> List[Dict[str, Any]]:
+    """
+    Query system/daemon logs.
+    
+    Args:
+        level: Filter by log level
+        source: Filter by source component
+        since: ISO timestamp, get logs after this time
+        limit: Max logs to return
+    
+    Returns:
+        List of log dicts
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        init_system_log_table(conn)
+        
+        query = "SELECT * FROM log_system WHERE 1=1"
+        params = []
+        
+        if level:
+            query += " AND level = ?"
+            params.append(level)
+        if source:
+            query += " AND source = ?"
+            params.append(source)
+        if since:
+            query += " AND timestamp > ?"
+            params.append(since)
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        try:
+            cur.execute(query, params)
+            
+            results = []
+            for row in cur.fetchall():
+                log = dict(row)
+                if log.get("metadata_json"):
+                    try:
+                        log["metadata"] = json.loads(log["metadata_json"])
+                    except:
+                        log["metadata"] = {}
+                else:
+                    log["metadata"] = {}
+                del log["metadata_json"]
+                results.append(log)
+            
+            return results
+        except sqlite3.OperationalError:
+            return []
+
+
+# ============================================================================
+# Server Log Functions (HTTP Requests)
+# ============================================================================
+
+def log_server_request(
+    method: str,
+    path: str,
+    status_code: int,
+    duration_ms: float = None,
+    client_ip: str = None,
+    user_agent: str = None,
+    error: str = None,
+    level: str = None,
+    metadata: Dict[str, Any] = None
+) -> int:
+    """
+    Log an HTTP request.
+    
+    Args:
+        method: HTTP method (GET, POST, etc)
+        path: Request path
+        status_code: Response status code
+        duration_ms: Request duration in milliseconds
+        client_ip: Client IP address
+        user_agent: Client user agent
+        error: Error message if request failed
+        level: Log level (auto-determined from status_code if not provided)
+        metadata: Additional context
+    
+    Returns:
+        Log entry ID
+    """
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_server_log_table(conn)
+        
+        # Auto-determine level from status code
+        if level is None:
+            if status_code >= 500:
+                level = "error"
+            elif status_code >= 400:
+                level = "warning"
+            else:
+                level = "info"
+        
+        metadata_json = json.dumps(metadata) if metadata else None
+        
+        cur.execute("""
+            INSERT INTO log_server 
+            (level, method, path, status_code, duration_ms, client_ip, user_agent, error, metadata_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (level, method, path, status_code, duration_ms, client_ip, user_agent, error, metadata_json))
+        
+        log_id = cur.lastrowid
+        conn.commit()
+    return log_id
+
+
+def get_server_logs(
+    level: str = None,
+    method: str = None,
+    path_prefix: str = None,
+    status_code: int = None,
+    errors_only: bool = False,
+    since: str = None,
+    limit: int = 100
+) -> List[Dict[str, Any]]:
+    """
+    Query server/HTTP logs.
+    
+    Args:
+        level: Filter by log level
+        method: Filter by HTTP method
+        path_prefix: Filter by path prefix (e.g., "/api/feeds")
+        status_code: Filter by exact status code
+        errors_only: Only return error logs (status >= 400)
+        since: ISO timestamp, get logs after this time
+        limit: Max logs to return
+    
+    Returns:
+        List of log dicts
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        init_server_log_table(conn)
+        
+        query = "SELECT * FROM log_server WHERE 1=1"
+        params = []
+        
+        if level:
+            query += " AND level = ?"
+            params.append(level)
+        if method:
+            query += " AND method = ?"
+            params.append(method)
+        if path_prefix:
+            query += " AND path LIKE ?"
+            params.append(f"{path_prefix}%")
+        if status_code:
+            query += " AND status_code = ?"
+            params.append(status_code)
+        if errors_only:
+            query += " AND status_code >= 400"
+        if since:
+            query += " AND timestamp > ?"
+            params.append(since)
+        
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        
+        try:
+            cur.execute(query, params)
+            
+            results = []
+            for row in cur.fetchall():
+                log = dict(row)
+                if log.get("metadata_json"):
+                    try:
+                        log["metadata"] = json.loads(log["metadata_json"])
+                    except:
+                        log["metadata"] = {}
+                else:
+                    log["metadata"] = {}
+                del log["metadata_json"]
+                results.append(log)
+            
+            return results
+        except sqlite3.OperationalError:
+            return []
+
+
+def get_server_stats(since: str = None) -> Dict[str, Any]:
+    """
+    Get server statistics for monitoring.
+    
+    Args:
+        since: ISO timestamp, only count requests after this time
+    
+    Returns:
+        Dict with request counts, error rates, avg duration
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        init_server_log_table(conn)
+        
+        time_clause = ""
+        params = []
+        if since:
+            time_clause = " WHERE timestamp > ?"
+            params.append(since)
+        
+        try:
+            # Total requests
+            cur.execute(f"SELECT COUNT(*) FROM log_server{time_clause}", params)
+            total = cur.fetchone()[0]
+            
+            # Error count (4xx and 5xx)
+            error_clause = " WHERE status_code >= 400" if not since else " AND status_code >= 400"
+            cur.execute(f"SELECT COUNT(*) FROM log_server{time_clause}{error_clause}", params)
+            errors = cur.fetchone()[0]
+            
+            # Average duration
+            cur.execute(f"SELECT AVG(duration_ms) FROM log_server{time_clause}", params)
+            avg_duration = cur.fetchone()[0] or 0
+            
+            # Requests by status code
+            cur.execute(f"""
+                SELECT status_code, COUNT(*) as count 
+                FROM log_server{time_clause}
+                GROUP BY status_code
+                ORDER BY count DESC
+            """, params)
+            by_status = {row[0]: row[1] for row in cur.fetchall()}
+            
+            # Requests by path (top 10)
+            cur.execute(f"""
+                SELECT path, COUNT(*) as count 
+                FROM log_server{time_clause}
+                GROUP BY path
+                ORDER BY count DESC
+                LIMIT 10
+            """, params)
+            by_path = {row[0]: row[1] for row in cur.fetchall()}
+            
+            return {
+                "total_requests": total,
+                "error_count": errors,
+                "error_rate": (errors / total * 100) if total > 0 else 0,
+                "avg_duration_ms": round(avg_duration, 2),
+                "by_status": by_status,
+                "top_paths": by_path
+            }
+        except sqlite3.OperationalError:
+            return {
+                "total_requests": 0,
+                "error_count": 0,
+                "error_rate": 0,
+                "avg_duration_ms": 0,
+                "by_status": {},
+                "top_paths": {}
+            }

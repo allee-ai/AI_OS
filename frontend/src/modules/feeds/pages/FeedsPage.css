@@ -1,14 +1,14 @@
-.stimuli-page {
+.feeds-page {
   max-width: 1200px;
 }
 
-.stimuli-page .subtitle {
+.feeds-page .subtitle {
   color: var(--text-muted);
   font-size: 0.9rem;
   margin-top: 4px;
 }
 
-.stimuli-layout {
+.feeds-layout {
   display: grid;
   grid-template-columns: 280px 1fr;
   gap: 24px;
@@ -682,4 +682,236 @@
   justify-content: center;
   padding: 40px;
   color: var(--text-muted);
+}
+
+/* Triggers Section */
+.triggers-section {
+  margin-top: 16px;
+}
+
+.section-header.clickable {
+  cursor: pointer;
+  user-select: none;
+}
+
+.section-header.clickable:hover {
+  background: var(--bg);
+  border-radius: 4px;
+}
+
+.trigger-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.trigger-count {
+  background: var(--primary);
+  color: white;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.trigger-count.empty {
+  background: var(--border);
+  color: var(--text-muted);
+}
+
+.expand-arrow {
+  color: var(--text-muted);
+  font-size: 0.7rem;
+}
+
+.triggers-content {
+  margin-top: 12px;
+}
+
+.no-triggers {
+  text-align: center;
+  padding: 20px;
+  color: var(--text-muted);
+}
+
+.no-triggers p {
+  margin: 0 0 4px 0;
+}
+
+.no-triggers small {
+  font-size: 0.8rem;
+  opacity: 0.7;
+}
+
+.triggers-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.trigger-item {
+  padding: 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+}
+
+.trigger-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.trigger-name {
+  font-weight: 600;
+  color: var(--primary);
+  font-size: 0.9rem;
+}
+
+.trigger-desc {
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+  margin: 0 0 8px 0;
+}
+
+.trigger-schema {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.schema-field {
+  background: var(--surface);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.schema-field code {
+  color: var(--primary);
+  font-family: 'SF Mono', monospace;
+}
+
+.all-triggers-summary {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.all-triggers-summary h4 {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  color: var(--text-muted);
+  margin: 0 0 12px 0;
+}
+
+.event-types-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.event-type-badge {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  font-size: 0.8rem;
+}
+
+.event-name {
+  color: var(--text-secondary);
+}
+
+.event-feed-count {
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 8px;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+/* Feed Viewer Container */
+.feed-viewer-container {
+  margin-bottom: 16px;
+}
+
+/* Standalone Triggers Section */
+.triggers-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 16px;
+  overflow: hidden;
+}
+
+.triggers-section > .section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  cursor: pointer;
+  background: var(--bg-tertiary);
+}
+
+.triggers-section > .section-header:hover {
+  background: var(--bg-hover);
+}
+
+.triggers-section h3 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.triggers-section .triggers-content {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Feed Settings Accordion */
+.feed-settings-accordion {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.feed-settings-accordion > summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  cursor: pointer;
+  font-weight: 500;
+  background: var(--bg-tertiary);
+  list-style: none;
+}
+
+.feed-settings-accordion > summary::-webkit-details-marker {
+  display: none;
+}
+
+.feed-settings-accordion > summary::before {
+  content: '▶';
+  font-size: 10px;
+  transition: transform 0.15s;
+}
+
+.feed-settings-accordion[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.feed-settings-accordion > .detail-header {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.feed-settings-accordion > .config-sections {
+  padding: 0 16px 16px;
 }

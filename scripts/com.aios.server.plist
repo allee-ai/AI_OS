@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <!-- Unique identifier for this service -->
+    <key>Label</key>
+    <string>com.aios.server</string>
+    
+    <!-- Working directory -->
+    <key>WorkingDirectory</key>
+    <string>__AIOS_PATH__</string>
+    
+    <!-- Command to run -->
+    <key>ProgramArguments</key>
+    <array>
+        <string>__AIOS_PATH__/.venv/bin/python</string>
+        <string>-m</string>
+        <string>uvicorn</string>
+        <string>scripts.server:app</string>
+        <string>--host</string>
+        <string>127.0.0.1</string>
+        <string>--port</string>
+        <string>8000</string>
+    </array>
+    
+    <!-- Environment variables -->
+    <key>EnvironmentVariables</key>
+    <dict>
+        <key>PATH</key>
+        <string>/usr/local/bin:/usr/bin:/bin:__AIOS_PATH__/.venv/bin</string>
+        <key>PYTHONPATH</key>
+        <string>__AIOS_PATH__</string>
+        <key>AIOS_PATH</key>
+        <string>__AIOS_PATH__</string>
+    </dict>
+    
+    <!-- Start at login -->
+    <key>RunAtLoad</key>
+    <true/>
+    
+    <!-- Keep alive - restart if it dies -->
+    <key>KeepAlive</key>
+    <dict>
+        <!-- Restart if crashes -->
+        <key>SuccessfulExit</key>
+        <false/>
+        <!-- Don't restart if stopped intentionally -->
+        <key>Crashed</key>
+        <true/>
+    </dict>
+    
+    <!-- Throttle restarts (wait 10 seconds between restart attempts) -->
+    <key>ThrottleInterval</key>
+    <integer>10</integer>
+    
+    <!-- Log stdout/stderr to files (will be replaced with DB logging) -->
+    <key>StandardOutPath</key>
+    <string>__AIOS_PATH__/data/logs/server_stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>__AIOS_PATH__/data/logs/server_stderr.log</string>
+    
+    <!-- Nice level (lower priority than user apps) -->
+    <key>Nice</key>
+    <integer>5</integer>
+    
+    <!-- Process type -->
+    <key>ProcessType</key>
+    <string>Background</string>
+</dict>
+</plist>

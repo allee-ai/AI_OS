@@ -71,9 +71,9 @@ export const SelectWithAdd: React.FC<SelectWithAddProps> = ({
             flex: 1,
             padding: '6px 8px',
             borderRadius: '4px',
-            border: '1px solid #444',
-            background: '#1e1e1e',
-            color: '#fff',
+            border: '1px solid var(--border)',
+            background: 'var(--surface)',
+            color: 'var(--text)',
             fontSize: '13px',
           }}
         />
@@ -81,7 +81,7 @@ export const SelectWithAdd: React.FC<SelectWithAddProps> = ({
           onClick={handleAdd}
           style={{
             padding: '6px 10px',
-            background: '#4CAF50',
+            background: 'var(--primary)',
             color: '#fff',
             border: 'none',
             borderRadius: '4px',
@@ -94,7 +94,7 @@ export const SelectWithAdd: React.FC<SelectWithAddProps> = ({
           onClick={handleCancel}
           style={{
             padding: '6px 10px',
-            background: '#666',
+            background: 'var(--text-muted)',
             color: '#fff',
             border: 'none',
             borderRadius: '4px',
@@ -114,13 +114,17 @@ export const SelectWithAdd: React.FC<SelectWithAddProps> = ({
       disabled={disabled}
       style={{
         width: '100%',
-        padding: '8px',
-        borderRadius: '4px',
-        border: '1px solid #444',
-        background: '#1e1e1e',
-        color: '#fff',
+        padding: '8px 32px 8px 8px',
+        borderRadius: '6px',
+        border: '1px solid var(--border)',
+        background: 'var(--surface)',
+        color: 'var(--text)',
         fontSize: '13px',
         cursor: 'pointer',
+        appearance: 'none',
+        backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%236b7280' d='M2 4l4 4 4-4'/%3E%3C/svg%3E")`,
+        backgroundRepeat: 'no-repeat',
+        backgroundPosition: 'right 10px center',
       }}
     >
       <option value="" disabled>
@@ -131,7 +135,7 @@ export const SelectWithAdd: React.FC<SelectWithAddProps> = ({
           {opt.label}
         </option>
       ))}
-      <option value="__add_new__" style={{ fontStyle: 'italic', color: '#888' }}>
+      <option value="__add_new__" style={{ fontStyle: 'italic', color: 'var(--text-muted)' }}>
         ➕ {addNewLabel}
       </option>
     </select>

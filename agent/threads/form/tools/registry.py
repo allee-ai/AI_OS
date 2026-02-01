@@ -250,11 +250,11 @@ TOOLS: List[ToolDefinition] = [
     
     # --- Project Management Tools ---
     ToolDefinition(
-        name="stimuli_github",
+        name="feed_github",
         description="GitHub issues, PRs, and notifications",
         category=ToolCategory.AUTOMATION,
         actions=["list_issues", "create_issue", "comment", "list_prs"],
-        run_file="stimuli_github.py",
+        run_file="feed_github.py",
         run_type=RunType.PYTHON,
         requires_env=["GITHUB_TOKEN"],
         weight=0.6,

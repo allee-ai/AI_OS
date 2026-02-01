@@ -90,6 +90,12 @@ ToolDefinition(
 ## Changelog
 
 <!-- CHANGELOG:form -->
+### 2026-02-01
+- Fixed ToolDashboard.css to use theme CSS variables consistently
+- Removed hardcoded hex color fallbacks
+- Added ThemedSelect component for styled dropdowns
+- Dashboard now properly supports light/dark theme switching
+
 ### 2026-01-27
 - L1/L2/L3 tool architecture
 - Executable hot-reload support

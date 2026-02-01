@@ -18,6 +18,10 @@ from .schema import (
     pull_log_events, push_log_entry, get_log_entry, delete_log_entry,
     # Stats and metadata
     get_log_stats, get_event_types, get_sources,
+    # System log operations
+    log_system_event, get_system_logs,
+    # Server log operations
+    log_server_request, get_server_logs, get_server_stats,
 )
 
 router = APIRouter(prefix="/api/log", tags=["log"])
@@ -154,6 +158,102 @@ async def get_system_log_endpoint(limit: int = Query(100, ge=1, le=1000)):
     """
     events = get_system_log(limit=limit)
     return {"events": events, "count": len(events)}
+
+
+# ─────────────────────────────────────────────────────────────
+# Daemon/Infrastructure Log Endpoints (log_system table)
+# ─────────────────────────────────────────────────────────────
+
+class SystemLogCreate(BaseModel):
+    level: str = "info"
+    message: str
+    source: str = "api"
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@router.get("/daemon")
+async def list_daemon_logs(
+    level: Optional[str] = None,
+    source: Optional[str] = None,
+    since: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=1000)
+):
+    """
+    Query daemon/infrastructure logs.
+    
+    Filters:
+    - level: debug, info, warning, error, critical
+    - source: daemon, scheduler, watcher, etc
+    - since: ISO timestamp
+    """
+    logs = get_system_logs(
+        level=level,
+        source=source,
+        since=since,
+        limit=limit
+    )
+    return {"logs": logs, "count": len(logs)}
+
+
+@router.post("/daemon")
+async def create_daemon_log(entry: SystemLogCreate):
+    """Log a daemon/infrastructure event."""
+    log_id = log_system_event(
+        level=entry.level,
+        message=entry.message,
+        source=entry.source,
+        metadata=entry.metadata
+    )
+    return {"status": "created", "log_id": log_id}
+
+
+# ─────────────────────────────────────────────────────────────
+# Server/HTTP Log Endpoints (log_server table)
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/server")
+async def list_server_logs(
+    level: Optional[str] = None,
+    method: Optional[str] = None,
+    path_prefix: Optional[str] = None,
+    status_code: Optional[int] = None,
+    errors_only: bool = False,
+    since: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=1000)
+):
+    """
+    Query HTTP server logs.
+    
+    Filters:
+    - level: info, warning, error
+    - method: GET, POST, PUT, DELETE
+    - path_prefix: Filter by path start (e.g., "/api/feeds")
+    - status_code: Exact status code
+    - errors_only: Only 4xx and 5xx responses
+    - since: ISO timestamp
+    """
+    logs = get_server_logs(
+        level=level,
+        method=method,
+        path_prefix=path_prefix,
+        status_code=status_code,
+        errors_only=errors_only,
+        since=since,
+        limit=limit
+    )
+    return {"logs": logs, "count": len(logs)}
+
+
+@router.get("/server/stats")
+async def server_statistics(since: Optional[str] = None):
+    """
+    Get server statistics for monitoring.
+    
+    Returns request counts, error rates, avg duration, top paths.
+    Use `since` to limit time window (e.g., last hour).
+    """
+    stats = get_server_stats(since=since)
+    return stats
 
 
 # ─────────────────────────────────────────────────────────────

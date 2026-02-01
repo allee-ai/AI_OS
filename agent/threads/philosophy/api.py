@@ -46,6 +46,14 @@ class PhilosophyFactCreate(BaseModel):
     weight: Optional[float] = 0.5
 
 
+class PhilosophyFactUpdate(BaseModel):
+    fact_type: Optional[str] = None
+    l1_value: Optional[str] = None
+    l2_value: Optional[str] = None
+    l3_value: Optional[str] = None
+    weight: Optional[float] = None
+
+
 class FactWeightUpdate(BaseModel):
     weight: float
 
@@ -139,6 +147,29 @@ async def add_philosophy_fact(data: PhilosophyFactCreate):
         l2_value=data.l2_value,
         l3_value=data.l3_value,
         weight=data.weight
+    )
+    return {"status": "ok"}
+
+
+@router.put("/{profile_id}/facts/{key}")
+async def edit_philosophy_fact(profile_id: str, key: str, data: PhilosophyFactUpdate):
+    """Edit an existing philosophical stance/fact."""
+    # Get existing fact to preserve values not being updated
+    facts = pull_philosophy_profile_facts(profile_id=profile_id)
+    existing = next((f for f in facts if f.get("key") == key), None)
+    
+    if not existing:
+        raise HTTPException(404, "Fact not found")
+    
+    # Merge existing with updates
+    push_philosophy_profile_fact(
+        profile_id=profile_id,
+        key=key,
+        fact_type=data.fact_type if data.fact_type else existing.get("fact_type"),
+        l1_value=data.l1_value if data.l1_value is not None else existing.get("l1_value"),
+        l2_value=data.l2_value if data.l2_value is not None else existing.get("l2_value"),
+        l3_value=data.l3_value if data.l3_value is not None else existing.get("l3_value"),
+        weight=data.weight if data.weight is not None else existing.get("weight")
     )
     return {"status": "ok"}
 

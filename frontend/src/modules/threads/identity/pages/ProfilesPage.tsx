@@ -5,6 +5,7 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import SelectWithAdd from '../components/SelectWithAdd';
+import ThemedSelect from '../components/ThemedSelect';
 import './ProfilesPage.css';
 
 const API = '/api/identity';
@@ -197,6 +198,24 @@ const ProfileView: React.FC<ProfileViewProps> = ({
   });
   const [editingWeight, setEditingWeight] = useState<string | null>(null);
   const [contextLevel, setContextLevel] = useState<1 | 2 | 3>(2);
+  const [editingFact, setEditingFact] = useState<Fact | null>(null);
+
+  const onEditFact = (fact: Fact) => {
+    setEditingFact(fact);
+  };
+
+  const handleSaveEdit = async () => {
+    if (editingFact) {
+      await onUpdateFact(editingFact.profile_id, editingFact.key, {
+        l1_value: editingFact.l1_value,
+        l2_value: editingFact.l2_value,
+        l3_value: editingFact.l3_value,
+        fact_type: editingFact.fact_type,
+        weight: editingFact.weight,
+      });
+      setEditingFact(null);
+    }
+  };
 
   if (!profile) {
     return (
@@ -421,14 +440,24 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 {fact.access_count}
               </td>
               <td>
-                <button
-                  onClick={() => onDeleteFact(fact.profile_id, fact.key)}
-                  className="fact-actions delete-btn"
-                  title="Delete fact"
-                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
-                >
-                  🗑️
-                </button>
+                <div style={{ display: 'flex', gap: '4px' }}>
+                  <button
+                    onClick={() => onEditFact(fact)}
+                    className="fact-actions edit-btn"
+                    title="Edit fact"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
+                  >
+                    ✏️
+                  </button>
+                  <button
+                    onClick={() => onDeleteFact(fact.profile_id, fact.key)}
+                    className="fact-actions delete-btn"
+                    title="Delete fact"
+                    style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: '4px' }}
+                  >
+                    🗑️
+                  </button>
+                </div>
               </td>
             </tr>
           ))}
@@ -441,6 +470,66 @@ const ProfileView: React.FC<ProfileViewProps> = ({
           )}
         </tbody>
       </table>
+
+      {/* Edit Fact Modal */}
+      {editingFact && (
+        <div className="modal-overlay" onClick={() => setEditingFact(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <h3>Edit Fact: {editingFact.key}</h3>
+            <div className="edit-fact-form">
+              <div className="form-group">
+                <label>L1 (Brief ~10 tokens)</label>
+                <textarea
+                  value={editingFact.l1_value || ''}
+                  onChange={(e) => setEditingFact({ ...editingFact, l1_value: e.target.value })}
+                  rows={2}
+                />
+              </div>
+              <div className="form-group">
+                <label>L2 (Standard ~50 tokens)</label>
+                <textarea
+                  value={editingFact.l2_value || ''}
+                  onChange={(e) => setEditingFact({ ...editingFact, l2_value: e.target.value })}
+                  rows={3}
+                />
+              </div>
+              <div className="form-group">
+                <label>L3 (Full ~200 tokens)</label>
+                <textarea
+                  value={editingFact.l3_value || ''}
+                  onChange={(e) => setEditingFact({ ...editingFact, l3_value: e.target.value })}
+                  rows={4}
+                />
+              </div>
+              <div className="form-row">
+                <div className="form-group">
+                  <label>Type</label>
+                  <ThemedSelect
+                    options={factTypes.map((t) => ({ value: t.fact_type, label: t.fact_type }))}
+                    value={editingFact.fact_type}
+                    onChange={(v) => setEditingFact({ ...editingFact, fact_type: v })}
+                  />
+                </div>
+                <div className="form-group">
+                  <label>Weight: {editingFact.weight.toFixed(1)}</label>
+                  <input
+                    type="range"
+                    min="0"
+                    max="1"
+                    step="0.1"
+                    value={editingFact.weight}
+                    onChange={(e) => setEditingFact({ ...editingFact, weight: parseFloat(e.target.value) })}
+                  />
+                </div>
+              </div>
+              <div className="modal-actions">
+                <button className="btn-secondary" onClick={() => setEditingFact(null)}>Cancel</button>
+                <button className="btn-primary" onClick={handleSaveEdit}>Save Changes</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

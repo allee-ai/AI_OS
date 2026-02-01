@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import ThemedSelect from './ThemedSelect';
 import './ToolDashboard.css';
 
 interface Tool {
@@ -316,25 +317,25 @@ export const ToolDashboard = () => {
           </div>
 
           <div className="tool-filters">
-            <select 
-              value={filterCategory} 
-              onChange={(e) => setFilterCategory(e.target.value)}
+            <ThemedSelect
+              options={[
+                { value: 'all', label: 'All Categories' },
+                ...categories.map(cat => ({ value: cat.value, label: cat.label, icon: cat.icon }))
+              ]}
+              value={filterCategory}
+              onChange={setFilterCategory}
               className="filter-select"
-            >
-              <option value="all">All Categories</option>
-              {categories.map(cat => (
-                <option key={cat.value} value={cat.value}>{cat.icon} {cat.label}</option>
-              ))}
-            </select>
-            <select 
-              value={filterAvailable} 
-              onChange={(e) => setFilterAvailable(e.target.value as 'all' | 'available' | 'unavailable')}
+            />
+            <ThemedSelect
+              options={[
+                { value: 'all', label: 'All Status' },
+                { value: 'available', label: '✓ Available' },
+                { value: 'unavailable', label: '✗ Unavailable' }
+              ]}
+              value={filterAvailable}
+              onChange={(v) => setFilterAvailable(v as 'all' | 'available' | 'unavailable')}
               className="filter-select"
-            >
-              <option value="all">All Status</option>
-              <option value="available">✓ Available</option>
-              <option value="unavailable">✗ Unavailable</option>
-            </select>
+            />
           </div>
 
           {loading ? (
@@ -512,16 +513,13 @@ def run(action: str, params: Dict[str, Any]) -> Any:
                   <h3>🧪 Test Environment</h3>
                   <div className="execute-controls">
                     <div className="execute-row">
-                      <select 
-                        value={selectedAction} 
-                        onChange={(e) => setSelectedAction(e.target.value)}
+                      <ThemedSelect
+                        options={toolDetail.actions.map(action => ({ value: action, label: action }))}
+                        value={selectedAction}
+                        onChange={setSelectedAction}
+                        placeholder="Select action..."
                         className="action-select"
-                      >
-                        <option value="">Select action...</option>
-                        {toolDetail.actions.map(action => (
-                          <option key={action} value={action}>{action}</option>
-                        ))}
-                      </select>
+                      />
                       <button 
                         className="run-btn"
                         onClick={executeTool}
@@ -601,14 +599,11 @@ def run(action: str, params: Dict[str, Any]) -> Any:
               
               <div className="form-group">
                 <label>Category</label>
-                <select
-                  value={newTool.category}
-                  onChange={(e) => setNewTool({ ...newTool, category: e.target.value })}
-                >
-                  {categories.map(cat => (
-                    <option key={cat.value} value={cat.value}>{cat.icon} {cat.label}</option>
-                  ))}
-                </select>
+                <ThemedSelect
+                  options={categories.map(cat => ({ value: cat.value, label: cat.label, icon: cat.icon }))}
+                  value={newTool.category || 'internal'}
+                  onChange={(v) => setNewTool({ ...newTool, category: v })}
+                />
               </div>
               
               <div className="form-group">

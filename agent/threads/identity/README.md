@@ -69,14 +69,31 @@ identity.primary_user.name: Jamie
 identity.dad.relationship: Your father, retired engineer
 ```
 
+### Preset Contact Facts
+
+New profiles are created with empty preset facts for common contact information:
+
+| Fact Key | Fact Type | Description |
+|----------|-----------|-------------|
+| `name` | name | Full name |
+| `email` | email | Email address |
+| `phone` | phone | Phone number |
+| `location` | location | City/region/timezone |
+| `occupation` | occupation | Job title or role |
+| `organization` | organization | Company or affiliation |
+| `relationship` | relationship | How they relate to user |
+| `notes` | note | Freeform notes |
+
 ### API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `/api/identity/profiles` | List all profiles |
-| GET | `/api/identity/profiles/{id}` | Get profile with facts |
-| POST | `/api/identity/facts` | Create/update fact |
-| DELETE | `/api/identity/profiles/{id}` | Delete (if not protected) |
+| GET | `/api/identity` | List all profiles |
+| GET | `/api/identity/{id}/facts` | Get profile facts |
+| POST | `/api/identity/facts` | Create new fact |
+| PUT | `/api/identity/{id}/facts/{key}` | Edit existing fact |
+| DELETE | `/api/identity/{id}/facts/{key}` | Delete fact |
+| DELETE | `/api/identity/{id}` | Delete profile (if not protected) |
 <!-- /ARCHITECTURE:identity -->
 
 ---
@@ -101,6 +118,16 @@ identity.dad.relationship: Your father, retired engineer
 ## Changelog
 
 <!-- CHANGELOG:identity -->
+### 2026-02-01
+- Added edit button (✏️) next to facts for inline editing
+- Added edit modal with L1/L2/L3 fields, type selector, weight slider
+- Added `ThemedSelect` component for consistent dropdown styling
+- Added PUT endpoint for editing facts (`api.py`)
+- Added `IdentityFactUpdate` model for partial updates (`api.py`)
+- New profiles get preset contact facts: name, email, phone, location, occupation, organization, relationship, notes (`schema.py`)
+- Added fact types: phone, organization, relationship, birthday (`schema.py`)
+- Updated API endpoints documentation (`README.md`)
+
 ### 2026-01-27
 - Profile-based schema with L1/L2/L3 values
 - Protected core profiles (machine, primary_user)

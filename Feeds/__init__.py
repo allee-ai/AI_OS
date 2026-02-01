@@ -11,4 +11,15 @@ Exports:
 from .api import router as api_router
 from .router import FeedsRouter
 
+# Import source modules to register their event types
+try:
+    from .sources import gmail
+except ImportError:
+    pass
+
+try:
+    from .sources import discord
+except ImportError:
+    pass
+
 __all__ = ["api_router", "FeedsRouter"]

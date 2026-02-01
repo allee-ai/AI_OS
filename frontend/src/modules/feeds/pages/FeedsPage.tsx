@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import './FeedsPage.css';
+import { FEED_VIEWERS, DefaultViewer } from '../viewers';
 
 interface FeedsSource {
   name: string;
@@ -27,6 +28,13 @@ interface SourceConfig {
   auth: Record<string, any>;
   pull: Record<string, any>;
   push: Record<string, any>;
+}
+
+interface EventTrigger {
+  feed_name: string;
+  event_type: string;
+  description: string;
+  payload_schema: Record<string, string>;
 }
 
 const API_BASE = 'http://localhost:8000';
@@ -73,6 +81,10 @@ export const FeedsPage = () => {
   // Form state for new source
   const [newSourceName, setNewSourceName] = useState('');
   const [newSourceType, setNewSourceType] = useState('rest');
+
+  // Triggers state
+  const [triggers, setTriggers] = useState<EventTrigger[]>([]);
+  const [showTriggers, setShowTriggers] = useState(false);
   const [newSourceDesc, setNewSourceDesc] = useState('');
 
   const fetchSources = useCallback(async () => {
@@ -97,6 +109,16 @@ export const FeedsPage = () => {
     }
   }, []);
 
+  const fetchTriggers = useCallback(async () => {
+    try {
+      const res = await fetch(`${API_BASE}/api/feeds/events/triggers`);
+      const data = await res.json();
+      setTriggers(data);
+    } catch (err) {
+      console.error('Failed to fetch triggers:', err);
+    }
+  }, []);
+
   const fetchSourceConfig = useCallback(async (name: string) => {
     setConfigLoading(true);
     setTestResult(null);
@@ -114,13 +136,22 @@ export const FeedsPage = () => {
   useEffect(() => {
     fetchSources();
     fetchTemplates();
-  }, [fetchSources, fetchTemplates]);
+    fetchTriggers();
+  }, [fetchSources, fetchTemplates, fetchTriggers]);
 
   useEffect(() => {
     if (activeSource) {
       fetchSourceConfig(activeSource);
     }
   }, [activeSource, fetchSourceConfig]);
+
+  // Get triggers for the active source
+  const feedTriggers = activeSource
+    ? triggers.filter((t) => t.feed_name === activeSource)
+    : [];
+
+  // Get all unique event types across all feeds
+  const allEventTypes = Array.from(new Set(triggers.map((t) => t.event_type)));
 
   const handleToggle = async (name: string) => {
     try {
@@ -290,54 +321,118 @@ export const FeedsPage = () => {
           {!activeSource ? (
             <div className="no-selection">
               <div className="no-selection-icon">📡</div>
-              <h3>Select a source</h3>
-              <p>Choose a feed source to view its configuration, or add a new one.</p>
+              <h3>Select a feed</h3>
+              <p>Choose a feed module to view messages, drafts, and actions.</p>
               <button className="primary-btn" onClick={() => setShowAddModal(true)}>
-                + Add New Source
+                + Add New Feed
               </button>
             </div>
           ) : configLoading ? (
-            <div className="loading">Loading configuration...</div>
+            <div className="loading">Loading...</div>
           ) : sourceConfig ? (
             <>
-              <div className="detail-header">
-                <div className="detail-title">
-                  <span className="detail-icon">{getIcon(sources.find(s => s.name === activeSource)!)}</span>
-                  <div>
-                    <h2>{sourceConfig.name}</h2>
-                    <span className="detail-type">{sourceConfig.type}</span>
-                  </div>
-                </div>
-                <div className="detail-actions">
-                  <button
-                    className={`toggle-btn ${sourceConfig.enabled ? 'enabled' : ''}`}
-                    onClick={() => handleToggle(sourceConfig.name)}
-                  >
-                    {sourceConfig.enabled ? '✓ Enabled' : 'Disabled'}
-                  </button>
-                  <button className="test-btn" onClick={() => handleTest(sourceConfig.name)}>
-                    Test
-                  </button>
-                  <button className="delete-btn" onClick={() => handleDelete(sourceConfig.name)}>
-                    Delete
-                  </button>
-                </div>
+              {/* Native Feed Viewer */}
+              <div className="feed-viewer-container">
+                {FEED_VIEWERS[activeSource] ? (
+                  (() => {
+                    const ViewerComponent = FEED_VIEWERS[activeSource];
+                    return <ViewerComponent />;
+                  })()
+                ) : (
+                  <DefaultViewer feedName={activeSource} />
+                )}
               </div>
 
-              {testResult && (
-                <div className={`test-result ${testResult.status}`}>
-                  {testResult.status === 'testing' && '⏳ '}
-                  {testResult.status === 'ok' && '✓ '}
-                  {testResult.status === 'error' && '✗ '}
-                  {testResult.message}
+              {/* Triggers Dropdown */}
+              <div className="triggers-section">
+                <div 
+                  className="section-header clickable"
+                  onClick={() => setShowTriggers(!showTriggers)}
+                >
+                  <h3>⚡ Event Triggers</h3>
+                  <div className="trigger-badge">
+                    {feedTriggers.length > 0 ? (
+                      <span className="trigger-count">{feedTriggers.length}</span>
+                    ) : (
+                      <span className="trigger-count empty">0</span>
+                    )}
+                    <span className="expand-arrow">{showTriggers ? '▼' : '▶'}</span>
+                  </div>
                 </div>
-              )}
+                
+                {showTriggers && (
+                  <div className="triggers-content">
+                    {feedTriggers.length === 0 ? (
+                      <div className="no-triggers">
+                        <p>No triggers registered for this feed</p>
+                        <small>Event types are defined in the feed module</small>
+                      </div>
+                    ) : (
+                      <div className="triggers-list">
+                        {feedTriggers.map((trigger) => (
+                          <div key={`${trigger.feed_name}.${trigger.event_type}`} className="trigger-item">
+                            <div className="trigger-header">
+                              <span className="trigger-name">{trigger.event_type}</span>
+                            </div>
+                            <p className="trigger-desc">{trigger.description}</p>
+                            {Object.keys(trigger.payload_schema).length > 0 && (
+                              <div className="trigger-schema">
+                                {Object.entries(trigger.payload_schema).map(([key, type]) => (
+                                  <span key={key} className="schema-field">
+                                    <code>{key}</code>: {type}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
 
-              {sourceConfig.description && (
-                <p className="detail-description">{sourceConfig.description}</p>
-              )}
+              {/* Settings accordion (collapsed by default) */}
+              <details className="feed-settings-accordion">
+                <summary>⚙️ Feed Settings</summary>
+                <div className="detail-header">
+                  <div className="detail-title">
+                    <span className="detail-icon">{getIcon(sources.find(s => s.name === activeSource)!)}</span>
+                    <div>
+                      <h2>{sourceConfig.name}</h2>
+                      <span className="detail-type">{sourceConfig.type}</span>
+                    </div>
+                  </div>
+                  <div className="detail-actions">
+                    <button
+                      className={`toggle-btn ${sourceConfig.enabled ? 'enabled' : ''}`}
+                      onClick={() => handleToggle(sourceConfig.name)}
+                    >
+                      {sourceConfig.enabled ? '✓ Enabled' : 'Disabled'}
+                    </button>
+                    <button className="test-btn" onClick={() => handleTest(sourceConfig.name)}>
+                      Test
+                    </button>
+                    <button className="delete-btn" onClick={() => handleDelete(sourceConfig.name)}>
+                      Delete
+                    </button>
+                  </div>
+                </div>
 
-              <div className="config-sections">
+                {testResult && (
+                  <div className={`test-result ${testResult.status}`}>
+                    {testResult.status === 'testing' && '⏳ '}
+                    {testResult.status === 'ok' && '✓ '}
+                    {testResult.status === 'error' && '✗ '}
+                    {testResult.message}
+                  </div>
+                )}
+
+                {sourceConfig.description && (
+                  <p className="detail-description">{sourceConfig.description}</p>
+                )}
+
+                <div className="config-sections">
                 <div className="config-section">
                   <div className="section-header">
                     <h3>⚙️ Settings</h3>
@@ -550,6 +645,7 @@ export const FeedsPage = () => {
                   </details>
                 </div>
               </div>
+              </details>
             </>
           ) : null}
         </div>

@@ -5,17 +5,43 @@
 }
 
 :root {
+  /* Core colors */
   --bg: #fafbfc;
   --surface: #ffffff;
   --border: #e8eaed;
   --text: #1a1a2e;
   --text-muted: #6b7280;
+  --text-primary: #1a1a2e;
+  
+  /* Brand colors */
   --primary: #7c3aed;
   --primary-light: #a78bfa;
   --accent: #3b82f6;
+  --accent-hover: #2563eb;
   --success: #10b981;
   --warning: #f59e0b;
   --error: #ef4444;
+  
+  /* Layered backgrounds (light theme) */
+  --bg-primary: #fafbfc;
+  --bg-secondary: #f3f4f6;
+  --bg-tertiary: #e5e7eb;
+}
+
+/* Dark theme support */
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a0a0f;
+    --surface: #18181b;
+    --border: #27272a;
+    --text: #e4e4e7;
+    --text-muted: #71717a;
+    --text-primary: #e4e4e7;
+    
+    --bg-primary: #0a0a0f;
+    --bg-secondary: #111118;
+    --bg-tertiary: #18181b;
+  }
 }
 
 body {

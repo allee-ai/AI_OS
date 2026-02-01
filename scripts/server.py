@@ -10,12 +10,14 @@ Run with:
     python -m scripts.server
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
+from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 import json
 import sys
+import time
 from pathlib import Path
 import uuid
 
@@ -51,6 +53,58 @@ from finetune import router as finetune_router
 
 
 # =============================================================================
+# HTTP Logging Middleware
+# =============================================================================
+
+class HTTPLoggingMiddleware(BaseHTTPMiddleware):
+    """Log all HTTP requests to the log_server table."""
+    
+    # Skip logging for high-frequency endpoints
+    SKIP_PATHS = {"/health", "/api/log/events", "/api/log/server", "/api/log/system"}
+    
+    async def dispatch(self, request: Request, call_next):
+        # Skip certain paths to avoid log spam
+        if request.url.path in self.SKIP_PATHS:
+            return await call_next(request)
+        
+        start_time = time.time()
+        error_msg = None
+        status_code = 500  # Default if something goes wrong
+        
+        try:
+            response = await call_next(request)
+            status_code = response.status_code
+            return response
+        except Exception as e:
+            error_msg = str(e)
+            raise
+        finally:
+            # Calculate duration
+            duration_ms = (time.time() - start_time) * 1000
+            
+            # Extract client info
+            client_ip = request.client.host if request.client else None
+            user_agent = request.headers.get("user-agent", "")[:500]  # Truncate long UAs
+            
+            # Log to database (async-safe via sync call)
+            try:
+                from agent.threads.log.schema import log_server_request
+                log_server_request(
+                    method=request.method,
+                    path=request.url.path,
+                    status_code=status_code,
+                    duration_ms=round(duration_ms, 2),
+                    client_ip=client_ip,
+                    user_agent=user_agent,
+                    error=error_msg,
+                    metadata={"query": str(request.url.query)} if request.url.query else None
+                )
+            except Exception:
+                # Don't let logging failures break requests
+                pass
+
+
+# =============================================================================
 # Create FastAPI App
 # =============================================================================
 
@@ -70,6 +124,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
+app.add_middleware(HTTPLoggingMiddleware)
 
 
 # =============================================================================
