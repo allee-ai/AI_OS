@@ -2,27 +2,26 @@
 GitHub Feed Module
 ==================
 
-GitHub integration via OAuth for notifications, issues, PRs, and activity.
-Uses GitHub OAuth App flow for easy "Connect with GitHub" UX.
+GitHub integration via Device Flow for easy "Connect with GitHub" UX.
+No redirect URIs needed - user enters code at github.com/login/device.
 """
 
 from typing import List, Dict, Any, Optional
 from Feeds.events import EventTypeDefinition, register_event_types, emit_event
 
 # ============================================================================
-# OAuth Configuration
+# OAuth Configuration (Device Flow - no redirect needed)
 # ============================================================================
 
 GITHUB_OAUTH_CONFIG = {
     "provider": "github",
     "client_id_env": "GITHUB_CLIENT_ID",
-    "client_secret_env": "GITHUB_CLIENT_SECRET",
-    "auth_uri": "https://github.com/login/oauth/authorize",
+    # Device flow endpoints
+    "device_code_uri": "https://github.com/login/device/code",
     "token_uri": "https://github.com/login/oauth/access_token",
-    "redirect_uri": "http://localhost:8000/api/feeds/github/oauth/callback",
     "scopes": [
         "repo",
-        "notifications",
+        "notifications", 
         "read:user",
     ],
     "api_base": "https://api.github.com",
@@ -157,36 +156,57 @@ register_event_types("github", GITHUB_EVENT_TYPES)
 
 
 # ============================================================================
-# OAuth Functions
+# Device Flow OAuth Functions
 # ============================================================================
 
-def get_oauth_url(state: Optional[str] = None) -> str:
-    """Generate GitHub OAuth authorization URL."""
-    import os
-    from urllib.parse import urlencode
+async def start_device_flow() -> Dict[str, Any]:
+    """
+    Start GitHub Device Flow - returns user_code and verification_uri.
     
-    client_id = os.environ.get(GITHUB_OAUTH_CONFIG["client_id_env"], "")
-    if not client_id:
-        raise ValueError("GITHUB_CLIENT_ID environment variable not set")
-    
-    params = {
-        "client_id": client_id,
-        "redirect_uri": GITHUB_OAUTH_CONFIG["redirect_uri"],
-        "scope": " ".join(GITHUB_OAUTH_CONFIG["scopes"]),
-    }
-    if state:
-        params["state"] = state
-    
-    return f"{GITHUB_OAUTH_CONFIG['auth_uri']}?{urlencode(params)}"
-
-
-async def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
-    """Exchange authorization code for access token."""
+    Returns:
+        {
+            "device_code": "xxx",      # Used to poll for token
+            "user_code": "ABCD-1234",  # User enters this at GitHub
+            "verification_uri": "https://github.com/login/device",
+            "expires_in": 900,
+            "interval": 5              # Poll interval in seconds
+        }
+    """
     import os
     import httpx
     
     client_id = os.environ.get(GITHUB_OAUTH_CONFIG["client_id_env"], "")
-    client_secret = os.environ.get(GITHUB_OAUTH_CONFIG["client_secret_env"], "")
+    if not client_id:
+        raise ValueError("GITHUB_CLIENT_ID not set. Create a GitHub OAuth App and add it to .env")
+    
+    async with httpx.AsyncClient() as client:
+        response = await client.post(
+            GITHUB_OAUTH_CONFIG["device_code_uri"],
+            headers={"Accept": "application/json"},
+            data={
+                "client_id": client_id,
+                "scope": " ".join(GITHUB_OAUTH_CONFIG["scopes"]),
+            },
+        )
+        response.raise_for_status()
+        return response.json()
+
+
+async def poll_for_token(device_code: str) -> Dict[str, Any]:
+    """
+    Poll GitHub for access token (call this on interval until success).
+    
+    Returns:
+        On success: {"access_token": "xxx", "token_type": "bearer", "scope": "..."}
+        On pending: {"error": "authorization_pending"}
+        On slow_down: {"error": "slow_down", "interval": 10}
+        On expired: {"error": "expired_token"}
+        On denied: {"error": "access_denied"}
+    """
+    import os
+    import httpx
+    
+    client_id = os.environ.get(GITHUB_OAUTH_CONFIG["client_id_env"], "")
     
     async with httpx.AsyncClient() as client:
         response = await client.post(
@@ -194,13 +214,22 @@ async def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
             headers={"Accept": "application/json"},
             data={
                 "client_id": client_id,
-                "client_secret": client_secret,
-                "code": code,
-                "redirect_uri": GITHUB_OAUTH_CONFIG["redirect_uri"],
+                "device_code": device_code,
+                "grant_type": "urn:ietf:params:oauth:grant-type:device_code",
             },
         )
-        response.raise_for_status()
         return response.json()
+
+
+# Legacy function for backwards compatibility
+def get_oauth_url(state: Optional[str] = None) -> str:
+    """Legacy - use start_device_flow() instead."""
+    raise ValueError("GitHub now uses Device Flow. Use the 'Login with GitHub' button which will show a code to enter at github.com")
+
+
+async def exchange_code_for_tokens(code: str) -> Dict[str, Any]:
+    """Legacy - use poll_for_token() instead."""
+    raise ValueError("GitHub now uses Device Flow - no code exchange needed")
 
 
 # ============================================================================

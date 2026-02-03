@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import './FeedViewer.css';
 
 interface Notification {
@@ -32,6 +32,14 @@ interface PR {
   created_at: string;
 }
 
+interface DeviceFlowState {
+  userCode: string;
+  verificationUri: string;
+  deviceCode: string;
+  expiresAt: number;
+  interval: number;
+}
+
 type ViewMode = 'notifications' | 'issues' | 'prs';
 
 const API_BASE = 'http://localhost:8000';
@@ -44,9 +52,17 @@ export default function GithubViewer() {
   const [issues, setIssues] = useState<Issue[]>([]);
   const [prs, setPRs] = useState<PR[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // Device flow state
+  const [deviceFlow, setDeviceFlow] = useState<DeviceFlowState | null>(null);
+  const [deviceFlowStatus, setDeviceFlowStatus] = useState<string>('');
+  const pollInterval = useRef<number | null>(null);
 
   useEffect(() => {
     checkConnection();
+    return () => {
+      if (pollInterval.current) clearInterval(pollInterval.current);
+    };
   }, []);
 
   useEffect(() => {
@@ -72,8 +88,75 @@ export default function GithubViewer() {
     }
   };
 
+  const startDeviceFlow = async () => {
+    try {
+      setDeviceFlowStatus('Starting...');
+      const res = await fetch(`${API_BASE}/api/feeds/github/device/start`, { method: 'POST' });
+      
+      if (!res.ok) {
+        const error = await res.json();
+        setDeviceFlowStatus(`Error: ${error.detail}`);
+        return;
+      }
+      
+      const data = await res.json();
+      setDeviceFlow({
+        userCode: data.user_code,
+        verificationUri: data.verification_uri,
+        deviceCode: data.device_code,
+        expiresAt: Date.now() + (data.expires_in * 1000),
+        interval: data.interval * 1000,
+      });
+      setDeviceFlowStatus('Enter the code at GitHub');
+      
+      // Start polling
+      pollInterval.current = window.setInterval(() => pollForToken(data.device_code), data.interval * 1000);
+    } catch (err) {
+      setDeviceFlowStatus(`Failed to start: ${err}`);
+    }
+  };
+
+  const pollForToken = async (deviceCode: string) => {
+    try {
+      const res = await fetch(`${API_BASE}/api/feeds/github/device/poll?device_code=${deviceCode}`, { 
+        method: 'POST' 
+      });
+      const data = await res.json();
+      
+      if (data.status === 'success') {
+        // Connected!
+        if (pollInterval.current) clearInterval(pollInterval.current);
+        setDeviceFlow(null);
+        setDeviceFlowStatus('');
+        setConnected(true);
+        checkConnection(); // Refresh to get username
+      } else if (data.status === 'pending') {
+        setDeviceFlowStatus('Waiting for authorization...');
+      } else if (data.status === 'slow_down') {
+        // Slow down polling
+        if (pollInterval.current) {
+          clearInterval(pollInterval.current);
+          pollInterval.current = window.setInterval(() => pollForToken(deviceCode), data.interval * 1000);
+        }
+      } else if (res.status >= 400) {
+        // Error
+        if (pollInterval.current) clearInterval(pollInterval.current);
+        setDeviceFlow(null);
+        setDeviceFlowStatus(data.detail || 'Authorization failed');
+      }
+    } catch (err) {
+      console.error('Poll error:', err);
+    }
+  };
+
+  const cancelDeviceFlow = () => {
+    if (pollInterval.current) clearInterval(pollInterval.current);
+    setDeviceFlow(null);
+    setDeviceFlowStatus('');
+  };
+
   const handleConnect = () => {
-    window.location.href = `${API_BASE}/api/feeds/github/oauth/start`;
+    startDeviceFlow();
   };
 
   const fetchNotifications = async () => {
@@ -159,10 +242,48 @@ export default function GithubViewer() {
     }
   };
 
-  if (loading && !connected) {
+  if (loading && !connected && !deviceFlow) {
     return (
       <div className="feed-viewer github-viewer">
         <div className="viewer-loading">Checking connection...</div>
+      </div>
+    );
+  }
+
+  // Device Flow UI - show code to enter
+  if (deviceFlow) {
+    return (
+      <div className="feed-viewer github-viewer">
+        <div className="connect-prompt device-flow">
+          <div className="connect-icon">🐙</div>
+          <h3>Enter this code at GitHub</h3>
+          
+          <div className="device-code-display">
+            <code className="user-code">{deviceFlow.userCode}</code>
+          </div>
+          
+          <p className="device-flow-instructions">
+            1. Click the button below to open GitHub<br/>
+            2. Enter the code above<br/>
+            3. Click "Authorize"
+          </p>
+          
+          <a 
+            href={deviceFlow.verificationUri} 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="connect-btn github-btn"
+          >
+            <span className="btn-icon">🔗</span>
+            Open GitHub
+          </a>
+          
+          <p className="device-flow-status">{deviceFlowStatus}</p>
+          
+          <button className="cancel-btn" onClick={cancelDeviceFlow}>
+            Cancel
+          </button>
+        </div>
       </div>
     );
   }
@@ -174,9 +295,10 @@ export default function GithubViewer() {
           <div className="connect-icon">🐙</div>
           <h3>Connect GitHub</h3>
           <p>Connect your GitHub account to see notifications, issues, and pull requests.</p>
+          {deviceFlowStatus && <p className="error-message">{deviceFlowStatus}</p>}
           <button className="connect-btn github-btn" onClick={handleConnect}>
             <span className="btn-icon">🐙</span>
-            Connect with GitHub
+            Login with GitHub
           </button>
         </div>
       </div>

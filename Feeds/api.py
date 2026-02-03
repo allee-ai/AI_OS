@@ -277,14 +277,18 @@ async def start_oauth(feed_name: str, provider: Optional[str] = None, redirect_u
         from .sources.email import get_oauth_url
         if not provider:
             provider = "gmail"  # Default provider
-        url = get_oauth_url(provider, state)
-        return {"auth_url": url, "state": state, "provider": provider}
+        try:
+            url = get_oauth_url(provider, state)
+            return {"auth_url": url, "state": state, "provider": provider}
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
     
-    # GitHub
+    # GitHub - uses Device Flow now, redirect to device flow endpoint
     if feed_name == "github":
-        from .sources.github import get_oauth_url
-        url = get_oauth_url(state)
-        return {"auth_url": url, "state": state}
+        raise HTTPException(
+            status_code=400, 
+            detail="GitHub uses Device Flow. Use POST /api/feeds/github/device/start instead"
+        )
     
     # Discord
     if feed_name == "discord":
@@ -292,6 +296,80 @@ async def start_oauth(feed_name: str, provider: Optional[str] = None, redirect_u
         raise HTTPException(status_code=400, detail="Discord uses bot token authentication. Add your bot token in settings.")
     
     raise HTTPException(status_code=400, detail=f"OAuth not supported for {feed_name}")
+
+
+# ============================================================================
+# GitHub Device Flow Endpoints
+# ============================================================================
+
+@router.post("/github/device/start")
+async def github_device_start():
+    """
+    Start GitHub Device Flow login.
+    
+    Returns user_code to display and device_code to poll with.
+    User visits github.com/login/device and enters the code.
+    """
+    from .sources.github import start_device_flow
+    
+    try:
+        result = await start_device_flow()
+        return {
+            "user_code": result["user_code"],
+            "verification_uri": result["verification_uri"],
+            "device_code": result["device_code"],
+            "expires_in": result.get("expires_in", 900),
+            "interval": result.get("interval", 5),
+        }
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to start device flow: {str(e)}")
+
+
+@router.post("/github/device/poll")
+async def github_device_poll(device_code: str):
+    """
+    Poll for GitHub access token.
+    
+    Call this every `interval` seconds until you get a token or error.
+    """
+    from .sources.github import poll_for_token
+    from agent.core.secrets import store_oauth_tokens
+    
+    try:
+        result = await poll_for_token(device_code)
+        
+        # Check for errors
+        if "error" in result:
+            error = result["error"]
+            if error == "authorization_pending":
+                return {"status": "pending", "message": "Waiting for user to authorize..."}
+            elif error == "slow_down":
+                return {"status": "slow_down", "interval": result.get("interval", 10)}
+            elif error == "expired_token":
+                raise HTTPException(status_code=400, detail="Device code expired. Please start over.")
+            elif error == "access_denied":
+                raise HTTPException(status_code=400, detail="User denied access.")
+            else:
+                raise HTTPException(status_code=400, detail=f"OAuth error: {error}")
+        
+        # Success - got access token
+        if "access_token" in result:
+            # Store the token
+            store_oauth_tokens("github", {
+                "access_token": result["access_token"],
+                "token_type": result.get("token_type", "bearer"),
+                "scope": result.get("scope", ""),
+            })
+            return {"status": "success", "message": "GitHub connected!"}
+        
+        return {"status": "unknown", "result": result}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Poll failed: {str(e)}")
 
 
 @router.get("/{feed_name}/oauth/callback")

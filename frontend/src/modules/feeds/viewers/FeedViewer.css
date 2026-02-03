@@ -439,10 +439,63 @@
 
 .connect-btn.github-btn {
   background: #24292e;
+  text-decoration: none;
 }
 
 .connect-btn .btn-icon {
   font-size: 18px;
+}
+
+/* Device Flow */
+.device-flow .device-code-display {
+  background: var(--bg-tertiary);
+  padding: 16px 32px;
+  border-radius: 12px;
+  margin: 16px 0;
+  border: 2px dashed var(--border);
+}
+
+.device-flow .user-code {
+  font-family: 'SF Mono', Menlo, monospace;
+  font-size: 32px;
+  font-weight: bold;
+  color: var(--accent);
+  letter-spacing: 4px;
+}
+
+.device-flow-instructions {
+  font-size: 14px;
+  line-height: 1.8;
+  color: var(--text-secondary);
+  margin-bottom: 20px !important;
+}
+
+.device-flow-status {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 16px !important;
+}
+
+.cancel-btn {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 13px;
+  margin-top: 8px;
+}
+
+.cancel-btn:hover {
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+}
+
+.error-message {
+  color: var(--error, #ef4444);
+  font-size: 13px;
+  margin-bottom: 12px !important;
 }
 
 /* GitHub Viewer */
