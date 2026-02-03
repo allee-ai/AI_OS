@@ -150,9 +150,6 @@ export const FeedsPage = () => {
     ? triggers.filter((t) => t.feed_name === activeSource)
     : [];
 
-  // Get all unique event types across all feeds
-  const allEventTypes = Array.from(new Set(triggers.map((t) => t.event_type)));
-
   const handleToggle = async (name: string) => {
     try {
       await fetch(`${API_BASE}/api/feeds/sources/${name}/toggle`, { method: 'POST' });

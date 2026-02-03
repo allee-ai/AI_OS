@@ -131,12 +131,13 @@ Advise on the theoretical foundations.
 
 ## How to Submit
 
-1. **Fork the repo**
-2. **Create a branch:** `git checkout -b my-feature`
-3. **Make your changes**
-4. **Run tests:** `.venv/bin/python -m pytest tests/ -v`
-5. **Commit with a clear message:** `git commit -m "Add toast notifications for learned facts"`
-6. **Push and open a PR**
+1. **Find an issue** — Labels like `backend`, `frontend`, `docs` indicate the area
+2. **Fork the repo**
+3. **Create a branch:** `git checkout -b my-feature`
+4. **Make your changes**
+5. **Run tests:** `.venv/bin/python -m pytest tests/ -v`
+6. **Commit with a clear message:** `git commit -m "Add toast notifications for learned facts"`
+7. **Push and open a PR to `main`**
 
 Small, focused PRs are easier to review. If you're doing something big, open an issue first to discuss.
 

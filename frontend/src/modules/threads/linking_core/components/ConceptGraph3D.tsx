@@ -242,8 +242,6 @@ function NebulaShell({ nodePositions, nodeConnections }: NebulaShellProps) {
         
         // Place particles in a shell around/beyond the node
         const offsetRadius = 0.3 + Math.random() * 0.8; // Shell offset from node
-        const phi = Math.acos(2 * Math.random() - 1);
-        const theta = Math.random() * Math.PI * 2;
         
         // Direction from center through node, then add offset
         const nodeDir = new THREE.Vector3(nodePos[0], nodePos[1], nodePos[2]).normalize();

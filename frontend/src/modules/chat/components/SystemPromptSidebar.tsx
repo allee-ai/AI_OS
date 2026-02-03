@@ -69,7 +69,7 @@ export const SystemPromptSidebar: React.FC<SystemPromptSidebarProps> = ({
       <div className="sidebar-header">
         <h3>State</h3>
         <div className="header-actions">
-          <button className="refresh-btn" onClick={fetchState} title="Refresh">
+          <button className="refresh-btn" onClick={() => fetchState()} title="Refresh">
             🔄
           </button>
           <button className="toggle-btn" onClick={onToggleCollapse} title="Hide">
