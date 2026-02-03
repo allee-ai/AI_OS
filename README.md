@@ -5,7 +5,7 @@
 > **Active Development** — The core agent capabilities work, the modules are scaffolded and a lot of the work that would really make this great is copy paste coding. adding endpoints for things we already use, integrating calendar, etc. Looking for collaborators at any level, and also we respect ideas from non technical users. Key Point I wont burn out because i love this work but Id love even more to see its growth accelerated by even just a few people.
 
 ![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)
-![License](https://img.shields.io/badge/license-MIT-blue.svg)
+![License](https://img.shields.io/badge/license-AGPL-blue.svg)
 
 ---
 
@@ -48,11 +48,11 @@ LLMs are powerful but unreliable. They hallucinate, forget, lose track of who th
 
 AI OS is an architecture layer that wraps your local LLM and handles what models are bad at:
 
-- **Memory** — Persistent across sessions, organized by relevance ✅
-- **Identity** — Consistent personality stored structurally ✅
-- **Learning** — Extracts facts from conversations ✅ (consolidation WIP)
-- **Control** — LLM handles language; OS handles state ✅
-- **Background Loops** — Memory extraction working, consolidation in progress 🔄
+- **Memory** — Persistent across sessions, organized by relevance 
+- **Identity** — Consistent personality stored structurally 
+- **Learning** — Extracts facts from conversations 
+- **Control** — LLM handles language; OS handles state 
+- **Background Loops** — Predefined COT for specific workflows
 
 **The pain point we solve:** These pieces exist separately — RAG libraries, prompt templates, memory plugins, identity frameworks — but nowhere in one integrated package for local LLMs. AI OS is that package.
 
@@ -86,11 +86,24 @@ You can download AI OS in two ways:
 
 ### Step 2: Run AI OS
 
-Simply double-click `run.command` (on Mac/Linux) or `run.bat` (on Windows) in the downloaded folder. This script handles everything:
+**On Mac/Linux:**
+1. Open Terminal (on Mac: search "Terminal" in Spotlight)
+2. Navigate to the downloaded folder:
+   ```bash
+   cd ~/Downloads/AI_OS
+   ```
+3. Run the start script:
+   ```bash
+   bash scripts/start.sh
+   ```
 
-- 🌀 Installs the LLM runtime (Ollama)
-- 🌀 Starts the OS backend and chat interface
-- 🌀 Opens your browser automatically
+**On Windows:**
+- Double-click `run.bat` in the downloaded folder.
+
+The script handles everything:
+- Installs the LLM runtime (Ollama)
+- Starts the OS backend and chat interface
+- Opens your browser automatically
 
 > **First time?** The first launch downloads the AI model (~4GB). This only happens once.
 
@@ -113,7 +126,7 @@ You: "How's my project going?"
 AI: "TaskMaster? Or, one of your other projects {list}"
 ```
 
-**The LLM didn't remember that. The OS did.** Your facts live in a database, organized by relevance, retrieved when needed. The LLM just turns that context into natural language.
+**The LLM doesnt't remember that. The OS did.** Your facts live in a database, organized by relevance, retrieved when needed. The LLM just turns that context into natural language.
 
 ---
 
@@ -146,7 +159,7 @@ It's prompt engineering, but organized. You define who you (and your agent) are,
 
 ### How much does it cost?
 
-**$0.** Open source, MIT licensed, free forever.
+**$0.** Open source, AGPL licensed, free forever.
 
 ### What computer specs do I need?
 
@@ -206,9 +219,9 @@ The LLM is stateless and dumb. The OS makes it smart.
 ### The Roadmap
 
 See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
-- 🌀 **Now:** Subconscious, memory threads, HEA context levels
-- 🔄 **Next:** Memory consolidation, philosophy constraints
-- 🚀 **Future:** Reflex automation, dream states, multi-model routing, enterprise integration
+- **Now:** Subconscious, memory threads, HEA context levels
+- **Next:** Memory consolidation, philosophy constraints
+- **Future:** Reflex automation, dream states, multi-model routing, enterprise integration
 
 ---
 
@@ -240,6 +253,7 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 ## Get Help
 
 - **GitHub Issues:** [Report bugs or request features](https://github.com/allee-ai/AI_OS/issues)
+
 - **Discussions:** Share how you're using Agent
 
 ---
@@ -259,7 +273,7 @@ AI OS stands on the shoulders of giants. Deep gratitude to the tools, models, an
 | [**Phi**](https://huggingface.co/microsoft/phi-2) (Microsoft) | Small but mighty models | Efficiency research. Phi models prove small can be smart. |
 | [**nomic-embed-text**](https://www.nomic.ai) | Open embedding model | The glue. Powers semantic search and concept similarity scoring. |
 
-### 🧠 Development Partners
+### Development Partners
 
 | | What | How They Helped |
 |---|------|----------------|
@@ -285,7 +299,7 @@ AI OS stands on the shoulders of giants. Deep gratitude to the tools, models, an
 | [**SQLite**](https://sqlite.org) | Embedded database | All state storage — portable, no server |
 | [**uv**](https://github.com/astral-sh/uv) | Fast Python package manager | Dependency management — 10-100x faster than pip |
 
-### 🌐 Community & Research
+###  Community & Research
 
 | | Contribution |
 |---|--------------|
@@ -294,7 +308,7 @@ AI OS stands on the shoulders of giants. Deep gratitude to the tools, models, an
 | [**LangChain**](https://langchain.com) | Patterns for LLM applications (we diverge but learned from) |
 | **Cognitive Science Literature** | Hebbian learning, spread activation, episodic memory research |
 
-### 📜 Theoretical Foundations
+###  Theoretical Foundations
 
 **Nothing here is new.** AI OS applies well-established cognitive science to LLM context management. The bet is that these proven patterns transfer usefully to AI systems — but that's a hypothesis under testing, not a claim.
 
@@ -316,7 +330,7 @@ If we're using your work and didn't credit it properly, or if you want to collab
 
 ## License
 
-MIT — Use it, fork it, build on it. Just don't claim you wrote it from scratch.
+AGPL — Use it, fork it, build on it. Just don't claim you wrote it from scratch.
 
 ---
 
