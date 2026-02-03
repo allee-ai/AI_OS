@@ -2,10 +2,43 @@
 
 **An open-source framework for building personal AI that remembers you. Private. Free. Early.**
 
-> **Active Development** — The core agent capabilities work, the modules are scaffolded and a lot of the work that would really make this great is copy paste coding. adding endpoints for things we already use, integrating calendar, etc. Looking for collaborators at any level, and also we respect ideas from non technical users.
+> **Active Development** — The core agent capabilities work, the modules are scaffolded and a lot of the work that would really make this great is copy paste coding. adding endpoints for things we already use, integrating calendar, etc. Looking for collaborators at any level, and also we respect ideas from non technical users. Key Point I wont burn out because i love this work but Id love even more to see its growth accelerated by even just a few people.
 
 ![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
+
+---
+
+<details>
+<summary><strong>A Quick Human Note</strong> (click to expand)</summary>
+
+I loved building this.
+
+It's been almost obsessive for close to a year. When I started, I knew a lot of math and quite a bit of psychology, and I'd heard the term neuroscience like six times, so obviously I knew it inside and out. I digress. Moving on.
+
+Initially, the project started because everybody LOVED GPT-4o, so I had to check it out, and I LOVED it too. It was a great thought partner. It made stuff up all the time, but it was cool to be able to rapidly iterate over a theory with a partner who always told me I was the queen of everything. No ego boost needed because I'm awesome.
+
+I wanted to get ChatGPT and Siri to be best buds and work together. So I'd tell ChatGPT to be Siri and do Siri things, and it would. Solved AGI right then and there. Just kidding.
+
+It would pretend to do things, and I would want to throw my phone out the window, because parsing an LLM output is like trying to understand someone else's toddler. You can do it… eventually. Mostly you just nod and smile and say, "Okay dear, let's try again." No fluffing.
+
+So I started trying to give GPT-3.5 function calling abilities. I set up a Pythonista endpoint and used CLI and the Openai key to talk to 3.5, and I just always said execution is called by saying "execute:function_name".
+
+Mind you, this is a side project I'm doing on my phone in the bathroom at work, so it was slow going. But eventually I got it to mostly work. Then the API broke. I gave up.
+
+And this is what's left.
+
+An entire operating system for LLMs that just takes ALLLL the things we EXPECT them to do and makes them do that. But all of it is visible. Complicated terms like forward pass are not present, but you can look at subconscious in the repo and see that it's a scientifically accurate description of the programs module, and also it's a CoT dashboard where you can save things you've already done.
+
+Form is a tool builder. Log keeps track of stuff. Identity and philosophy are just editable profiles. But the deeper research architecture fascinates me.
+
+I built this because I desperately want it, and I desperately want everyone to have it, because I think if AI made people better, it wouldn't take their jobs. Simple concept. Massive implications.
+
+If you read this, I appreciate it. Please enjoy whatever it is you do with my bathroom project :)
+
+— Allee
+
+</details>
 
 ---
 
