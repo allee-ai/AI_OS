@@ -15,24 +15,24 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 **What AI OS provides:** One system with all the cognitive architecture pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
 
-**The hypothesis we're testing:** Structure helps scale. A smaller model with well-organized context *might* match a larger model with flat context for certain tasks (identity coherence, fact recall, personality stability). This isn't proven — it's the bet we're exploring.
+**The methodology:** Retrieval-augmented prompting. Clear, structured context produces better model outputs — this is established prompt engineering. AI OS makes that structure *visible and controllable*: you see what context is being retrieved, how it's organized, and why. A smaller model with well-curated context outperforms a larger model with flat context for identity coherence, fact recall, and personality stability.
 
 ### Current State
 
 | Layer | Status | What's Working |
 |-------|--------|----------------|
-| **Core** | 🌀 | Threads, HEA, SQLite backend, stateless agent |
-| **UI** | 🌀 | React app, chat, thread visualization |
-| **Integrations** | 🔄 | Feeds system built, needs OAuth + polling daemon |
-| **Advanced** | 🔮 | Philosophy thread exists. Reflex has API/schema. Visual builder planned. |
+| **Core** | [WIP] | Threads, HEA, SQLite backend, stateless agent |
+| **UI** | [WIP] | React app, chat, thread visualization |
+| **Integrations** | [~] | Feeds system built, needs OAuth + polling daemon |
+| **Advanced** | [--] | Philosophy thread exists. Reflex has API/schema. Visual builder planned. |
 
 ### Future: The Ecosystem
 
-**Thread Marketplace** — Community-built cognitive modules:
-- Emotion regulation thread
-- Calendar awareness thread  
-- Code context thread
-- Domain-specific threads (medical, legal, creative)
+**Plugin Marketplace** — A modular ecosystem for extending AI OS:
+- Predefined personalities (e.g., assistant, tutor, coach)
+- Predefined knowledgebases (e.g., medical, legal, creative)
+- Calendar as a feed
+- Domain-specific plugins for specialized tasks
 
 **Enterprise Edition:**
 - Multi-user with role-based access
@@ -48,12 +48,12 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| **1. Memory** | Facts get promoted based on importance | 🌀 90% |
-| **2. Philosophy** | Moral compass, value-guided behavior | 🔮 Planned |
-| **3. Reflex** | Visual automation, 10x pattern learning | 🔮 Planned |
-| **4. Dream** | Personality through synthetic experience | 🔮 Planned |
-| **5. Multi-Model** | Right model for right task | 🔮 Planned |
-| **6. Beyond Chat** | Background presence via Feeds | 🌀 Foundation done |
+| **1. Memory** | Facts get promoted based on importance | 90% |
+| **2. Philosophy** | Moral compass, value-guided behavior | Planned |
+| **3. Reflex** | Visual automation, 10x pattern learning | Planned |
+| **4. Dream** | Personality through synthetic experience | Planned |
+| **5. Multi-Model** | Right model for right task | Planned |
+| **6. Beyond Chat** | Background presence via Feeds | Foundation done |
 
 ---
 
@@ -79,8 +79,8 @@ Each module below is self-contained. Pick one, own it, ship it.
 _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 
 ### Ready for contributors
-- [ ] **Family/contacts UI** — Add/edit family members from dashboard
-- [ ] **Trust level indicators** — Visual badges for trust levels in UI
+- [x] **Family/contacts UI** — Add/edit contacts by type with details
+- [x] **Trust level indicators** — Visual badges for trust levels in UI
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
 - [ ] **Import from contacts** — Pull from phone/Google contacts
@@ -414,7 +414,7 @@ _Source: [agent/services/README.md](agent/services/README.md)_
   - Claude and GPT can both provide input via API
   - Each model has a "voice" in Discussions
   - Creates collaborative AI development loop
-  - OpenAI and Anthropic models discussing architecture = 🔥
+  - OpenAI and Anthropic models discussing architecture — that's the good stuff
 
 ### Contributor Experience
 - [ ] **Auto-assign issues** — Match issues to contributor skills

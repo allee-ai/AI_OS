@@ -2,7 +2,7 @@
 
 **An open-source framework for building personal AI that remembers you. Private. Free. Early.**
 
-> 🚧 **Active Development** — Core works, edges are rough. Help us build the standard.
+> **Active Development** — The core agent capabilities work, the modules are scaffolded and a lot of the work that would really make this great is copy paste coding. adding endpoints for things we already use, integrating calendar, etc. Looking for collaborators at any level, and also we respect ideas from non technical users.
 
 ![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
