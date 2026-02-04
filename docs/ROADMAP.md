@@ -361,6 +361,24 @@ _Source: [agent/services/README.md](agent/services/README.md)_
 - [ ] Add response time metrics
 - [ ] Show context token count in UI
 <!-- /INCLUDE:services:ROADMAP -->
+
+---
+
+### Core
+
+<!-- INCLUDE:core:ROADMAP -->
+_Source: [agent/core/README.md](agent/core/README.md)_
+
+### Ready for contributors
+- [ ] **Config validation** — Validate required settings on startup
+- [ ] **Multi-environment support** — Dev/staging/prod config profiles
+- [ ] **Secret rotation** — Automatic key rotation for long-running instances
+
+### Starter tasks
+- [ ] Add config documentation generator
+- [ ] Add secret audit logging
+<!-- /INCLUDE:core:ROADMAP -->
+
 ---
 
 ## Program-Wide Features
