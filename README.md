@@ -1,4 +1,4 @@
-# AI OS — A Cognitive Architecture for Local LLMs
+# AI OS — A Local OS Extension for LLMs
 
 **An open-source framework for building personal AI that remembers you. Private. Free. Early.**
 
@@ -232,7 +232,7 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 **Looking for:**
 - **Python devs** — async, SQLite, state management
 - **React devs** — dashboard UI, visualizations
-- **AI researchers** — cognitive architecture, memory systems
+- **AI researchers** — memory systems, context management
 - **Anyone frustrated with raw LLMs** — use it, break it, tell me what's missing
 
 **Interested?** Open an issue, start a discussion, or just start using it.

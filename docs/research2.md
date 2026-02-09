@@ -1,14 +1,14 @@
-# Cognitive Architecture for Autonomous Systems: Layer-Aligned State Injection in Small Language Models
+# Local OS Extension for Autonomous Systems: Layer-Aligned State Injection in Small Language Models
 
 ## Abstract
 
-We present a cognitive architecture that enables autonomous operation of small language models (1-2B parameters) by externalizing context reconstruction into structured state threads. We hypothesize that transformer layers perform hierarchical computation—entity binding (layers 2-6), relational positioning (6-10), causal reasoning (8-12), and logical inference (12+)—and that pre-structured state can bypass early-layer computation, effectively donating those layers to reasoning capacity. Our architecture implements six specialized threads (Identity, Log, Form, Philosophy, Reflex, Linking Core) that map to specific layer ranges and cognitive functions. We propose that programmatically-generated state blocks, being statistically perfect (zero token variance), enable earlier concept anchoring than natural language system prompts. This separation of contextual/structural self-awareness from the reasoning model enables a 1.2B parameter "executive" to achieve autonomous operation—including self-monitoring, learning-rate adjustment, and goal-directed behavior—by offloading context reconstruction to the architecture. We outline 12 empirically testable predictions using sparse autoencoders, activation probing, and ablation studies, all executable on consumer hardware (Apple M4). If validated, this framework suggests that AGI-adjacent capabilities (continuous learning, bounded self-modification, operational self-awareness) emerge not from scale but from proper cognitive scaffolding.
+We present a local OS extension that enables autonomous operation of small language models (1-2B parameters) by externalizing context reconstruction into structured state threads. We hypothesize that transformer layers perform hierarchical computation—entity binding (layers 2-6), relational positioning (6-10), causal reasoning (8-12), and logical inference (12+)—and that pre-structured state can bypass early-layer computation, effectively donating those layers to reasoning capacity. Our architecture implements six specialized threads (Identity, Log, Form, Philosophy, Reflex, Linking Core) that map to specific layer ranges and cognitive functions. We propose that programmatically-generated state blocks, being statistically perfect (zero token variance), enable earlier concept anchoring than natural language system prompts. This separation of contextual/structural self-awareness from the reasoning model enables a 1.2B parameter "executive" to achieve autonomous operation—including self-monitoring, learning-rate adjustment, and goal-directed behavior—by offloading context reconstruction to the architecture. We outline 12 empirically testable predictions using sparse autoencoders, activation probing, and ablation studies, all executable on consumer hardware (Apple M4). If validated, this framework suggests that AGI-adjacent capabilities (continuous learning, bounded self-modification, operational self-awareness) emerge not from scale but from proper cognitive scaffolding.
 
 ---
 
 ## 1. Introduction
 
-Current approaches to capable AI systems rely on scaling: more parameters enable emergent capabilities including apparent self-awareness and reasoning. However, large models spend significant computational capacity reconstructing context that could be provided structurally. We propose an alternative: a small model serving as "executive function" within a cognitive architecture that handles specialized computation externally.
+Current approaches to capable AI systems rely on scaling: more parameters enable emergent capabilities including apparent self-awareness and reasoning. However, large models spend significant computational capacity reconstructing context that could be provided structurally. We propose an alternative: a small model serving as "executive function" within a local OS extension that handles specialized computation externally.
 
 ### 1.1 The Layer Hypothesis
 
@@ -174,7 +174,7 @@ Our contribution: unifying these insights into a testable theory of layer-aligne
 
 ## 7. Conclusion
 
-We propose that small language models can achieve autonomous, self-aware operation when embedded in a cognitive architecture that externalizes context reconstruction. By mapping specialized threads to transformer layer ranges, we transform the model from "system that responds" to "executive function within a cognitive system." 
+We propose that small language models can achieve autonomous, self-aware operation when embedded in a local OS extension that externalizes context reconstruction. By mapping specialized threads to transformer layer ranges, we transform the model from "system that responds" to "executive function within a cognitive system." 
 
 The theoretical framework makes specific, testable predictions about layer activation, feature sparsity, and attention patterns. If validated, this suggests that AGI-adjacent capabilities emerge not from parameter count but from proper cognitive scaffolding—and that such systems can run on consumer hardware.
 

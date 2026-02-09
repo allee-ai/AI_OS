@@ -13,7 +13,7 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 **The problem:** If you want memory, identity, context management, and background processing for a local LLM, you're currently stitching together 5+ libraries and writing glue code. There's no integrated package.
 
-**What AI OS provides:** One system with all the cognitive architecture pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
+**What AI OS provides:** One system with all the OS extension pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
 
 **The methodology:** Retrieval-augmented prompting. Clear, structured context produces better model outputs — this is established prompt engineering. AI OS makes that structure *visible and controllable*: you see what context is being retrieved, how it's organized, and why. A smaller model with well-curated context outperforms a larger model with flat context for identity coherence, fact recall, and personality stability.
 
@@ -443,13 +443,13 @@ _Source: [agent/core/README.md](agent/core/README.md)_
 
 ## AI-Native Development Loop
 
-> _The innovation moat: an open platform where humans AND AI models collaborate on cognitive architecture._
+> _The innovation moat: an open platform where humans AND AI models collaborate on local LLM tooling._
 
 ### The Insight
 
 **Why put your AI architecture idea anywhere else?**
 
-AI OS becomes the default destination for cognitive architecture innovation because:
+AI OS becomes the default destination for local LLM tooling innovation because:
 1. **Your ideas get seen** — By contributors, researchers, AND the AI models themselves
 2. **Models have skin in the game** — Claude, GPT, Gemini all participate in Discussions
 3. **Ideas become code faster** — Roadmap → Issues → PRs is automated
@@ -491,7 +491,7 @@ AI OS becomes the default destination for cognitive architecture innovation beca
 
 ### Implementation
 
-- [ ] **Idea Discussions board** — Structured template for cognitive architecture proposals
+- [ ] **Idea Discussions board** — Structured template for feature proposals
 - [ ] **Model voices** — Scheduled API calls to Claude/GPT to comment on new Discussions
 - [ ] **Idea-to-Issue pipeline** — Approved ideas auto-create GitHub Issues with full context
 - [ ] **Roadmap sync** — Issues auto-populate module roadmaps

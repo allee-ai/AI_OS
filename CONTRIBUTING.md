@@ -102,7 +102,7 @@ Improve the chat interface and visualization tools.
 ---
 
 ### 🧠 AI / Research Engineers
-Work on model integration and cognitive architecture.
+Work on model integration and OS architecture.
 
 **What you'll do:**
 - Experiment with different local models

@@ -942,7 +942,7 @@ We cannot build "Liveness" on top of `pass`.
 
 ### The Core Insight
 
-**Structure beats scale.** A 7B model with proper cognitive architecture outperforms a 100B model with flat context.
+**Structure beats scale.** A 7B model with proper context management outperforms a 100B model with flat context.
 
 The LLM is the voice. The OS is the brain.
 
@@ -1159,7 +1159,7 @@ ANYONE → Idea (Discussion) → AI Models Weigh In → Structured Issue →
 
 ### The Moat
 
-Once Claude and GPT are actively commenting on Discussions, debating architecture, suggesting improvements — why would anyone serious about cognitive architecture put their ideas anywhere else?
+Once Claude and GPT are actively commenting on Discussions, debating architecture, suggesting improvements — why would anyone serious about local LLM tooling put their ideas anywhere else?
 
 **First-mover advantage in AI-assisted open source.**
 
@@ -1168,7 +1168,7 @@ Once Claude and GPT are actively commenting on Discussions, debating architectur
 ## 📋 Updated Priority Queue (Jan 31, 2026)
 
 **Tier 1: Community Infrastructure (The Moat)**
-1. GitHub Discussions template for cognitive architecture ideas
+1. GitHub Discussions template for feature ideas
 2. API hooks for model voices (Claude/GPT comment on Discussions)
 3. Idea-to-Issue pipeline (approved ideas → auto-create Issues)
 4. Attribution tracking through implementation

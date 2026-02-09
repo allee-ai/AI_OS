@@ -285,7 +285,7 @@ class SubconsciousCore:
                 except Exception:
                     pass
             
-            lines.append("## My Cognitive Architecture")
+            lines.append("## My Internal Structure")
             lines.append("")
             lines.append(f"I am {agent_name}. This is my internal structure:")
             lines.append("")

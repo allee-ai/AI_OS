@@ -1,4 +1,4 @@
-# Structure Beats Scale: A Cognitive Architecture for Persistent AI Identity
+# Structure Beats Scale: A Local OS Extension for Persistent AI Identity
 
 **Allee**  
 *Independent Researcher*  
@@ -12,7 +12,7 @@ The current trajectory of AI research favors scale over nuance, chasing General 
 
 We argue that the critical deficits of current AI are not computational but structural and societal. Centralized models strip users of privacy, ownership, and continuity. To reverse this, we introduce an operating system that provides persistent state and local control, grounding the model in a user-centric reality. While our architecture utilizes **Hierarchical Experiential Attention (HEA)** and parallels cognitive science, these theories serve purely as engineering constraints to ensure stability rather than attempts to replicate biological consciousness. By treating identity not as a metaphysical property but as a set of prompt-engineered behaviors made queryable and permanent, we transform the LLM from a transient chatbot into a personal, owned extension of the user.
 
-**Keywords:** cognitive architecture, identity persistence, hierarchical attention, personal AI, state management, behavioral stability, global workspace theory, cognitive threading
+**Keywords:** local OS extension, identity persistence, hierarchical attention, personal AI, state management, behavioral stability, global workspace theory, cognitive threading
 
 ---
 
@@ -327,7 +327,7 @@ To evaluate "does structure beat scale?", we define comparison tiers:
 
 ## 7. Conclusion
 
-We have presented Hierarchical Experiential Attention (HEA), a cognitive architecture that provides LLMs with persistent identity through structured external state. The key contributions:
+We have presented Hierarchical Experiential Attention (HEA), a local OS extension that provides LLMs with persistent identity through structured external state. The key contributions:
 
 1. **Identity as systems property:** Structure beats scale for identity persistence
 2. **Supplied reality:** STATE defines existence, not instructions about self
