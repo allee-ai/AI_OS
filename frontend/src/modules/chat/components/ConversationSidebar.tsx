@@ -35,14 +35,15 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editName, setEditName] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  const loadConversations = useCallback(async () => {
+  const loadConversations = useCallback(async (search?: string) => {
     try {
-      const data = await apiService.getConversations();
+      const data = await apiService.getConversations(50, search);
       setConversations(data);
       
       // Also load archived conversations
-      const archived = await apiService.getArchivedConversations();
+      const archived = await apiService.getArchivedConversations(50, search);
       setArchivedConversations(archived);
     } catch (error) {
       console.error('Failed to load conversations:', error);
@@ -52,11 +53,13 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   }, []);
 
   useEffect(() => {
-    loadConversations();
-    // Refresh every 10 seconds to pick up auto-naming
-    const interval = setInterval(loadConversations, 10000);
-    return () => clearInterval(interval);
-  }, [loadConversations]);
+    loadConversations(searchQuery);
+    // Refresh every 10 seconds to pick up auto-naming (only if not searching)
+    if (!searchQuery) {
+      const interval = setInterval(() => loadConversations(), 10000);
+      return () => clearInterval(interval);
+    }
+  }, [loadConversations, searchQuery]);
 
   const handleDelete = async (e: React.MouseEvent, sessionId: string) => {
     e.stopPropagation();
@@ -169,18 +172,48 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
             </svg>
             Import
           </button>
-          <button className="settings-button" onClick={() => alert('Settings coming soon!')} title="Chat settings">
+          <button 
+            className="settings-button" 
+            onClick={() => {
+              apiService.exportAllConversations(false).catch(err => 
+                console.error('Failed to export:', err)
+              );
+            }} 
+            title="Export all conversations"
+          >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none">
-              <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2"/>
-              <path d="M12 1V3M12 21V23M4.22 4.22L5.64 5.64M18.36 18.36L19.78 19.78M1 12H3M21 12H23M4.22 19.78L5.64 18.36M18.36 5.64L19.78 4.22" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M17 10L12 15L7 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+              <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
             </svg>
-            Settings
+            Export All
           </button>
         </div>
         {onToggleCollapse && (
           <button className="collapse-toggle" onClick={onToggleCollapse} title="Collapse sidebar">
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none">
               <path d="M15 18L9 12L15 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+          </button>
+        )}
+      </div>
+
+      <div className="search-box">
+        <input
+          type="text"
+          className="search-input"
+          placeholder="Search conversations..."
+          value={searchQuery}
+          onChange={(e) => setSearchQuery(e.target.value)}
+        />
+        {searchQuery && (
+          <button 
+            className="clear-search" 
+            onClick={() => setSearchQuery('')}
+            title="Clear search"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+              <path d="M18 6L6 18M6 6L18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
             </svg>
           </button>
         )}
@@ -225,6 +258,22 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
                         </span>
                       </div>
                       <div className="conversation-actions">
+                        <button 
+                          className="action-btn" 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            apiService.exportConversation(conversation.session_id).catch(err => 
+                              console.error('Failed to export:', err)
+                            );
+                          }}
+                          title="Export conversation"
+                        >
+                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                            <path d="M21 15V19C21 19.5304 20.7893 20.0391 20.4142 20.4142C20.0391 20.7893 19.5304 21 19 21H5C4.46957 21 3.96086 20.7893 3.58579 20.4142C3.21071 20.0391 3 19.5304 3 19V15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M17 10L12 15L7 10" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                            <path d="M12 15V3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          </svg>
+                        </button>
                         <button 
                           className="action-btn" 
                           onClick={(e) => startEditing(e, conversation)}
