@@ -218,8 +218,12 @@ class APIService {
   }
 
   // Conversations API methods
-  async getConversations(limit: number = 50): Promise<any[]> {
-    const response = await fetch(`${this.baseUrl}/api/conversations?limit=${limit}&archived=false`);
+  async getConversations(limit: number = 50, search?: string): Promise<any[]> {
+    let url = `${this.baseUrl}/api/conversations?limit=${limit}&archived=false`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -228,8 +232,12 @@ class APIService {
     return response.json();
   }
 
-  async getArchivedConversations(limit: number = 50): Promise<any[]> {
-    const response = await fetch(`${this.baseUrl}/api/conversations?limit=${limit}&archived=true`);
+  async getArchivedConversations(limit: number = 50, search?: string): Promise<any[]> {
+    let url = `${this.baseUrl}/api/conversations?limit=${limit}&archived=true`;
+    if (search) {
+      url += `&search=${encodeURIComponent(search)}`;
+    }
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -302,6 +310,42 @@ class APIService {
     }
 
     return response.json();
+  }
+
+  async exportConversation(sessionId: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/${sessionId}/export`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `conversation_${sessionId}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
+  }
+
+  async exportAllConversations(archived: boolean = false): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/export/all?archived=${archived}`);
+    
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `ai_os_conversations_${archived ? 'archived' : 'active'}.json`;
+    document.body.appendChild(a);
+    a.click();
+    window.URL.revokeObjectURL(url);
+    document.body.removeChild(a);
   }
 }
 

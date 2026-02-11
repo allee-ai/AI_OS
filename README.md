@@ -173,8 +173,10 @@ It's prompt engineering, but organized. You define who you (and your agent) are,
 
 **Yes!** You can switch chat models instantly.
 
-*   **Chat Models:** Use the model selector in the chat interface to switch between models or click **"Add Model"** to download new ones (like Llama 3, Phi-3, Mistral). The AI OS architecture works with any model you choose for conversation. 
+*   **Chat Models:** Use the model selector in the chat interface to switch between models or click **"Add Model"** to download new ones (like Llama 3, Phi-3, Mistral). The AI OS architecture works with any model you choose for conversation.
+*   **Search Conversations:** Use the search box in the conversation sidebar to find specific discussions by keywords. Perfect for recovering lost project conversations!
 *   **Import History:** Click **Import**, choose your export type, and port your conversations from other models directly into AI OS.
+*   **Export Backups:** Export individual conversations or all your conversations at once to protect against data loss.
 
 > **Pro Tip for Developers:** You can override the system architecture models by editing the `.env` file if you want to experiment with different backends for specific modules.
 
@@ -246,6 +248,7 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 | [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
 | [**Architecture**](docs/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, state) |
 | [**Research Paper**](docs/RESEARCH_PAPER.md) | The theory behind the design |
+| [**Conversation Search Guide**](docs/CONVERSATION_SEARCH_GUIDE.md) | Find and recover lost conversations |
 | [**Contributing**](CONTRIBUTING.md) | How to help build it |
 
 ---

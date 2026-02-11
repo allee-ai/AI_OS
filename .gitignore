@@ -58,7 +58,11 @@ pids/
 *.db
 *.sqlite
 *.sqlite3
+*.db-shm
+*.db-wal
+*.db-journal
 data/db/*.db
+data/db/*.db-*
 
 # But allow demo database (ships pre-populated)
 !data/db/state_demo.db

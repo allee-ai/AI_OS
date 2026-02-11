@@ -343,6 +343,106 @@ def delete_conversation(session_id: str) -> bool:
     return deleted
 
 
+def search_conversations(
+    query: str,
+    limit: int = 50,
+    archived: bool = False
+) -> List[Dict[str, Any]]:
+    """
+    Search conversations by keywords in name, messages, or summary.
+    
+    Args:
+        query: Search keywords
+        limit: Max conversations to return
+        archived: Filter by archived status
+        
+    Returns:
+        List of matching conversations with highlights
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        
+        # Search in conversation names and summaries
+        search_pattern = f"%{query}%"
+        
+        # First, get conversations where name or summary matches
+        cur.execute("""
+            SELECT DISTINCT c.session_id, c.name, c.started, c.last_updated, 
+                   c.archived, c.weight, c.turn_count, c.summary
+            FROM convos c
+            LEFT JOIN convo_turns t ON t.convo_id = c.id
+            WHERE c.archived = ? 
+            AND (
+                c.name LIKE ? COLLATE NOCASE
+                OR c.summary LIKE ? COLLATE NOCASE
+                OR t.user_message LIKE ? COLLATE NOCASE
+                OR t.assistant_message LIKE ? COLLATE NOCASE
+            )
+            ORDER BY c.last_updated DESC
+            LIMIT ?
+        """, (archived, search_pattern, search_pattern, search_pattern, search_pattern, limit))
+        
+        conversations = []
+        for row in cur.fetchall():
+            session_id = row[0]
+            
+            # Get a preview showing the search match
+            cur.execute("""
+                SELECT user_message, assistant_message
+                FROM convo_turns 
+                WHERE convo_id = (SELECT id FROM convos WHERE session_id = ?)
+                AND (user_message LIKE ? COLLATE NOCASE OR assistant_message LIKE ? COLLATE NOCASE)
+                ORDER BY turn_index
+                LIMIT 1
+            """, (session_id, search_pattern, search_pattern))
+            
+            match_row = cur.fetchone()
+            if match_row:
+                # Get context around the match
+                if match_row[0] and query.lower() in match_row[0].lower():
+                    preview = match_row[0][:200]
+                elif match_row[1] and query.lower() in match_row[1].lower():
+                    preview = match_row[1][:200]
+                else:
+                    preview = match_row[0][:200] if match_row[0] else match_row[1][:200]
+            else:
+                # Fallback to first message
+                cur.execute("""
+                    SELECT user_message FROM convo_turns 
+                    WHERE convo_id = (SELECT id FROM convos WHERE session_id = ?)
+                    ORDER BY turn_index LIMIT 1
+                """, (session_id,))
+                preview_row = cur.fetchone()
+                preview = preview_row[0][:200] if preview_row and preview_row[0] else ""
+            
+            if preview and len(preview) > 200:
+                preview = preview[:197] + "..."
+            
+            # Get last assistant message
+            cur.execute("""
+                SELECT assistant_message FROM convo_turns 
+                WHERE convo_id = (SELECT id FROM convos WHERE session_id = ?)
+                ORDER BY turn_index DESC LIMIT 1
+            """, (session_id,))
+            last_row = cur.fetchone()
+            last_message = last_row[0][:100] if last_row and last_row[0] else None
+            
+            conversations.append({
+                "session_id": session_id,
+                "name": row[1] or _generate_fallback_name(session_id),
+                "started": row[2],
+                "last_updated": row[3],
+                "archived": bool(row[4]),
+                "weight": row[5],
+                "turn_count": row[6],
+                "preview": preview,
+                "last_message": last_message,
+                "summary": row[7],
+            })
+    
+    return conversations
+
+
 def update_conversation_weight(session_id: str, weight: float) -> bool:
     """Update a conversation's weight. Returns True if found and updated."""
     with closing(get_connection()) as conn:

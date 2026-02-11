@@ -46,6 +46,7 @@ from .schema import (
     add_turn,
     get_conversation,
     list_conversations as db_list_conversations,
+    search_conversations as db_search_conversations,
     rename_conversation as db_rename_conversation,
     archive_conversation as db_archive_conversation,
     delete_conversation as db_delete_conversation,
@@ -320,9 +321,12 @@ async def auto_name_conversation(session_id: str):
 
 
 @convos_router.get("", response_model=List[ConversationSummary])
-async def list_conversations_endpoint(limit: int = 50, archived: bool = False):
-    """List all saved conversations, newest first."""
-    conversations = db_list_conversations(limit=limit, archived=archived)
+async def list_conversations_endpoint(limit: int = 50, archived: bool = False, search: Optional[str] = None):
+    """List all saved conversations, newest first. Optionally filter by search query."""
+    if search:
+        conversations = db_search_conversations(query=search, limit=limit, archived=archived)
+    else:
+        conversations = db_list_conversations(limit=limit, archived=archived)
     
     return [
         ConversationSummary(
@@ -409,6 +413,75 @@ async def create_new_conversation():
     session_id = f"react_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     save_conversation(session_id=session_id)
     return {"session_id": session_id}
+
+
+@convos_router.get("/{session_id}/export")
+async def export_conversation(session_id: str):
+    """Export a single conversation as JSON."""
+    from fastapi.responses import JSONResponse
+    
+    convo = get_conversation(session_id)
+    
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    # Format for export
+    export_data = {
+        "version": "1.0",
+        "platform": "AI_OS",
+        "exported_at": datetime.now().isoformat(),
+        "conversation": {
+            "session_id": convo["session_id"],
+            "name": convo["name"],
+            "started": convo["started"],
+            "turns": convo["turns"],
+            "turn_count": len(convo["turns"]),
+            "state_snapshot": convo.get("state_snapshot")
+        }
+    }
+    
+    return JSONResponse(
+        content=export_data,
+        headers={
+            "Content-Disposition": f"attachment; filename=conversation_{session_id}.json"
+        }
+    )
+
+
+@convos_router.get("/export/all")
+async def export_all_conversations(archived: bool = False):
+    """Export all conversations as a single JSON file."""
+    from fastapi.responses import JSONResponse
+    
+    conversations = db_list_conversations(limit=1000, archived=archived)
+    
+    export_data = {
+        "version": "1.0",
+        "platform": "AI_OS",
+        "exported_at": datetime.now().isoformat(),
+        "conversations": []
+    }
+    
+    for conv_summary in conversations:
+        convo = get_conversation(conv_summary["session_id"])
+        if convo:
+            export_data["conversations"].append({
+                "session_id": convo["session_id"],
+                "name": convo["name"],
+                "started": convo["started"],
+                "turns": convo["turns"],
+                "turn_count": len(convo["turns"]),
+                "state_snapshot": convo.get("state_snapshot")
+            })
+    
+    filename = f"ai_os_conversations_{'archived' if archived else 'active'}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
+    
+    return JSONResponse(
+        content=export_data,
+        headers={
+            "Content-Disposition": f"attachment; filename={filename}"
+        }
+    )
 
 
 # =============================================================================
