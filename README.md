@@ -147,6 +147,56 @@ It's prompt engineering, but organized. You define who you (and your agent) are,
 
 ---
 
+## Running with Docker
+
+For containerized deployment or if you prefer not to install dependencies locally:
+
+### Quick Start
+
+```bash
+# Clone the repo
+git clone https://github.com/allee-ai/AI_OS.git
+cd AI_OS
+
+# Run with Docker Compose
+docker compose up
+```
+
+Open `http://localhost:8000` in your browser.
+
+### Build and Run Manually
+
+```bash
+# Build the image
+docker build -t ai-os .
+
+# Run the container
+docker run -p 8000:8000 \
+  -v aios-data:/app/data/db \
+  -e OLLAMA_HOST=http://host.docker.internal:11434 \
+  ai-os
+```
+
+### Connecting to Ollama
+
+The Docker container needs to reach Ollama running on your host machine:
+
+- **macOS/Windows**: Use `OLLAMA_HOST=http://host.docker.internal:11434` (default in docker-compose.yml)
+- **Linux**: Use `OLLAMA_HOST=http://172.17.0.1:11434` or run with `--network=host`
+
+### Persistent Data
+
+Data is stored in Docker volumes:
+- `aios-data` — Database (conversations, memories, profiles)
+- `aios-logs` — Server logs
+
+To backup your data:
+```bash
+docker run --rm -v aios-data:/data -v $(pwd):/backup alpine tar cvf /backup/aios-backup.tar /data
+```
+
+---
+
 ## Frequently Asked Questions
 
 ### Is my data really private?

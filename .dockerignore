@@ -1,0 +1,80 @@
+# Docker ignore file
+# ==================
+# Keep the Docker image lean
+
+# Git
+.git
+.gitignore
+
+# Dependencies (will be installed fresh)
+node_modules
+.venv
+venv
+__pycache__
+*.pyc
+*.pyo
+
+# Build artifacts
+dist
+build
+*.egg-info
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Environment files (secrets - use docker env vars instead)
+.env
+.env.local
+.env.*.local
+
+# Testing
+.pytest_cache
+coverage
+.nyc_output
+
+# Logs (will be generated fresh)
+*.log
+logs/
+
+# Database files (will be mounted as volume)
+data/db/*.db
+!data/db/state_demo.db
+
+# Temporary
+tmp
+temp
+*.tmp
+
+# Archives and old docs
+_archive
+docs/_archive
+
+# Development scripts
+*.dmg
+*.icns
+*.app
+
+# Eval transcripts
+eval/transcripts/*.json
+eval/transcripts/*.md
+
+# Local config
+scripts/connect_vm_*.sh
+scripts/install-vm.sh
+
+# Frontend source (we only need the built dist)
+# Note: We need source for build stage, so don't ignore
+# frontend/node_modules handled above
+
+# Documentation that's not needed at runtime
+*.md
+!README.md
+LICENSE
+CONTRIBUTING.md

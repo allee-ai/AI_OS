@@ -2,7 +2,15 @@
 
 **February 2026**
 
-This document compares AI_OS to popular LLM frameworks. The goal isn't to claim superiority—each tool has its strengths. AI_OS borrows heavily from existing work and makes specific tradeoffs for a particular use case: **persistent local autonomy within constraits**.
+This document compares AI_OS to popular LLM frameworks. The goal isn't to claim superiority—each tool has its strengths. AI_OS borrows heavily from existing work and makes specific tradeoffs.
+
+**What AI_OS offers:**
+
+- **Zero config** — Clone, install, run. No accounts, no API keys, no infra setup.
+- **Everything visible** — Memory, context assembly, scoring — all UI panels you can inspect and edit.
+- **Local-first** — Runs on your machine. Nothing leaves your device.
+
+That's the pitch. The rest of this document explains how we compare to frameworks that do more.
 
 ---
 
@@ -268,19 +276,15 @@ AI_OS: "One agent that knows me across all my conversations"
 
 ## What AI_OS Actually Contributes
 
-We don't claim to invent much. Our contribution is combining existing ideas with one architectural constraint:
+We don't claim to invent much. Our contribution is combining existing ideas with these defaults:
 
-**The model cannot modify its own perception.**
+1. **Zero config** — No accounts, no API keys, no cloud setup
+2. **Everything visible** — Threads are UI panels, not hidden state
+3. **Everything editable** — Facts, profiles, context — all rows you can modify
+4. **Local-first** — SQLite, Ollama, your machine
+5. **Read-only perception** — Model can't modify what it sees
 
-This leads to:
-
-1. **Thread separation** — Different cognitive functions in different storage
-2. **Read-only context** — Model generates responses but can't edit state
-3. **L1/L2/L3 hierarchy** — Token-efficient fact representation
-4. **Spread activation** — Borrowed from cognitive science for relevance scoring
-5. **Local-first** — Everything on your machine
-
-These aren't revolutionary. They're engineering choices for a specific use case: persistent local autonomy.
+These aren't revolutionary. They're engineering choices for people who want to see inside.
 
 ---
 
@@ -301,16 +305,16 @@ These aren't revolutionary. They're engineering choices for a specific use case:
 
 AI_OS isn't better than these frameworks. It makes different tradeoffs:
 
-- **Local-only** (privacy, but you manage infrastructure)
-- **Opinionated threads** (less flexible, but memory built-in)
-- **Read-only perception** (less adaptive, but more stable)
+- **Zero config** — Clone → install → run. No accounts.
+- **Everything visible** — State is UI, not hidden.
+- **Local-only** — Privacy default, you manage nothing in the cloud.
 
 If you need integrations, use LangChain. If you need document search, use LlamaIndex. If you need autonomous tasks, use AutoGPT.
 
-If you want persistent local memory with constrained autonomy, AI_OS might be worth trying.
+If you want to see inside your agent and run it locally, AI_OS might be worth trying.
 
 We're building on the work of everyone listed here. Thanks to all of them.
 
 ---
 
-**Last Updated:** February 7, 2026
+**Last Updated:** February 9, 2026

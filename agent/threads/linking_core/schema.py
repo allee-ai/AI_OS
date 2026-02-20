@@ -723,7 +723,7 @@ def update_link_strength(concept_a: str, concept_b: str, strength: float) -> boo
 # Graph Visualization
 # ─────────────────────────────────────────────────────────────
 
-def get_graph_data(center_concept: str = None, max_nodes: int = 100, min_strength: float = 0.1) -> Dict[str, Any]:
+def get_graph_data(center_concept: str = None, max_nodes: int = 100, min_strength: float = 0.1) -> Dict[str, Any]: # pyright: ignore[reportArgumentType]
     """
     Get graph data for visualization (nodes and links).
     

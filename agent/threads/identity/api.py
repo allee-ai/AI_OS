@@ -255,3 +255,47 @@ async def get_identity_table():
         "rows": table_rows,
         "row_count": len(table_rows)
     }
+
+
+# ============================================================================
+# Import Contacts (macOS)
+# ============================================================================
+
+@router.get("/import/preview")
+async def preview_contacts_import(limit: int = 10):
+    """
+    Preview contacts from macOS Contacts.app before importing.
+    
+    Args:
+        limit: Max contacts to preview (default 10)
+    """
+    try:
+        from .import_contacts import preview_macos_contacts
+        contacts = preview_macos_contacts(limit=limit)
+        return {"contacts": contacts, "count": len(contacts)}
+    except ImportError as e:
+        raise HTTPException(501, str(e))
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Failed to preview contacts: {str(e)}")
+
+
+@router.post("/import/contacts")
+async def import_contacts(skip_existing: bool = True):
+    """
+    Import all contacts from macOS Contacts.app.
+    
+    Args:
+        skip_existing: Skip contacts with matching profile names (default True)
+    """
+    try:
+        from .import_contacts import import_all_macos_contacts
+        result = import_all_macos_contacts(skip_existing=skip_existing)
+        return result
+    except ImportError as e:
+        raise HTTPException(501, str(e))
+    except PermissionError as e:
+        raise HTTPException(403, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Failed to import contacts: {str(e)}")

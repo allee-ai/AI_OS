@@ -177,6 +177,37 @@ app.include_router(db_mode_router)
 
 
 # =============================================================================
+# Static File Serving (Production/Docker)
+# =============================================================================
+# Serve built frontend from frontend/dist if it exists
+
+_frontend_dist = _project_root / "frontend" / "dist"
+if _frontend_dist.exists():
+    from fastapi.staticfiles import StaticFiles
+    from fastapi.responses import FileResponse
+    from starlette.exceptions import HTTPException as StarletteHTTPException
+    
+    # Serve static assets
+    app.mount("/assets", StaticFiles(directory=_frontend_dist / "assets"), name="assets")
+    
+    # Serve index.html at root
+    @app.get("/")
+    async def serve_index():
+        """Serve the SPA index."""
+        return FileResponse(_frontend_dist / "index.html")
+    
+    # Use 404 handler to serve SPA for client-side routes
+    @app.exception_handler(404)
+    async def spa_fallback(request, exc):
+        """Serve SPA for unknown routes (client-side routing)."""
+        # Don't serve SPA for API routes
+        if request.url.path.startswith(("/api/", "/ws/", "/docs", "/openapi")):
+            return JSONResponse(status_code=404, content={"detail": "Not found"})
+        # Serve index.html for SPA routing
+        return FileResponse(_frontend_dist / "index.html")
+
+
+# =============================================================================
 # Lifecycle Events
 # =============================================================================
 
@@ -232,10 +263,12 @@ async def health_check():
     return {"status": "healthy", "service": settings.app_name}
 
 
-@app.get("/")
-async def root():
-    """Root endpoint"""
-    return {"message": "AI OS API", "docs": "/docs"}
+# Root endpoint only when frontend not built (dev mode uses Vite proxy)
+if not _frontend_dist.exists():
+    @app.get("/")
+    async def root():
+        """Root endpoint"""
+        return {"message": "AI OS API", "docs": "/docs"}
 
 
 @app.websocket("/ws")

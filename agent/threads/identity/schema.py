@@ -332,7 +332,7 @@ def create_profile(profile_id: str, type_name: str, display_name: str = "") -> N
         conn.commit()
 
 
-def get_profiles(type_name: str = None) -> List[Dict]:
+def get_profiles(type_name: str = None) -> List[Dict]: # pyright: ignore[reportArgumentType]
     """Get all profiles, optionally filtered by type."""
     ensure_initialized()
     conn = get_connection(readonly=True)
@@ -429,7 +429,7 @@ def push_profile_fact(
     profile_id: str,
     key: str,
     fact_type: str,
-    l1_value: str = None,
+    l1_value: str = None, # type: ignore
     l2_value: str = None,
     l3_value: str = None,
     weight: float = None
@@ -483,7 +483,7 @@ def pull_profile_facts(
         
         if profile_id:
             query += " AND pf.profile_id = ?"
-            params.append(profile_id)
+            params.append(profile_id) # pyright: ignore[reportArgumentType]
         
         if fact_type:
             query += " AND pf.fact_type = ?"

@@ -1,0 +1,55 @@
+# AI_OS Docker Compose
+# =====================
+# Run with: docker compose up
+#
+# For development with hot reload:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up
+
+services:
+  aios:
+    build: .
+    container_name: ai-os
+    ports:
+      - "8000:8000"
+    volumes:
+      # Persist database and logs
+      - aios-data:/app/data/db
+      - aios-logs:/app/data/logs
+      # Optional: Mount workspace for file access
+      # - ./workspace:/app/workspace
+    environment:
+      - AIOS_MODE=personal
+      - OLLAMA_HOST=http://host.docker.internal:11434
+      - AIOS_MODEL_PROVIDER=ollama
+      - AIOS_MODEL_NAME=qwen2.5:7b
+      # Add your API keys here or use .env file
+      # - OPENAI_API_KEY=${OPENAI_API_KEY}
+    # Uncomment if you have a .env file with additional config
+    # env_file:
+    #   - .env
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8000/health')"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 10s
+
+  # Optional: Run Ollama alongside AI_OS
+  # Uncomment if you want Ollama in the same compose stack
+  # ollama:
+  #   image: ollama/ollama:latest
+  #   container_name: ollama
+  #   ports:
+  #     - "11434:11434"
+  #   volumes:
+  #     - ollama-models:/root/.ollama
+  #   restart: unless-stopped
+
+volumes:
+  aios-data:
+    name: aios-data
+  aios-logs:
+    name: aios-logs
+  # ollama-models:
+  #   name: ollama-models
