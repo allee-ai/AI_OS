@@ -709,9 +709,24 @@ const ProfilesPage: React.FC = () => {
   };
 
   const handleUpdateFact = async (profileId: string, key: string, updates: Partial<Fact>) => {
-    if (updates.weight !== undefined) {
-      await fetch(`${API}/${profileId}/facts/${encodeURIComponent(key)}/weight`, {
+    // Update fact values (l1, l2, l3, fact_type)
+    if (updates.l1_value !== undefined || updates.l2_value !== undefined || 
+        updates.l3_value !== undefined || updates.fact_type !== undefined) {
+      await fetch(`${API}/${profileId}/facts/${encodeURIComponent(key)}`, {
         method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          fact_type: updates.fact_type,
+          l1_value: updates.l1_value,
+          l2_value: updates.l2_value,
+          l3_value: updates.l3_value,
+          weight: updates.weight,
+        }),
+      });
+    } else if (updates.weight !== undefined) {
+      // Weight-only update uses PATCH endpoint
+      await fetch(`${API}/${profileId}/facts/${encodeURIComponent(key)}/weight`, {
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ weight: updates.weight }),
       });
