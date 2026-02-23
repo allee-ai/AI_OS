@@ -1,7 +1,7 @@
-# Structure Beats Scale: A Local OS Extension for Persistent AI Identity
+# Visible by Design: A Local OS Extension for Persistent AI Identity
 
 **Allee**  
-*Independent Researcher*  
+*Independent Developer*  
 January 2026
 
 ---

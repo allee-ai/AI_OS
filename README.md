@@ -30,7 +30,7 @@ And this is what's left.
 
 An entire operating system for LLMs that just takes ALLLL the things we EXPECT them to do and makes them do that. But all of it is visible. Complicated terms like forward pass are not present, but you can look at subconscious in the repo and see that it's a scientifically accurate description of the programs module, and also it's a CoT dashboard where you can save things you've already done.
 
-Form is a tool builder. Log keeps track of stuff. Identity and philosophy are just editable profiles. But the deeper research architecture fascinates me.
+Form is a tool builder. Log keeps track of stuff. Identity and philosophy are just editable profiles. But the deeper design architecture fascinates me.
 
 I built this because I desperately want it, and I desperately want everyone to have it, because I think if AI made people better, it wouldn't take their jobs. Simple concept. Massive implications.
 
@@ -297,7 +297,7 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 |-------|-------------|
 | [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
 | [**Architecture**](docs/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, state) |
-| [**Research Paper**](docs/RESEARCH_PAPER.md) | The theory behind the design |
+| [**Design Paper**](docs/RESEARCH_PAPER.md) | The theory behind the design |
 | [**Conversation Search Guide**](docs/CONVERSATION_SEARCH_GUIDE.md) | Find and recover lost conversations |
 | [**Contributing**](CONTRIBUTING.md) | How to help build it |
 
@@ -361,17 +361,17 @@ AI OS stands on the shoulders of giants. Deep gratitude to the tools, models, an
 | [**LangChain**](https://langchain.com) | Patterns for LLM applications (we diverge but learned from) |
 | **Cognitive Science Literature** | Hebbian learning, spread activation, episodic memory research |
 
-###  Theoretical Foundations
+###  Design Foundations
 
-**Nothing here is new.** AI OS applies well-established cognitive science to LLM context management. The bet is that these proven patterns transfer usefully to AI systems — but that's a hypothesis under testing, not a claim.
+**Nothing here is new.** AI OS uses well-established cognitive science as design constraints — intuitive names and proven structures for organizing an information system.
 
-| Research | What It Proved | How AI OS Applies It |
-|----------|----------------|---------------------|
-| **Hebbian Learning** (Hebb, 1949) | "Neurons that fire together, wire together" | Concepts accessed together get stronger links. Established neuroscience. |
-| **Spread Activation** (Collins & Loftus, 1975) | Memory retrieval follows associative paths | Related concepts activate when one is accessed. Textbook cognitive psych. |
-| **Working Memory** (Baddeley, 1986) | Attention has hierarchical capacity limits | L1/L2/L3 token budgets mirror proven memory architecture. |
+| Pattern | Origin | How AI OS Uses It |
+|---------|--------|-------------------|
+| **Hebbian Learning** (Hebb, 1949) | "Neurons that fire together, wire together" | Concepts accessed together get stronger links. Simple, intuitive co-occurrence weighting. |
+| **Spread Activation** (Collins & Loftus, 1975) | Memory retrieval follows associative paths | Related concepts activate when one is accessed. Makes relevant context surface naturally. |
+| **Working Memory** (Baddeley, 1986) | Attention has hierarchical capacity limits | L1/L2/L3 token budgets give structure to context assembly. |
 
-**What needs testing:** Whether these patterns actually improve LLM coherence over long interactions. We have anecdotal evidence (it *feels* better), not rigorous benchmarks yet. Help us build those.
+These are engineering conveniences, not scientific claims. They provide names and structures that make the system intuitive to build on and reason about.
 
 ### 🤝 Missing Something?
 

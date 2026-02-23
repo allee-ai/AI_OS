@@ -15,7 +15,7 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 **What AI OS provides:** One system with all the OS extension pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
 
-**The methodology:** Retrieval-augmented prompting. Clear, structured context produces better model outputs — this is established prompt engineering. AI OS makes that structure *visible and controllable*: you see what context is being retrieved, how it's organized, and why. A smaller model with well-curated context outperforms a larger model with flat context for identity coherence, fact recall, and personality stability.
+**The methodology:** Retrieval-augmented prompting. Clear, structured context produces better model outputs — this is established prompt engineering. AI OS makes that structure *visible and controllable*: you see what context is being retrieved, how it's organized, and why. Everything visible, everything manageable, in a single place.
 
 ### Current State
 
@@ -39,10 +39,10 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 - Compliance and audit logging
 - On-prem deployment packages
 
-**Research Platform:**
-- Cognitive science experiments
-- Memory consolidation studies
-- Identity stability benchmarks
+**Long-Term Use Studies:**
+- How identity coherence evolves over weeks/months of use
+- Memory consolidation effectiveness over time
+- User experience patterns with persistent AI
 
 ### Big Milestones
 
