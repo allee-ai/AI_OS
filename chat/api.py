@@ -50,6 +50,7 @@ from .schema import (
     rename_conversation as db_rename_conversation,
     archive_conversation as db_archive_conversation,
     delete_conversation as db_delete_conversation,
+    delete_conversations_by_source as db_delete_by_source,
     increment_conversation_weight,
 )
 
@@ -110,6 +111,7 @@ class ConversationSummary(BaseModel):
     preview: Optional[str] = None
     archived: bool = False
     weight: Optional[float] = None
+    source: str = "aios"
 
 
 class ConversationDetail(BaseModel):
@@ -338,6 +340,7 @@ async def list_conversations_endpoint(limit: int = 50, archived: bool = False, s
             preview=c.get("preview"),
             archived=c["archived"],
             weight=c.get("weight"),
+            source=c.get("source", "aios"),
         )
         for c in conversations
     ]
@@ -383,6 +386,17 @@ async def delete_conversation(session_id: str):
         raise HTTPException(status_code=404, detail="Conversation not found")
     
     return {"success": True, "deleted": session_id}
+
+
+@convos_router.delete("/source/{source}")
+async def delete_by_source(source: str):
+    """Delete all conversations from a specific source (chatgpt, claude, gemini, copilot)."""
+    valid_sources = {"chatgpt", "claude", "gemini", "copilot", "aios"}
+    if source not in valid_sources:
+        raise HTTPException(status_code=400, detail=f"Invalid source: {source}. Valid: {', '.join(valid_sources)}")
+    
+    deleted = db_delete_by_source(source)
+    return {"success": True, "source": source, "deleted_count": deleted}
 
 
 @convos_router.post("/{session_id}/archive")

@@ -51,11 +51,13 @@ def init_convos_tables():
             )
         """)
         
-        # Migration: add summary column if missing
+        # Migrations: add columns if missing
         cur.execute("PRAGMA table_info(convos)")
         columns = [col[1] for col in cur.fetchall()]
         if 'summary' not in columns:
             cur.execute("ALTER TABLE convos ADD COLUMN summary TEXT")
+        if 'source' not in columns:
+            cur.execute("ALTER TABLE convos ADD COLUMN source TEXT DEFAULT 'aios'")
         
         # Index for listing
         cur.execute("""
@@ -97,6 +99,7 @@ def save_conversation(
     name: Optional[str] = None,
     channel: str = "react",
     state_snapshot: Optional[Dict] = None,
+    source: str = "aios",
 ) -> bool:
     """
     Create or update a conversation record.
@@ -104,8 +107,9 @@ def save_conversation(
     Args:
         session_id: Unique identifier for the conversation
         name: Human-readable name (optional)
-        channel: Source channel (react, cli, etc.)
+        channel: Source channel (react, cli, import, etc.)
         state_snapshot: Optional snapshot of agent state at conversation start
+        source: Origin platform (aios, chatgpt, claude, gemini, copilot)
     
     Returns:
         True if created/updated successfully
@@ -116,12 +120,12 @@ def save_conversation(
         state_json = json.dumps(state_snapshot) if state_snapshot else None
         
         cur.execute("""
-            INSERT INTO convos (session_id, name, channel, state_snapshot_json)
-            VALUES (?, ?, ?, ?)
+            INSERT INTO convos (session_id, name, channel, state_snapshot_json, source)
+            VALUES (?, ?, ?, ?, ?)
             ON CONFLICT(session_id) DO UPDATE SET
                 name = COALESCE(excluded.name, convos.name),
                 last_updated = CURRENT_TIMESTAMP
-        """, (session_id, name, channel, state_json))
+        """, (session_id, name, channel, state_json, source))
         
         conn.commit()
     return True
@@ -200,7 +204,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
         
         # Get conversation
         cur.execute("""
-            SELECT id, session_id, channel, name, started, last_updated, archived, weight, turn_count, state_snapshot_json, summary
+            SELECT id, session_id, channel, name, started, last_updated, archived, weight, turn_count, state_snapshot_json, summary, source
             FROM convos WHERE session_id = ?
         """, (session_id,))
         row = cur.fetchone()
@@ -211,6 +215,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
         convo_id = row[0]
         state_snapshot = json.loads(row[9]) if row[9] else None
         summary = row[10]
+        source = row[11] or "aios"
         
         # Get turns
         cur.execute("""
@@ -243,6 +248,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
             "turns": turns,
             "state_snapshot": state_snapshot,
             "summary": summary,
+            "source": source,
         }
     return result
 
@@ -264,7 +270,7 @@ def list_conversations(
         cur = conn.cursor()
         
         query = """
-            SELECT session_id, name, started, last_updated, archived, weight, turn_count
+            SELECT session_id, name, started, last_updated, archived, weight, turn_count, source
             FROM convos
             WHERE archived = ?
         """
@@ -309,6 +315,7 @@ def list_conversations(
                 "turn_count": row[6],
                 "preview": preview,
                 "last_message": last_message,
+                "source": row[7] or "aios",
             })
     return conversations
 
@@ -343,6 +350,22 @@ def delete_conversation(session_id: str) -> bool:
     return deleted
 
 
+def delete_conversations_by_source(source: str) -> int:
+    """Delete all conversations from a given source. Returns count deleted."""
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        # Delete turns first (FK cascade may not be enabled)
+        cur.execute("""
+            DELETE FROM convo_turns WHERE convo_id IN (
+                SELECT id FROM convos WHERE source = ?
+            )
+        """, (source,))
+        cur.execute("DELETE FROM convos WHERE source = ?", (source,))
+        deleted = cur.rowcount
+        conn.commit()
+    return deleted
+
+
 def search_conversations(
     query: str,
     limit: int = 50,
@@ -368,7 +391,7 @@ def search_conversations(
         # First, get conversations where name or summary matches
         cur.execute("""
             SELECT DISTINCT c.session_id, c.name, c.started, c.last_updated, 
-                   c.archived, c.weight, c.turn_count, c.summary
+                   c.archived, c.weight, c.turn_count, c.summary, c.source
             FROM convos c
             LEFT JOIN convo_turns t ON t.convo_id = c.id
             WHERE c.archived = ? 
@@ -438,6 +461,7 @@ def search_conversations(
                 "preview": preview,
                 "last_message": last_message,
                 "summary": row[7],
+                "source": row[8] or "aios",
             })
     
     return conversations

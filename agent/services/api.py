@@ -423,6 +423,12 @@ async def upload_export(file: UploadFile = File(...), platform: Optional[str] = 
             with zipfile.ZipFile(file_path, 'r') as zip_ref:
                 zip_ref.extractall(upload_path)
             file_path.unlink()
+            # Filter out macOS artifacts
+            macosx_dir = upload_path / "__MACOSX"
+            if macosx_dir.exists():
+                shutil.rmtree(macosx_dir)
+            for ds in upload_path.rglob(".DS_Store"):
+                ds.unlink(missing_ok=True)
             extracted_folders = [p for p in upload_path.iterdir() if p.is_dir()]
             actual_path = extracted_folders[0] if extracted_folders else upload_path
         else:

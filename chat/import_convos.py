@@ -18,6 +18,7 @@ from chat.parsers import (
     GeminiExportParser,
     VSCodeExportParser
 )
+from chat.schema import save_conversation, add_turn
 
 
 class ImportConvos:
@@ -80,12 +81,42 @@ class ImportConvos:
                 # Convert to AI OS format
                 aios_conv = self._convert_to_aios_format(conv)
                 
-                # Save conversation
+                # Save conversation to JSON file
                 conv_file = self.feeds_path / "conversations" / f"imported_{conv.id}.json"
                 conv_file.parent.mkdir(parents=True, exist_ok=True)
                 
                 with open(conv_file, 'w', encoding='utf-8') as f:
                     json.dump(aios_conv, f, indent=2, default=str)
+                
+                # Save to SQLite DB with source tracking
+                platform_name = parser.get_platform_name().lower()
+                source_map = {
+                    "chatgpt": "chatgpt",
+                    "claude": "claude",
+                    "gemini": "gemini",
+                    "vscode": "copilot",
+                    "copilot": "copilot",
+                    "vscode-copilot": "copilot",
+                }
+                source = source_map.get(platform_name, platform_name)
+                
+                save_conversation(
+                    session_id=aios_conv["session_id"],
+                    name=aios_conv["name"],
+                    channel="import",
+                    state_snapshot=aios_conv.get("state_snapshot"),
+                    source=source,
+                )
+                
+                # Add turns to DB
+                for turn in aios_conv.get("turns", []):
+                    add_turn(
+                        session_id=aios_conv["session_id"],
+                        user_message=turn.get("user", ""),
+                        assistant_message=turn.get("assistant", ""),
+                        feed_type=turn.get("feed_type", "conversational"),
+                        context_level=turn.get("context_level", 0),
+                    )
                 
                 # Handle attachments
                 if conv.attachments and organize_by_project:
@@ -108,21 +139,55 @@ class ImportConvos:
         }
     
     def _convert_to_aios_format(self, conv: ParsedConversation) -> Dict[str, Any]:
-        """Convert parsed conversation to AI OS's JSON format."""
-        turns = []
+        """Convert parsed conversation to AI OS's JSON format.
         
-        for i in range(0, len(conv.messages), 2):
-            user_msg = conv.messages[i]
-            assistant_msg = conv.messages[i + 1] if i + 1 < len(conv.messages) else None
+        Pairs messages into user/assistant turns. Handles:
+        - Non-alternating roles (consecutive user or assistant messages)
+        - Missing counterparts (user with no response, or assistant with no prompt)
+        """
+        turns = []
+        messages = conv.messages
+        i = 0
+        
+        while i < len(messages):
+            msg = messages[i]
             
-            turn = {
-                "timestamp": user_msg.timestamp.isoformat(),
-                "user": user_msg.content,
-                "assistant": assistant_msg.content if assistant_msg else "",
-                "feed_type": "conversational",
-                "context_level": 2
-            }
-            turns.append(turn)
+            if msg.role == "user":
+                # Look ahead for assistant response
+                assistant_text = ""
+                if i + 1 < len(messages) and messages[i + 1].role == "assistant":
+                    assistant_text = messages[i + 1].content
+                    i += 2
+                    # Absorb consecutive assistant messages (multi-part response)
+                    while i < len(messages) and messages[i].role == "assistant":
+                        assistant_text += "\n\n" + messages[i].content
+                        i += 1
+                else:
+                    # User message with no assistant response
+                    i += 1
+                
+                turns.append({
+                    "timestamp": msg.timestamp.isoformat(),
+                    "user": msg.content,
+                    "assistant": assistant_text,
+                    "feed_type": "conversational",
+                    "context_level": 2
+                })
+            
+            elif msg.role == "assistant":
+                # Assistant message with no preceding user message
+                turns.append({
+                    "timestamp": msg.timestamp.isoformat(),
+                    "user": "",
+                    "assistant": msg.content,
+                    "feed_type": "conversational",
+                    "context_level": 2
+                })
+                i += 1
+            
+            else:
+                # Skip system / tool / unknown roles
+                i += 1
         
         return {
             "session_id": f"imported_{conv.id}",
@@ -131,7 +196,7 @@ class ImportConvos:
             "name": conv.title,
             "turns": turns,
             "state_snapshot": {
-                "imported_from": conv.metadata.get("platform", "unknown"),
+                "imported_from": (conv.metadata or {}).get("platform", "unknown"),
                 "original_id": conv.id
             },
             "last_updated": conv.updated_at.isoformat()

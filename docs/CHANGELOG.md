@@ -5,6 +5,23 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2025-02-23 — Import Source Grouping
+
+### Conversation Source Tracking
+- **DB Migration**: Added `source TEXT DEFAULT 'aios'` column to `convos` table — values: `aios`, `chatgpt`, `claude`, `gemini`, `copilot`
+- **save_conversation()**: New `source` parameter propagated through save, get, list, and search functions
+- **Import Pipeline**: `import_convos.py` now writes to SQLite DB (via `save_conversation()` + `add_turn()`) with platform-specific source tags
+- **API**: `ConversationSummary` model includes `source` field; `list_conversations_endpoint` returns source for each conversation
+
+### Sidebar: Grouped by Source
+- **ConversationSidebar.tsx**: Native chats displayed at top; imported conversations grouped into collapsible sections per source model (ChatGPT, Claude, Gemini, Copilot) with count badges
+- **CSS**: `.import-source-section` and `.conversation-item.imported` styles for indented imported items
+
+### Tests (162 total, +5 new)
+- `TestConversationSource`: source column existence, default source, save with source, list includes source, search includes source
+
+---
+
 ## 2026-02-22 — Text-Native Tool Calling + Contacts Import
 
 ### Tool Calling: Text-Native Protocol

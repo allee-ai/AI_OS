@@ -300,6 +300,18 @@ class APIService {
     }
   }
 
+  async deleteConversationsBySource(source: string): Promise<{ deleted_count: number }> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/source/${source}`, {
+      method: 'DELETE',
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    return response.json();
+  }
+
   async createNewConversation(): Promise<{ session_id: string }> {
     const response = await fetch(`${this.baseUrl}/api/conversations/new`, {
       method: 'POST',

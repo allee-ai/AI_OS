@@ -11,7 +11,16 @@ interface Conversation {
   last_message?: string;
   preview?: string;
   archived?: boolean;
+  source?: string;
 }
+
+// Display labels for import sources
+const SOURCE_LABELS: Record<string, string> = {
+  chatgpt: 'ChatGPT',
+  claude: 'Claude',
+  gemini: 'Gemini',
+  copilot: 'Copilot',
+};
 
 interface ConversationSidebarProps {
   currentSessionId?: string;
@@ -31,11 +40,40 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [archivedConversations, setArchivedConversations] = useState<Conversation[]>([]);
   const [showArchive, setShowArchive] = useState(false);
+  const [expandedSources, setExpandedSources] = useState<Record<string, boolean>>({});
   const [isLoading, setIsLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [showImportModal, setShowImportModal] = useState(false);
   const [editName, setEditName] = useState('');
   const [searchQuery, setSearchQuery] = useState('');
+
+  // Split conversations into native and imported groups
+  const nativeConversations = conversations.filter(c => !c.source || c.source === 'aios');
+  const importedGroups = conversations.reduce<Record<string, Conversation[]>>((groups, conv) => {
+    if (conv.source && conv.source !== 'aios') {
+      if (!groups[conv.source]) groups[conv.source] = [];
+      groups[conv.source].push(conv);
+    }
+    return groups;
+  }, {});
+  const importedSourceKeys = Object.keys(importedGroups).sort();
+
+  const toggleSource = (source: string) => {
+    setExpandedSources(prev => ({ ...prev, [source]: !prev[source] }));
+  };
+
+  const handleDeleteSource = async (e: React.MouseEvent, source: string) => {
+    e.stopPropagation();
+    const label = SOURCE_LABELS[source] || source;
+    const count = importedGroups[source]?.length || 0;
+    if (!window.confirm(`Delete all ${count} conversations imported from ${label}?`)) return;
+    try {
+      await apiService.deleteConversationsBySource(source);
+      await loadConversations();
+    } catch (error) {
+      console.error('Failed to delete source group:', error);
+    }
+  };
 
   const loadConversations = useCallback(async (search?: string) => {
     try {
@@ -224,10 +262,11 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
           <div className="loading">Loading...</div>
         ) : (
           <>
-            {conversations.length === 0 ? (
+            {/* Native conversations */}
+            {nativeConversations.length === 0 && importedSourceKeys.length === 0 ? (
               <div className="empty-state">No conversations yet</div>
             ) : (
-              conversations.map(conversation => (
+              nativeConversations.map(conversation => (
                 <div
                   key={conversation.session_id}
                   className={`conversation-item ${conversation.session_id === currentSessionId ? 'active' : ''}`}
@@ -311,6 +350,81 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               ))
             )}
 
+            {/* Imported conversation groups */}
+            {importedSourceKeys.map(source => (
+              <div key={source} className="import-source-section">
+                <div className="section-divider">
+                  <span>Imported from {SOURCE_LABELS[source] || source}</span>
+                </div>
+                <div className="source-group-header">
+                  <button 
+                    className="archive-toggle"
+                    onClick={() => toggleSource(source)}
+                  >
+                    <svg 
+                      width="14" 
+                      height="14" 
+                      viewBox="0 0 24 24" 
+                      fill="none"
+                      style={{ transform: expandedSources[source] ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}
+                    >
+                      <path d="M9 18L15 12L9 6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                    {SOURCE_LABELS[source] || source} ({importedGroups[source].length})
+                  </button>
+                  <button
+                    className="action-btn delete source-delete-all"
+                    onClick={(e) => handleDeleteSource(e, source)}
+                    title={`Delete all ${SOURCE_LABELS[source] || source} imports`}
+                  >
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                      <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                      <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                    </svg>
+                  </button>
+                </div>
+                
+                {expandedSources[source] && importedGroups[source].map(conversation => (
+                  <div
+                    key={conversation.session_id}
+                    className={`conversation-item imported ${conversation.session_id === currentSessionId ? 'active' : ''}`}
+                    onClick={() => onSelectConversation(conversation.session_id)}
+                  >
+                    <div className="conversation-info">
+                      <span className="conversation-name" title={conversation.name}>
+                        {conversation.name}
+                      </span>
+                      <span className="conversation-meta">
+                        {formatDate(conversation.started)} · {conversation.turn_count} turns
+                      </span>
+                    </div>
+                    <div className="conversation-actions">
+                      <button 
+                        className="action-btn" 
+                        onClick={(e) => handleArchive(e, conversation.session_id)}
+                        title="Archive"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M21 8V21H3V8M1 3H23V8H1V3Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M10 12H14" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                      <button 
+                        className="action-btn delete" 
+                        onClick={(e) => handleDelete(e, conversation.session_id)}
+                        title="Delete"
+                      >
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none">
+                          <path d="M3 6H5H21" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                          <path d="M8 6V4C8 3.46957 8.21071 2.96086 8.58579 2.58579C8.96086 2.21071 9.46957 2 10 2H14C14.5304 2 15.0391 2.21071 15.4142 2.58579C15.7893 2.96086 16 3.46957 16 4V6M19 6V20C19 20.5304 18.7893 21.0391 18.4142 21.4142C18.0391 21.7893 17.5304 22 17 22H7C6.46957 22 5.96086 21.7893 5.58579 21.4142C5.21071 21.0391 5 20.5304 5 20V6H19Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ))}
+
             {/* Divider before archive */}
             {archivedConversations.length > 0 && (
               <div className="section-divider">
@@ -318,7 +432,7 @@ export const ConversationSidebar: React.FC<ConversationSidebarProps> = ({
               </div>
             )}
 
-            {/* Archive section - always show if there are archived conversations */}
+            {/* Archive section */}
             {archivedConversations.length > 0 && (
             <div className="archive-section">
               <button 

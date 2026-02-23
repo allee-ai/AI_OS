@@ -329,3 +329,42 @@
 .conversation-item.archived:hover {
   opacity: 1;
 }
+
+/* Import source sections */
+.import-source-section {
+  margin-top: 4px;
+}
+
+.source-group-header {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.source-group-header .archive-toggle {
+  flex: 1;
+}
+
+.source-delete-all {
+  opacity: 0;
+  transition: opacity 0.2s;
+  flex-shrink: 0;
+  margin-right: 12px;
+}
+
+.source-group-header:hover .source-delete-all {
+  opacity: 0.6;
+}
+
+.source-delete-all:hover {
+  opacity: 1 !important;
+}
+
+.conversation-item.imported {
+  opacity: 0.85;
+  padding-left: 24px;
+}
+
+.conversation-item.imported:hover {
+  opacity: 1;
+}
