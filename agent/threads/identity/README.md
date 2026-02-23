@@ -94,6 +94,9 @@ New profiles are created with empty preset facts for common contact information:
 | PUT | `/api/identity/{id}/facts/{key}` | Edit existing fact |
 | DELETE | `/api/identity/{id}/facts/{key}` | Delete fact |
 | DELETE | `/api/identity/{id}` | Delete profile (if not protected) |
+| POST | `/api/identity/import/upload` | Upload vCard file, returns upload_id |
+| POST | `/api/identity/import/parse` | Parse uploaded file, returns preview |
+| POST | `/api/identity/import/commit` | Import contacts to profiles |
 <!-- /ARCHITECTURE:identity -->
 
 ---
@@ -106,7 +109,7 @@ New profiles are created with empty preset facts for common contact information:
 - [ ] **Trust level indicators** — Visual badges for trust levels in UI
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
-- [ ] **Import from contacts** — Pull from phone/Google contacts
+- [x] **Import from contacts** — Pull from vCard files (Google, iCloud, Outlook)
 
 ### Technical debt
 - [ ] Batch fact updates (currently one-at-a-time)
@@ -118,6 +121,15 @@ New profiles are created with empty preset facts for common contact information:
 ## Changelog
 
 <!-- CHANGELOG:identity -->
+### 2026-02-20
+- Universal contacts import via vCard (.vcf) files
+- Added `ContactsImportModal` component with guided flow (source → instructions → upload → preview → import)
+- Supports Google, iCloud, Outlook, and any vCard export
+- Upload/parse/commit API pattern: `POST /api/identity/import/upload`, `/parse`, `/commit`
+- Removed macOS-specific pyobjc-framework-Contacts dependency
+- Added vobject library for vCard parsing
+- Import button added to ProfilesPage sidebar
+
 ### 2026-02-01
 - Added edit button (✏️) next to facts for inline editing
 - Added edit modal with L1/L2/L3 fields, type selector, weight slider

@@ -27,9 +27,8 @@ ollama>=0.1.0
 # kernel>=0.1.0
 # playwright>=1.40.0
 
-# macOS: Import contacts from Contacts.app
-# Only needed on macOS for contact import feature
-pyobjc-framework-Contacts>=10.0; sys_platform == "darwin"
+# vCard parsing for contacts import
+vobject>=0.9.6
 
 # Testing
 pytest>=7.4.0

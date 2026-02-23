@@ -1,0 +1,347 @@
+/* Contacts Import Modal - extends base modal styles from chat ImportModal */
+
+.contacts-import-modal {
+  padding: 32px;
+  max-width: 560px;
+}
+
+/* Source selection grid */
+.step-description {
+  color: var(--text-muted);
+  margin: 0 0 24px 0;
+  text-align: center;
+}
+
+.source-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.source-option {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 24px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.source-option:hover {
+  border-color: var(--primary);
+  background: var(--surface);
+}
+
+.source-icon {
+  font-size: 32px;
+}
+
+.source-name {
+  color: var(--text);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* Export instructions */
+.export-steps {
+  margin: 24px 0;
+  padding-left: 20px;
+  color: var(--text);
+}
+
+.export-steps li {
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.instructions-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 24px;
+}
+
+/* Upload step */
+.upload-actions {
+  margin-top: 16px;
+}
+
+/* Contact list in preview */
+.contact-list {
+  max-height: 300px;
+  overflow-y: auto;
+  margin: 16px 0;
+}
+
+.contact-list-header {
+  padding: 8px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  margin-bottom: 8px;
+}
+
+.contact-list-header label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-muted);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.contact-preview {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  background: var(--bg);
+  border-radius: 6px;
+  margin-bottom: 6px;
+}
+
+.contact-preview input[type="checkbox"] {
+  flex-shrink: 0;
+}
+
+.contact-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.contact-name {
+  color: var(--text);
+  font-size: 14px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.contact-meta {
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.more-contacts {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-top: 12px;
+}
+
+/* Import summary */
+.import-summary {
+  text-align: center;
+  margin: 16px 0;
+}
+
+.import-summary p {
+  margin: 8px 0;
+  color: var(--text-muted);
+}
+
+.import-summary strong {
+  color: var(--primary);
+}
+
+/* Reuse styles from chat ImportModal */
+.modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+.modal-content {
+  background: var(--surface);
+  border-radius: 12px;
+  max-width: 600px;
+  width: 90%;
+  max-height: 80vh;
+  overflow-y: auto;
+  position: relative;
+  border: 1px solid var(--border);
+}
+
+.modal-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 32px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+}
+
+.modal-close:hover {
+  color: var(--text);
+}
+
+.import-step h3 {
+  margin: 0 0 24px 0;
+  color: var(--text);
+  font-size: 24px;
+  text-align: center;
+}
+
+.drop-zone {
+  border: 2px dashed var(--border);
+  border-radius: 12px;
+  padding: 48px 24px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.drop-zone:hover,
+.drop-zone.dragging {
+  border-color: var(--primary);
+  background: var(--bg);
+}
+
+.drop-zone svg {
+  color: var(--text-muted);
+  margin-bottom: 16px;
+}
+
+.drop-zone p {
+  margin: 0 0 8px 0;
+  color: var(--text);
+  font-size: 16px;
+}
+
+.drop-zone .hint {
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.preview-stats {
+  display: flex;
+  gap: 24px;
+  margin-bottom: 16px;
+  padding: 16px;
+  background: var(--bg);
+  border-radius: 8px;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.stat strong {
+  font-size: 24px;
+  color: var(--primary);
+}
+
+.stat span {
+  font-size: 12px;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+.preview-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 24px;
+  justify-content: space-between;
+}
+
+.btn-primary,
+.btn-secondary {
+  padding: 10px 20px;
+  border-radius: 6px;
+  border: none;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-primary {
+  background: var(--primary);
+  color: white;
+}
+
+.btn-primary:hover {
+  background: var(--primary-light);
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background: var(--bg);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.btn-secondary:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: var(--bg);
+  border-radius: 4px;
+  overflow: hidden;
+  margin: 24px 0;
+}
+
+.progress-fill {
+  height: 100%;
+  background: var(--primary);
+  transition: width 0.3s ease;
+}
+
+.import-step p {
+  text-align: center;
+  color: var(--text-muted);
+  margin: 16px 0 0 0;
+}
+
+.success-icon {
+  width: 80px;
+  height: 80px;
+  margin: 24px auto;
+  border-radius: 50%;
+  background: var(--primary);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 48px;
+}
+
+.error-message {
+  margin-top: 16px;
+  padding: 12px;
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  color: var(--error);
+  font-size: 14px;
+}

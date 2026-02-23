@@ -4,9 +4,9 @@ Manages identity profile types, profiles, and identity facts.
 Answers: "WHO am I? WHO are you?"
 """
 
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, UploadFile
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, List
 
 # Import from local schema
 from .schema import (
@@ -258,44 +258,75 @@ async def get_identity_table():
 
 
 # ============================================================================
-# Import Contacts (macOS)
+# Import Contacts (vCard)
 # ============================================================================
 
-@router.get("/import/preview")
-async def preview_contacts_import(limit: int = 10):
+@router.post("/import/upload")
+async def upload_contacts_file(file: UploadFile):
     """
-    Preview contacts from macOS Contacts.app before importing.
+    Upload a vCard (.vcf) file for import.
     
-    Args:
-        limit: Max contacts to preview (default 10)
+    Returns upload_id for subsequent parse/commit calls.
     """
     try:
-        from .import_contacts import preview_macos_contacts
-        contacts = preview_macos_contacts(limit=limit)
-        return {"contacts": contacts, "count": len(contacts)}
-    except ImportError as e:
-        raise HTTPException(501, str(e))
-    except PermissionError as e:
-        raise HTTPException(403, str(e))
+        from .import_contacts import store_upload
+        
+        content = await file.read()
+        # Try UTF-8 first, fall back to latin-1
+        try:
+            text_content = content.decode('utf-8')
+        except UnicodeDecodeError:
+            text_content = content.decode('latin-1')
+        
+        upload_id = store_upload(text_content, file.filename or "contacts.vcf")
+        return {"upload_id": upload_id, "filename": file.filename}
     except Exception as e:
-        raise HTTPException(500, f"Failed to preview contacts: {str(e)}")
+        raise HTTPException(500, f"Upload failed: {str(e)}")
 
 
-@router.post("/import/contacts")
-async def import_contacts(skip_existing: bool = True):
+@router.post("/import/parse")
+async def parse_contacts_upload(upload_id: str):
     """
-    Import all contacts from macOS Contacts.app.
+    Parse an uploaded vCard file and return preview.
     
     Args:
-        skip_existing: Skip contacts with matching profile names (default True)
+        upload_id: ID returned from /import/upload
     """
     try:
-        from .import_contacts import import_all_macos_contacts
-        result = import_all_macos_contacts(skip_existing=skip_existing)
+        from .import_contacts import parse_upload
+        preview = parse_upload(upload_id)
+        return preview
+    except ValueError as e:
+        raise HTTPException(404, str(e))
+    except Exception as e:
+        raise HTTPException(500, f"Parse failed: {str(e)}")
+
+
+class ImportCommitRequest(BaseModel):
+    upload_id: str
+    selected_ids: Optional[list] = None
+    skip_existing: bool = True
+
+
+@router.post("/import/commit")
+async def commit_contacts_import(data: ImportCommitRequest):
+    """
+    Commit parsed contacts to identity profiles.
+    
+    Args:
+        upload_id: ID from upload
+        selected_ids: Only import these contact IDs (None = all)
+        skip_existing: Skip contacts with matching names
+    """
+    try:
+        from .import_contacts import commit_import
+        result = commit_import(
+            upload_id=data.upload_id,
+            selected_ids=data.selected_ids,
+            skip_existing=data.skip_existing
+        )
         return result
-    except ImportError as e:
-        raise HTTPException(501, str(e))
-    except PermissionError as e:
-        raise HTTPException(403, str(e))
+    except ValueError as e:
+        raise HTTPException(404, str(e))
     except Exception as e:
-        raise HTTPException(500, f"Failed to import contacts: {str(e)}")
+        raise HTTPException(500, f"Import failed: {str(e)}")

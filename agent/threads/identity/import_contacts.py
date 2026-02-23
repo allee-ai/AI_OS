@@ -1,30 +1,37 @@
 """
-Import Contacts (macOS)
+Import Contacts (vCard)
 =======================
-Imports contacts from macOS Contacts.app into identity profiles.
+Imports contacts from vCard (.vcf) files into identity profiles.
 
-Uses pyobjc-framework-Contacts to access the system address book.
-Requires user permission on first run.
+Supports vCard 2.1, 3.0, and 4.0 formats exported from:
+- Google Contacts
+- iCloud
+- Outlook
+- Any standard contacts app
 """
 
 import re
+import uuid
 from typing import List, Dict, Any, Optional
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+
+# vobject handles vCard parsing with all the quirks (folding, encoding, etc.)
+import vobject
 
 
 @dataclass
 class ParsedContact:
-    """A contact parsed from macOS Contacts.app."""
+    """A contact parsed from a vCard file."""
     identifier: str
-    given_name: str
-    family_name: str
     full_name: str
-    emails: List[str]
-    phones: List[str]
-    organization: str
-    job_title: str
-    note: str
-    birthday: Optional[str]
+    given_name: str = ""
+    family_name: str = ""
+    emails: List[str] = field(default_factory=list)
+    phones: List[str] = field(default_factory=list)
+    organization: str = ""
+    job_title: str = ""
+    note: str = ""
+    birthday: Optional[str] = None
 
 
 def slugify(name: str) -> str:
@@ -35,106 +42,238 @@ def slugify(name: str) -> str:
     return slug or "contact"
 
 
-def fetch_macos_contacts(limit: int = 0) -> List[ParsedContact]:
+# Storage for pending imports (in-memory, cleared on server restart)
+_pending_uploads: Dict[str, Dict[str, Any]] = {}
+
+
+def parse_vcard_file(file_content: str) -> List[ParsedContact]:
     """
-    Fetch contacts from macOS Contacts.app.
+    Parse vCard file content into ParsedContact objects.
     
     Args:
-        limit: Max contacts to fetch (0 = all)
+        file_content: Raw vCard file content (can contain multiple vCards)
         
     Returns:
         List of ParsedContact objects
-        
-    Raises:
-        ImportError: If pyobjc-framework-Contacts not installed
-        PermissionError: If contacts access denied
     """
-    try:
-        import Contacts  # pyobjc-framework-Contacts
-    except ImportError:
-        raise ImportError(
-            "pyobjc-framework-Contacts not installed. "
-            "Run: pip install pyobjc-framework-Contacts"
-        )
-    
-    store = Contacts.CNContactStore.alloc().init()
-    
-    # Request access (will prompt user on first run)
-    # Note: This is synchronous for simplicity
-    keys_to_fetch = [
-        Contacts.CNContactGivenNameKey,
-        Contacts.CNContactFamilyNameKey,
-        Contacts.CNContactEmailAddressesKey,
-        Contacts.CNContactPhoneNumbersKey,
-        Contacts.CNContactOrganizationNameKey,
-        Contacts.CNContactJobTitleKey,
-        Contacts.CNContactNoteKey,
-        Contacts.CNContactBirthdayKey,
-        Contacts.CNContactIdentifierKey,
-    ]
-    
-    # Fetch all contacts
-    request = Contacts.CNContactFetchRequest.alloc().initWithKeysToFetch_(keys_to_fetch)
-    
     contacts = []
-    error = None
     
-    def handle_contact(contact, stop):
-        nonlocal contacts
-        
-        # Extract emails
-        emails = []
-        for email in contact.emailAddresses():
-            emails.append(str(email.value()))
-        
-        # Extract phones
-        phones = []
-        for phone in contact.phoneNumbers():
-            phones.append(str(phone.value().stringValue()))
-        
-        # Extract birthday
-        birthday = None
-        if contact.birthday():
-            bd = contact.birthday()
-            if bd.year() and bd.month() and bd.day():
-                birthday = f"{bd.year()}-{bd.month():02d}-{bd.day():02d}"
-            elif bd.month() and bd.day():
-                birthday = f"{bd.month():02d}-{bd.day():02d}"
-        
-        given = str(contact.givenName() or "")
-        family = str(contact.familyName() or "")
-        full_name = f"{given} {family}".strip()
-        
-        # Skip empty contacts
-        if not full_name and not emails and not phones:
-            return
-        
-        contacts.append(ParsedContact(
-            identifier=str(contact.identifier()),
-            given_name=given,
-            family_name=family,
-            full_name=full_name or "Unknown",
-            emails=emails,
-            phones=phones,
-            organization=str(contact.organizationName() or ""),
-            job_title=str(contact.jobTitle() or ""),
-            note=str(contact.note() or ""),
-            birthday=birthday,
-        ))
-        
-        if limit and len(contacts) >= limit:
-            stop[0] = True
+    # vobject.readComponents handles multi-contact vcf files
+    # Wrap in try-except to handle malformed vCard files gracefully
+    try:
+        components = list(vobject.readComponents(file_content))
+    except Exception:
+        # If vobject can't parse at all, return empty list
+        return contacts
     
-    success, error = store.enumerateContactsWithFetchRequest_error_usingBlock_(
-        request, None, handle_contact
-    )
-    
-    if not success:
-        if error:
-            raise PermissionError(f"Cannot access contacts: {error}")
-        raise PermissionError("Cannot access contacts. Check System Settings > Privacy > Contacts.")
+    for vcard in components:
+        try:
+            contact = _parse_single_vcard(vcard)
+            if contact:
+                contacts.append(contact)
+        except Exception:
+            # Skip malformed contacts
+            continue
     
     return contacts
+
+
+def _parse_single_vcard(vcard) -> Optional[ParsedContact]:
+    """Parse a single vCard component into a ParsedContact."""
+    
+    # Get name - try FN (formatted name) first, then N (structured name)
+    full_name = ""
+    given_name = ""
+    family_name = ""
+    
+    if hasattr(vcard, 'fn'):
+        full_name = str(vcard.fn.value).strip()
+    
+    if hasattr(vcard, 'n'):
+        n = vcard.n.value
+        given_name = str(n.given) if n.given else ""
+        family_name = str(n.family) if n.family else ""
+        if not full_name:
+            full_name = f"{given_name} {family_name}".strip()
+    
+    # Skip if no name
+    if not full_name:
+        return None
+    
+    # Extract emails
+    emails = []
+    if hasattr(vcard, 'email'):
+        # Handle single or multiple emails
+        email_objs = vcard.contents.get('email', [])
+        for email_obj in email_objs:
+            email = str(email_obj.value).strip()
+            if email and '@' in email:
+                emails.append(email)
+    
+    # Extract phones
+    phones = []
+    if hasattr(vcard, 'tel'):
+        tel_objs = vcard.contents.get('tel', [])
+        for tel_obj in tel_objs:
+            phone = str(tel_obj.value).strip()
+            if phone:
+                phones.append(phone)
+    
+    # Organization
+    organization = ""
+    if hasattr(vcard, 'org'):
+        org_val = vcard.org.value
+        if isinstance(org_val, list):
+            organization = org_val[0] if org_val else ""
+        else:
+            organization = str(org_val)
+    
+    # Job title
+    job_title = ""
+    if hasattr(vcard, 'title'):
+        job_title = str(vcard.title.value).strip()
+    
+    # Note
+    note = ""
+    if hasattr(vcard, 'note'):
+        note = str(vcard.note.value).strip()
+    
+    # Birthday
+    birthday = None
+    if hasattr(vcard, 'bday'):
+        bday = str(vcard.bday.value).strip()
+        # Normalize various date formats to YYYY-MM-DD or MM-DD
+        if bday:
+            # Remove dashes for re-formatting
+            bday_clean = bday.replace('-', '').replace('/', '')
+            if len(bday_clean) == 8:  # YYYYMMDD
+                birthday = f"{bday_clean[:4]}-{bday_clean[4:6]}-{bday_clean[6:]}"
+            elif len(bday_clean) == 4:  # MMDD
+                birthday = f"{bday_clean[:2]}-{bday_clean[2:]}"
+            else:
+                birthday = bday  # Keep original
+    
+    return ParsedContact(
+        identifier=str(uuid.uuid4()),
+        full_name=full_name,
+        given_name=given_name,
+        family_name=family_name,
+        emails=emails,
+        phones=phones,
+        organization=organization,
+        job_title=job_title,
+        note=note,
+        birthday=birthday,
+    )
+
+
+def store_upload(file_content: str, filename: str) -> str:
+    """
+    Store uploaded file content for later parsing.
+    
+    Args:
+        file_content: Raw vCard file content
+        filename: Original filename
+        
+    Returns:
+        upload_id for retrieving the upload
+    """
+    upload_id = str(uuid.uuid4())
+    _pending_uploads[upload_id] = {
+        "content": file_content,
+        "filename": filename,
+        "parsed": None,
+    }
+    return upload_id
+
+
+def parse_upload(upload_id: str) -> Dict[str, Any]:
+    """
+    Parse a previously uploaded file.
+    
+    Args:
+        upload_id: ID from store_upload
+        
+    Returns:
+        Preview dict with contacts list
+        
+    Raises:
+        ValueError: If upload_id not found
+    """
+    if upload_id not in _pending_uploads:
+        raise ValueError(f"Upload not found: {upload_id}")
+    
+    upload = _pending_uploads[upload_id]
+    
+    # Parse if not already parsed
+    if upload["parsed"] is None:
+        contacts = parse_vcard_file(upload["content"])
+        upload["parsed"] = contacts
+    
+    contacts = upload["parsed"]
+    
+    # Return preview format
+    return {
+        "upload_id": upload_id,
+        "total_contacts": len(contacts),
+        "contacts": [
+            {
+                "id": c.identifier,
+                "full_name": c.full_name,
+                "email": c.emails[0] if c.emails else None,
+                "phone": c.phones[0] if c.phones else None,
+                "organization": c.organization or None,
+            }
+            for c in contacts[:20]  # Preview first 20
+        ]
+    }
+
+
+def commit_import(
+    upload_id: str,
+    selected_ids: Optional[List[str]] = None,
+    type_name: str = "contact",
+    skip_existing: bool = True
+) -> Dict[str, Any]:
+    """
+    Commit a parsed upload to identity profiles.
+    
+    Args:
+        upload_id: ID from store_upload
+        selected_ids: Only import these contact IDs (None = all)
+        type_name: Profile type to use
+        skip_existing: Skip contacts with matching names
+        
+    Returns:
+        Import summary
+    """
+    if upload_id not in _pending_uploads:
+        raise ValueError(f"Upload not found: {upload_id}")
+    
+    upload = _pending_uploads[upload_id]
+    
+    # Parse if needed
+    if upload["parsed"] is None:
+        upload["parsed"] = parse_vcard_file(upload["content"])
+    
+    contacts = upload["parsed"]
+    
+    # Filter to selected if provided
+    if selected_ids:
+        selected_set = set(selected_ids)
+        contacts = [c for c in contacts if c.identifier in selected_set]
+    
+    # Import to identity
+    result = import_contacts_to_identity(
+        contacts=contacts,
+        type_name=type_name,
+        skip_existing=skip_existing
+    )
+    
+    # Clean up
+    del _pending_uploads[upload_id]
+    
+    return result
 
 
 def import_contacts_to_identity(
@@ -170,6 +309,7 @@ def import_contacts_to_identity(
         )
     
     existing_profiles = {p["profile_id"] for p in get_profiles()}
+    existing_names = {p["display_name"].lower() for p in get_profiles()}
     
     imported = 0
     skipped = 0
@@ -178,6 +318,12 @@ def import_contacts_to_identity(
     
     for contact in contacts:
         try:
+            # Check for existing by name
+            if skip_existing and contact.full_name.lower() in existing_names:
+                skipped += 1
+                results.append({"name": contact.full_name, "status": "skipped"})
+                continue
+            
             # Generate profile_id from name
             base_id = slugify(contact.full_name)
             profile_id = base_id
@@ -185,95 +331,92 @@ def import_contacts_to_identity(
             # Handle duplicates by appending number
             counter = 1
             while profile_id in existing_profiles:
-                if skip_existing:
-                    skipped += 1
-                    results.append({"name": contact.full_name, "status": "skipped"})
-                    break
                 profile_id = f"{base_id}_{counter}"
                 counter += 1
-            else:
-                # Create profile
-                create_profile(
+            
+            # Create profile
+            create_profile(
+                profile_id=profile_id,
+                type_name=type_name,
+                display_name=contact.full_name
+            )
+            existing_profiles.add(profile_id)
+            existing_names.add(contact.full_name.lower())
+            
+            # Push facts (L1 values only - brief)
+            if contact.full_name:
+                push_profile_fact(
                     profile_id=profile_id,
-                    type_name=type_name,
-                    display_name=contact.full_name
+                    key="name",
+                    fact_type="name",
+                    l1_value=contact.full_name,
+                    l2_value=contact.full_name,
+                    weight=0.9
                 )
-                existing_profiles.add(profile_id)
-                
-                # Push facts
-                if contact.full_name:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="name",
-                        fact_type="name",
-                        l1_value=contact.full_name,
-                        l2_value=contact.full_name,
-                        weight=0.9
-                    )
-                
-                if contact.emails:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="email",
-                        fact_type="email",
-                        l1_value=contact.emails[0],
-                        l2_value=", ".join(contact.emails) if len(contact.emails) > 1 else contact.emails[0],
-                        weight=0.7
-                    )
-                
-                if contact.phones:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="phone",
-                        fact_type="phone",
-                        l1_value=contact.phones[0],
-                        l2_value=", ".join(contact.phones) if len(contact.phones) > 1 else contact.phones[0],
-                        weight=0.6
-                    )
-                
-                if contact.organization:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="organization",
-                        fact_type="organization",
-                        l1_value=contact.organization,
-                        weight=0.5
-                    )
-                
-                if contact.job_title:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="occupation",
-                        fact_type="occupation",
-                        l1_value=contact.job_title,
-                        weight=0.6
-                    )
-                
-                if contact.birthday:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="birthday",
-                        fact_type="birthday",
-                        l1_value=contact.birthday,
-                        weight=0.4
-                    )
-                
-                if contact.note:
-                    push_profile_fact(
-                        profile_id=profile_id,
-                        key="notes",
-                        fact_type="note",
-                        l1_value=contact.note[:100] if len(contact.note) > 100 else contact.note,
-                        l2_value=contact.note,
-                        weight=0.3
-                    )
-                
-                imported += 1
-                results.append({
-                    "name": contact.full_name,
-                    "profile_id": profile_id,
-                    "status": "imported"
-                })
+            
+            if contact.emails:
+                push_profile_fact(
+                    profile_id=profile_id,
+                    key="email",
+                    fact_type="email",
+                    l1_value=contact.emails[0],
+                    l2_value=", ".join(contact.emails) if len(contact.emails) > 1 else contact.emails[0],
+                    weight=0.7
+                )
+            
+            if contact.phones:
+                push_profile_fact(
+                    profile_id=profile_id,
+                    key="phone",
+                    fact_type="phone",
+                    l1_value=contact.phones[0],
+                    l2_value=", ".join(contact.phones) if len(contact.phones) > 1 else contact.phones[0],
+                    weight=0.6
+                )
+            
+            if contact.organization:
+                push_profile_fact(
+                    profile_id=profile_id,
+                    key="organization",
+                    fact_type="organization",
+                    l1_value=contact.organization,
+                    weight=0.5
+                )
+            
+            if contact.job_title:
+                push_profile_fact(
+                    profile_id=profile_id,
+                    key="occupation",
+                    fact_type="occupation",
+                    l1_value=contact.job_title,
+                    weight=0.6
+                )
+            
+            if contact.birthday:
+                push_profile_fact(
+                    profile_id=profile_id,
+                    key="birthday",
+                    fact_type="birthday",
+                    l1_value=contact.birthday,
+                    weight=0.4
+                )
+            
+            if contact.note:
+                push_profile_fact(
+                    profile_id=profile_id,
+                    key="notes",
+                    fact_type="note",
+                    l1_value=contact.note[:100] if len(contact.note) > 100 else contact.note,
+                    l2_value=contact.note,
+                    weight=0.3
+                )
+            
+            imported += 1
+            results.append({
+                "name": contact.full_name,
+                "profile_id": profile_id,
+                "status": "imported"
+            })
                 
         except Exception as e:
             failed += 1
@@ -292,50 +435,11 @@ def import_contacts_to_identity(
     }
 
 
-def preview_macos_contacts(limit: int = 10) -> List[Dict[str, Any]]:
-    """
-    Preview contacts without importing.
-    
-    Args:
-        limit: Max contacts to preview
-        
-    Returns:
-        List of contact preview dicts
-    """
-    contacts = fetch_macos_contacts(limit=limit)
-    
-    return [
-        {
-            "full_name": c.full_name,
-            "emails": c.emails,
-            "phones": c.phones,
-            "organization": c.organization,
-            "job_title": c.job_title,
-            "has_birthday": c.birthday is not None,
-            "has_notes": bool(c.note),
-        }
-        for c in contacts
-    ]
-
-
-def import_all_macos_contacts(skip_existing: bool = True) -> Dict[str, Any]:
-    """
-    Import all macOS contacts in one call.
-    
-    Args:
-        skip_existing: Skip contacts with matching names
-        
-    Returns:
-        Import summary
-    """
-    contacts = fetch_macos_contacts()
-    return import_contacts_to_identity(contacts, skip_existing=skip_existing)
-
-
 __all__ = [
     'ParsedContact',
-    'fetch_macos_contacts',
+    'parse_vcard_file',
+    'store_upload',
+    'parse_upload',
+    'commit_import',
     'import_contacts_to_identity',
-    'preview_macos_contacts',
-    'import_all_macos_contacts',
 ]

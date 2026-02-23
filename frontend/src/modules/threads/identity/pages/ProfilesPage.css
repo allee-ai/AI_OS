@@ -58,6 +58,22 @@
   cursor: not-allowed;
 }
 
+.profile-header-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.profile-list-header .import-btn {
+  background: var(--surface);
+  color: var(--text-muted);
+  border: 1px solid var(--border);
+}
+
+.profile-list-header .import-btn:hover {
+  background: var(--bg);
+  color: var(--text);
+}
+
 .profile-list {
   flex: 1;
   overflow-y: auto;

@@ -6,6 +6,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import SelectWithAdd from '../components/SelectWithAdd';
 import ThemedSelect from '../components/ThemedSelect';
+import ContactsImportModal from '../components/ContactsImportModal';
 import './ProfilesPage.css';
 
 const API = '/api/identity';
@@ -64,6 +65,7 @@ interface ProfileSidebarProps {
   onDeleteProfile: (profileId: string) => Promise<void>;
   onDeleteAllFacts: () => void;
   onDeleteAllProfiles: () => void;
+  onImportContacts: () => void;
 }
 
 const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
@@ -78,6 +80,7 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
   onDeleteProfile,
   onDeleteAllFacts,
   onDeleteAllProfiles,
+  onImportContacts,
 }) => {
   const filteredProfiles = selectedType
     ? profiles.filter((p) => p.type_name === selectedType)
@@ -108,13 +111,22 @@ const ProfileSidebar: React.FC<ProfileSidebarProps> = ({
       <div className="profile-list">
         <div className="profile-list-header">
           <label>Profiles ({filteredProfiles.length})</label>
-          <button
-            onClick={onAddProfile}
-            disabled={!selectedType}
-            title={selectedType ? 'Add profile' : 'Select a type first'}
-          >
-            + Add
-          </button>
+          <div className="profile-header-actions">
+            <button
+              onClick={onImportContacts}
+              title="Import contacts from vCard file"
+              className="import-btn"
+            >
+              ↓ Import
+            </button>
+            <button
+              onClick={onAddProfile}
+              disabled={!selectedType}
+              title={selectedType ? 'Add profile' : 'Select a type first'}
+            >
+              + Add
+            </button>
+          </div>
         </div>
 
         <div>
@@ -618,6 +630,7 @@ const ProfilesPage: React.FC = () => {
   const [selectedType, setSelectedType] = useState('');
   const [selectedProfile, setSelectedProfile] = useState<string | null>(null);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [showImportModal, setShowImportModal] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Fetch all data
@@ -795,6 +808,7 @@ const ProfilesPage: React.FC = () => {
         onDeleteProfile={handleDeleteProfile}
         onDeleteAllFacts={handleDeleteAllFacts}
         onDeleteAllProfiles={handleDeleteAllProfiles}
+        onImportContacts={() => setShowImportModal(true)}
       />
       <ProfileView
         profile={currentProfile}
@@ -810,6 +824,14 @@ const ProfilesPage: React.FC = () => {
         typeName={selectedType}
         onClose={() => setShowAddModal(false)}
         onAdd={handleAddProfile}
+      />
+      <ContactsImportModal
+        isOpen={showImportModal}
+        onClose={() => setShowImportModal(false)}
+        onImportComplete={() => {
+          setShowImportModal(false);
+          fetchData();
+        }}
       />
     </div>
   );
