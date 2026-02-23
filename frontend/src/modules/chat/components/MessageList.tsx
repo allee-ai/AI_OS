@@ -1,8 +1,138 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import type { ChatMessage } from '../types/chat';
 import './MessageList.css';
+
+/* ── Tool block rendering ────────────────────────────────────────── */
+
+interface ContentSegment {
+  type: 'text' | 'execute' | 'result';
+  content: string;
+  meta?: Record<string, string>;  // parsed key:value for execute blocks
+}
+
+/**
+ * Split assistant message content into segments: plain text, :::execute blocks,
+ * and :::result blocks.  This lets us render each with its own component while
+ * leaving the rest of the message to ReactMarkdown.
+ */
+function parseToolBlocks(raw: string): ContentSegment[] {
+  const BLOCK_RE = /:::(execute|result)\s*\n([\s\S]*?):::/g;
+  const segments: ContentSegment[] = [];
+  let cursor = 0;
+
+  for (const match of raw.matchAll(BLOCK_RE)) {
+    const start = match.index!;
+    // push preceding text
+    if (start > cursor) {
+      segments.push({ type: 'text', content: raw.slice(cursor, start) });
+    }
+
+    const kind = match[1] as 'execute' | 'result';
+    const body = match[2].trim();
+
+    if (kind === 'execute') {
+      const meta: Record<string, string> = {};
+      for (const line of body.split('\n')) {
+        const idx = line.indexOf(':');
+        if (idx > 0) {
+          meta[line.slice(0, idx).trim().toLowerCase()] = line.slice(idx + 1).trim();
+        }
+      }
+      segments.push({ type: 'execute', content: body, meta });
+    } else {
+      segments.push({ type: 'result', content: body });
+    }
+
+    cursor = start + match[0].length;
+  }
+
+  // trailing text
+  if (cursor < raw.length) {
+    segments.push({ type: 'text', content: raw.slice(cursor) });
+  }
+
+  return segments;
+}
+
+const ToolCallBlock: React.FC<{ meta?: Record<string, string> }> = ({ meta }) => (
+  <div className="tool-call">
+    <div className="tool-call-header">
+      <span className="tool-call-icon">⚡</span>
+      <span className="tool-call-label">
+        {meta?.tool ?? 'tool'}<span className="tool-call-action">.{meta?.action ?? 'run'}</span>
+      </span>
+    </div>
+    {meta && Object.keys(meta).filter(k => k !== 'tool' && k !== 'action').length > 0 && (
+      <div className="tool-call-params">
+        {Object.entries(meta)
+          .filter(([k]) => k !== 'tool' && k !== 'action')
+          .map(([k, v]) => (
+            <div key={k} className="tool-param">
+              <span className="tool-param-key">{k}</span>
+              <span className="tool-param-val">{v}</span>
+            </div>
+          ))}
+      </div>
+    )}
+  </div>
+);
+
+const ToolResultBlock: React.FC<{ content: string }> = ({ content }) => (
+  <div className="tool-result">
+    <div className="tool-result-header">
+      <span className="tool-result-icon">✓</span>
+      <span className="tool-result-label">Result</span>
+    </div>
+    <pre className="tool-result-body">{content}</pre>
+  </div>
+);
+
+const markdownComponents = {
+  code({ className, children, ...props }: any) {
+    const isInline = !className;
+    return isInline ? (
+      <code className="inline-code" {...props}>{children}</code>
+    ) : (
+      <pre className="code-block">
+        <code className={className} {...props}>{children}</code>
+      </pre>
+    );
+  }
+};
+
+const AssistantContent: React.FC<{ content: string }> = ({ content }) => {
+  const segments = useMemo(() => parseToolBlocks(content), [content]);
+  const hasToolBlocks = segments.some(s => s.type !== 'text');
+
+  if (!hasToolBlocks) {
+    return (
+      <ReactMarkdown remarkPlugins={[remarkGfm]} components={markdownComponents}>
+        {content}
+      </ReactMarkdown>
+    );
+  }
+
+  return (
+    <>
+      {segments.map((seg, i) => {
+        switch (seg.type) {
+          case 'execute':
+            return <ToolCallBlock key={i} meta={seg.meta} />;
+          case 'result':
+            return <ToolResultBlock key={i} content={seg.content} />;
+          default:
+            return seg.content.trim() ? (
+              <ReactMarkdown key={i} remarkPlugins={[remarkGfm]} components={markdownComponents}>
+                {seg.content}
+              </ReactMarkdown>
+            ) : null;
+        }
+      })}
+    </>
+  );
+};
 
 interface MessageListProps {
   messages: ChatMessage[];
@@ -132,23 +262,7 @@ export const MessageList: React.FC<MessageListProps> = ({
             <div className="message-content">
               <div className="message-text">
                 {message.role === 'assistant' ? (
-                  <ReactMarkdown 
-                    remarkPlugins={[remarkGfm]}
-                    components={{
-                      code({ className, children, ...props }) {
-                        const isInline = !className;
-                        return isInline ? (
-                          <code className="inline-code" {...props}>{children}</code>
-                        ) : (
-                          <pre className="code-block">
-                            <code className={className} {...props}>{children}</code>
-                          </pre>
-                        );
-                      }
-                    }}
-                  >
-                    {message.content}
-                  </ReactMarkdown>
+                  <AssistantContent content={message.content} />
                 ) : (
                   message.content
                 )}

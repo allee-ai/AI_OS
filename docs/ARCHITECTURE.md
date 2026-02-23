@@ -68,7 +68,8 @@ response = agent.generate(
 
 **Key Methods:**
 - `get_agent()` — Returns singleton instance
-- `generate(user_input, convo, feed_type, consciousness_context)` — Main response method
+- `generate(user_input, convo, feed_type, consciousness_context, on_tool_event)` — Main response method with optional tool event callback
+- `_process_tool_calls(text, messages, on_tool_event, max_rounds)` — Scan/execute/re-call loop (max 5 rounds)
 - `introspect()` — Returns agent status and identity
 
 ### agent/core/ — System Primitives
@@ -273,9 +274,14 @@ form/
 ├── api.py          # FastAPI routes (/api/form/*)
 ├── schema.py       # DB operations, tool management
 └── tools/
-    ├── registry.py     # L1: Tool definitions
+    ├── registry.py     # L1: Tool definitions + safety allowlist
+    ├── scanner.py      # :::execute::: block parser
     ├── executor.py     # L2: Execution engine
     └── executables/    # L3: Python implementations
+        ├── file_read.py    # Read files (sandboxed)
+        ├── file_write.py   # Write files (sandboxed)
+        ├── terminal.py     # Shell commands (30s timeout)
+        └── web_search.py   # DuckDuckGo search
 ```
 
 ### Tool Definition
@@ -308,6 +314,39 @@ ToolDefinition(
 | Memory | identity, philosophy, log, linking |
 | Files | file_read, file_write |
 | Automation | terminal, scheduler |
+
+### Tool Calling Protocol
+
+Tool calling is **text-native** — the LLM writes `:::execute:::` blocks in its response, which are parsed by `scanner.py` and dispatched to executables.
+
+```
+User: "What's in README.md?"
+
+LLM Output:
+  Let me check that file.
+  :::execute
+  tool: file_read
+  action: read_file
+  path: README.md
+  :::
+
+Scanner parses → is_action_safe() checks → executable runs → result injected:
+  :::result tool=file_read action=read_file
+  # AI OS — A Local OS Extension for LLMs
+  ...
+  :::
+
+LLM re-called with result → generates final answer.
+```
+
+### Safety Layers
+
+| Layer | Check | Location |
+|-------|-------|----------|
+| 1. Allowlist | `is_action_safe(tool, action)` | `registry.py` |
+| 2. DB Flag | `allowed` column per tool | `schema.py` |
+| 3. Sandbox | Path traversal prevention | Each executable |
+| 4. Timeouts | 30s max for terminal | `terminal.py` |
 <!-- /INCLUDE:form:ARCHITECTURE -->
 
 #### 4. Philosophy Thread (`agent/threads/philosophy/`)
@@ -588,7 +627,11 @@ agent/services/
 ```
 User Message → agent_service.py
     → get_consciousness_context()
-    → agent.generate()
+    → agent.generate(on_tool_event=callback)
+    → Scanner: parse :::execute::: blocks
+    → Safety: is_action_safe() check
+    → Execute: run tool, inject :::result:::
+    → Re-call LLM with result (up to 5 rounds)
     → Response
 ```
 <!-- /INCLUDE:services:ARCHITECTURE -->

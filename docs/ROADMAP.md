@@ -21,9 +21,9 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 | Layer | Status | What's Working |
 |-------|--------|----------------|
-| **Core** | [WIP] | Threads, HEA, SQLite backend, stateless agent |
-| **UI** | [WIP] | React app, chat, thread visualization |
-| **Integrations** | [~] | Feeds system built, needs OAuth + polling daemon |
+| **Core** | [WIP] | Threads, HEA, SQLite backend, stateless agent, text-native tool calling |
+| **UI** | [WIP] | React app, chat, tool call/result rendering, thread visualization |
+| **Integrations** | [~] | Feeds system built, contacts import, needs OAuth + polling daemon |
 | **Advanced** | [--] | Philosophy thread exists. Reflex has API/schema. Visual builder planned. |
 
 ### Future: The Ecosystem
@@ -49,6 +49,7 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 | Phase | Goal | Status |
 |-------|------|--------|
 | **1. Memory** | Facts get promoted based on importance | 90% |
+| **1b. Tool Calling** | Agent executes tools via text-native protocol | Done (core) |
 | **2. Philosophy** | Moral compass, value-guided behavior | Planned |
 | **3. Reflex** | Visual automation, 10x pattern learning | Planned |
 | **4. Dream** | Personality through synthetic experience | Planned |
@@ -81,9 +82,9 @@ _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 ### Ready for contributors
 - [x] **Family/contacts UI** — Add/edit contacts by type with details
 - [x] **Trust level indicators** — Visual badges for trust levels in UI
+- [x] **Import from contacts** — Universal vCard (.vcf) import with preview and commit flow
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
-- [ ] **Import from contacts** — Pull from phone/Google contacts
 
 ### Technical debt
 - [ ] Batch fact updates (currently one-at-a-time)
@@ -135,10 +136,16 @@ _Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
 _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 
 ### Ready for contributors
+- [ ] **Tool editor UI** — Visual tool builder for creating/editing tools
 - [ ] **Tool marketplace** — Shareable tool definitions
 - [ ] **Action chaining** — Multi-step tool workflows
-- [ ] **Permission system** — User approval for sensitive actions
 - [ ] **Usage analytics** — Track tool success/failure rates
+
+### Done
+- [x] **Text-native tool calling** — `:::execute:::` block protocol with scanner, safety allowlist, 4 executables
+- [x] **Permission system** — Two-layer safety: `SAFE_ACTIONS` allowlist + DB `allowed` flag
+- [x] **Frontend tool rendering** — ToolCallBlock / ToolResultBlock components with styled cards
+- [x] **WebSocket tool events** — Real-time tool_executing / tool_complete messages
 
 ### Starter tasks
 - [ ] Add tool search/filter in UI

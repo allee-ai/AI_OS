@@ -623,3 +623,65 @@
   font-size: 0.85rem;
   padding: 12px;
 }
+/* ── Tool calling mode toggle ─────────────────────────────────── */
+
+.tool-mode-options {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: 12px 0;
+}
+
+.tool-mode-option {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: border-color 0.15s, background 0.15s;
+  background: var(--surface);
+}
+
+.tool-mode-option:hover {
+  border-color: var(--primary);
+}
+
+.tool-mode-option.selected {
+  border-color: var(--primary);
+  background: color-mix(in srgb, var(--primary) 8%, var(--surface));
+}
+
+.tool-mode-option input[type="radio"] {
+  margin-top: 3px;
+  accent-color: var(--primary);
+  flex-shrink: 0;
+}
+
+.tool-mode-body {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.tool-mode-body strong {
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.tool-mode-body span {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.4;
+}
+
+.tool-mode-warning {
+  background: color-mix(in srgb, #f59e0b 12%, var(--surface));
+  border: 1px solid #f59e0b;
+  border-radius: 6px;
+  padding: 10px 14px;
+  font-size: 0.82rem;
+  color: var(--text);
+  margin-top: 4px;
+}

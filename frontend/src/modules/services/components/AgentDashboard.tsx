@@ -22,6 +22,7 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
       kernel_enabled: false,
       default_context_level: 2,
       max_context_tokens: 4000,
+      tool_calling_mode: 'text',
     }
   });
   const [saving, setSaving] = useState(false);
@@ -153,6 +154,60 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
             <span>Deep analysis with full memory access</span>
           </div>
         </div>
+      </section>
+
+      <section className="settings-section">
+        <h3>Tool Calling Mode</h3>
+        <p className="setting-hint">
+          How the agent invokes tools during a response.
+        </p>
+
+        <div className="tool-mode-options">
+          <label className={`tool-mode-option ${localConfig.settings.tool_calling_mode === 'text' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name="tool_calling_mode"
+              value="text"
+              checked={localConfig.settings.tool_calling_mode === 'text'}
+              onChange={() => handleChange('tool_calling_mode', 'text')}
+            />
+            <div className="tool-mode-body">
+              <strong>Text — <code>:::execute:::</code> blocks</strong>
+              <span>Works with any model. Reasoning is visible in the chat. Gracefully degrades if the model writes prose instead of a block.</span>
+            </div>
+          </label>
+
+          <label className={`tool-mode-option ${localConfig.settings.tool_calling_mode === 'schema' ? 'selected' : ''}`}>
+            <input
+              type="radio"
+              name="tool_calling_mode"
+              value="schema"
+              checked={localConfig.settings.tool_calling_mode === 'schema'}
+              onChange={() => handleChange('tool_calling_mode', 'schema')}
+            />
+            <div className="tool-mode-body">
+              <strong>Schema — Ollama JSON protocol</strong>
+              <span>Rigid, deterministic output. Requires a tool-calling compatible model.</span>
+            </div>
+          </label>
+        </div>
+
+        {localConfig.settings.tool_calling_mode === 'schema' && (() => {
+          const model = (localConfig.settings.default_model as string) || '';
+          const compatible = [
+            'llama3.1', 'llama3.2', 'llama3.3',
+            'qwen2.5', 'qwen2.5-coder',
+            'mistral-nemo', 'command-r',
+            'firefunction',
+          ];
+          const isCompatible = compatible.some(m => model.startsWith(m));
+          return !isCompatible ? (
+            <div className="tool-mode-warning">
+              ⚠️ <strong>{model || 'Selected model'}</strong> may not support Ollama JSON tool calling.
+              Compatible models include: llama3.1+, qwen2.5, mistral-nemo.
+            </div>
+          ) : null;
+        })()}
       </section>
 
       <section className="settings-section">

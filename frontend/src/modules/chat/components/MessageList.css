@@ -287,6 +287,109 @@
 }
 
 /* Markdown styling for assistant messages */
+
+/* ── Tool call / result blocks ────────────────────────────────── */
+
+.tool-call {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid var(--primary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.tool-call-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: var(--primary);
+  margin-bottom: 4px;
+}
+
+.tool-call-icon {
+  font-size: 14px;
+}
+
+.tool-call-action {
+  opacity: 0.7;
+  font-weight: 400;
+}
+
+.tool-call-params {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 6px;
+}
+
+.tool-param {
+  display: flex;
+  gap: 8px;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.tool-param-key {
+  color: var(--text-secondary, #888);
+  min-width: 60px;
+}
+
+.tool-param-key::after {
+  content: ':';
+}
+
+.tool-param-val {
+  color: var(--text);
+  word-break: break-all;
+}
+
+.tool-result {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left: 3px solid #4caf50;
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin: 8px 0;
+  font-size: 13px;
+}
+
+.tool-result-header {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-weight: 600;
+  color: #4caf50;
+  margin-bottom: 6px;
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.tool-result-icon {
+  font-size: 13px;
+}
+
+.tool-result-body {
+  background: var(--bg);
+  color: var(--text);
+  padding: 8px 12px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  margin: 0;
+  white-space: pre-wrap;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+/* ── Code blocks ────────────────────────────────────────────── */
+
 .message-text .code-block {
   background: var(--surface);
   color: var(--text);

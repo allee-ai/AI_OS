@@ -31,9 +31,14 @@ form/
 ├── api.py          # FastAPI routes (/api/form/*)
 ├── schema.py       # DB operations, tool management
 └── tools/
-    ├── registry.py     # L1: Tool definitions
+    ├── registry.py     # L1: Tool definitions + safety allowlist
+    ├── scanner.py      # :::execute::: block parser
     ├── executor.py     # L2: Execution engine
     └── executables/    # L3: Python implementations
+        ├── file_read.py    # Read files (sandboxed)
+        ├── file_write.py   # Write files (sandboxed)
+        ├── terminal.py     # Shell commands (30s timeout)
+        └── web_search.py   # DuckDuckGo search
 ```
 
 ### Tool Definition
@@ -74,10 +79,19 @@ ToolDefinition(
 
 <!-- ROADMAP:form -->
 ### Ready for contributors
+- [ ] **Tool editor UI** — Visual tool builder for creating/editing tools
 - [ ] **Tool marketplace** — Shareable tool definitions
 - [ ] **Action chaining** — Multi-step tool workflows
-- [ ] **Permission system** — User approval for sensitive actions
 - [ ] **Usage analytics** — Track tool success/failure rates
+
+### Done
+- [x] **Text-native tool calling** — `:::execute:::` block protocol parsed by scanner.py
+- [x] **Safety allowlist** — `SAFE_ACTIONS` / `BLOCKED_ACTIONS` in registry.py with `is_action_safe()` gating
+- [x] **Core executables** — file_read, file_write, terminal, web_search (sandboxed)
+- [x] **Permission system** — Two-layer safety: allowlist check + DB `allowed` flag
+- [x] **Tool loop in agent** — `_process_tool_calls()` with max 5 rounds, auto-re-call after execution
+- [x] **Frontend rendering** — `:::execute:::` and `:::result:::` blocks render as styled cards in chat
+- [x] **WebSocket tool events** — Real-time `tool_executing` / `tool_complete` messages
 
 ### Starter tasks
 - [ ] Add tool search/filter in UI
@@ -90,6 +104,17 @@ ToolDefinition(
 ## Changelog
 
 <!-- CHANGELOG:form -->
+### 2026-02-22
+- Text-native tool calling via `:::execute:::` / `:::result:::` block protocol
+- Scanner (`scanner.py`): regex parser for execute blocks, ToolCall dataclass, block replacement
+- Safety allowlist (`registry.py`): SAFE_ACTIONS, BLOCKED_ACTIONS, `is_action_safe()`
+- Four core executables: file_read, file_write, terminal, web_search
+- Agent tool loop: `_process_tool_calls()` in agent.py (max 5 rounds)
+- Form adapter injects `:::execute:::` usage instructions at L2+
+- Frontend ToolCallBlock / ToolResultBlock components in MessageList.tsx
+- WebSocket tool event forwarding (tool_executing, tool_complete)
+- 42 new tests in test_tool_calling.py (scanner, safety, executables, integration)
+
 ### 2026-02-01
 - Fixed ToolDashboard.css to use theme CSS variables consistently
 - Removed hardcoded hex color fallbacks
@@ -117,13 +142,13 @@ ToolDefinition(
 
 2. **Create executable** at `tools/executables/my_tool.py`:
 ```python
-def run(action: str, params: dict) -> dict:
+def run(action: str, params: dict) -> str:
     if action == "action_one":
-        return {"result": "did action one"}
+        return "did action one"
     elif action == "action_two":
-        return {"result": "did action two"}
+        return "did action two"
     else:
-        raise ValueError(f"Unknown action: {action}")
+        return f"Unknown action: {action}"
 ```
 
 3. **Test** via API:

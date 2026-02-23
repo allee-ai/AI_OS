@@ -653,9 +653,24 @@ class WebSocketManager:
         try:
             await self.send_personal_message({"type": "agent_typing_start"}, client_id)
             
+            # Build a callback that pushes tool events over the WebSocket
+            async def _tool_event(event: dict):
+                await self.send_personal_message({
+                    "type": f"tool_{event.get('status', 'info')}",
+                    **event
+                }, client_id)
+
+            # Wrap async callback for sync agent.generate() call
+            import asyncio
+            loop = asyncio.get_event_loop()
+            def on_tool_event(event: dict):
+                asyncio.run_coroutine_threadsafe(_tool_event(event), loop)
+
             from agent.services.agent_service import get_agent_service
             agent_service = get_agent_service()
-            response_message = await agent_service.send_message(content)
+            response_message = await agent_service.send_message(
+                content, on_tool_event=on_tool_event
+            )
             
             await self.stream_response(client_id, response_message.content, response_message.id)
             await self.send_personal_message({"type": "agent_typing_stop"}, client_id)

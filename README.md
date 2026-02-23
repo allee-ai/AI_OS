@@ -246,7 +246,7 @@ docker run --rm -v aios-data:/data -v $(pwd):/backup alpine tar cvf /backup/aios
 | **Context** | "Who am I talking to?" | Knows your name, job, projects, preferences |
 | **Continuity** | Every conversation starts fresh | Picks up where you left off, even weeks later |
 | **Consistency** | Personality drifts with prompting | Identity is structural, can't be manipulated |
-| **Action** | Locked in chat box | Tool framework ready, integrations planned |
+| **Action** | Locked in chat box | Reads files, searches web, runs commands via text-native tool calling |
 | **Learning** | Same quality forever | Extracts and stores facts from conversations |
 
 ---

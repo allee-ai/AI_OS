@@ -231,6 +231,24 @@ class FormThreadAdapter(BaseThreadAdapter):
         facts = []
         min_weight = threshold / 10.0
         
+        # Tool-use instructions — only when Form scores high enough (L2+)
+        # and runnable tools exist. Injected as a fact so it flows through
+        # the same context system as everything else.
+        if _HAS_TOOLS and context_level >= 2:
+            from .tools.registry import get_runnable_tools
+            runnable = get_runnable_tools()
+            if runnable:
+                facts.append(
+                    "form.tools._usage: To use a tool, write an execute block:\\n"
+                    ":::execute\\n"
+                    "tool: <tool_name>\\n"
+                    "action: <action_name>\\n"
+                    "param_name: param_value\\n"
+                    ":::\\n"
+                    "You will receive the result and can continue your response. "
+                    "Only use tools when genuinely needed. Explain your reasoning first."
+                )
+        
         # Tools - use formatted tools from tools.py with dot notation
         if _HAS_TOOLS:
             available = get_available_tools()
@@ -243,10 +261,10 @@ class FormThreadAdapter(BaseThreadAdapter):
                 if context_level == 1:
                     facts.append(f"{path}: {t.name}")
                 elif context_level == 2:
-                    facts.append(f"{path}: {t.description}")
+                    facts.append(f"{path}: {t.description} (actions: {', '.join(t.actions)})")
                 else:
                     # L3: Full details
-                    facts.append(f"{path}: {t.description} [{t.category.value}]")
+                    facts.append(f"{path}: {t.description} [{t.category.value}] (actions: {', '.join(t.actions)})")
         else:
             # Fallback to DB lookup
             tools = self.get_tools(context_level)

@@ -5,6 +5,61 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-02-22 — Text-Native Tool Calling + Contacts Import
+
+### Tool Calling: Text-Native Protocol
+- **Scanner** (`agent/threads/form/tools/scanner.py`): Parses `:::execute:::` blocks from LLM output, extracts tool/action/params, replaces with `:::result:::` blocks after execution
+- **Safety Allowlist** (`registry.py`): `SAFE_ACTIONS` (read-only auto-execute), `BLOCKED_ACTIONS` (terminal.run_command, file_write.write_file), `is_action_safe()` gating function
+- **Agent Tool Loop** (`agent.py`): `_process_tool_calls()` — scan → safety check → execute → inject result → re-call LLM (max 5 rounds)
+- **Form Adapter**: Injects `:::execute:::` usage instructions into STATE at L2+ when runnable tools exist
+
+### Executables: 4 Core Tools
+- **file_read.py**: read_file (50KB cap), list_directory (100 entry cap), search_files (rglob, 50 results) — all sandboxed to workspace
+- **file_write.py**: write_file, append_file, create_directory — sandboxed with path traversal prevention
+- **terminal.py**: run_command (30s timeout, 10KB output cap), get_output — CWD locked to workspace
+- **web_search.py**: DuckDuckGo search via `duckduckgo-search` — no API key required
+
+### Frontend: Tool Block Rendering
+- **MessageList.tsx**: `parseToolBlocks()` splits content into text/execute/result segments; `ToolCallBlock` and `ToolResultBlock` React components; `AssistantContent` wrapper
+- **MessageList.css**: `.tool-call` (primary-colored left border, param grid), `.tool-result` (green left border, monospace scrollable body)
+
+### WebSocket: Tool Event Forwarding
+- **chat/api.py**: `handle_chat_message()` creates `on_tool_event` callback → pushes `tool_executing` / `tool_complete` messages over WebSocket
+- **agent_service.py**: `send_message()` forwards `on_tool_event` to `agent.generate()`
+
+### Contacts Import (vCard)
+- **import_contacts.py**: Universal vCard (.vcf) parser replacing macOS-only approach
+- **ContactsImportModal**: Frontend upload → preview → select → commit flow
+- **API**: `/api/identity/contacts/upload`, `/api/identity/contacts/preview/{id}`, `/api/identity/contacts/commit`
+
+### Tests
+- **test_tool_calling.py**: 42 tests — scanner (11), safety (10), file_read (7), file_write (5), terminal (4), web_search (3), integration (3)
+- **test_contacts_import.py**: 19 tests — vCard parsing, upload storage, slugify, birthday parsing, commit integration
+- **Total**: 142 passing, 1 skipped
+
+### Dependencies
+- Added `duckduckgo-search>=7.0.0` to requirements.txt
+
+### Files Changed
+- `agent/agent.py` — Tool loop, `_process_tool_calls()`, `_log_tool_call()`
+- `agent/threads/form/tools/scanner.py` — New
+- `agent/threads/form/tools/registry.py` — SAFE_ACTIONS, BLOCKED_ACTIONS, `is_action_safe()`
+- `agent/threads/form/adapter.py` — Tool-use instructions in introspect()
+- `agent/threads/form/tools/executables/file_read.py` — New
+- `agent/threads/form/tools/executables/file_write.py` — New
+- `agent/threads/form/tools/executables/terminal.py` — New
+- `agent/threads/form/tools/executables/web_search.py` — New
+- `agent/services/agent_service.py` — on_tool_event forwarding
+- `chat/api.py` — WebSocket tool event callback
+- `frontend/src/modules/chat/components/MessageList.tsx` — Tool block rendering
+- `frontend/src/modules/chat/components/MessageList.css` — Tool block styles
+- `agent/threads/identity/import_contacts.py` — Rewritten for vCard
+- `frontend/src/modules/identity/components/ContactsImportModal.tsx` — New
+- `tests/test_tool_calling.py` — New (42 tests)
+- `tests/test_contacts_import.py` — New (19 tests)
+
+---
+
 ## 2026-02-01 — Feeds Architecture & Daemon Setup
 
 ### Infrastructure: Production-Ready Daemon

@@ -357,6 +357,126 @@ def get_runnable_tools() -> List[ToolDefinition]:
 
 
 # ============================================================================
+# SAFETY ALLOWLIST
+# ============================================================================
+
+# Actions that auto-execute without user approval
+SAFE_ACTIONS: Dict[str, List[str]] = {
+    "file_read": ["read_file", "list_directory", "search_files"],
+    "web_search": ["search", "get_results"],
+    "terminal": ["get_output"],
+    "file_write": ["create_directory"],
+    "memory_identity": ["get_identity", "list_keys"],
+    "memory_philosophy": ["get_beliefs", "list_values"],
+    "memory_log": ["search_logs", "get_recent", "get_session"],
+    "memory_linking": ["spread_activate", "find_related"],
+    "introspect": ["get_context", "get_recent_thoughts", "get_active_threads"],
+}
+
+# Actions that are blocked by default (require user to toggle allowed)
+BLOCKED_ACTIONS: Dict[str, List[str]] = {
+    "terminal": ["run_command", "kill_process"],
+    "file_write": ["write_file", "append_file"],
+}
+
+
+def is_action_safe(tool_name: str, action: str) -> bool:
+    """Check if a tool action can auto-execute.
+    
+    Safe actions run immediately.
+    Blocked/unknown actions are denied — the LLM sees the denial
+    and can tell the user what it wanted to do.
+    
+    This is an extra layer: the executor already checks the
+    `allowed` DB flag per-tool. This adds per-action granularity.
+    """
+    safe = SAFE_ACTIONS.get(tool_name, [])
+    return action in safe
+
+
+# ============================================================================
+# OLLAMA JSON TOOL CALLING SCHEMA
+# ============================================================================
+
+# Parameter schemas for each action (tool__action) used when building
+# Ollama JSON tool specs.  Only actions listed in SAFE_ACTIONS are exported.
+_ACTION_PARAM_SCHEMAS: Dict[str, Dict[str, str]] = {
+    # file_read
+    "file_read__read_file":        {"path": "File path relative to workspace root"},
+    "file_read__list_directory":   {"path": "Directory path to list (default '.')"},
+    "file_read__search_files":     {"pattern": "Glob pattern e.g. *.py",
+                                    "directory": "Start directory (default '.')"},
+    # file_write
+    "file_write__write_file":      {"path": "File path to write",
+                                    "content": "Content to write"},
+    "file_write__append_file":     {"path": "File path to append to",
+                                    "content": "Content to append"},
+    "file_write__create_directory":{"path": "Directory path to create"},
+    # terminal
+    "terminal__run_command":       {"command": "Shell command to execute"},
+    "terminal__get_output":        {},
+    # web_search
+    "web_search__search":          {"query": "Search query string"},
+    "web_search__get_results":     {},
+    # memory
+    "memory_identity__get_identity":   {"key": "Optional fact key to retrieve"},
+    "memory_identity__list_keys":      {},
+    "memory_log__search_logs":         {"query": "Search string"},
+    "memory_log__get_recent":          {"limit": "Number of events (default 10)"},
+    "memory_log__get_session":         {},
+    "memory_linking__spread_activate": {"concept": "Concept name to activate"},
+    "memory_linking__find_related":    {"concept": "Concept name to find links for"},
+}
+
+
+def to_ollama_tools(tools: Optional[List[ToolDefinition]] = None) -> List[Dict[str, Any]]:
+    """Convert tool definitions to Ollama JSON tool calling format.
+
+    Only exports actions present in SAFE_ACTIONS — the same set the
+    text-native path auto-executes — so the safety contract is identical
+    regardless of which calling mode is active.
+
+    Function name format: ``{tool_name}__{action_name}``
+    (double underscore; Ollama function names must be flat strings)
+
+    Returns a list ready to pass as ``tools=`` in ``ollama.chat()``.
+    """
+    if tools is None:
+        tools = get_runnable_tools()
+
+    result: List[Dict[str, Any]] = []
+    for tool in tools:
+        safe = SAFE_ACTIONS.get(tool.name, [])
+        for action in tool.actions:
+            if action not in safe:
+                continue
+
+            fn_name = f"{tool.name}__{action}"
+            param_descs = _ACTION_PARAM_SCHEMAS.get(fn_name, {})
+
+            properties: Dict[str, Any] = {}
+            required: List[str] = []
+            for param, desc in param_descs.items():
+                properties[param] = {"type": "string", "description": desc}
+                required.append(param)
+
+            result.append({
+                "type": "function",
+                "function": {
+                    "name": fn_name,
+                    "description": f"{tool.description} — {action}",
+                    "parameters": {
+                        "type": "object",
+                        "properties": properties,
+                        "required": required,
+                    },
+                },
+            })
+
+    return result
+
+
+# ============================================================================
 # TOOL PROMPT GENERATION
 # ============================================================================
 
@@ -411,4 +531,8 @@ __all__ = [
     "get_runnable_tools",
     "check_tool_availability",
     "format_tools_for_prompt",
+    "SAFE_ACTIONS",
+    "BLOCKED_ACTIONS",
+    "is_action_safe",
+    "to_ollama_tools",
 ]
