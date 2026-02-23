@@ -189,7 +189,7 @@ The agent doesn't "think it's X." In its supplied reality, its identity is simpl
 
 ## 4. Core Innovations
 
-### 4.1 Learned Focus ("Focus is all you need")
+### 4.1 Learned Focus ("Focus is the next attention")
 
 Moving beyond "Attention is all you need," we use a persistent database as a control plane that learns key sequences to pre-select context before the LLM sees it.
 

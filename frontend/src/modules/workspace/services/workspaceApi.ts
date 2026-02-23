@@ -2,7 +2,9 @@ import type {
   WorkspaceFile, 
   FileUploadRequest, 
   FileMoveRequest,
-  CreateFolderRequest 
+  CreateFolderRequest,
+  FileMeta,
+  SearchResult,
 } from '../types/workspace';
 import { API_CONFIG } from '../utils/constants';
 
@@ -136,6 +138,60 @@ class WorkspaceAPIService {
       throw new Error(`Failed to download file: ${response.status}`);
     }
 
+    return response.blob();
+  }
+
+  /**
+   * Get file metadata + text content + summary as JSON
+   */
+  async getFileMeta(path: string): Promise<FileMeta> {
+    const response = await fetch(
+      `${this.baseUrl}/api/workspace/file/meta?path=${encodeURIComponent(path)}`
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to get file meta: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Summarize a file using the LLM
+   */
+  async summarizeFile(path: string): Promise<string> {
+    const response = await fetch(
+      `${this.baseUrl}/api/workspace/summarize?path=${encodeURIComponent(path)}`,
+      { method: 'POST' }
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to summarize file: ${response.status}`);
+    }
+    const data = await response.json();
+    return data.summary;
+  }
+
+  /**
+   * Full-text search across workspace files
+   */
+  async searchFiles(query: string, limit: number = 20): Promise<SearchResult[]> {
+    const response = await fetch(
+      `${this.baseUrl}/api/workspace/search?q=${encodeURIComponent(query)}&limit=${limit}`
+    );
+    if (!response.ok) {
+      throw new Error(`Search failed: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Get raw file content as a blob (for images, downloads)
+   */
+  async getFileBlob(path: string): Promise<Blob> {
+    const response = await fetch(
+      `${this.baseUrl}/api/workspace/file?path=${encodeURIComponent(path)}`
+    );
+    if (!response.ok) {
+      throw new Error(`Failed to get file: ${response.status}`);
+    }
     return response.blob();
   }
 }

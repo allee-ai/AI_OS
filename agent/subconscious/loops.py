@@ -1053,9 +1053,418 @@ class HealthLoop(BackgroundLoop):
             pass  # Best effort
 
 
+# ─────────────────────────────────────────────────────────────
+# Custom Chain-of-Thought Loops
+# ─────────────────────────────────────────────────────────────
+
+# Valid sources for custom loops
+CUSTOM_LOOP_SOURCES = [
+    "convos",        # Conversation turns
+    "feeds",         # Feed items
+    "temp_memory",   # Pending facts
+    "identity",      # Identity thread facts
+    "philosophy",    # Philosophy thread facts
+    "log",           # Log events
+    "workspace",     # Workspace files
+]
+
+# Valid targets for custom loop output
+CUSTOM_LOOP_TARGETS = [
+    "temp_memory",   # Store as temp facts for review
+    "log",           # Write to log thread
+]
+
+
+def _ensure_custom_loops_table() -> None:
+    """Create custom_loops table if it doesn't exist."""
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS custom_loops (
+                    name TEXT PRIMARY KEY,
+                    source TEXT NOT NULL,
+                    target TEXT NOT NULL DEFAULT 'temp_memory',
+                    interval_seconds REAL NOT NULL DEFAULT 300,
+                    model TEXT,
+                    prompt TEXT NOT NULL,
+                    enabled INTEGER NOT NULL DEFAULT 1,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+                )
+            """)
+            conn.commit()
+    except Exception as e:
+        print(f"[CustomLoop] Failed to create table: {e}")
+
+
+def save_custom_loop_config(
+    name: str,
+    source: str,
+    target: str,
+    interval: float,
+    model: Optional[str],
+    prompt: str,
+    enabled: bool = True,
+) -> Dict[str, Any]:
+    """Save or update a custom loop config in the database."""
+    _ensure_custom_loops_table()
+    
+    if source not in CUSTOM_LOOP_SOURCES:
+        raise ValueError(f"Invalid source '{source}'. Must be one of: {CUSTOM_LOOP_SOURCES}")
+    if target not in CUSTOM_LOOP_TARGETS:
+        raise ValueError(f"Invalid target '{target}'. Must be one of: {CUSTOM_LOOP_TARGETS}")
+    if interval < 5:
+        raise ValueError("Interval must be >= 5 seconds")
+    if not prompt.strip():
+        raise ValueError("Prompt cannot be empty")
+    if not name.strip():
+        raise ValueError("Name cannot be empty")
+    
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            conn.execute("""
+                INSERT OR REPLACE INTO custom_loops
+                    (name, source, target, interval_seconds, model, prompt, enabled, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            """, (name.strip(), source, target, interval, model, prompt.strip(), int(enabled)))
+            conn.commit()
+        
+        return {
+            "name": name.strip(),
+            "source": source,
+            "target": target,
+            "interval_seconds": interval,
+            "model": model,
+            "prompt": prompt.strip(),
+            "enabled": enabled,
+        }
+    except Exception as e:
+        raise RuntimeError(f"Failed to save custom loop: {e}")
+
+
+def get_custom_loop_configs() -> List[Dict[str, Any]]:
+    """Get all custom loop configs from the database."""
+    _ensure_custom_loops_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT name, source, target, interval_seconds, model, prompt, enabled, created_at, updated_at FROM custom_loops")
+            rows = cur.fetchall()
+            return [
+                {
+                    "name": r[0], "source": r[1], "target": r[2],
+                    "interval_seconds": r[3], "model": r[4], "prompt": r[5],
+                    "enabled": bool(r[6]), "created_at": r[7], "updated_at": r[8],
+                }
+                for r in rows
+            ]
+    except Exception:
+        return []
+
+
+def get_custom_loop_config(name: str) -> Optional[Dict[str, Any]]:
+    """Get a single custom loop config by name."""
+    configs = get_custom_loop_configs()
+    for c in configs:
+        if c["name"] == name:
+            return c
+    return None
+
+
+def delete_custom_loop_config(name: str) -> bool:
+    """Delete a custom loop config from the database."""
+    _ensure_custom_loops_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM custom_loops WHERE name = ?", (name,))
+            conn.commit()
+            return cur.rowcount > 0
+    except Exception:
+        return False
+
+
+class CustomLoop(BackgroundLoop):
+    """
+    User-defined chain-of-thought loop.
+    
+    Reads from a source, passes through an LLM with a custom prompt,
+    and writes results to a target.
+    
+    Sources: convos, feeds, temp_memory, identity, philosophy, log, workspace
+    Targets: temp_memory, log
+    """
+    
+    def __init__(
+        self,
+        name: str,
+        source: str,
+        target: str = "temp_memory",
+        interval: float = 300.0,
+        model: Optional[str] = None,
+        prompt: str = "",
+        enabled: bool = True,
+    ):
+        config = LoopConfig(
+            interval_seconds=interval,
+            name=name,
+            enabled=enabled,
+        )
+        super().__init__(config, self._run_chain)
+        self.source = source
+        self.target = target
+        self._model = model
+        self.prompt = prompt
+    
+    @property
+    def model(self) -> str:
+        """Get the model used for this loop."""
+        import os
+        if self._model:
+            return self._model
+        return os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+    
+    @model.setter
+    def model(self, value: str) -> None:
+        self._model = value
+    
+    @property
+    def stats(self) -> Dict[str, Any]:
+        base = super().stats
+        base["source"] = self.source
+        base["target"] = self.target
+        base["model"] = self.model
+        base["prompt_preview"] = self.prompt[:80] + ("..." if len(self.prompt) > 80 else "")
+        base["is_custom"] = True
+        return base
+    
+    def to_config_dict(self) -> Dict[str, Any]:
+        """Serialize this loop's configuration for API responses."""
+        return {
+            "name": self.config.name,
+            "source": self.source,
+            "target": self.target,
+            "interval_seconds": self.config.interval_seconds,
+            "model": self._model,
+            "prompt": self.prompt,
+            "enabled": self.config.enabled,
+        }
+    
+    def _read_source(self) -> List[str]:
+        """Read content from the configured source."""
+        items = []
+        try:
+            if self.source == "convos":
+                from data.db import get_connection
+                from contextlib import closing
+                with closing(get_connection(readonly=True)) as conn:
+                    cur = conn.cursor()
+                    cur.execute("""
+                        SELECT user_message, assistant_message
+                        FROM convo_turns
+                        ORDER BY id DESC LIMIT 10
+                    """)
+                    for row in cur.fetchall():
+                        text = f"User: {row[0]}"
+                        if row[1]:
+                            text += f"\nAssistant: {row[1]}"
+                        items.append(text)
+            
+            elif self.source == "feeds":
+                from data.db import get_connection
+                from contextlib import closing
+                with closing(get_connection(readonly=True)) as conn:
+                    cur = conn.cursor()
+                    cur.execute("""
+                        SELECT title, content FROM feed_items
+                        ORDER BY created_at DESC LIMIT 10
+                    """)
+                    for row in cur.fetchall():
+                        items.append(f"{row[0]}: {row[1][:200]}" if row[1] else row[0])
+            
+            elif self.source == "temp_memory":
+                from agent.subconscious.temp_memory import get_all_pending
+                for fact in get_all_pending()[:20]:
+                    items.append(f"[{fact.status}] {fact.text}")
+            
+            elif self.source == "identity":
+                from agent.threads.identity.schema import pull_profile_facts
+                facts = pull_profile_facts(limit=20)
+                for f in facts:
+                    items.append(f"{f.get('key', '')}: {f.get('l1_value', '')}")
+            
+            elif self.source == "philosophy":
+                from agent.threads.philosophy.schema import pull_philosophy_profile_facts
+                facts = pull_philosophy_profile_facts(limit=20)
+                for f in facts:
+                    items.append(f"{f.get('key', '')}: {f.get('l1_value', '')}")
+            
+            elif self.source == "log":
+                from agent.threads.log import get_recent_events
+                events = get_recent_events(limit=20)
+                for e in events:
+                    items.append(f"[{e.get('timestamp', '')}] {e.get('event_type', '')}: {e.get('description', '')}")
+            
+            elif self.source == "workspace":
+                from workspace.schema import list_workspace_files
+                files = list_workspace_files()
+                for f in files[:10]:
+                    items.append(f"{f.get('path', '')}: {f.get('description', '')}")
+        
+        except Exception as e:
+            print(f"[CustomLoop:{self.config.name}] Source read error: {e}")
+        
+        return items
+    
+    def _write_target(self, results: List[Dict[str, Any]]) -> int:
+        """Write processed results to the configured target. Returns count written."""
+        written = 0
+        try:
+            if self.target == "temp_memory":
+                from agent.subconscious.temp_memory import add_fact
+                for result in results:
+                    add_fact(
+                        session_id=f"custom:{self.config.name}",
+                        text=result.get("text", ""),
+                        source=f"loop:{self.config.name}",
+                        metadata={
+                            "hier_key": result.get("key", f"custom.{self.config.name}"),
+                            "confidence": result.get("confidence", 0.5),
+                        }
+                    )
+                    written += 1
+            
+            elif self.target == "log":
+                from agent.threads.log import log_event
+                for result in results:
+                    log_event(
+                        f"custom:{self.config.name}",
+                        "custom_loop",
+                        result.get("text", ""),
+                    )
+                    written += 1
+        
+        except Exception as e:
+            print(f"[CustomLoop:{self.config.name}] Target write error: {e}")
+        
+        return written
+    
+    def _run_chain(self) -> None:
+        """Execute the chain-of-thought: read source → LLM → write target."""
+        # 1. Read from source
+        source_items = self._read_source()
+        if not source_items:
+            return
+        
+        # 2. Build prompt with source content
+        source_text = "\n---\n".join(source_items)
+        full_prompt = f"""{self.prompt}
+
+SOURCE DATA:
+\"\"\"
+{source_text}
+\"\"\"
+
+Output a Python list of dicts with "key" and "text" fields.
+If nothing worth noting, output: []
+
+Python list:"""
+        
+        # 3. Call LLM
+        try:
+            import ollama
+            response = ollama.chat(
+                model=self.model,
+                messages=[{"role": "user", "content": full_prompt}],
+                options={"temperature": 0.1}
+            )
+            raw = response["message"]["content"].strip()
+            
+            # 4. Parse results
+            import ast
+            results = self._parse_results(raw)
+            
+            # 5. Write to target
+            if results:
+                written = self._write_target(results)
+                try:
+                    from agent.threads.log import log_event
+                    log_event(
+                        f"custom:{self.config.name}",
+                        "custom_loop",
+                        f"Processed {len(source_items)} items, wrote {written} results"
+                    )
+                except Exception:
+                    pass
+        
+        except ImportError:
+            print(f"[CustomLoop:{self.config.name}] ollama not installed")
+        except Exception as e:
+            print(f"[CustomLoop:{self.config.name}] LLM error: {e}")
+    
+    def _parse_results(self, raw: str) -> List[Dict[str, Any]]:
+        """Parse LLM output into list of result dicts."""
+        import ast
+        
+        if not raw:
+            return []
+        
+        raw = raw.strip()
+        
+        # Extract from code block
+        code_match = re.search(r'```(?:python)?\s*([\s\S]*?)```', raw)
+        if code_match:
+            raw = code_match.group(1).strip()
+        
+        # Find the list
+        list_start = raw.find('[')
+        if list_start < 0:
+            return []
+        raw = raw[list_start:]
+        
+        # Find matching bracket
+        bracket_count = 0
+        end_pos = 0
+        for i, char in enumerate(raw):
+            if char == '[':
+                bracket_count += 1
+            elif char == ']':
+                bracket_count -= 1
+                if bracket_count == 0:
+                    end_pos = i + 1
+                    break
+        if end_pos > 0:
+            raw = raw[:end_pos]
+        
+        try:
+            result = ast.literal_eval(raw)
+            if isinstance(result, list):
+                return [r for r in result if isinstance(r, dict) and r.get("text")]
+        except (ValueError, SyntaxError):
+            pass
+        
+        try:
+            fixed = raw.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+            result = ast.literal_eval(fixed)
+            if isinstance(result, list):
+                return [r for r in result if isinstance(r, dict) and r.get("text")]
+        except (ValueError, SyntaxError):
+            pass
+        
+        return []
+
+
 class LoopManager:
     """
-    Manages all background loops.
+    Manages all background loops (built-in + custom).
     
     Provides unified start/stop and status reporting.
     """
@@ -1066,6 +1475,15 @@ class LoopManager:
     def add(self, loop: BackgroundLoop) -> None:
         """Add a loop to be managed."""
         self._loops.append(loop)
+    
+    def remove(self, name: str) -> bool:
+        """Remove and stop a loop by name."""
+        for i, loop in enumerate(self._loops):
+            if loop.config.name == name:
+                loop.stop()
+                self._loops.pop(i)
+                return True
+        return False
     
     def start_all(self) -> None:
         """Start all managed loops."""
@@ -1087,6 +1505,30 @@ class LoopManager:
             if loop.config.name == name:
                 return loop
         return None
+    
+    def load_custom_loops(self) -> int:
+        """Load custom loops from DB and add them to the manager. Returns count loaded."""
+        configs = get_custom_loop_configs()
+        loaded = 0
+        for cfg in configs:
+            if not cfg["enabled"]:
+                continue
+            # Skip if already loaded
+            if self.get_loop(cfg["name"]):
+                continue
+            loop = CustomLoop(
+                name=cfg["name"],
+                source=cfg["source"],
+                target=cfg["target"],
+                interval=cfg["interval_seconds"],
+                model=cfg["model"],
+                prompt=cfg["prompt"],
+                enabled=cfg["enabled"],
+            )
+            self.add(loop)
+            loop.start()
+            loaded += 1
+        return loaded
 
 
 def create_default_loops() -> LoopManager:
@@ -1101,6 +1543,13 @@ def create_default_loops() -> LoopManager:
     manager.add(ConsolidationLoop()) # Promote approved facts
     manager.add(SyncLoop())          # Sync state across threads
     manager.add(HealthLoop())        # Monitor thread health
+    
+    # Load user-defined custom loops from DB
+    try:
+        manager.load_custom_loops()
+    except Exception as e:
+        print(f"⚠️ Failed to load custom loops: {e}")
+    
     return manager
 
 
@@ -1112,6 +1561,13 @@ __all__ = [
     "ConsolidationLoop",
     "SyncLoop",
     "HealthLoop",
+    "CustomLoop",
     "LoopManager",
     "create_default_loops",
+    "CUSTOM_LOOP_SOURCES",
+    "CUSTOM_LOOP_TARGETS",
+    "save_custom_loop_config",
+    "get_custom_loop_configs",
+    "get_custom_loop_config",
+    "delete_custom_loop_config",
 ]

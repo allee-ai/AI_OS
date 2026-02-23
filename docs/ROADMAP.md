@@ -48,9 +48,9 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| **1. Memory** | Facts get promoted based on importance | 90% |
+| **1. Memory** | Facts get promoted based on importance | 95% |
 | **1b. Tool Calling** | Agent executes tools via text-native protocol | Done (core) |
-| **2. Philosophy** | Moral compass, value-guided behavior | Planned |
+| **2. Philosophy** | Moral compass, value-guided behavior | Foundation done |
 | **3. Reflex** | Visual automation, 10x pattern learning | Planned |
 | **4. Dream** | Personality through synthetic experience | Planned |
 | **5. Multi-Model** | Right model for right task | Planned |
@@ -107,7 +107,7 @@ _Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md
 
 ### Starter tasks
 - [ ] Pre-populate common ethical bounds (harm prevention, privacy, consent)
-- [ ] Philosophy introspection shows active constraints in STATE
+- [x] Philosophy introspection shows active constraints in STATE
 <!-- /INCLUDE:philosophy:ROADMAP -->
 
 ---
@@ -208,7 +208,7 @@ _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/READM
 _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 
 ### Ready for contributors
-- [ ] **Loop Editor Dashboard** — Visual editor for background loops:
+- [x] **Loop Editor Dashboard** — Visual editor for background loops:
   - View running loops with status indicators
   - Edit loop parameters (interval, enabled/disabled)
   - Live logs per loop
@@ -216,14 +216,14 @@ _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
   - Set max iterations per loop
   - Configure max tokens per iteration
   - Cutoff conditions (confidence threshold, diminishing returns)
-- [ ] **Context compression** — Smarter token budgeting per thread
+- [x] **Context compression** — Token budgeting per thread via _budget_fill()
 - [ ] **Priority queue** — Urgent facts surface first
 - [ ] **Dream mode** — Background processing during idle
 - [ ] **Attention visualization** — Show what's in context
 
 ### Starter tasks
-- [ ] Add loop status indicators in UI
-- [ ] Configurable loop intervals
+- [x] Add loop status indicators in UI
+- [x] Configurable loop intervals
 - [ ] Loop execution history view
 <!-- /INCLUDE:subconscious:ROADMAP -->
 
@@ -255,16 +255,16 @@ _Source: [chat/README.md](chat/README.md)_
 ### Ready for contributors
 - [ ] **Import pipeline repair** — Fix and improve `import_convos.py` reliability
 - [ ] **Smart import helper** — Chat-aware LLM that assists with import errors at runtime ("this file failed, here's why, let me fix it")
-- [ ] **Conversation archiving** — Archive old convos without deleting, restore on demand
+- [x] **Conversation archiving** — Archive old convos without deleting, restore on demand
 - [ ] **Import directory organization** — Separate imports by source (`imported/claude/`, `imported/gpt/`, `imported/copilot/`)
 - [ ] **Sidebar directory visibility** — Show import folders in sidebar, collapsible by source
-- [ ] **Conversation search** — Full-text search across history
+- [x] **Conversation search** — Full-text search across history
 - [ ] **Branching** — Create conversation forks
 - [ ] **Export** — Export to markdown/JSON
 - [ ] **Tags/categories** — Organize conversations
 
 ### Starter tasks
-- [ ] Add conversation summary generation
+- [x] Add conversation summary generation
 - [ ] Show message timestamps
 - [ ] Import source badges on conversation cards
 <!-- /INCLUDE:chat:ROADMAP -->
@@ -277,10 +277,10 @@ _Source: [chat/README.md](chat/README.md)_
 _Source: [Feeds/README.md](Feeds/README.md)_
 
 ### Ready for contributors
-- [ ] **Gmail adapter** — OAuth2 flow, draft creation
+- [x] **Gmail adapter** — OAuth2 flow, draft creation
 - [ ] **Slack adapter** — Bot token auth, message polling
 - [ ] **SMS adapter** — Twilio integration
-- [ ] **Discord adapter** — Bot token, channel watching
+- [x] **Discord adapter** — Bot token, channel watching
 
 ### Starter tasks
 - [ ] Create gmail.yaml from template
@@ -295,17 +295,17 @@ _Source: [Feeds/README.md](Feeds/README.md)_
 _Source: [workspace/README.md](workspace/README.md)_
 
 ### Ready for contributors
-- [ ] **File rendering** — Type-aware rendering for JSON, PY, DOCX, MD, and more
+- [x] **File rendering** — Type-aware rendering for text, code, markdown, images
 - [ ] **In-browser editing** — Edit files directly in workspace UI with syntax highlighting
-- [ ] **Auto-summarization** — Generate L1/L2 summaries on upload, append to `summary` column for fast retrieval
-- [ ] **Full-text search** — Search within file contents
+- [x] **Auto-summarization** — LLM-powered summaries stored in summary column
+- [x] **Full-text search** — FTS5 search within file contents
 - [ ] **Agent reference** — Agent cites specific files in responses
 - [ ] **Version history** — Track file changes over time
 - [ ] **Sharing** — Share files with external users
 
 ### Starter tasks
-- [ ] Add file preview (markdown, code)
-- [ ] Show file metadata (size, modified)
+- [x] Add file preview (markdown, code)
+- [x] Show file metadata (size, modified)
 - [ ] File type icons in list view
 <!-- /INCLUDE:workspace:ROADMAP -->
 

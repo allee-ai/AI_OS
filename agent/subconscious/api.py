@@ -246,6 +246,29 @@ async def get_loops_status():
         }
 
 
+@router.get("/loops/custom")
+async def list_custom_loops():
+    """List all custom loop configurations."""
+    from .loops import get_custom_loop_configs, CUSTOM_LOOP_SOURCES, CUSTOM_LOOP_TARGETS
+    
+    configs = get_custom_loop_configs()
+    
+    # Augment with runtime stats if loops are running
+    from . import _loop_manager
+    if _loop_manager:
+        for cfg in configs:
+            loop = _loop_manager.get_loop(cfg["name"])
+            if loop:
+                cfg["runtime"] = loop.stats
+    
+    return {
+        "custom_loops": configs,
+        "count": len(configs),
+        "available_sources": CUSTOM_LOOP_SOURCES,
+        "available_targets": CUSTOM_LOOP_TARGETS,
+    }
+
+
 @router.get("/loops/{loop_name}")
 async def get_loop_status(loop_name: str):
     """Get status of a specific loop."""
@@ -514,6 +537,25 @@ async def get_unprocessed_queue():
     }
 
 
+@router.post("/preview")
+async def preview_state(body: dict):
+    """
+    Preview the STATE block for a given query without sending to LLM.
+    
+    Returns thread scores, the full state block, and token estimate.
+    Used by the dashboard test panel.
+    """
+    query = body.get("query", "").strip()
+    if not query:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Query is required")
+    
+    from .orchestrator import get_subconscious
+    sub = get_subconscious()
+    result = sub.preview_state(query)
+    return result
+
+
 @router.get("/potentiation")
 async def get_potentiation_status():
     """Get concept link potentiation stats (SHORT vs LONG)."""
@@ -541,3 +583,123 @@ async def trigger_consolidation():
     except Exception as e:
         from fastapi import HTTPException
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────
+# Custom Loop CRUD Endpoints
+# ─────────────────────────────────────────────────────────────
+
+@router.post("/loops/custom")
+async def create_custom_loop(body: dict):
+    """
+    Create a new custom chain-of-thought loop.
+    
+    Required: name, source, prompt
+    Optional: target (default: temp_memory), interval (default: 300), model, enabled
+    """
+    from .loops import save_custom_loop_config, CustomLoop
+    from . import _loop_manager
+    
+    name = body.get("name", "").strip()
+    source = body.get("source", "").strip()
+    prompt = body.get("prompt", "").strip()
+    target = body.get("target", "temp_memory").strip()
+    interval = body.get("interval", 300)
+    model = body.get("model") or None
+    enabled = body.get("enabled", True)
+    
+    if not name or not source or not prompt:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="name, source, and prompt are required")
+    
+    # Check for name conflict with built-in loops
+    builtin_names = {"memory", "consolidation", "sync", "health"}
+    if name in builtin_names:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"'{name}' conflicts with a built-in loop name")
+    
+    try:
+        config = save_custom_loop_config(
+            name=name, source=source, target=target,
+            interval=float(interval), model=model,
+            prompt=prompt, enabled=enabled,
+        )
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    # Start the loop if enabled and manager is available
+    if enabled and _loop_manager:
+        # Remove old version if exists
+        _loop_manager.remove(name)
+        loop = CustomLoop(
+            name=name, source=source, target=target,
+            interval=float(interval), model=model,
+            prompt=prompt, enabled=enabled,
+        )
+        _loop_manager.add(loop)
+        loop.start()
+    
+    return {"status": "created", "loop": config}
+
+
+@router.put("/loops/custom/{loop_name}")
+async def update_custom_loop(loop_name: str, body: dict):
+    """Update an existing custom loop's configuration."""
+    from .loops import get_custom_loop_config, save_custom_loop_config, CustomLoop
+    from . import _loop_manager
+    
+    existing = get_custom_loop_config(loop_name)
+    if not existing:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Custom loop '{loop_name}' not found")
+    
+    # Merge with existing config
+    source = body.get("source", existing["source"])
+    target = body.get("target", existing["target"])
+    interval = body.get("interval", existing["interval_seconds"])
+    model = body.get("model", existing["model"])
+    prompt = body.get("prompt", existing["prompt"])
+    enabled = body.get("enabled", existing["enabled"])
+    
+    try:
+        config = save_custom_loop_config(
+            name=loop_name, source=source, target=target,
+            interval=float(interval), model=model,
+            prompt=prompt, enabled=enabled,
+        )
+    except ValueError as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=str(e))
+    
+    # Restart the loop with new config
+    if _loop_manager:
+        _loop_manager.remove(loop_name)
+        if enabled:
+            loop = CustomLoop(
+                name=loop_name, source=source, target=target,
+                interval=float(interval), model=model,
+                prompt=prompt, enabled=enabled,
+            )
+            _loop_manager.add(loop)
+            loop.start()
+    
+    return {"status": "updated", "loop": config}
+
+
+@router.delete("/loops/custom/{loop_name}")
+async def delete_custom_loop(loop_name: str):
+    """Delete a custom loop entirely."""
+    from .loops import delete_custom_loop_config
+    from . import _loop_manager
+    
+    # Stop it if running
+    if _loop_manager:
+        _loop_manager.remove(loop_name)
+    
+    success = delete_custom_loop_config(loop_name)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Custom loop '{loop_name}' not found")
+    
+    return {"status": "deleted", "loop": loop_name}

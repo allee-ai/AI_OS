@@ -47,17 +47,17 @@ workspace/
 
 <!-- ROADMAP:workspace -->
 ### Ready for contributors
-- [ ] **File rendering** — Type-aware rendering for JSON, PY, DOCX, MD, and more
+- [x] **File rendering** — Type-aware rendering for text, code, markdown, images
 - [ ] **In-browser editing** — Edit files directly in workspace UI with syntax highlighting
-- [ ] **Auto-summarization** — Generate L1/L2 summaries on upload, append to `summary` column for fast retrieval
-- [ ] **Full-text search** — Search within file contents
+- [x] **Auto-summarization** — LLM-powered summaries stored in summary column
+- [x] **Full-text search** — FTS5 search within file contents
 - [ ] **Agent reference** — Agent cites specific files in responses
 - [ ] **Version history** — Track file changes over time
 - [ ] **Sharing** — Share files with external users
 
 ### Starter tasks
-- [ ] Add file preview (markdown, code)
-- [ ] Show file metadata (size, modified)
+- [x] Add file preview (markdown, code)
+- [x] Show file metadata (size, modified)
 - [ ] File type icons in list view
 <!-- /ROADMAP:workspace -->
 

@@ -79,6 +79,12 @@ def init_workspace_tables():
             )
         """)
         
+        # Add summary column if missing (migration)
+        try:
+            cursor.execute("ALTER TABLE workspace_files ADD COLUMN summary TEXT")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
         # Indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_ws_parent ON workspace_files(parent_path)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_ws_mime ON workspace_files(mime_type)")
@@ -247,7 +253,7 @@ def list_directory(path: str = '/') -> List[Dict[str, Any]]:
         path = normalize_path(path)
         
         cursor.execute("""
-            SELECT path, name, is_folder, mime_type, size, modified_at
+            SELECT path, name, is_folder, mime_type, size, modified_at, summary
             FROM workspace_files 
             WHERE parent_path = ?
             ORDER BY is_folder DESC, name ASC
@@ -259,7 +265,8 @@ def list_directory(path: str = '/') -> List[Dict[str, Any]]:
             "is_folder": bool(row[2]),
             "mime_type": row[3],
             "size": row[4],
-            "modified_at": row[5]
+            "modified_at": row[5],
+            "summary": row[6],
         } for row in cursor.fetchall()]
     return result
 
@@ -492,6 +499,90 @@ def get_workspace_stats() -> Dict[str, Any]:
         "chunks": chunk_count,
         "indexed_files": indexed_count
     }
+
+
+# ─────────────────────────────────────────────────────────────
+# Summary & Metadata helpers
+# ─────────────────────────────────────────────────────────────
+
+def update_file_summary(path: str, summary: str) -> bool:
+    """Store an LLM-generated summary for a file."""
+    with closing(get_connection()) as conn:
+        cursor = conn.cursor()
+        path = normalize_path(path)
+        cursor.execute(
+            "UPDATE workspace_files SET summary = ? WHERE path = ?",
+            (summary, path),
+        )
+        updated = cursor.rowcount > 0
+        conn.commit()
+    return updated
+
+
+def get_file_summary(path: str) -> Optional[str]:
+    """Get the stored summary for a file."""
+    with closing(get_connection(readonly=True)) as conn:
+        cursor = conn.cursor()
+        path = normalize_path(path)
+        cursor.execute("SELECT summary FROM workspace_files WHERE path = ?", (path,))
+        row = cursor.fetchone()
+    return row[0] if row else None
+
+
+def get_all_files_metadata(limit: int = 50) -> List[Dict[str, Any]]:
+    """Get metadata for all files (L1 context).
+    
+    Returns path, size, modified_at, mime_type, summary for each file.
+    Sorted by most recently modified.
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT path, name, size, modified_at, mime_type, summary
+            FROM workspace_files
+            WHERE is_folder = 0
+            ORDER BY modified_at DESC
+            LIMIT ?
+        """, (limit,))
+        return [
+            {
+                "path": row[0],
+                "name": row[1],
+                "size": row[2],
+                "modified_at": row[3],
+                "mime_type": row[4],
+                "summary": row[5],
+            }
+            for row in cursor.fetchall()
+        ]
+
+
+def search_file_content(path: str, query: str, max_snippets: int = 3) -> List[str]:
+    """Search within a specific file's chunks for query matches.
+    
+    Returns matching snippet strings for L3 context.
+    """
+    with closing(get_connection(readonly=True)) as conn:
+        cursor = conn.cursor()
+        path = normalize_path(path)
+        # Get file id
+        cursor.execute("SELECT id FROM workspace_files WHERE path = ?", (path,))
+        row = cursor.fetchone()
+        if not row:
+            return []
+        file_id = row[0]
+        # Search chunks via FTS
+        try:
+            cursor.execute("""
+                SELECT snippet(workspace_fts, 0, '', '', '...', 20)
+                FROM workspace_fts fts
+                JOIN workspace_chunks wc ON fts.rowid = wc.id
+                WHERE wc.file_id = ? AND workspace_fts MATCH ?
+                LIMIT ?
+            """, (file_id, query, max_snippets))
+            return [row[0] for row in cursor.fetchall()]
+        except Exception:
+            return []
 
 
 # Initialize on import

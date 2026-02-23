@@ -225,6 +225,84 @@ class TestWorkspaceInContext:
         assert "== END STATE ==" in state
 
 
+# ─── Score-driven state variation ─────────────────────────────────────────
+
+class TestScoreDrivenState:
+    """Verify that different scores produce different STATE blocks."""
+
+    def test_different_scores_produce_different_state(self):
+        """Mocked high-identity vs high-log scores should differ."""
+        from agent.subconscious.orchestrator import get_subconscious
+
+        sub = get_subconscious()
+
+        # High identity relevance
+        scores_identity = {t: 1.0 for t in ["identity", "log", "form", "philosophy", "reflex", "linking_core"]}
+        scores_identity["identity"] = 9.5
+
+        # High log relevance
+        scores_log = {t: 1.0 for t in ["identity", "log", "form", "philosophy", "reflex", "linking_core"]}
+        scores_log["log"] = 9.5
+
+        state_a = sub.build_state(scores_identity, "who am I")
+        state_b = sub.build_state(scores_log, "what happened recently")
+
+        # Both are valid state blocks
+        assert "== STATE ==" in state_a
+        assert "== STATE ==" in state_b
+
+        # They should not be identical (ordering and detail differ)
+        assert state_a != state_b
+
+    def test_high_score_shows_more_facts(self):
+        """High-scoring thread should have more facts than low-scoring one."""
+        from agent.subconscious.orchestrator import get_subconscious
+
+        sub = get_subconscious()
+
+        all_low = {t: 1.0 for t in ["identity", "log", "form", "philosophy", "reflex", "linking_core"]}
+        all_high = {t: 9.0 for t in ["identity", "log", "form", "philosophy", "reflex", "linking_core"]}
+
+        state_low = sub.build_state(all_low, "test")
+        state_high = sub.build_state(all_high, "test")
+
+        # High scores should produce a longer (or at least equal) state block
+        # because more facts pass the threshold and richer values are used
+        assert len(state_high) >= len(state_low)
+
+    def test_context_level_in_state(self):
+        """L1 vs L3 should be visible in context_level markers."""
+        from agent.subconscious.orchestrator import get_subconscious
+
+        sub = get_subconscious()
+
+        low_scores = {t: 1.0 for t in ["identity", "log", "form", "philosophy", "reflex", "linking_core"]}
+        high_scores = {t: 9.0 for t in ["identity", "log", "form", "philosophy", "reflex", "linking_core"]}
+
+        state_low = sub.build_state(low_scores, "test")
+        state_high = sub.build_state(high_scores, "test")
+
+        # Low scores → L1
+        assert "context_level: 1" in state_low
+        # High scores → L3
+        assert "context_level: 3" in state_high
+
+    def test_thread_ordering_by_score(self):
+        """Highest-scoring thread should appear first in STATE."""
+        from agent.subconscious.orchestrator import get_subconscious
+
+        sub = get_subconscious()
+
+        scores = {"identity": 2.0, "log": 9.0, "form": 1.0, "philosophy": 1.0, "reflex": 1.0, "linking_core": 1.0}
+        state = sub.build_state(scores, "what happened")
+
+        # log should appear before identity in the state
+        log_pos = state.find("[log]")
+        identity_pos = state.find("[identity]")
+        if log_pos >= 0 and identity_pos >= 0:
+            assert log_pos < identity_pos, "Higher-scored thread should appear first"
+
+
 # ─── Triggers ──────────────────────────────────────────────────────────────
 
 class TestTriggerLifecycle:

@@ -89,8 +89,15 @@ from .loops import (
     ConsolidationLoop,
     SyncLoop,
     HealthLoop,
+    CustomLoop,
     LoopManager,
     create_default_loops,
+    CUSTOM_LOOP_SOURCES,
+    CUSTOM_LOOP_TARGETS,
+    save_custom_loop_config,
+    get_custom_loop_configs,
+    get_custom_loop_config,
+    delete_custom_loop_config,
 )
 
 # Triggers
@@ -130,6 +137,11 @@ def wake(start_loops: bool = True) -> None:
     if start_loops:
         _loop_manager = create_default_loops()
         _loop_manager.start_all()
+        
+        # Log custom loops loaded
+        custom_count = sum(1 for l in _loop_manager._loops if isinstance(l, CustomLoop))
+        if custom_count:
+            print(f"  ✓ Loaded {custom_count} custom loop(s)")
     
     _trigger_manager = TriggerManager()
     
@@ -190,20 +202,6 @@ def sleep() -> None:
     
     core = get_core()
     core.sleep()
-
-
-def get_context(level: int = 2) -> Dict[str, Any]:
-    """
-    Assemble context from all threads at the specified level.
-    
-    Args:
-        level: Context detail level (1=minimal, 2=moderate, 3=full)
-    
-    Returns:
-        Dict with 'facts' list and 'threads' detail dict
-    """
-    core = get_core()
-    return core.get_context(level)
 
 
 def get_consciousness_context(level: int = 2, query: str = "") -> str:
@@ -289,7 +287,6 @@ __all__ = [
     # Main API
     "wake",
     "sleep",
-    "get_context",
     "get_consciousness_context",
     "get_status",
     "register_thread",
@@ -328,8 +325,15 @@ __all__ = [
     "ConsolidationLoop",
     "SyncLoop",
     "HealthLoop",
+    "CustomLoop",
     "LoopManager",
     "create_default_loops",
+    "CUSTOM_LOOP_SOURCES",
+    "CUSTOM_LOOP_TARGETS",
+    "save_custom_loop_config",
+    "get_custom_loop_configs",
+    "get_custom_loop_config",
+    "delete_custom_loop_config",
     
     # Triggers
     "BaseTrigger",

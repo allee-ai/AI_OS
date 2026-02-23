@@ -18,13 +18,9 @@ It's been almost obsessive for close to a year. When I started, I knew a lot of 
 
 Initially, the project started because everybody LOVED GPT-4o, so I had to check it out, and I LOVED it too. It was a great thought partner. It made stuff up all the time, but it was cool to be able to rapidly iterate over a theory with a partner who always told me I was the queen of everything. No ego boost needed because I'm awesome.
 
-I wanted to get ChatGPT and Siri to be best buds and work together. So I'd tell ChatGPT to be Siri and do Siri things, and it would. Solved AGI right then and there. Just kidding.
+I wanted to get ChatGPT and Siri to be best buds and work together. So I'd tell ChatGPT to be Siri and do Siri things, and it would. Solved AGI right then and there. Just kidding, it would pretend to do things, and I would want to throw my phone out the window, because parsing an LLM output is like trying to understand someone else's toddler. You can do it… eventually. Mostly you just nod and smile and say, "Okay dear, let's try again." No fluffing.
 
-It would pretend to do things, and I would want to throw my phone out the window, because parsing an LLM output is like trying to understand someone else's toddler. You can do it… eventually. Mostly you just nod and smile and say, "Okay dear, let's try again." No fluffing.
-
-So I started trying to give GPT-3.5 function calling abilities. I set up a Pythonista endpoint and used CLI and the Openai key to talk to 3.5, and I just always said execution is called by saying "execute:function_name".
-
-Mind you, this is a side project I'm doing on my phone in the bathroom at work, so it was slow going. But eventually I got it to mostly work. Then the API broke. I gave up.
+So I started trying to give GPT-3.5 function calling abilities. I set up a Pythonista endpoint and used CLI and the Openai key to talk to 3.5, and I just always said execution is called by saying "execute:function_name".Mind you, this is a side project I'm doing on my phone in the bathroom at work, so it was slow going. But eventually I got it to mostly work. Then the API broke. I gave up.
 
 And this is what's left.
 

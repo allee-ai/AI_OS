@@ -73,7 +73,7 @@ class ThreadInterface(Protocol):
 
 <!-- ROADMAP:subconscious -->
 ### Ready for contributors
-- [ ] **Loop Editor Dashboard** — Visual editor for background loops:
+- [x] **Loop Editor Dashboard** — Visual editor for background loops:
   - View running loops with status indicators
   - Edit loop parameters (interval, enabled/disabled)
   - Live logs per loop
@@ -81,14 +81,14 @@ class ThreadInterface(Protocol):
   - Set max iterations per loop
   - Configure max tokens per iteration
   - Cutoff conditions (confidence threshold, diminishing returns)
-- [ ] **Context compression** — Smarter token budgeting per thread
+- [x] **Context compression** — Token budgeting per thread via _budget_fill()
 - [ ] **Priority queue** — Urgent facts surface first
 - [ ] **Dream mode** — Background processing during idle
 - [ ] **Attention visualization** — Show what's in context
 
 ### Starter tasks
-- [ ] Add loop status indicators in UI
-- [ ] Configurable loop intervals
+- [x] Add loop status indicators in UI
+- [x] Configurable loop intervals
 - [ ] Loop execution history view
 <!-- /ROADMAP:subconscious -->
 

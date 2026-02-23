@@ -1,8 +1,7 @@
 """
 Subconscious Core
 =================
-The central nervous system of Agent - registers threads, coordinates state,
-and assembles context for the agent.
+Thread registry and wake/sleep lifecycle.
 
 Key insight: "Subconscious builds state, agent just reads it."
 
@@ -11,8 +10,8 @@ a response. All state management lives here in the subconscious.
 
 Architecture:
     ThreadRegistry ← holds all registered adapters
-    SubconsciousCore ← orchestrates introspection and context assembly
-    get_consciousness_context() ← public API for agent_service
+    SubconsciousCore ← manages lifecycle (wake/sleep) and health
+    Orchestrator   ← builds STATE blocks (see orchestrator.py)
 """
 
 import threading
@@ -142,7 +141,6 @@ class SubconsciousCore:
         self.registry = registry or ThreadRegistry()
         self._awake = False
         self._wake_time: Optional[str] = None
-        self._loops: List[Any] = []  # Background loop handles
     
     @property
     def is_awake(self) -> bool:
@@ -185,18 +183,11 @@ class SubconsciousCore:
         """
         Gracefully shutdown the subconscious.
         
-        - Stops background loops
-        - Flushes pending state
-        - Marks system as asleep
+        Marks system as asleep. Loop/trigger shutdown is handled
+        by the module-level sleep() in __init__.py.
         """
         if not self._awake:
             return
-        
-        # Stop any running loops
-        for loop in self._loops:
-            if hasattr(loop, 'stop'):
-                loop.stop()
-        self._loops.clear()
         
         self._awake = False
         
@@ -209,168 +200,6 @@ class SubconsciousCore:
             )
         except Exception:
             pass
-    
-    def get_context(self, level: int = 2) -> Dict[str, Any]:
-        """
-        Assemble context from all threads at the specified level.
-        
-        Args:
-            level: Context detail level (1=minimal, 2=moderate, 3=full)
-        
-        Returns:
-            Dict with 'facts' list and 'threads' detail dict
-        """
-        if not self._awake:
-            self.wake()
-        
-        all_facts: List[str] = []
-        thread_data: Dict[str, Dict] = {}
-        
-        introspections = self.registry.introspect_all()
-        
-        for name, result in introspections.items():
-            # Filter facts by requested level vs thread's suggested level
-            if result.context_level <= level:
-                all_facts.extend(result.facts)
-            
-            # Always include state data for debugging
-            thread_data[name] = {
-                "facts": result.facts,
-                "fact_count": len(result.facts),
-                "context_level": result.context_level,
-                "state": result.state if level >= 3 else {}
-            }
-        
-        return {
-            "level": level,
-            "facts": all_facts,
-            "fact_count": len(all_facts),
-            "threads": thread_data,
-            "thread_count": self.registry.count(),
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
-    
-    def get_consciousness_context(self, level: int = 2, include_meta: bool = True) -> str:
-        """
-        Format context as a string for system prompt injection.
-        
-        This is the main API for agent_service.py to call before
-        generating a response.
-        
-        Args:
-            level: Context detail level (1=minimal, 2=moderate, 3=full)
-            include_meta: Include thread architecture metadata (for self-awareness)
-        
-        Returns:
-            Formatted string suitable for system prompt
-        """
-        context = self.get_context(level)
-        threads = context.get("threads", {})
-
-        lines = []
-        
-        # === THREAD ARCHITECTURE METADATA ===
-        if include_meta:
-            # Get agent name from identity if available
-            agent_name = "Agent"  # Default
-            if "identity" in self.registry._threads:
-                try:
-                    identity = self.registry._threads["identity"]
-                    result = identity.introspect(1)
-                    if result.data and "name" in str(result.data):
-                        import re
-                        match = re.search(r"name['\"]?\s*[:=]\s*['\"]?(\w+)", str(result.data))
-                        if match:
-                            agent_name = match.group(1)
-                except Exception:
-                    pass
-            
-            lines.append("## My Internal Structure")
-            lines.append("")
-            lines.append(f"I am {agent_name}. This is my internal structure:")
-            lines.append("")
-            lines.append("| Thread | Question | What I Store |")
-            lines.append("|--------|----------|--------------|")
-            lines.append("| **Identity** | WHO | My self-model, my user, our relationship |")
-            lines.append("| **Form** | WHAT | My tools, my actions, my capabilities |")
-            lines.append("| **Philosophy** | WHY | My values, my ethics, my reasoning style |")
-            lines.append("| **Reflex** | HOW | My learned patterns, my shortcuts |")
-            lines.append("| **Log** | WHEN/WHERE | My event timeline, my session history |")
-            lines.append("| **Linking Core** | WHICH | My concept graph, my relevance scoring |")
-            lines.append("")
-            lines.append("**How I work:**")
-            lines.append("- My `concept_links` table stores my associations (Hebbian learning)")
-            lines.append("- My `spread_activate()` determines what's relevant to current input")
-            lines.append("- My facts have L1/L2/L3 compression levels (more detail = higher level)")
-            lines.append("- My weights (0.0-1.0) determine importance and retrieval priority")
-            lines.append("")
-            
-            # Include graph stats if available
-            try:
-                from data.db import get_connection
-                conn = get_connection(readonly=True)
-                cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM concept_links")
-                link_count = cur.fetchone()[0]
-                cur.execute("SELECT COUNT(DISTINCT concept_a) + COUNT(DISTINCT concept_b) FROM concept_links")
-                concept_count = cur.fetchone()[0] // 2 or 1
-                cur.execute("SELECT AVG(strength) FROM concept_links")
-                avg_strength = cur.fetchone()[0] or 0
-                
-                lines.append(f"**My current graph state:** {link_count} links, ~{concept_count} concepts, avg strength {avg_strength:.2f}")
-                lines.append("")
-            except Exception:
-                pass
-
-        if not threads:
-            return "\n".join(lines).strip() if lines else ""
-
-        # === FOCUSED CONTEXT (existing logic) ===
-        # Per-module budgets (tokens) with sensible defaults per HEA level
-        module_budgets = {
-            1: {"identity": 50, "temp_memory": 50, "log_thread": 40, "default": 50},
-            2: {"identity": 200, "temp_memory": 200, "log_thread": 120, "default": 200},
-            3: {"identity": 400, "temp_memory": 400, "log_thread": 200, "default": 400},
-        }
-
-        budgets = module_budgets.get(level, module_budgets[2])
-
-        lines.append("## Focused Context")
-        lines.append(f"_Level L{level}; per-module caps enforced_")
-        lines.append("")
-
-        for thread_name, thread_info in threads.items():
-            facts = thread_info.get("facts", []) or []
-            if not facts:
-                continue
-
-            budget = budgets.get(thread_name, budgets.get("default", 200))
-            selected, used = self._truncate_to_budget(facts, budget)
-            if not selected:
-                continue
-
-            lines.append(f"### {thread_name} (<= {budget} tokens, used {used})")
-            for fact in selected:
-                lines.append(f"- {fact}")
-            lines.append("")
-
-        return "\n".join(lines).strip()
-
-    def _truncate_to_budget(self, facts: List[str], budget_tokens: int) -> tuple[List[str], int]:
-        """Take facts until the token budget is reached."""
-        selected: List[str] = []
-        used = 0
-        for fact in facts:
-            t = self._estimate_tokens(fact)
-            if used + t > budget_tokens:
-                break
-            selected.append(fact)
-            used += t
-        return selected, used
-
-    def _estimate_tokens(self, text: str) -> int:
-        """Rough token estimator (word count fallback)."""
-        return max(1, len(text.split()))
     
     def get_status(self) -> Dict[str, Any]:
         """

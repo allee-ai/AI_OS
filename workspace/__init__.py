@@ -30,9 +30,22 @@ from .schema import (
     chunk_file,
     get_file_chunks,
     
+    # Summary & metadata
+    update_file_summary,
+    get_file_summary,
+    get_all_files_metadata,
+    search_file_content,
+    
     # Stats
     get_workspace_stats,
     init_workspace_tables,
+)
+
+from .summarizer import (
+    summarize_file,
+    summarize_text,
+    get_summary_prompt,
+    set_summary_prompt,
 )
 
 __all__ = [
@@ -47,6 +60,14 @@ __all__ = [
     "search_files",
     "chunk_file",
     "get_file_chunks",
+    "update_file_summary",
+    "get_file_summary",
+    "get_all_files_metadata",
+    "search_file_content",
     "get_workspace_stats",
     "init_workspace_tables",
+    "summarize_file",
+    "summarize_text",
+    "get_summary_prompt",
+    "set_summary_prompt",
 ]

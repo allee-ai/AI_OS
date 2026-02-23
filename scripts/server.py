@@ -221,9 +221,10 @@ async def startup_event():
         print(f"[Startup] DB exists: {DB_PATH.exists()}")
         
         # Wake subconscious
+        from agent.subconscious import wake
+        wake()
         from agent.subconscious import get_core
         core = get_core()
-        core.wake()
         print(f"[Startup] Subconscious awakened with {core.registry.count()} threads")
         
         # Verify identity data

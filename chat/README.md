@@ -55,16 +55,16 @@ chat/
 ### Ready for contributors
 - [ ] **Import pipeline repair** — Fix and improve `import_convos.py` reliability
 - [ ] **Smart import helper** — Chat-aware LLM that assists with import errors at runtime ("this file failed, here's why, let me fix it")
-- [ ] **Conversation archiving** — Archive old convos without deleting, restore on demand
+- [x] **Conversation archiving** — Archive old convos without deleting, restore on demand
 - [ ] **Import directory organization** — Separate imports by source (`imported/claude/`, `imported/gpt/`, `imported/copilot/`)
 - [ ] **Sidebar directory visibility** — Show import folders in sidebar, collapsible by source
-- [ ] **Conversation search** — Full-text search across history
+- [x] **Conversation search** — Full-text search across history
 - [ ] **Branching** — Create conversation forks
 - [ ] **Export** — Export to markdown/JSON
 - [ ] **Tags/categories** — Organize conversations
 
 ### Starter tasks
-- [ ] Add conversation summary generation
+- [x] Add conversation summary generation
 - [ ] Show message timestamps
 - [ ] Import source badges on conversation cards
 <!-- /ROADMAP:chat -->

@@ -46,6 +46,11 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         """
         Get identity data at specified HEA level.
         
+        Args:
+            level: Context level (1=lean/l1, 2=medium/l2, 3=full/l3)
+            min_weight: Minimum fact weight to include
+            limit: Maximum facts to return
+        
         Returns list of facts across all profiles.
         """
         # Get all profiles and collect their facts
@@ -56,8 +61,8 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             profile_id = profile.get("profile_id", "")
             facts = pull_profile_facts(profile_id=profile_id, min_weight=min_weight, limit=limit)
             for fact in facts[:limit]:
-                # Get the appropriate value based on level
-                value = get_value_by_weight(fact, fact.get("weight", 0.5))
+                # Select value tier based on requested context level
+                value = self._select_value_for_level(fact, level)
                 all_facts.append({
                     "key": fact.get("key", ""),
                     "value": value,
@@ -67,6 +72,27 @@ class IdentityThreadAdapter(BaseThreadAdapter):
                 })
         
         return all_facts[:limit]
+
+    @staticmethod
+    def _select_value_for_level(fact: Dict, level: int) -> str:
+        """Pick l1/l2/l3 value based on requested context level.
+        
+        L1 → compact label  (e.g. "Nola")
+        L2 → medium detail   (e.g. "Nola — AI agent built on AI-OS")
+        L3 → full description (e.g. "I am Nola, an AI agent...")
+        
+        Falls back to the next-lower tier that exists.
+        """
+        l1 = fact.get('l1_value', '') or ''
+        l2 = fact.get('l2_value', '') or ''
+        l3 = fact.get('l3_value', '') or ''
+        
+        if level >= 3:
+            return l3 or l2 or l1
+        elif level >= 2:
+            return l2 or l1 or l3
+        else:
+            return l1 or l2 or l3
     
     def get_context_string(self, level: int = 2, token_budget: int = 500) -> str:
         """
@@ -102,63 +128,114 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             weight=weight
         )
     
+    def _get_raw_facts(self, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
+        """Get raw facts with all l1/l2/l3 values and dot-notation paths.
+
+        Returns dicts ready for _budget_fill():
+            path, l1_value, l2_value, l3_value, weight, profile_id, fact_type
+        """
+        profiles = get_profiles()
+        out = []
+        for profile in profiles:
+            profile_id = profile.get("profile_id", "")
+            facts = pull_profile_facts(profile_id=profile_id, min_weight=min_weight, limit=limit)
+
+            # Build short profile name for dot path
+            parts = profile_id.split(".")
+            profile_short = parts[1] if len(parts) >= 2 else profile_id
+
+            for fact in facts[:limit]:
+                out.append({
+                    "path": f"identity.{profile_short}.{fact.get('key', 'unknown')}",
+                    "l1_value": fact.get("l1_value", ""),
+                    "l2_value": fact.get("l2_value", ""),
+                    "l3_value": fact.get("l3_value", ""),
+                    "weight": fact.get("weight", 0.5),
+                    "profile_id": profile_id,
+                    "fact_type": fact.get("fact_type", ""),
+                    "key": fact.get("key", ""),
+                })
+        return out[:limit]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
-        Identity introspection with structured output.
-        
-        Returns facts at the requested HEA level, filtered by weight threshold.
-        Facts are formatted with dot notation for addressability.
-        
+        Identity introspection with budget-aware fact packing.
+
+        Uses _budget_fill to fit the most relevant facts within a
+        per-level token budget.  Top facts get the full context_level
+        detail; tail facts are downgraded to L1 so context stays compact.
+
         Args:
             context_level: HEA level (1=lean, 2=medium, 3=full)
             query: Optional query for relevance filtering
-            threshold: Minimum weight for facts to be included (0-10 scale)
-        
-        Returns:
-            IntrospectionResult with facts like:
-                "identity.nola.name: I am Nola..."
-                "identity.user.name: Jordan"
+            threshold: Minimum weight for facts (0-10 scale, inverted by orchestrator)
         """
-        relevant_concepts = []
-        
+        relevant_concepts: List[str] = []
+
         # Convert 0-10 threshold to 0-1 weight scale
         min_weight = threshold / 10.0
-        
-        # Get raw data filtered by weight
-        rows = self.get_data(level=context_level, min_weight=min_weight)
-        
-        # If query provided, filter by relevance
+
+        # Get raw facts with all value tiers
+        raw = self._get_raw_facts(min_weight=min_weight)
+
+        # If query provided, boost relevant facts via weight bump
         if query:
-            rows, relevant_concepts = self._filter_by_relevance(rows, query, context_level)
-        
-        # Format facts with dot notation
-        facts = []
-        for row in rows:
-            profile_id = row.get('profile_id', 'unknown')
-            key = row.get('key', 'unknown')
-            value = row.get('value', '')
-            
-            # Build dot notation path: identity.{profile}.{key}
-            # profile_id is like "self.nola" or "user.demo_user"
-            profile_parts = profile_id.split('.')
-            if len(profile_parts) >= 2:
-                profile_short = profile_parts[1]  # "nola", "demo_user", etc.
-            else:
-                profile_short = profile_id
-            
-            path = f"identity.{profile_short}.{key}"
-            facts.append(f"{path}: {value}")
-        
-        # Get health
-        health_report = self.health()
-        
+            raw, relevant_concepts = self._relevance_boost(raw, query)
+
+        # Pack into token budget at the right detail level
+        facts = self._budget_fill(raw, context_level)
+
         return IntrospectionResult(
             facts=facts,
             state=self.get_metadata(),
             context_level=context_level,
-            health=health_report.to_dict(),
+            health=self.health().to_dict(),
             relevant_concepts=relevant_concepts,
         )
+
+    def _relevance_boost(
+        self,
+        raw_facts: List[Dict],
+        query: str,
+    ) -> tuple:
+        """Boost weights of query-relevant facts so _budget_fill prioritizes them.
+
+        Instead of filtering out irrelevant facts (which loses data),
+        this promotes relevant ones to the top of the budget window.
+        Non-relevant facts still appear if budget allows, just at L1.
+        """
+        try:
+            from agent.threads.linking_core.schema import (
+                spread_activate,
+                extract_concepts_from_text,
+            )
+
+            query_concepts = extract_concepts_from_text(query)
+            if not query_concepts:
+                return raw_facts, []
+
+            activated = spread_activate(
+                input_concepts=query_concepts,
+                activation_threshold=0.1,
+                max_hops=1,
+                limit=20,
+            )
+            relevant = set(query_concepts)
+            for a in activated:
+                relevant.add(a.get("concept", ""))
+
+            # Boost weight of matching facts so they sort first
+            for fact in raw_facts:
+                text = f"{fact.get('profile_id', '')} {fact.get('key', '')} " \
+                       f"{fact.get('l1_value', '')} {fact.get('l2_value', '')}".lower()
+                for concept in relevant:
+                    if concept.lower() in text:
+                        fact["weight"] = min(1.0, fact.get("weight", 0.5) + 0.3)
+                        break
+
+            return raw_facts, list(relevant)
+        except Exception:
+            return raw_facts, []
     
     def _filter_by_relevance(
         self, 

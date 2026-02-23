@@ -96,6 +96,9 @@ class BaseThreadAdapter:
     
     _name: str = "base"
     _description: str = "Base thread adapter"
+
+    # Per-level token budgets — threads can override
+    _token_budgets: Dict[int, int] = {1: 150, 2: 400, 3: 800}
     
     def __init__(self):
         self._last_sync: Optional[str] = None
@@ -161,6 +164,84 @@ class BaseThreadAdapter:
             "modules": modules,
         }
     
+    # =========================================================================
+    # BUDGET-AWARE FACT PACKING
+    # =========================================================================
+
+    @staticmethod
+    def _estimate_tokens(text: str) -> int:
+        """Rough token estimate: ~1.3 tokens per whitespace-separated word."""
+        return max(1, int(len(text.split()) * 1.3))
+
+    def _budget_fill(
+        self,
+        raw_facts: List[Dict[str, Any]],
+        level: int,
+        token_budget: int = 0,
+    ) -> List[str]:
+        """Pack facts into a token budget at varying detail levels.
+
+        Each *raw_fact* dict must contain:
+            path  – dot-notation prefix  (e.g. "identity.nola.name")
+            l1_value, l2_value, l3_value – value at each tier
+            weight – 0-1 importance
+
+        Algorithm (greedy, O(n)):
+            1. Sort by weight descending (most important first).
+            2. For each fact, try the *requested* level value.
+            3. If that would blow the remaining budget, try L1 instead.
+            4. If even L1 won't fit, skip the fact.
+
+        Returns a list of formatted "path: value" strings.
+        """
+        budget = token_budget or self._token_budgets.get(level, 400)
+        used = 0
+        result: List[str] = []
+
+        # Sort by weight descending — highest-value facts first
+        sorted_facts = sorted(raw_facts, key=lambda f: f.get("weight", 0.5), reverse=True)
+
+        for fact in sorted_facts:
+            path = fact.get("path", "")
+            l1 = fact.get("l1_value") or ""
+            l2 = fact.get("l2_value") or ""
+            l3 = fact.get("l3_value") or ""
+
+            # Pick value at requested level (with fallbacks)
+            if level >= 3:
+                preferred = l3 or l2 or l1
+            elif level >= 2:
+                preferred = l2 or l1 or l3
+            else:
+                preferred = l1 or l2 or l3
+
+            lean = l1 or l2 or l3  # always the shortest version
+
+            if not preferred:
+                continue
+
+            line = f"{path}: {preferred}"
+            cost = self._estimate_tokens(line)
+
+            if used + cost <= budget:
+                result.append(line)
+                used += cost
+                continue
+
+            # Preferred blows the budget — try lean version if different
+            if lean and lean != preferred:
+                lean_line = f"{path}: {lean}"
+                lean_cost = self._estimate_tokens(lean_line)
+                if used + lean_cost <= budget:
+                    result.append(lean_line)
+                    used += lean_cost
+                    continue
+
+            # Even lean doesn't fit — we're done (facts are sorted, rest are less important)
+            break
+
+        return result
+
     # =========================================================================
     # HEALTH & INTROSPECTION
     # =========================================================================

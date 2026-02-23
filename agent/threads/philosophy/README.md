@@ -77,7 +77,7 @@ philosophy.bound.harm_reduction: minimize harm
 
 ### Starter tasks
 - [ ] Pre-populate common ethical bounds (harm prevention, privacy, consent)
-- [ ] Philosophy introspection shows active constraints in STATE
+- [x] Philosophy introspection shows active constraints in STATE
 <!-- /ROADMAP:philosophy -->
 
 ---

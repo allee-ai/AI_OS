@@ -120,30 +120,22 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
     
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
-        Philosophy introspection with values and constraints.
-        
-        Args:
-            context_level: HEA level (1=lean, 2=medium, 3=full)
-            query: Optional query for relevance filtering
-            threshold: Minimum weight for facts to be included (0-10 scale)
-        
-        Returns:
-            IntrospectionResult with facts like:
-                "philosophy.values.honesty: always direct"
-                "philosophy.principles.consent: never act without agreement"
+        Philosophy introspection with budget-aware fact packing.
+
+        Uses _budget_fill to fit the most relevant values/principles
+        within a per-level token budget.
         """
-        facts = []
-        relevant_concepts = []
-        
+        relevant_concepts: list = []
+
         # Convert 0-10 threshold to 0-1 weight scale
         min_weight = threshold / 10.0
-        
+
         # Get all philosophy facts
         all_facts = pull_philosophy_profile_facts()
-        
+
         # Filter by weight threshold
         all_facts = [f for f in all_facts if f.get('weight', 0.5) >= min_weight]
-        
+
         # Filter by relevance if query provided
         if query:
             all_facts = self._filter_by_relevance(all_facts, query)
@@ -151,21 +143,22 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
                 relevant_concepts = extract_concepts_from_text(query)
             except Exception:
                 pass
-        
-        # Get level-appropriate value column
-        level_col = {1: 'l1_value', 2: 'l2_value', 3: 'l3_value'}.get(context_level, 'l2_value')
-        
-        # Build facts with dot notation
+
+        # Build raw fact dicts for _budget_fill
+        raw = []
         for f in all_facts:
-            key = f.get('key', 'unknown')
-            value = f.get(level_col) or f.get('l2_value', '')
             fact_type = (f.get('fact_type') or 'general').lower().replace(' ', '_')
-            
-            if value:
-                # Use fact_type as category: philosophy.values.honesty, philosophy.principles.consent
-                path = f"philosophy.{fact_type}.{key}"
-                facts.append(f"{path}: {value}")
-        
+            key = f.get('key', 'unknown')
+            raw.append({
+                "path": f"philosophy.{fact_type}.{key}",
+                "l1_value": f.get("l1_value", ""),
+                "l2_value": f.get("l2_value", ""),
+                "l3_value": f.get("l3_value", ""),
+                "weight": f.get("weight", 0.5),
+            })
+
+        facts = self._budget_fill(raw, context_level)
+
         return IntrospectionResult(
             facts=facts,
             state=self.get_metadata(),

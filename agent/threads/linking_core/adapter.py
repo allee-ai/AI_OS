@@ -123,7 +123,17 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         )
     
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
-        """Return linking/relevance facts for context assembly."""
+        """Return linking/relevance facts for context assembly.
+        
+        Uses threshold to gate detail: low threshold → skip entirely,
+        medium → core stats, high → full activation details.
+        """
+        # Low score → linking_core adds no value to STATE
+        if threshold < 2.0:
+            return IntrospectionResult(
+                facts=[], state=self._get_state_summary(),
+                context_level=context_level, relevant_concepts=[]
+            )
         facts = self.get_context(context_level, query)
         
         # If query provided, get relevant concepts
@@ -443,6 +453,19 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         feed_lower = feeds.lower()
         scores = {}
         
+        # Date pattern detection for temporal queries
+        import re
+        _has_date_ref = bool(re.search(
+            r'(?:'
+            r'\d{1,2}/\d{1,2}(?:/\d{2,4})?'        # 12/30, 12/30/2025
+            r'|\d{4}-\d{2}-\d{2}'                    # 2025-12-30
+            r'|(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\s+\d{1,2}'  # dec 30, January 5
+            r'|\d{1,2}(?:st|nd|rd|th)?\s+(?:of\s+)?(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*'  # 30th of December
+            r'|(?:january|february|march|april|may|june|july|august|september|october|november|december)'  # month name alone
+            r')',
+            feed_lower
+        ))
+        
         # Get all threads
         try:
             from agent.threads import get_all_threads
@@ -466,7 +489,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             
             elif thread_name == 'log':
                 # Log: Temporal/debugging keywords
-                if any(kw in feed_lower for kw in ['when', 'recent', 'earlier', 'yesterday', 'last', 'history']):
+                if _has_date_ref or any(kw in feed_lower for kw in ['when', 'recent', 'earlier', 'yesterday', 'last', 'history']):
                     scores[thread_name] = 9.0
                 elif any(kw in feed_lower for kw in ['debug', 'error', 'problem', 'what happened']):
                     scores[thread_name] = 8.0

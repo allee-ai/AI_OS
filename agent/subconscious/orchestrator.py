@@ -44,6 +44,15 @@ SCORE_THRESHOLDS = {
 }
 
 
+def _fmt_size(n: int) -> str:
+    """Format byte size to human-readable."""
+    if n < 1024:
+        return f"{n}B"
+    elif n < 1024 * 1024:
+        return f"{n / 1024:.1f}KB"
+    return f"{n / (1024 * 1024):.1f}MB"
+
+
 class Subconscious:
     """
     The orchestrator that builds STATE from all threads.
@@ -60,67 +69,21 @@ class Subconscious:
     def __init__(self):
         self._last_context_time: Optional[str] = None
         self._last_query: Optional[str] = None
-        self._adapters: Dict[str, Any] = {}
         self._linking_core = None
     
     def _get_adapter(self, thread_name: str):
-        """Lazy-load thread adapters. Each import is fully isolated."""
-        if thread_name not in self._adapters:
-            # Each adapter import in its own try/catch - one failure doesn't affect others
-            if thread_name == "identity":
-                try:
-                    from agent.threads.identity.adapter import IdentityThreadAdapter
-                    self._adapters[thread_name] = IdentityThreadAdapter()
-                except Exception as e:
-                    print(f"⚠️ Failed to load identity adapter: {e}")
-                    self._adapters[thread_name] = None
-            elif thread_name == "philosophy":
-                try:
-                    from agent.threads.philosophy.adapter import PhilosophyThreadAdapter
-                    self._adapters[thread_name] = PhilosophyThreadAdapter()
-                except Exception as e:
-                    print(f"⚠️ Failed to load philosophy adapter: {e}")
-                    self._adapters[thread_name] = None
-            elif thread_name == "log":
-                try:
-                    from agent.threads.log.adapter import LogThreadAdapter
-                    self._adapters[thread_name] = LogThreadAdapter()
-                except Exception as e:
-                    print(f"⚠️ Failed to load log adapter: {e}")
-                    self._adapters[thread_name] = None
-            elif thread_name == "form":
-                try:
-                    from agent.threads.form.adapter import FormThreadAdapter
-                    self._adapters[thread_name] = FormThreadAdapter()
-                except Exception as e:
-                    print(f"⚠️ Failed to load form adapter: {e}")
-                    self._adapters[thread_name] = None
-            elif thread_name == "reflex":
-                try:
-                    from agent.threads.reflex.adapter import ReflexThreadAdapter
-                    self._adapters[thread_name] = ReflexThreadAdapter()
-                except Exception as e:
-                    print(f"⚠️ Failed to load reflex adapter: {e}")
-                    self._adapters[thread_name] = None
-            elif thread_name == "linking_core":
-                try:
-                    from agent.threads.linking_core.adapter import LinkingCoreThreadAdapter
-                    self._adapters[thread_name] = LinkingCoreThreadAdapter()
-                except Exception as e:
-                    print(f"⚠️ Failed to load linking_core adapter: {e}")
-                    self._adapters[thread_name] = None
-            else:
-                self._adapters[thread_name] = None
-        return self._adapters.get(thread_name)
+        """Get a thread adapter from the central registry."""
+        try:
+            from agent.threads import get_thread
+            return get_thread(thread_name)
+        except Exception as e:
+            print(f"⚠️ Failed to load {thread_name} adapter: {e}")
+            return None
     
     def _get_linking_core(self):
         """Get the LinkingCore adapter for scoring."""
         if self._linking_core is None:
-            try:
-                from agent.threads.linking_core.adapter import LinkingCoreThreadAdapter
-                self._linking_core = LinkingCoreThreadAdapter()
-            except Exception as e:
-                print(f"⚠️ Failed to load linking_core: {e}")
+            self._linking_core = self._get_adapter("linking_core")
         return self._linking_core
     
     def score(self, query: str = "") -> Dict[str, float]:
@@ -205,8 +168,10 @@ class Subconscious:
             else:
                 level = 3
             
-            # Use score as threshold
-            threshold = score
+            # Threshold is INVERTED: high score → low weight threshold (more facts)
+            # Score 10 → threshold 0 (everything), Score 0 → threshold 10 (nothing)
+            # This makes the system include MORE detail for relevant threads
+            threshold = max(0.0, 10.0 - score)
             
             try:
                 # Call introspect with threshold
@@ -269,46 +234,6 @@ class Subconscious:
         
         return "\n".join(lines)
     
-    def _group_facts_by_category(self, facts: List[str], thread_name: str) -> Dict[str, List[str]]:
-        """
-        Group dot-notation facts by their category, preserving thread prefix.
-        
-        Input:  ["identity.machine.name: Nola", "identity.dad.name: Robert", "identity.dad.likes: fishing"]
-        Output: {"identity.machine": ["name: Nola"], "identity.dad": ["name: Robert", "likes: fishing"]}
-        """
-        from collections import OrderedDict
-        grouped: Dict[str, List[str]] = OrderedDict()
-        
-        for fact in facts:
-            # Parse "thread.category.key: value" format
-            if ": " in fact:
-                path, value = fact.split(": ", 1)
-                parts = path.split(".")
-                
-                if len(parts) >= 3:
-                    # thread.category.key -> thread.category, key: value
-                    category = f"{parts[0]}.{parts[1]}"
-                    key = ".".join(parts[2:])  # Handle nested keys
-                    formatted = f"{key}: {value}"
-                elif len(parts) == 2:
-                    # thread.key -> thread, key: value
-                    category = parts[0]
-                    key = parts[1]
-                    formatted = f"{key}: {value}"
-                else:
-                    category = thread_name
-                    formatted = fact
-            else:
-                # No colon, treat as-is
-                category = thread_name
-                formatted = fact
-            
-            if category not in grouped:
-                grouped[category] = []
-            grouped[category].append(formatted)
-        
-        return grouped
-    
     def _build_self_awareness_block(self) -> List[str]:
         """Build the self-awareness metadata for the top of STATE.
         
@@ -346,31 +271,69 @@ class Subconscious:
         return lines
 
     def _get_workspace_context(self, query: str, max_results: int = 5) -> List[str]:
-        """Search workspace files via FTS and return dot-notation facts.
+        """Build workspace context at the appropriate level.
         
-        Only returns results when the workspace actually has indexed content
-        and the query matches something. Cheap FTS lookup — no LLM call.
+        L1 — file metadata only (path, size, modified)
+        L2 — metadata + stored LLM-generated summaries
+        L3 — summaries + FTS snippet matches for the query
+        
+        Level is determined by whether the query matches workspace content.
         """
         try:
-            from workspace.schema import search_files, get_workspace_stats
+            from workspace.schema import (
+                get_workspace_stats, get_all_files_metadata,
+                search_files, search_file_content,
+            )
             
             stats = get_workspace_stats()
-            if stats.get("indexed_files", 0) == 0:
+            if stats.get("files", 0) == 0:
                 return []
             
-            results = search_files(query, limit=max_results)
-            if not results:
-                return []
+            # Determine level by checking FTS hits
+            fts_results = []
+            if query and stats.get("indexed_files", 0) > 0:
+                try:
+                    fts_results = search_files(query, limit=max_results)
+                except Exception:
+                    fts_results = []
             
             facts = []
-            for r in results:
-                path = r.get("path", "")
-                snippet = r.get("snippet", "")
-                # Strip HTML marks from FTS snippet
-                snippet = snippet.replace("<mark>", "").replace("</mark>", "")
-                if snippet:
-                    facts.append(f"  workspace.file: {path}")
-                    facts.append(f"  workspace.snippet: {snippet[:200]}")
+            
+            if fts_results:
+                # L3 — we have direct query matches: summaries + snippets
+                for r in fts_results:
+                    path = r.get("path", "")
+                    dot_path = path.lstrip("/").replace("/", ".")
+                    size = r.get("size", 0)
+                    snippet = r.get("snippet", "")
+                    snippet = snippet.replace("<mark>", "").replace("</mark>", "")
+                    
+                    facts.append(f"  workspace.{dot_path}: {_fmt_size(size)}")
+                    
+                    # Add summary if available
+                    try:
+                        from workspace.schema import get_file_summary
+                        summary = get_file_summary(path)
+                        if summary:
+                            facts.append(f"  workspace.{dot_path}.summary: {summary[:150]}")
+                    except Exception:
+                        pass
+                    
+                    if snippet:
+                        facts.append(f"  workspace.{dot_path}.match: {snippet[:200]}")
+            else:
+                # L1 — no query hits, just metadata for recent files
+                all_files = get_all_files_metadata(limit=8)
+                for f in all_files:
+                    path = f.get("path", "")
+                    dot_path = path.lstrip("/").replace("/", ".")
+                    size = f.get("size", 0)
+                    summary = f.get("summary")
+                    if summary:
+                        # L2 — has summary
+                        facts.append(f"  workspace.{dot_path}: {_fmt_size(size)} — {summary[:100]}")
+                    else:
+                        facts.append(f"  workspace.{dot_path}: {_fmt_size(size)}")
             
             return facts
         except Exception:
@@ -390,6 +353,25 @@ class Subconscious:
         """
         scores = self.score(query)
         return self.build_state(scores, query)
+
+    def preview_state(self, query: str) -> Dict[str, Any]:
+        """
+        Preview what STATE would look like for a given query.
+        
+        Returns the scores, state block, and token estimate without
+        sending anything to the LLM. Used by the dashboard test panel.
+        """
+        scores = self.score(query)
+        state_block = self.build_state(scores, query)
+        # Rough token estimate: ~0.75 tokens per word
+        token_est = len(state_block.split()) * 0.75
+        return {
+            "query": query,
+            "thread_scores": scores,
+            "state_block": state_block,
+            "total_tokens": int(token_est),
+            "thresholds": SCORE_THRESHOLDS,
+        }
     
     def build_context(
         self,

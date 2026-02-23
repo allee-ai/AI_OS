@@ -41,6 +41,8 @@ from .schema import (
     get_file_chunks,
     get_workspace_stats,
     normalize_path,
+    get_file_summary,
+    get_all_files_metadata,
 )
 
 router = APIRouter(prefix="/api/workspace", tags=["workspace"])
@@ -73,6 +75,7 @@ class FileInfo(BaseModel):
     mime_type: Optional[str]
     size: int
     modified_at: Optional[str]
+    summary: Optional[str] = None
 
 
 class SearchResult(BaseModel):
@@ -117,6 +120,47 @@ async def get_file_content(path: str):
             "X-File-Hash": file["hash"] or "",
         }
     )
+
+
+@router.get("/file/meta")
+async def get_file_meta(path: str):
+    """Get file metadata, summary, and text content as JSON."""
+    file = get_file(path)
+    if not file:
+        raise HTTPException(status_code=404, detail="File not found")
+
+    result: Dict[str, Any] = {
+        "path": file["path"],
+        "name": file["name"],
+        "is_folder": file["is_folder"],
+        "mime_type": file["mime_type"],
+        "size": file["size"],
+        "hash": file["hash"],
+        "created_at": file["created_at"],
+        "modified_at": file["modified_at"],
+        "summary": get_file_summary(file["path"]),
+    }
+
+    # Include text content for renderable files
+    mime = file["mime_type"] or ""
+    if (
+        mime.startswith("text/")
+        or mime in ("application/json", "application/javascript", "application/xml")
+        or mime.endswith("+xml")
+    ):
+        try:
+            raw = file["content"]
+            result["content"] = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        except Exception:
+            result["content"] = None
+    elif mime.startswith("image/"):
+        # For images, provide a download URL the frontend can use
+        result["content"] = None
+        result["is_image"] = True
+    else:
+        result["content"] = None
+
+    return result
 
 
 @router.post("/file")
@@ -257,6 +301,55 @@ async def workspace_info():
             "full-text-search",
             "llm-chunking",
             "metadata",
-            "versioning-ready"
+            "versioning-ready",
+            "llm-summarization",
         ]
     }
+
+
+# ─────────────────────────────────────────────────────────────
+# Summarization Endpoints
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/summary/prompt")
+async def get_summarizer_prompt():
+    """Get the current summarizer prompt."""
+    from .summarizer import get_summary_prompt
+    return {"prompt": get_summary_prompt()}
+
+
+@router.put("/summary/prompt")
+async def set_summarizer_prompt(body: dict):
+    """Update the summarizer prompt."""
+    prompt = body.get("prompt", "").strip()
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt cannot be empty")
+    from .summarizer import set_summary_prompt
+    ok = set_summary_prompt(prompt)
+    if not ok:
+        raise HTTPException(status_code=500, detail="Failed to save prompt")
+    return {"prompt": prompt}
+
+
+@router.post("/summarize")
+async def summarize_file_endpoint(path: str):
+    """Summarize a file using the LLM. Stores result in DB."""
+    from .summarizer import summarize_file
+    summary = summarize_file(path)
+    if summary is None:
+        raise HTTPException(status_code=400, detail="Could not summarize file")
+    return {"path": path, "summary": summary}
+
+
+@router.get("/file/summary")
+async def get_file_summary_endpoint(path: str):
+    """Get the stored summary for a file."""
+    summary = get_file_summary(path)
+    return {"path": path, "summary": summary}
+
+
+@router.get("/metadata")
+async def get_files_metadata(limit: int = 50):
+    """Get metadata for all files (L1 context)."""
+    files = get_all_files_metadata(limit=limit)
+    return {"files": files, "count": len(files)}

@@ -16,6 +16,8 @@ interface FileExplorerProps {
   onDownloadFile: (file: WorkspaceFile) => void;
   onToggleSelect: (fileId: string) => void;
   onMoveFile: (sourceId: string, targetPath: string) => void;
+  onOpenFile?: (file: WorkspaceFile) => void;
+  activeFilePath?: string | null;
 }
 
 // File icon based on type/extension
@@ -68,6 +70,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
   onDownloadFile,
   onToggleSelect,
   onMoveFile,
+  onOpenFile,
+  activeFilePath,
 }) => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [showNewFolderDialog, setShowNewFolderDialog] = useState(false);
@@ -102,6 +106,8 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
       onToggleSelect(file.id);
     } else if (file.type === 'folder') {
       onNavigateTo(file.path);
+    } else if (onOpenFile) {
+      onOpenFile(file);
     }
   };
 
@@ -250,7 +256,7 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
           files.map((file) => (
             <div
               key={file.id}
-              className={`file-item ${selectedFiles.includes(file.id) ? 'selected' : ''} ${dragOverId === file.id ? 'drag-over' : ''}`}
+              className={`file-item ${selectedFiles.includes(file.id) ? 'selected' : ''} ${dragOverId === file.id ? 'drag-over' : ''} ${activeFilePath === file.path ? 'active' : ''}`}
               onClick={(e) => handleFileClick(file, e)}
               onDoubleClick={() => handleDoubleClick(file)}
               draggable
@@ -260,7 +266,12 @@ export const FileExplorer: React.FC<FileExplorerProps> = ({
               onDrop={(e) => handleDrop(e, file)}
             >
               <span className="file-icon">{getFileIcon(file)}</span>
-              <span className="file-name">{file.name}</span>
+              <div className="file-info">
+                <span className="file-name">{file.name}</span>
+                {file.summary && (
+                  <span className="file-summary">{file.summary}</span>
+                )}
+              </div>
               <span className="file-size">{formatSize(file.size)}</span>
               <div className="file-actions">
                 {file.type === 'file' && (

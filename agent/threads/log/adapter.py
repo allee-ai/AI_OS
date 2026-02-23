@@ -186,14 +186,17 @@ class LogThreadAdapter(BaseThreadAdapter):
         if self._message_count > 0:
             facts.append(f"log.session.messages: {self._message_count}")
         
-        # Events: higher threshold = MORE events (inverted from other threads)
-        # threshold 0-3.5 → 2 events, 3.5-7 → 5 events, 7-10 → 10 events
-        if threshold < 3.5:
-            event_count = 2
-        elif threshold < 7:
+        # Events: threshold comes inverted from orchestrator
+        # Low threshold = high relevance score = MORE events
+        # threshold 0-3 → 10 events (most relevant)
+        # threshold 3-7 → 5 events (medium)
+        # threshold 7-10 → 2 events (least relevant)
+        if threshold < 3.0:
+            event_count = 10
+        elif threshold < 7.0:
             event_count = 5
         else:
-            event_count = 10
+            event_count = 2
         
         events = self.get_recent_events(event_count)
         

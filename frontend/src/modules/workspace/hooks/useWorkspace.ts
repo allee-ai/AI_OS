@@ -38,6 +38,11 @@ const initialState: WorkspaceState = {
   selectedFiles: [],
   isLoading: false,
   error: null,
+  openFile: null,
+  openFileLoading: false,
+  searchQuery: '',
+  searchResults: [],
+  searchLoading: false,
 };
 
 function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): WorkspaceState {
@@ -73,6 +78,26 @@ function workspaceReducer(state: WorkspaceState, action: WorkspaceAction): Works
       return { ...state, isLoading: action.payload };
     case 'SET_ERROR':
       return { ...state, error: action.payload, isLoading: false };
+    case 'SET_OPEN_FILE':
+      return { ...state, openFile: action.payload, openFileLoading: false };
+    case 'SET_OPEN_FILE_LOADING':
+      return { ...state, openFileLoading: action.payload };
+    case 'SET_SEARCH_QUERY':
+      return { ...state, searchQuery: action.payload };
+    case 'SET_SEARCH_RESULTS':
+      return { ...state, searchResults: action.payload, searchLoading: false };
+    case 'SET_SEARCH_LOADING':
+      return { ...state, searchLoading: action.payload };
+    case 'UPDATE_FILE_SUMMARY':
+      return {
+        ...state,
+        files: state.files.map(f =>
+          f.path === action.payload.path ? { ...f, summary: action.payload.summary } : f
+        ),
+        openFile: state.openFile?.path === action.payload.path
+          ? { ...state.openFile, summary: action.payload.summary }
+          : state.openFile,
+      };
     default:
       return state;
   }
@@ -226,6 +251,58 @@ export function useWorkspace() {
     loadFiles();
   }, []);
 
+  // Open file in viewer
+  const handleOpenFile = useCallback(async (file: WorkspaceFile) => {
+    if (file.type === 'folder') return;
+    dispatch({ type: 'SET_OPEN_FILE_LOADING', payload: true });
+    try {
+      const meta = await workspaceApi.getFileMeta(file.path);
+      dispatch({ type: 'SET_OPEN_FILE', payload: meta });
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      dispatch({ type: 'SET_OPEN_FILE_LOADING', payload: false });
+    }
+  }, []);
+
+  // Close file viewer
+  const closeFile = useCallback(() => {
+    dispatch({ type: 'SET_OPEN_FILE', payload: null });
+  }, []);
+
+  // Summarize a file
+  const summarizeFile = useCallback(async (path: string) => {
+    try {
+      const summary = await workspaceApi.summarizeFile(path);
+      dispatch({ type: 'UPDATE_FILE_SUMMARY', payload: { path, summary } });
+      return summary;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      return null;
+    }
+  }, []);
+
+  // Search workspace
+  const searchFiles = useCallback(async (query: string) => {
+    dispatch({ type: 'SET_SEARCH_QUERY', payload: query });
+    if (!query.trim()) {
+      dispatch({ type: 'SET_SEARCH_RESULTS', payload: [] });
+      return;
+    }
+    dispatch({ type: 'SET_SEARCH_LOADING', payload: true });
+    try {
+      const results = await workspaceApi.searchFiles(query);
+      dispatch({ type: 'SET_SEARCH_RESULTS', payload: results });
+    } catch (error) {
+      dispatch({ type: 'SET_SEARCH_RESULTS', payload: [] });
+    }
+  }, []);
+
+  // Get blob URL for image preview
+  const getImageUrl = useCallback(async (path: string): Promise<string> => {
+    const blob = await workspaceApi.getFileBlob(path);
+    return URL.createObjectURL(blob);
+  }, []);
+
   return {
     ...state,
     loadFiles,
@@ -240,5 +317,10 @@ export function useWorkspace() {
     deselectFile,
     clearSelection,
     toggleSelect,
+    handleOpenFile,
+    closeFile,
+    summarizeFile,
+    searchFiles,
+    getImageUrl,
   };
 }

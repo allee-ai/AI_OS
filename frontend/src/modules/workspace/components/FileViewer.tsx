@@ -1,0 +1,179 @@
+import React, { useEffect, useState } from 'react';
+import type { FileMeta } from '../types/workspace';
+import './FileViewer.css';
+
+interface FileViewerProps {
+  file: FileMeta | null;
+  isLoading: boolean;
+  onClose: () => void;
+  onSummarize: (path: string) => Promise<string | null>;
+  getImageUrl: (path: string) => Promise<string>;
+}
+
+/** Map mime/extension → language label for syntax display */
+function getLanguage(file: FileMeta): string | null {
+  const ext = file.name.split('.').pop()?.toLowerCase();
+  const map: Record<string, string> = {
+    py: 'python', js: 'javascript', ts: 'typescript',
+    jsx: 'jsx', tsx: 'tsx', json: 'json',
+    html: 'html', css: 'css', xml: 'xml',
+    md: 'markdown', sh: 'shell', bash: 'shell',
+    yaml: 'yaml', yml: 'yaml', toml: 'toml',
+    sql: 'sql', rs: 'rust', go: 'go',
+    java: 'java', c: 'c', cpp: 'cpp', h: 'c',
+    rb: 'ruby', php: 'php', swift: 'swift',
+  };
+  return map[ext || ''] ?? null;
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0;
+  let size = bytes;
+  while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+  return `${size.toFixed(1)} ${units[i]}`;
+}
+
+function formatDate(iso: string | null): string {
+  if (!iso) return '-';
+  const d = new Date(iso);
+  return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+}
+
+/** Basic markdown-ish rendering: headings, bold, italic, code, links */
+function renderSimpleMarkdown(text: string): React.ReactNode {
+  const lines = text.split('\n');
+  return lines.map((line, i) => {
+    // Headings
+    const hMatch = line.match(/^(#{1,3})\s+(.*)/);
+    if (hMatch) {
+      const level = hMatch[1].length;
+      return React.createElement(`h${level + 1}`, { key: i, className: 'md-heading' }, hMatch[2]);
+    }
+    // Empty line → spacing
+    if (!line.trim()) return <div key={i} className="md-spacer" />;
+    // Otherwise paragraph
+    return <p key={i} className="md-para">{line}</p>;
+  });
+}
+
+export const FileViewer: React.FC<FileViewerProps> = ({
+  file,
+  isLoading,
+  onClose,
+  onSummarize,
+  getImageUrl,
+}) => {
+  const [summarizing, setSummarizing] = useState(false);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+
+  // Load image URL if file is an image
+  useEffect(() => {
+    if (file?.is_image) {
+      let cancelled = false;
+      getImageUrl(file.path).then(url => {
+        if (!cancelled) setImageUrl(url);
+      });
+      return () => { cancelled = true; };
+    } else {
+      setImageUrl(null);
+    }
+  }, [file?.path, file?.is_image, getImageUrl]);
+
+  if (isLoading) {
+    return (
+      <div className="file-viewer">
+        <div className="file-viewer-empty">
+          <div className="viewer-spinner" />
+          <p>Loading file...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!file) {
+    return (
+      <div className="file-viewer">
+        <div className="file-viewer-empty">
+          <span className="empty-icon">📄</span>
+          <p>Select a file to preview</p>
+          <p className="hint">Click any file in the explorer</p>
+        </div>
+      </div>
+    );
+  }
+
+  const language = getLanguage(file);
+  const isMarkdown = file.name.endsWith('.md');
+  const isImage = !!file.is_image;
+
+  const handleSummarize = async () => {
+    setSummarizing(true);
+    await onSummarize(file.path);
+    setSummarizing(false);
+  };
+
+  return (
+    <div className="file-viewer">
+      {/* Header */}
+      <div className="file-viewer-header">
+        <div className="file-viewer-title">
+          <span className="viewer-filename">{file.name}</span>
+          <span className="viewer-path">{file.path}</span>
+        </div>
+        <button className="viewer-close" onClick={onClose} title="Close">×</button>
+      </div>
+
+      {/* Meta bar */}
+      <div className="file-viewer-meta">
+        <span className="meta-item">{formatBytes(file.size)}</span>
+        {file.mime_type && <span className="meta-item">{file.mime_type}</span>}
+        {language && <span className="meta-item lang-badge">{language}</span>}
+        <span className="meta-item">{formatDate(file.modified_at)}</span>
+      </div>
+
+      {/* Summary section */}
+      <div className="file-viewer-summary">
+        <div className="summary-header">
+          <span className="summary-label">Summary</span>
+          <button
+            className="summary-btn"
+            onClick={handleSummarize}
+            disabled={summarizing}
+            title="Generate / regenerate summary"
+          >
+            {summarizing ? '⏳ Summarizing...' : '✨ Summarize'}
+          </button>
+        </div>
+        {file.summary ? (
+          <p className="summary-text">{file.summary}</p>
+        ) : (
+          <p className="summary-empty">No summary yet</p>
+        )}
+      </div>
+
+      {/* Content */}
+      <div className="file-viewer-content">
+        {isImage && imageUrl ? (
+          <div className="image-preview">
+            <img src={imageUrl} alt={file.name} />
+          </div>
+        ) : isMarkdown && file.content ? (
+          <div className="markdown-preview">
+            {renderSimpleMarkdown(file.content)}
+          </div>
+        ) : file.content ? (
+          <pre className={`code-preview ${language ? `lang-${language}` : ''}`}>
+            <code>{file.content}</code>
+          </pre>
+        ) : (
+          <div className="no-preview">
+            <p>Preview not available for this file type</p>
+            <p className="hint">{file.mime_type || 'Unknown type'}</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};

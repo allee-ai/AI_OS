@@ -25,6 +25,9 @@ from workspace.schema import (
     chunk_file,
     get_file_chunks,
     get_workspace_stats,
+    update_file_summary,
+    get_file_summary,
+    get_all_files_metadata,
 )
 
 
@@ -181,3 +184,88 @@ class TestWorkspaceStats:
         assert "folders" in stats
         assert "total_size_bytes" in stats
         assert "chunks" in stats
+
+
+# ─── Summary & Metadata ────────────────────────────────────────────────────
+
+class TestListDirectorySummary:
+    """list_directory now returns summary field."""
+
+    def test_summary_field_present(self):
+        create_file("/sumdir/note.txt", b"hello", mime_type="text/plain")
+        listing = list_directory("/sumdir")
+        item = next(i for i in listing if i["name"] == "note.txt")
+        assert "summary" in item
+
+    def test_summary_populated_after_update(self):
+        path = "/sumdir2/doc.md"
+        create_file(path, b"# Title\nBody text", mime_type="text/markdown")
+        update_file_summary(path, "A short doc with title")
+        listing = list_directory("/sumdir2")
+        item = next(i for i in listing if i["name"] == "doc.md")
+        assert item["summary"] == "A short doc with title"
+
+
+class TestFileSummary:
+    """Summary CRUD helpers."""
+
+    def test_update_and_get_summary(self):
+        import time
+        path = f"/sumtest_{int(time.time())}/readme.txt"
+        create_file(path, b"content here", mime_type="text/plain")
+        assert get_file_summary(path) is None
+        update_file_summary(path, "A readme file")
+        assert get_file_summary(path) == "A readme file"
+
+    def test_overwrite_summary(self):
+        path = "/sumtest/over.txt"
+        create_file(path, b"x", mime_type="text/plain")
+        update_file_summary(path, "v1")
+        update_file_summary(path, "v2")
+        assert get_file_summary(path) == "v2"
+
+    def test_summary_nonexistent_file(self):
+        assert get_file_summary("/does/not/exist.txt") is None
+
+
+class TestAllFilesMetadata:
+    """get_all_files_metadata returns summary + metadata."""
+
+    def test_returns_list_with_summary(self):
+        path = "/meta/data.json"
+        create_file(path, b'{"a":1}', mime_type="application/json")
+        update_file_summary(path, "JSON config")
+        items = get_all_files_metadata(limit=100)
+        item = next((i for i in items if i["path"] == path), None)
+        assert item is not None
+        assert item["summary"] == "JSON config"
+        assert item["name"] == "data.json"
+
+
+class TestFileMetaEndpoint:
+    """Test the /api/workspace/file/meta endpoint logic (unit-ish)."""
+
+    def test_text_file_has_content(self):
+        """get_file on a text file should return decodable content."""
+        path = "/meta_ep/hello.py"
+        create_file(path, b"print('hello')", mime_type="text/x-python")
+        f = get_file(path)
+        assert f is not None
+        raw = f["content"]
+        text = raw.decode("utf-8") if isinstance(raw, bytes) else raw
+        assert "print" in text
+
+    def test_binary_file_not_text_decodable(self):
+        """Binary file content shouldn't be served as text in meta."""
+        path = "/meta_ep/img.png"
+        create_file(path, b"\x89PNG\r\n\x1a\n", mime_type="image/png")
+        f = get_file(path)
+        mime = f["mime_type"] or ""
+        assert not mime.startswith("text/")
+
+    def test_meta_includes_summary(self):
+        path = "/meta_ep/noted.md"
+        create_file(path, b"# Hi", mime_type="text/markdown")
+        update_file_summary(path, "Greeting file")
+        summary = get_file_summary(path)
+        assert summary == "Greeting file"
