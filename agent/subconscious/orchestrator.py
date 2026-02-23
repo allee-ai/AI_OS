@@ -189,6 +189,9 @@ class Subconscious:
         # Build state blocks
         lines = ["== STATE =="]
         
+        # Self-awareness header — injected once at top
+        lines.extend(self._build_self_awareness_block())
+        
         for thread_name, score in ordered_threads:
             adapter = self._get_adapter(thread_name)
             if not adapter:
@@ -248,6 +251,15 @@ class Subconscious:
             except Exception as e:
                 print(f"⚠️ {thread_name} introspect failed: {e}")
         
+        # Workspace context — FTS-scored file snippets
+        if query:
+            workspace_facts = self._get_workspace_context(query)
+            if workspace_facts:
+                lines.append("")
+                lines.append("[workspace] Relevant files and documents")
+                for fact in workspace_facts:
+                    lines.append(fact)
+        
         lines.append("")
         lines.append("== END STATE ==")
         
@@ -296,15 +308,74 @@ class Subconscious:
             grouped[category].append(formatted)
         
         return grouped
-        
-        lines.append("== END STATE ==")
-        
-        # Track timing
-        self._last_context_time = datetime.now(timezone.utc).isoformat()
-        self._last_query = query
-        
-        return "\n".join(lines)
     
+    def _build_self_awareness_block(self) -> List[str]:
+        """Build the self-awareness metadata for the top of STATE.
+        
+        Gives the agent awareness of its own architecture — what threads
+        exist, what they store, and the current state of its concept graph.
+        """
+        lines = [
+            "",
+            "[self] My internal structure",
+            "  | Thread | Question | What I Store |",
+            "  |--------|----------|--------------|",
+            "  | identity | WHO | My self-model, my user, our relationship |",
+            "  | form | WHAT | My tools, my actions, my capabilities |",
+            "  | philosophy | WHY | My values, my ethics, my reasoning style |",
+            "  | reflex | HOW | My learned patterns, my shortcuts |",
+            "  | log | WHEN/WHERE | My event timeline, my session history |",
+            "  | linking_core | WHICH | My concept graph, my relevance scoring |",
+        ]
+        
+        # Graph stats (cheap read from DB)
+        try:
+            from data.db import get_connection
+            conn = get_connection(readonly=True)
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM concept_links")
+            link_count = cur.fetchone()[0]
+            cur.execute("SELECT COUNT(DISTINCT concept_a) + COUNT(DISTINCT concept_b) FROM concept_links")
+            concept_count = cur.fetchone()[0] // 2 or 0
+            cur.execute("SELECT AVG(strength) FROM concept_links")
+            avg_strength = cur.fetchone()[0] or 0
+            lines.append(f"  graph: {link_count} links, ~{concept_count} concepts, avg_strength={avg_strength:.2f}")
+        except Exception:
+            pass
+        
+        return lines
+
+    def _get_workspace_context(self, query: str, max_results: int = 5) -> List[str]:
+        """Search workspace files via FTS and return dot-notation facts.
+        
+        Only returns results when the workspace actually has indexed content
+        and the query matches something. Cheap FTS lookup — no LLM call.
+        """
+        try:
+            from workspace.schema import search_files, get_workspace_stats
+            
+            stats = get_workspace_stats()
+            if stats.get("indexed_files", 0) == 0:
+                return []
+            
+            results = search_files(query, limit=max_results)
+            if not results:
+                return []
+            
+            facts = []
+            for r in results:
+                path = r.get("path", "")
+                snippet = r.get("snippet", "")
+                # Strip HTML marks from FTS snippet
+                snippet = snippet.replace("<mark>", "").replace("</mark>", "")
+                if snippet:
+                    facts.append(f"  workspace.file: {path}")
+                    facts.append(f"  workspace.snippet: {snippet[:200]}")
+            
+            return facts
+        except Exception:
+            return []
+
     def get_state(self, query: str = "") -> str:
         """
         Convenience method: score + build_state in one call.

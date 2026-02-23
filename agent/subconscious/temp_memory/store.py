@@ -499,6 +499,49 @@ def reject_fact(fact_id: int) -> bool:
     return update_fact_status(fact_id, 'rejected')
 
 
+def update_fact_text(fact_id: int, new_text: str) -> bool:
+    """
+    Edit the text of a pending fact before it enters long-term memory.
+    
+    Args:
+        fact_id: Database ID of the fact
+        new_text: New text to replace the current fact text
+    
+    Returns:
+        True if fact was found and updated, False otherwise
+    """
+    if not new_text or not new_text.strip():
+        raise ValueError("Fact text cannot be empty")
+    
+    with _db_lock:
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            cursor.execute(
+                "UPDATE temp_facts SET text = ? WHERE id = ?",
+                (new_text.strip(), fact_id)
+            )
+            conn.commit()
+            return cursor.rowcount > 0
+
+
+def delete_fact(fact_id: int) -> bool:
+    """
+    Delete a fact from temp memory entirely.
+    
+    Args:
+        fact_id: Database ID of the fact
+    
+    Returns:
+        True if fact was found and deleted, False otherwise
+    """
+    with _db_lock:
+        with closing(get_connection()) as conn:
+            cursor = conn.cursor()
+            cursor.execute("DELETE FROM temp_facts WHERE id = ?", (fact_id,))
+            conn.commit()
+            return cursor.rowcount > 0
+
+
 def get_approved_pending() -> List[Fact]:
     """
     Get facts that are approved but not yet consolidated.

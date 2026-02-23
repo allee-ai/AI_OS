@@ -164,14 +164,95 @@ class MemoryLoop(BackgroundLoop):
     into temp_memory for user review before consolidation.
     """
     
-    def __init__(self, interval: float = 60.0):  # 1 minute
+    def __init__(self, interval: float = 60.0, model: str = None):  # 1 minute
         config = LoopConfig(
             interval_seconds=interval,
             name="memory",
             enabled=True
         )
         super().__init__(config, self._extract)
-        self._last_processed_turn_id: Optional[int] = None
+        self._last_processed_turn_id: Optional[int] = self._load_last_turn_id()
+        self._model = model  # None = use env/default
+    
+    @property
+    def model(self) -> str:
+        """Get the model used for fact extraction."""
+        import os
+        if self._model:
+            return self._model
+        return os.getenv("AIOS_EXTRACT_MODEL", os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b"))
+    
+    @model.setter
+    def model(self, value: str) -> None:
+        self._model = value
+    
+    def _load_last_turn_id(self) -> Optional[int]:
+        """Load _last_processed_turn_id from DB so it survives restart."""
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    CREATE TABLE IF NOT EXISTS memory_loop_state (
+                        key TEXT PRIMARY KEY,
+                        value TEXT
+                    )
+                """)
+                # Can't create table in readonly — fall through
+                cur.execute(
+                    "SELECT value FROM memory_loop_state WHERE key = 'last_processed_turn_id'"
+                )
+                row = cur.fetchone()
+                return int(row[0]) if row else None
+        except Exception:
+            return None
+    
+    def _save_last_turn_id(self, turn_id: int) -> None:
+        """Persist _last_processed_turn_id to DB."""
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection()) as conn:
+                conn.execute("""
+                    CREATE TABLE IF NOT EXISTS memory_loop_state (
+                        key TEXT PRIMARY KEY,
+                        value TEXT
+                    )
+                """)
+                conn.execute(
+                    "INSERT OR REPLACE INTO memory_loop_state (key, value) VALUES (?, ?)",
+                    ("last_processed_turn_id", str(turn_id))
+                )
+                conn.commit()
+        except Exception:
+            pass
+    
+    def get_unprocessed_count(self) -> int:
+        """Return the number of conversation turns not yet read by the memory loop."""
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                if self._last_processed_turn_id:
+                    cur.execute(
+                        "SELECT COUNT(*) FROM convo_turns WHERE id > ?",
+                        (self._last_processed_turn_id,)
+                    )
+                else:
+                    cur.execute("SELECT COUNT(*) FROM convo_turns")
+                return cur.fetchone()[0]
+        except Exception:
+            return 0
+    
+    @property
+    def stats(self) -> Dict[str, Any]:
+        base = super().stats
+        base["model"] = self.model
+        base["unprocessed_turns"] = self.get_unprocessed_count()
+        base["last_processed_turn_id"] = self._last_processed_turn_id
+        return base
     
     def _extract(self) -> None:
         """Extract facts from recent conversation turns."""
@@ -251,6 +332,7 @@ class MemoryLoop(BackgroundLoop):
             
             # 4. Update last_processed_turn_id
             self._last_processed_turn_id = turn_id
+            self._save_last_turn_id(turn_id)
         
         # Log extraction run
         try:
@@ -298,7 +380,7 @@ Python list:'''
 
         try:
             import ollama
-            model = os.getenv("AIOS_EXTRACT_MODEL", os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b"))
+            model = self.model
             
             max_attempts = 3
             for attempt in range(max_attempts):
@@ -860,9 +942,6 @@ class ConsolidationLoop(BackgroundLoop):
                             # Take up to 10 most important facts
                             summary_facts = result.facts[:10]
                             summary = ' '.join(summary_facts)
-                            
-                            if summary:
-                                set_thread_summary(thread_name, summary)
                             
                             if summary:
                                 set_thread_summary(thread_name, summary)

@@ -132,6 +132,41 @@ def wake(start_loops: bool = True) -> None:
         _loop_manager.start_all()
     
     _trigger_manager = TriggerManager()
+    
+    # Wire built-in triggers
+    from .triggers import create_pending_facts_trigger, create_error_trigger
+    
+    # When pending facts pile up, trigger an early consolidation
+    def _trigger_consolidation():
+        if _loop_manager:
+            loop = _loop_manager.get_loop("consolidation")
+            if loop and hasattr(loop, '_consolidate'):
+                try:
+                    loop._consolidate()
+                except Exception as e:
+                    print(f"⚠️ Triggered consolidation failed: {e}")
+    
+    pending_trigger = create_pending_facts_trigger(
+        action=_trigger_consolidation,
+        threshold=50,
+    )
+    _trigger_manager.add(pending_trigger)
+    
+    # Log errors for observability
+    def _on_error_event():
+        try:
+            from agent.threads.log import log_event
+            log_event("system:trigger", "error_trigger", "Error trigger fired")
+        except Exception:
+            pass
+    
+    error_trigger = create_error_trigger(
+        action=_on_error_event,
+        cooldown=60.0,
+    )
+    _trigger_manager.add(error_trigger)
+    
+    _trigger_manager.start_check_loop(interval=30.0)
 
 
 def sleep() -> None:

@@ -228,12 +228,12 @@ async def get_loops_status():
     Returns loop name, status, interval, last run, run count, errors.
     """
     try:
-        from .loops import create_default_loops, LoopManager
+        from . import _loop_manager
         
-        # Get or create the global loop manager
-        # Note: In production, this should be a singleton
-        manager = create_default_loops()
-        stats = manager.get_stats()
+        if _loop_manager is not None:
+            stats = _loop_manager.get_stats()
+        else:
+            stats = []
         
         return {
             "loops": stats,
@@ -250,10 +250,12 @@ async def get_loops_status():
 async def get_loop_status(loop_name: str):
     """Get status of a specific loop."""
     try:
-        from .loops import create_default_loops
+        from . import _loop_manager
         
-        manager = create_default_loops()
-        loop = manager.get_loop(loop_name)
+        if _loop_manager is None:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=503, detail="Loops not started")
+        loop = _loop_manager.get_loop(loop_name)
         
         if not loop:
             from fastapi import HTTPException
@@ -284,11 +286,232 @@ async def get_temp_facts_summary():
             "stats": stats,
             "by_status": by_status,
             "pending_count": len(pending),
-            "recent": [{"id": f.id, "text": f.text[:100], "status": f.status} 
-                      for f in pending[:10]]
+            "recent": [fact.to_dict() for fact in pending[:50]]
         }
     except Exception as e:
         return {"error": str(e)}
+
+
+@router.get("/temp-facts/review")
+async def get_facts_for_review():
+    """Get all facts needing human review."""
+    try:
+        from .temp_memory import get_pending_review, get_all_pending
+        
+        review = get_pending_review()
+        pending = [f for f in get_all_pending() if f.status == 'pending']
+        
+        all_facts = review + pending
+        return {
+            "facts": [f.to_dict() for f in all_facts],
+            "count": len(all_facts)
+        }
+    except Exception as e:
+        return {"error": str(e)}
+
+
+@router.post("/temp-facts/{fact_id}/approve")
+async def approve_temp_fact(fact_id: int):
+    """Approve a temp fact for promotion to long-term memory."""
+    from .temp_memory import approve_fact
+    
+    success = approve_fact(fact_id)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Fact {fact_id} not found")
+    return {"status": "approved", "fact_id": fact_id}
+
+
+@router.post("/temp-facts/{fact_id}/reject")
+async def reject_temp_fact(fact_id: int):
+    """Reject a temp fact — it will never enter long-term memory."""
+    from .temp_memory import reject_fact
+    
+    success = reject_fact(fact_id)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Fact {fact_id} not found")
+    return {"status": "rejected", "fact_id": fact_id}
+
+
+@router.put("/temp-facts/{fact_id}")
+async def edit_temp_fact(fact_id: int, body: dict):
+    """Edit a temp fact's text before it enters long-term memory."""
+    from .temp_memory import update_fact_text
+    
+    text = body.get("text", "").strip()
+    if not text:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="text is required")
+    
+    success = update_fact_text(fact_id, text)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Fact {fact_id} not found")
+    return {"status": "updated", "fact_id": fact_id, "text": text}
+
+
+@router.delete("/temp-facts/{fact_id}")
+async def delete_temp_fact(fact_id: int):
+    """Delete a temp fact entirely."""
+    from .temp_memory import delete_fact
+    
+    success = delete_fact(fact_id)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Fact {fact_id} not found")
+    return {"status": "deleted", "fact_id": fact_id}
+
+
+@router.post("/temp-facts/approve-all")
+async def approve_all_pending():
+    """Approve all pending/pending_review facts at once."""
+    from .temp_memory import get_all_pending, approve_fact
+    
+    pending = [f for f in get_all_pending() if f.status in ('pending', 'pending_review')]
+    approved = 0
+    for fact in pending:
+        if approve_fact(fact.id):
+            approved += 1
+    return {"approved": approved}
+
+
+@router.post("/temp-facts/reject-all")
+async def reject_all_pending():
+    """Reject all pending/pending_review facts at once."""
+    from .temp_memory import get_all_pending, reject_fact
+    
+    pending = [f for f in get_all_pending() if f.status in ('pending', 'pending_review')]
+    rejected = 0
+    for fact in pending:
+        if reject_fact(fact.id):
+            rejected += 1
+    return {"rejected": rejected}
+
+
+# ─────────────────────────────────────────────────────────────
+# Loop Configuration Endpoints
+# ─────────────────────────────────────────────────────────────
+
+@router.put("/loops/{loop_name}/interval")
+async def set_loop_interval(loop_name: str, body: dict):
+    """Update a loop's interval in seconds."""
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    interval = body.get("interval")
+    if interval is None or not isinstance(interval, (int, float)) or interval < 5:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="interval must be a number >= 5")
+    
+    loop.config.interval_seconds = float(interval)
+    return {"status": "updated", "loop": loop_name, "interval": interval}
+
+
+@router.post("/loops/{loop_name}/pause")
+async def pause_loop(loop_name: str):
+    """Pause a running loop."""
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    loop.pause()
+    return {"status": "paused", "loop": loop_name}
+
+
+@router.post("/loops/{loop_name}/resume")
+async def resume_loop(loop_name: str):
+    """Resume a paused loop."""
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    loop.resume()
+    return {"status": "resumed", "loop": loop_name}
+
+
+@router.put("/loops/memory/model")
+async def set_memory_model(body: dict):
+    """Set the LLM model used by the memory loop for fact extraction."""
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop("memory")
+    if not loop or not hasattr(loop, 'model'):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail="Memory loop not available")
+    
+    model = body.get("model", "").strip()
+    if not model:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="model is required")
+    
+    loop.model = model
+    return {"status": "updated", "model": model}
+
+
+@router.get("/queue")
+async def get_unprocessed_queue():
+    """
+    Get the number of unprocessed conversation turns waiting to be read.
+    Shows the user how many conversations the memory loop still needs to process.
+    """
+    from . import _loop_manager
+    
+    unprocessed = 0
+    last_id = None
+    model = None
+    
+    if _loop_manager:
+        loop = _loop_manager.get_loop("memory")
+        if loop and hasattr(loop, 'get_unprocessed_count'):
+            unprocessed = loop.get_unprocessed_count()
+            last_id = getattr(loop, '_last_processed_turn_id', None)
+            model = getattr(loop, 'model', None)
+    
+    # Also get total turns for context
+    total_turns = 0
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM convo_turns")
+            total_turns = cur.fetchone()[0]
+    except Exception:
+        pass
+    
+    return {
+        "unprocessed": unprocessed,
+        "total_turns": total_turns,
+        "last_processed_turn_id": last_id,
+        "model": model
+    }
 
 
 @router.get("/potentiation")

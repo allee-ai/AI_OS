@@ -44,14 +44,6 @@ class HealthReport:
             "message": self.message,
             "details": self.details
         }
-    
-    def to_dict(self) -> Dict[str, Any]:
-        """Convert to dict for JSON serialization."""
-        return {
-            "status": self.status.value if hasattr(self.status, 'value') else str(self.status),
-            "message": self.message,
-            "details": self.details
-        }
 
 
 @dataclass

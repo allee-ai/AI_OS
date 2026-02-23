@@ -361,3 +361,238 @@
   padding: 1rem;
   font-size: 0.875rem;
 }
+
+/* ── Small Buttons ── */
+.btn-sm {
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  cursor: pointer;
+  font-size: 0.75rem;
+  line-height: 1;
+  transition: all 0.15s;
+}
+.btn-sm:hover { background: var(--bg); }
+.btn-sm.save { color: #059669; border-color: #059669; }
+.btn-sm.cancel { color: #6b7280; }
+.btn-sm.approve { color: #059669; border-color: #d1fae5; background: #ecfdf5; }
+.btn-sm.approve:hover { background: #d1fae5; }
+.btn-sm.reject { color: #dc2626; border-color: #fee2e2; background: #fef2f2; }
+.btn-sm.reject:hover { background: #fee2e2; }
+.btn-sm.edit { color: #2563eb; }
+.btn-sm.delete { color: #6b7280; border: none; background: none; }
+.btn-sm.delete:hover { color: #dc2626; }
+.btn-sm.approve-all { color: #059669; border-color: #059669; padding: 0.3rem 0.6rem; }
+.btn-sm.reject-all { color: #dc2626; border-color: #dc2626; padding: 0.3rem 0.6rem; }
+
+/* ── Model Section ── */
+.model-section {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.model-label {
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.model-value {
+  background: none;
+  border: none;
+  color: var(--text);
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0.15rem 0.3rem;
+  border-radius: 3px;
+  font-size: 0.8rem;
+  font-family: monospace;
+}
+.model-value:hover { background: var(--surface); }
+
+.model-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  flex: 1;
+}
+
+.model-input {
+  flex: 1;
+  padding: 0.2rem 0.4rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: monospace;
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ── Queue Bar ── */
+.queue-bar {
+  margin-bottom: 0.75rem;
+  padding: 0.5rem 0.75rem;
+  background: #fffbeb;
+  border: 1px solid #fde68a;
+  border-radius: 6px;
+}
+
+.queue-progress {
+  height: 6px;
+  background: #fde68a;
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: 0.35rem;
+}
+
+.queue-fill {
+  height: 100%;
+  background: #f59e0b;
+  border-radius: 3px;
+  transition: width 0.3s;
+}
+
+.queue-text {
+  font-size: 0.75rem;
+  color: #92400e;
+}
+
+/* ── Loop Controls ── */
+.loop-controls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.interval-edit {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.interval-input {
+  width: 60px;
+  padding: 0.15rem 0.3rem;
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  font-size: 0.75rem;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.interval-unit {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+}
+
+.interval-click {
+  cursor: pointer;
+  padding: 0.1rem 0.2rem;
+  border-radius: 3px;
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+.interval-click:hover {
+  background: var(--surface);
+  color: var(--text);
+}
+
+/* ── Bulk Actions ── */
+.bulk-actions {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.5rem;
+}
+
+/* ── Expanded Fact Items ── */
+.fact-item-expanded {
+  padding: 0.6rem;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  font-size: 0.8rem;
+}
+
+.fact-item-expanded + .fact-item-expanded {
+  margin-top: 0.5rem;
+}
+
+.fact-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+}
+
+.fact-text-full {
+  color: var(--text);
+  flex: 1;
+  line-height: 1.4;
+  word-break: break-word;
+}
+
+.fact-status-badge {
+  font-size: 0.6rem;
+  padding: 0.15rem 0.35rem;
+  border-radius: 3px;
+  text-transform: uppercase;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.fact-meta {
+  display: flex;
+  gap: 0.75rem;
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  margin-bottom: 0.35rem;
+}
+
+.fact-key {
+  font-family: monospace;
+  color: var(--accent);
+}
+
+.fact-confidence {
+  color: var(--text-muted);
+}
+
+.fact-source {
+  color: var(--text-muted);
+}
+
+.fact-actions {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.fact-edit-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.fact-edit-input {
+  width: 100%;
+  padding: 0.4rem;
+  border: 1px solid var(--accent);
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-family: inherit;
+  resize: vertical;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.fact-edit-actions {
+  display: flex;
+  gap: 0.25rem;
+  justify-content: flex-end;
+}

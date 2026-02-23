@@ -15,6 +15,8 @@ from .store import (
     update_fact_status,
     approve_fact,
     reject_fact,
+    update_fact_text,
+    delete_fact,
     get_approved_pending,
     Fact,
 )
@@ -31,6 +33,8 @@ __all__ = [
     "update_fact_status",
     "approve_fact",
     "reject_fact",
+    "update_fact_text",
+    "delete_fact",
     "get_approved_pending",
     "Fact",
 ]
