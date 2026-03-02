@@ -11,11 +11,30 @@ from pydantic import BaseModel
 from pathlib import Path
 import yaml
 
+import json
+
 router = APIRouter(prefix="/api/feeds", tags=["feeds"])
 
 # Paths relative to this module
 FEEDS_DIR = Path(__file__).resolve().parent
 SOURCES_DIR = FEEDS_DIR / "sources"
+_ENABLED_FILE = SOURCES_DIR / ".enabled.json"
+
+
+def _load_enabled() -> Dict[str, bool]:
+    """Load per-source enabled flags from disk."""
+    if _ENABLED_FILE.exists():
+        try:
+            return json.loads(_ENABLED_FILE.read_text())
+        except Exception:
+            pass
+    return {}
+
+
+def _save_enabled(state: Dict[str, bool]) -> None:
+    """Persist per-source enabled flags."""
+    _ENABLED_FILE.parent.mkdir(parents=True, exist_ok=True)
+    _ENABLED_FILE.write_text(json.dumps(state, indent=2))
 
 
 class FeedSourceConfig(BaseModel):
@@ -47,10 +66,11 @@ def _get_module_info(module_dir: Path) -> Optional[Dict[str, Any]]:
         return None
     
     name = module_dir.name
+    enabled_map = _load_enabled()
     info = {
         "name": name,
         "type": "module",
-        "enabled": False,  # Check if connected
+        "enabled": enabled_map.get(name, False),
         "poll_interval": 300,
         "has_auth": False,
         "description": None,
@@ -134,14 +154,18 @@ async def get_source(name: str):
 
 @router.post("/sources/{name}/toggle")
 async def toggle_source(name: str):
-    """Toggle enabled state for a feed module"""
+    """Toggle enabled state for a feed module."""
     module_dir = SOURCES_DIR / name
-    
+
     if not module_dir.exists():
         raise HTTPException(status_code=404, detail=f"Feed module '{name}' not found")
-    
-    # TODO: Implement actual enable/disable logic
-    return {"name": name, "enabled": True}
+
+    state = _load_enabled()
+    current = state.get(name, False)
+    state[name] = not current
+    _save_enabled(state)
+
+    return {"name": name, "enabled": state[name]}
 
 
 @router.post("/sources/{name}/test")

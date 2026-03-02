@@ -21,6 +21,7 @@ Usage:
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Dict, Any, Optional
 
 TRAINING_DIR = Path(__file__).parents[3] / "finetune" / "auto_generated"
 TRAINING_DIR.mkdir(parents=True, exist_ok=True)
@@ -127,7 +128,3 @@ def get_export_stats() -> Dict[str, Any]:
         total = cur.fetchone()[0]
     
     return {"total_turns": total, "exportable": total}
-
-
-# Add typing imports
-from typing import Dict, Any, Optional

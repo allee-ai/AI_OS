@@ -26,6 +26,8 @@ export interface FileMeta {
   summary: string | null;
   content: string | null;
   is_image?: boolean;
+  is_pdf?: boolean;
+  is_docx?: boolean;
 }
 
 export interface SearchResult {

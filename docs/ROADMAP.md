@@ -80,11 +80,11 @@ Each module below is self-contained. Pick one, own it, ship it.
 _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 
 ### Ready for contributors
-- [x] **Family/contacts UI** — Add/edit contacts by type with details
+- [ ] **Family/contacts UI** — Add/edit family members from dashboard
 - [x] **Trust level indicators** — Visual badges for trust levels in UI
-- [x] **Import from contacts** — Universal vCard (.vcf) import with preview and commit flow
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
+- [x] **Import from contacts** — Pull from vCard files (Google, iCloud, Outlook)
 
 ### Technical debt
 - [ ] Batch fact updates (currently one-at-a-time)
@@ -142,10 +142,13 @@ _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 - [ ] **Usage analytics** — Track tool success/failure rates
 
 ### Done
-- [x] **Text-native tool calling** — `:::execute:::` block protocol with scanner, safety allowlist, 4 executables
-- [x] **Permission system** — Two-layer safety: `SAFE_ACTIONS` allowlist + DB `allowed` flag
-- [x] **Frontend tool rendering** — ToolCallBlock / ToolResultBlock components with styled cards
-- [x] **WebSocket tool events** — Real-time tool_executing / tool_complete messages
+- [x] **Text-native tool calling** — `:::execute:::` block protocol parsed by scanner.py
+- [x] **Safety allowlist** — `SAFE_ACTIONS` / `BLOCKED_ACTIONS` in registry.py with `is_action_safe()` gating
+- [x] **Core executables** — file_read, file_write, terminal, web_search (sandboxed)
+- [x] **Permission system** — Two-layer safety: allowlist check + DB `allowed` flag
+- [x] **Tool loop in agent** — `_process_tool_calls()` with max 5 rounds, auto-re-call after execution
+- [x] **Frontend rendering** — `:::execute:::` and `:::result:::` blocks render as styled cards in chat
+- [x] **WebSocket tool events** — Real-time `tool_executing` / `tool_complete` messages
 
 ### Starter tasks
 - [ ] Add tool search/filter in UI
@@ -163,13 +166,14 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 ### Ready for contributors
 - [ ] **10x auto-promotion** — Patterns repeating 10+ times auto-promote to reflex
 - [ ] **Reflex editor** — Visual pattern builder in UI
-- [ ] **Conditional reflexes** — Time-of-day, user-state triggers
+- [x] **Conditional reflexes** — Feed event triggers with conditions
 - [ ] **Reflex analytics** — Usage frequency, match rates
 
 ### Starter tasks
 - [ ] Add reflex test button in UI
 - [ ] Show reflex match history
-- [ ] Implement reflex enable/disable toggle
+- [x] Implement reflex enable/disable toggle
+- [ ] Feed trigger builder UI
 <!-- /INCLUDE:reflex:ROADMAP -->
 
 ---
@@ -283,8 +287,9 @@ _Source: [Feeds/README.md](Feeds/README.md)_
 - [x] **Discord adapter** — Bot token, channel watching
 
 ### Starter tasks
-- [ ] Create gmail.yaml from template
+- [x] Create gmail module from template
 - [ ] Add feed status indicators in UI
+- [ ] Feed viewer components (native dashboard)
 <!-- /INCLUDE:feeds:ROADMAP -->
 
 ---

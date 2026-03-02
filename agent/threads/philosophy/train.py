@@ -21,6 +21,7 @@ Usage:
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Dict, Any, Optional
 
 TRAINING_DIR = Path(__file__).parents[3] / "finetune" / "auto_generated"
 TRAINING_DIR.mkdir(parents=True, exist_ok=True)
@@ -69,7 +70,7 @@ def export_training_data(
     
     Training goal: Teach the model to reason with user's values.
     """
-    from .schema import get_philosophy_facts
+    from .schema import pull_philosophy_profile_facts
     
     if output_path is None:
         output_path = Path(__file__).parents[3] / "finetune" / "philosophy_train.jsonl"
@@ -77,7 +78,7 @@ def export_training_data(
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    facts = get_philosophy_facts(limit=500)
+    facts = pull_philosophy_profile_facts(limit=500)
     facts = [f for f in facts if f.get("weight", 0) >= min_weight]
     
     examples = []
@@ -110,10 +111,8 @@ def export_training_data(
 
 def get_export_stats() -> Dict[str, Any]:
     """Get stats about exportable philosophy data."""
-    from .schema import get_philosophy_facts
-    facts = get_philosophy_facts(limit=500)
+    from .schema import pull_philosophy_profile_facts
+    facts = pull_philosophy_profile_facts(limit=500)
     return {"total_facts": len(facts), "exportable": len([f for f in facts if f.get("weight", 0) >= 0.3])}
 
 
-# Add typing imports
-from typing import Dict, Any, Optional

@@ -40,7 +40,7 @@ import numpy as np
 
 # Load combined data
 try:
-    df = pd.read_json('state_obedience.jsonl', lines=True)
+    df = pd.read_json('aios_combined.jsonl', lines=True)
     
     # Shuffle the data so we don't learn patterns based on order (e.g. all 'Greetings' first)
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)

@@ -67,6 +67,7 @@ export const FileViewer: React.FC<FileViewerProps> = ({
 }) => {
   const [summarizing, setSummarizing] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null);
 
   // Load image URL if file is an image
   useEffect(() => {
@@ -80,6 +81,22 @@ export const FileViewer: React.FC<FileViewerProps> = ({
       setImageUrl(null);
     }
   }, [file?.path, file?.is_image, getImageUrl]);
+
+  // Load PDF blob URL for iframe rendering
+  useEffect(() => {
+    if (file?.is_pdf) {
+      let cancelled = false;
+      getImageUrl(file.path).then(url => {
+        if (!cancelled) setPdfUrl(url);
+      });
+      return () => {
+        cancelled = true;
+        if (pdfUrl) URL.revokeObjectURL(pdfUrl);
+      };
+    } else {
+      setPdfUrl(null);
+    }
+  }, [file?.path, file?.is_pdf, getImageUrl]);
 
   if (isLoading) {
     return (
@@ -107,6 +124,8 @@ export const FileViewer: React.FC<FileViewerProps> = ({
   const language = getLanguage(file);
   const isMarkdown = file.name.endsWith('.md');
   const isImage = !!file.is_image;
+  const isPdf = !!file.is_pdf;
+  const isDocx = !!file.is_docx;
 
   const handleSummarize = async () => {
     setSummarizing(true);
@@ -158,6 +177,17 @@ export const FileViewer: React.FC<FileViewerProps> = ({
         {isImage && imageUrl ? (
           <div className="image-preview">
             <img src={imageUrl} alt={file.name} />
+          </div>
+        ) : isPdf && pdfUrl ? (
+          <div className="pdf-preview">
+            <iframe src={pdfUrl} title={file.name} />
+          </div>
+        ) : isDocx && file.content ? (
+          <div className="docx-preview">
+            <div className="docx-badge">DOCX &mdash; extracted text</div>
+            {file.content.split('\n\n').map((para, i) => (
+              <p key={i} className="docx-para">{para}</p>
+            ))}
           </div>
         ) : isMarkdown && file.content ? (
           <div className="markdown-preview">

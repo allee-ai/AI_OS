@@ -21,6 +21,7 @@ Usage:
 import json
 from datetime import datetime, timezone
 from pathlib import Path
+from typing import Dict, Any, Optional
 
 TRAINING_DIR = Path(__file__).parents[3] / "finetune" / "auto_generated"
 TRAINING_DIR.mkdir(parents=True, exist_ok=True)
@@ -78,12 +79,12 @@ def export_training_data(
     
     # Get registered tools if available
     try:
-        from .tools.registry import get_registered_tools
-        tools = get_registered_tools()
+        from .tools.registry import get_all_tools
+        tools = get_all_tools()
         
         for tool in tools:
-            name = tool.get("name", "")
-            desc = tool.get("description", "")
+            name = tool.name
+            desc = tool.description
             if name and desc:
                 examples.append({
                     "messages": [
@@ -110,12 +111,10 @@ def export_training_data(
 def get_export_stats() -> Dict[str, Any]:
     """Get stats about exportable form data."""
     try:
-        from .tools.registry import get_registered_tools
-        tools = get_registered_tools()
+        from .tools.registry import get_all_tools
+        tools = get_all_tools()
         return {"tools": len(tools), "exportable": len(tools)}
     except ImportError:
         return {"tools": 0, "exportable": 0}
 
 
-# Add typing imports
-from typing import Dict, Any, Optional

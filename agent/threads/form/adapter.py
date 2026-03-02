@@ -213,105 +213,135 @@ class FormThreadAdapter(BaseThreadAdapter):
     
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
-        Form introspection with capability awareness.
-        
+        Form introspection with budget-aware fact packing.
+
+        Uses _budget_fill to fit tool/capability facts within a
+        per-level token budget.
+
         Args:
             context_level: HEA level (1=lean, 2=medium, 3=full)
             query: Optional query for relevance filtering
             threshold: Minimum weight for tools/actions (0-10 scale)
-        
-        Returns:
-            IntrospectionResult with facts like:
-                "form.tools.browser: Kernel browser automation"
-                "form.browser.url: github.com"
         """
-        # Ensure tools are seeded on first introspection
         self.seed_tools()
-        
-        facts = []
+        relevant_concepts: List[str] = []
+
         min_weight = threshold / 10.0
-        
-        # Tool-use instructions — only when Form scores high enough (L2+)
-        # and runnable tools exist. Injected as a fact so it flows through
-        # the same context system as everything else.
-        if _HAS_TOOLS and context_level >= 2:
+        raw = self._get_raw_facts(min_weight=min_weight)
+
+        if query:
+            raw, relevant_concepts = self._relevance_boost(raw, query)
+
+        facts = self._budget_fill(raw, context_level)
+
+        return IntrospectionResult(
+            facts=facts,
+            state=self.get_metadata(),
+            context_level=context_level,
+            health=self.health().to_dict(),
+            relevant_concepts=relevant_concepts,
+        )
+
+    def _get_raw_facts(self, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
+        """Get raw facts with l1/l2/l3 value tiers for _budget_fill.
+
+        Returns dicts with: path, l1_value, l2_value, l3_value, weight.
+        """
+        raw: List[Dict] = []
+
+        # Tool-use instructions — high weight so they sort near top
+        if _HAS_TOOLS:
             from .tools.registry import get_runnable_tools
             runnable = get_runnable_tools()
             if runnable:
-                facts.append(
-                    "form.tools._usage: To use a tool, write an execute block:\\n"
-                    ":::execute\\n"
-                    "tool: <tool_name>\\n"
-                    "action: <action_name>\\n"
-                    "param_name: param_value\\n"
-                    ":::\\n"
-                    "You will receive the result and can continue your response. "
-                    "Only use tools when genuinely needed. Explain your reasoning first."
+                usage_short = "Tool calling available via :::execute blocks"
+                usage_mid = (
+                    "To use a tool, write an execute block:\\n"
+                    ":::execute\\ntool: <tool_name>\\naction: <action_name>\\n"
+                    "param_name: param_value\\n:::\\n"
+                    "Only use tools when genuinely needed."
                 )
-        
-        # Tools - use formatted tools from tools.py with dot notation
+                raw.append({
+                    "path": "form.tools._usage",
+                    "l1_value": usage_short,
+                    "l2_value": usage_mid,
+                    "l3_value": usage_mid + " Explain your reasoning first.",
+                    "weight": 0.95,
+                })
+
+        # Available tools
         if _HAS_TOOLS:
             available = get_available_tools()
             for t in available:
                 if t.weight < min_weight:
                     continue
-                    
-                path = f"form.tools.{t.name}"
-                
-                if context_level == 1:
-                    facts.append(f"{path}: {t.name}")
-                elif context_level == 2:
-                    facts.append(f"{path}: {t.description} (actions: {', '.join(t.actions)})")
-                else:
-                    # L3: Full details
-                    facts.append(f"{path}: {t.description} [{t.category.value}] (actions: {', '.join(t.actions)})")
+                raw.append({
+                    "path": f"form.tools.{t.name}",
+                    "l1_value": t.name,
+                    "l2_value": f"{t.description} (actions: {', '.join(t.actions)})",
+                    "l3_value": (
+                        f"{t.description} [{t.category.value}] "
+                        f"(actions: {', '.join(t.actions)})"
+                    ),
+                    "weight": t.weight,
+                })
         else:
-            # Fallback to DB lookup
-            tools = self.get_tools(context_level)
+            tools = self.get_tools(2)
             for tool in tools:
                 meta = tool.get("metadata", {})
                 data = tool.get("data", {})
                 weight = tool.get("weight", 0.5)
-                
                 if weight < min_weight:
                     continue
-                    
                 name = meta.get("name", tool.get("key", "").replace("tool_", ""))
                 if data.get("available", True):
-                    path = f"form.tools.{name}"
-                    facts.append(f"{path}: {meta.get('description', '')}")
-        
-        # Browser state (L2+)
-        if context_level >= 2:
-            browser = self.get_browser_state()
-            for b in browser:
-                data = b.get("data", {})
-                url = data.get("url", "")
-                title = data.get("title", "")
-                if url:
-                    facts.append(f"form.browser.url: {url}")
-                    if title:
-                        facts.append(f"form.browser.title: {title}")
-        
-        # Action history (L3 only)
-        if context_level >= 3:
-            actions = self.get_action_history(3)
-            for i, action in enumerate(actions):
-                data = action.get("data", {})
-                meta = action.get("metadata", {})
-                act = meta.get("action", "")
-                tool = meta.get("tool", "")
-                success = data.get("success", False)
-                if act:
-                    facts.append(f"form.history.{i}.action: {tool} → {act}")
-                    facts.append(f"form.history.{i}.success: {success}")
-                    facts.append(f"form.history.{i}.weight: 4.0")
-        
-        return IntrospectionResult(
-            facts=facts,
-            state=self.get_metadata(),
-            context_level=context_level
-        )
+                    actions = ", ".join(meta.get("actions", []))
+                    raw.append({
+                        "path": f"form.tools.{name}",
+                        "l1_value": name,
+                        "l2_value": meta.get("description", ""),
+                        "l3_value": (
+                            f"{meta.get('description', '')} (actions: {actions})"
+                        ),
+                        "weight": weight,
+                    })
+
+        # Browser state
+        browser = self.get_browser_state()
+        for b in browser:
+            data = b.get("data", {})
+            url = data.get("url", "")
+            title = data.get("title", "")
+            if url:
+                raw.append({
+                    "path": "form.browser.url",
+                    "l1_value": url,
+                    "l2_value": f"{url} — {title}" if title else url,
+                    "l3_value": f"Browser at {url}" + (f" ({title})" if title else ""),
+                    "weight": 0.6,
+                })
+
+        # Action history
+        actions = self.get_action_history(10)
+        for i, action in enumerate(actions):
+            data = action.get("data", {})
+            meta = action.get("metadata", {})
+            act = meta.get("action", "")
+            tool = meta.get("tool", "")
+            success = data.get("success", False)
+            if act:
+                raw.append({
+                    "path": f"form.history.{i}",
+                    "l1_value": f"{tool} → {act}",
+                    "l2_value": f"{tool} → {act} ({'ok' if success else 'fail'})",
+                    "l3_value": (
+                        f"{tool} → {act} "
+                        f"({'success' if success else 'failed'})"
+                    ),
+                    "weight": 0.4,
+                })
+
+        return raw[:limit]
 
 
 __all__ = ["FormThreadAdapter"]

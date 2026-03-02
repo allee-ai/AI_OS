@@ -154,66 +154,107 @@ class LogThreadAdapter(BaseThreadAdapter):
                 return HealthReport.ok("Ready", row_count=0)
         except Exception as e:
             return HealthReport.error(f"Log health check failed: {e}")
-    
-    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
+
+    def _get_raw_facts(self, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
+        """Get raw facts with l1/l2/l3 value tiers for _budget_fill.
+
+        Returns dicts with: path, l1_value, l2_value, l3_value, weight.
         """
-        Log introspection with temporal awareness.
-        
-        Args:
-            context_level: HEA level (1=lean, 2=medium, 3=full)
-            query: Optional query for relevance filtering
-            threshold: Thread relevance score (0-10). Higher = more detail.
-                       For log, this increases event count rather than filtering.
-        
-        Returns:
-            IntrospectionResult with facts like:
-                "log.session.duration: 15 minutes"
-                "log.events.0: discussed architecture [conversation]"
-        """
-        facts = []
-        
-        # Session info (always included - high relevance for temporal context)
+        raw: List[Dict] = []
+
+        # Session metadata — always high weight (temporal context)
         duration = self.get_session_duration()
         if duration:
             if duration < 60:
-                duration_str = f"{int(duration)} seconds"
+                dur_str = f"{int(duration)}s"
             elif duration < 3600:
-                duration_str = f"{int(duration/60)} minutes"
+                dur_str = f"{int(duration / 60)}m"
             else:
-                duration_str = f"{duration/3600:.1f} hours"
-            facts.append(f"log.session.duration: {duration_str}")
-        
+                dur_str = f"{duration / 3600:.1f}h"
+            raw.append({
+                "path": "log.session.duration",
+                "l1_value": dur_str,
+                "l2_value": f"Session active for {dur_str}",
+                "l3_value": (
+                    f"Current session started at "
+                    f"{self._session_start.isoformat()}, active for {dur_str}"
+                ),
+                "weight": 0.9,
+            })
+
         if self._message_count > 0:
-            facts.append(f"log.session.messages: {self._message_count}")
-        
-        # Events: threshold comes inverted from orchestrator
-        # Low threshold = high relevance score = MORE events
-        # threshold 0-3 → 10 events (most relevant)
-        # threshold 3-7 → 5 events (medium)
-        # threshold 7-10 → 2 events (least relevant)
-        if threshold < 3.0:
-            event_count = 10
-        elif threshold < 7.0:
-            event_count = 5
-        else:
-            event_count = 2
-        
-        events = self.get_recent_events(event_count)
-        
+            raw.append({
+                "path": "log.session.messages",
+                "l1_value": str(self._message_count),
+                "l2_value": f"{self._message_count} messages exchanged",
+                "l3_value": (
+                    f"{self._message_count} messages exchanged in current session"
+                ),
+                "weight": 0.8,
+            })
+
+        # Events — convert to l1/l2/l3 dicts
+        events = self.get_recent_events(limit)
         for i, evt in enumerate(events):
-            event_type = evt.get("metadata", {}).get("type", "system")
-            # Clean event_type for display (remove colons, etc.)
-            event_type_clean = event_type.split(":")[0] if ":" in event_type else event_type
-            
+            meta = evt.get("metadata", {})
+            event_type = meta.get("type", "system")
+            event_type_clean = (
+                event_type.split(":")[0] if ":" in event_type else event_type
+            )
+            source = meta.get("source", "")
             data = evt.get("data", {})
             msg = data.get("message", "")
-            if msg:
-                facts.append(f"log.events.{i}: {msg[:80]} [{event_type_clean}]")
-        
+            timestamp = data.get("timestamp", "")
+            stored_weight = evt.get("weight", 0.3)
+
+            if not msg or stored_weight < min_weight:
+                continue
+
+            # Blend stored weight with event-type relevance
+            type_relevance = EVENT_TYPE_RELEVANCE.get(event_type_clean, 3) / 10.0
+            weight = max(stored_weight, type_relevance)
+
+            raw.append({
+                "path": f"log.events.{i}",
+                "l1_value": f"{msg[:40]} [{event_type_clean}]",
+                "l2_value": f"{msg[:80]} [{event_type_clean}]",
+                "l3_value": (
+                    f"{msg} [{event_type_clean}] source={source} at={timestamp}"
+                ),
+                "weight": weight,
+            })
+
+        return raw[:limit]
+    
+    def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
+        """
+        Log introspection with budget-aware fact packing.
+
+        Uses _budget_fill to fit temporal facts within a per-level
+        token budget.  Top facts get full detail; tail facts are
+        downgraded to L1 so context stays compact.
+
+        Args:
+            context_level: HEA level (1=lean, 2=medium, 3=full)
+            query: Optional query for relevance filtering
+            threshold: Thread relevance score (0-10, inverted by orchestrator)
+        """
+        relevant_concepts: List[str] = []
+
+        min_weight = threshold / 10.0
+        raw = self._get_raw_facts(min_weight=min_weight)
+
+        if query:
+            raw, relevant_concepts = self._relevance_boost(raw, query)
+
+        facts = self._budget_fill(raw, context_level)
+
         return IntrospectionResult(
             facts=facts,
             state=self.get_metadata(),
-            context_level=context_level
+            context_level=context_level,
+            health=self.health().to_dict(),
+            relevant_concepts=relevant_concepts,
         )
 
 

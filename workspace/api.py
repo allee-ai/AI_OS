@@ -22,7 +22,10 @@ from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional, List, Dict, Any
 from pathlib import Path
+import io
 import sys
+import zipfile
+import xml.etree.ElementTree as ET
 
 # Ensure project root is on path
 project_root = Path(__file__).resolve().parents[1]
@@ -46,6 +49,35 @@ from .schema import (
 )
 
 router = APIRouter(prefix="/api/workspace", tags=["workspace"])
+
+
+# =============================================================================
+# Helpers
+# =============================================================================
+
+_DOCX_NS = "{http://schemas.openxmlformats.org/wordprocessingml/2006/main}"
+
+
+def _extract_docx_text(content: bytes | None) -> str | None:
+    """Extract plain text from a .docx (Office Open XML) blob.
+
+    Uses only stdlib: zipfile + xml.etree.  Returns None on failure.
+    """
+    if not content:
+        return None
+    try:
+        raw = content if isinstance(content, bytes) else content.encode("utf-8")
+        with zipfile.ZipFile(io.BytesIO(raw)) as zf:
+            doc_xml = zf.read("word/document.xml")
+        tree = ET.fromstring(doc_xml)
+        paragraphs: list[str] = []
+        for p in tree.iter(f"{_DOCX_NS}p"):
+            texts = [t.text for t in p.iter(f"{_DOCX_NS}t") if t.text]
+            if texts:
+                paragraphs.append("".join(texts))
+        return "\n\n".join(paragraphs) if paragraphs else None
+    except Exception:
+        return None
 
 
 # =============================================================================
@@ -157,6 +189,17 @@ async def get_file_meta(path: str):
         # For images, provide a download URL the frontend can use
         result["content"] = None
         result["is_image"] = True
+    elif mime == "application/pdf":
+        # PDF: frontend renders via blob URL in <iframe>
+        result["content"] = None
+        result["is_pdf"] = True
+    elif mime in (
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/msword",
+    ):
+        # DOCX/DOC: extract text from Office XML
+        result["content"] = _extract_docx_text(file.get("content"))
+        result["is_docx"] = True
     else:
         result["content"] = None
 

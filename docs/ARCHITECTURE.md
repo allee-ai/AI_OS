@@ -173,14 +173,34 @@ identity.primary_user.name: Jamie
 identity.dad.relationship: Your father, retired engineer
 ```
 
+### Preset Contact Facts
+
+New profiles are created with empty preset facts for common contact information:
+
+| Fact Key | Fact Type | Description |
+|----------|-----------|-------------|
+| `name` | name | Full name |
+| `email` | email | Email address |
+| `phone` | phone | Phone number |
+| `location` | location | City/region/timezone |
+| `occupation` | occupation | Job title or role |
+| `organization` | organization | Company or affiliation |
+| `relationship` | relationship | How they relate to user |
+| `notes` | note | Freeform notes |
+
 ### API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| GET | `/api/identity/profiles` | List all profiles |
-| GET | `/api/identity/profiles/{id}` | Get profile with facts |
-| POST | `/api/identity/facts` | Create/update fact |
-| DELETE | `/api/identity/profiles/{id}` | Delete (if not protected) |
+| GET | `/api/identity` | List all profiles |
+| GET | `/api/identity/{id}/facts` | Get profile facts |
+| POST | `/api/identity/facts` | Create new fact |
+| PUT | `/api/identity/{id}/facts/{key}` | Edit existing fact |
+| DELETE | `/api/identity/{id}/facts/{key}` | Delete fact |
+| DELETE | `/api/identity/{id}` | Delete profile (if not protected) |
+| POST | `/api/identity/import/upload` | Upload vCard file, returns upload_id |
+| POST | `/api/identity/import/parse` | Parse uploaded file, returns preview |
+| POST | `/api/identity/import/commit` | Import contacts to profiles |
 <!-- /INCLUDE:identity:ARCHITECTURE -->
 
 #### 2. Log Thread (`agent/threads/log/`)
@@ -314,39 +334,6 @@ ToolDefinition(
 | Memory | identity, philosophy, log, linking |
 | Files | file_read, file_write |
 | Automation | terminal, scheduler |
-
-### Tool Calling Protocol
-
-Tool calling is **text-native** — the LLM writes `:::execute:::` blocks in its response, which are parsed by `scanner.py` and dispatched to executables.
-
-```
-User: "What's in README.md?"
-
-LLM Output:
-  Let me check that file.
-  :::execute
-  tool: file_read
-  action: read_file
-  path: README.md
-  :::
-
-Scanner parses → is_action_safe() checks → executable runs → result injected:
-  :::result tool=file_read action=read_file
-  # AI OS — A Local OS Extension for LLMs
-  ...
-  :::
-
-LLM re-called with result → generates final answer.
-```
-
-### Safety Layers
-
-| Layer | Check | Location |
-|-------|-------|----------|
-| 1. Allowlist | `is_action_safe(tool, action)` | `registry.py` |
-| 2. DB Flag | `allowed` column per tool | `schema.py` |
-| 3. Sandbox | Path traversal prevention | Each executable |
-| 4. Timeouts | 30s max for terminal | `terminal.py` |
 <!-- /INCLUDE:form:ARCHITECTURE -->
 
 #### 4. Philosophy Thread (`agent/threads/philosophy/`)
@@ -418,6 +405,7 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 | `reflex_greetings` | Quick greeting patterns |
 | `reflex_shortcuts` | User-defined commands |
 | `reflex_system` | System-level reflexes |
+| `reflex_triggers` | Feed event → Tool action automations |
 
 ### Pattern Matching
 
@@ -426,6 +414,22 @@ trigger → response
 "hi" → "Hey! What's on your mind?"
 "/clear" → [clear_conversation action]
 ```
+
+### Feed Triggers (NEW)
+
+Connect feed events to tool actions:
+```
+gmail/email_received → web_search/search
+discord/mention_received → send_notification/notify
+```
+
+Trigger fields:
+- **feed_name**: Source feed (gmail, discord, etc.)
+- **event_type**: Event to listen for (email_received, message_sent, etc.)
+- **condition**: Optional filter (e.g., subject contains "urgent")
+- **tool_name**: Tool to execute
+- **tool_action**: Action to perform
+- **tool_params**: Parameters to pass to tool
 
 ### Reflex Cascade
 
@@ -627,11 +631,7 @@ agent/services/
 ```
 User Message → agent_service.py
     → get_consciousness_context()
-    → agent.generate(on_tool_event=callback)
-    → Scanner: parse :::execute::: blocks
-    → Safety: is_action_safe() check
-    → Execute: run tool, inject :::result:::
-    → Re-call LLM with result (up to 5 rounds)
+    → agent.generate()
     → Response
 ```
 <!-- /INCLUDE:services:ARCHITECTURE -->
@@ -649,24 +649,49 @@ _Source: [Feeds/README.md](Feeds/README.md)_
 
 ```
 Feeds/
-├── router.py          # Main message bus
-├── api.py             # FastAPI endpoints
-└── sources/           # YAML configurations
-    └── _template.yaml # Structure for new sources
+├── router.py              # Main message bus
+├── api.py                 # FastAPI endpoints (secrets, OAuth, events)
+├── events.py              # Event registry and emission system
+└── sources/               # Modular feed directories
+    ├── gmail/
+    │   └── __init__.py    # OAuth, adapter, event types
+    ├── discord/
+    │   └── __init__.py    # Bot adapter, event types
+    └── _template.yaml     # Legacy YAML structure
 ```
 
-### Source Configuration
+### Feed Modules
 
-```yaml
-# sources/slack.yaml
-name: slack
-type: rest
-poll_interval: 60
-auth:
-  method: bearer
-  token_env: SLACK_BOT_TOKEN
-pull:
-  endpoint: https://slack.com/api/conversations.history
+Each feed module defines:
+- **Event types**: What events it can emit (email_received, message_sent, etc.)
+- **OAuth config**: How to authenticate (Google OAuth2, bot tokens, etc.)
+- **Adapter**: API wrapper for fetching/sending data
+
+### Event System
+
+```python
+from Feeds.events import emit_event, EventPriority
+
+# Emit an event (auto-logged, triggers reflexes)
+emit_event(
+    feed_name="gmail",
+    event_type="email_received",
+    payload={"from": "user@example.com", "subject": "Hello"},
+    priority=EventPriority.HIGH,
+)
+```
+
+### Secrets Management
+
+Encrypted credential storage for API keys and OAuth tokens:
+```python
+from agent.core.secrets import store_secret, get_oauth_tokens
+
+# Store API key
+store_secret("discord", "bot_token", "MTEx...")
+
+# Get OAuth tokens
+tokens = get_oauth_tokens("gmail")
 ```
 
 ### Status
@@ -675,9 +700,11 @@ pull:
 |---------|--------|
 | Router Logic | ✅ |
 | API Endpoints | ✅ |
-| Auth Handlers | 🔜 |
-| Polling | 🔜 |
-| Draft Push | 🔜 |
+| Event System | ✅ |
+| Secrets Storage | ✅ |
+| Gmail OAuth | ✅ |
+| Discord Adapter | ✅ |
+| Reflex Triggers | ✅ |
 <!-- /INCLUDE:feeds:ARCHITECTURE -->
 
 #### 2. Chat (`chat/`) — Interface API

@@ -10,6 +10,13 @@ Syncs:
 - Module ARCHITECTURE sections → docs/ARCHITECTURE.md
 - Module ROADMAP sections → docs/ROADMAP.md
 - Module CHANGELOG sections → docs/CHANGELOG.md
+
+Rules:
+- Module READMEs are the source of truth. This script NEVER writes to them.
+- Root docs get their INCLUDE sections replaced with module content.
+- Checkbox state is MERGED: if either side has [x], the result is [x].
+  This prevents re-checking completed items and allows edits in either file.
+- Module READMEs are append-only by convention — contributors add, never delete.
 """
 
 import re
@@ -58,9 +65,50 @@ def extract_section(readme_path: Path, section: str, module: str) -> str:
     return match.group(1).strip() if match else ""
 
 
+def _extract_checkboxes(text: str) -> dict[str, bool]:
+    """Build a map of checkbox-line-text → checked for every ``- [x]`` / ``- [ ]`` line."""
+    result: dict[str, bool] = {}
+    for line in text.splitlines():
+        m = re.match(r"^(\s*-\s*)\[([ xX])\]\s*(.*)", line)
+        if m:
+            # Key is the text after the checkbox, stripped, so we match regardless of indent
+            key = m.group(3).strip()
+            checked = m.group(2).lower() == "x"
+            result[key] = checked
+    return result
+
+
+def _merge_checkboxes(incoming: str, existing: str) -> str:
+    """Merge checkbox state: if EITHER side has [x], result is [x].
+
+    ``incoming`` is the module README content (source of truth for new items).
+    ``existing`` is what's currently in the root doc section.
+    The merge ensures:
+    - New items from module README appear.
+    - Items checked in either place stay checked.
+    - Items removed from module README are dropped (module is canonical for item list).
+    """
+    existing_checks = _extract_checkboxes(existing)
+
+    lines: list[str] = []
+    for line in incoming.splitlines():
+        m = re.match(r"^(\s*-\s*)\[([ xX])\]\s*(.*)", line)
+        if m:
+            prefix, state, text = m.group(1), m.group(2), m.group(3)
+            key = text.strip()
+            # Checked if either side says so
+            if state.lower() == "x" or existing_checks.get(key, False):
+                line = f"{prefix}[x] {text}"
+            else:
+                line = f"{prefix}[ ] {text}"
+        lines.append(line)
+    return "\n".join(lines)
+
+
 def update_doc_section(doc_path: Path, section: str, module: str, content: str, source_path: str) -> bool:
     """
     Update a section in a root doc file with content from a module.
+    Merges checkbox state so [x] from either side is preserved.
     Returns True if updated, False if marker not found or no change.
     """
     if not doc_path.exists():
@@ -71,14 +119,20 @@ def update_doc_section(doc_path: Path, section: str, module: str, content: str, 
     # Pattern: <!-- INCLUDE:identity:ARCHITECTURE --> ... <!-- /INCLUDE:identity:ARCHITECTURE -->
     pattern = f"(<!-- INCLUDE:{module}:{section} -->)(.*?)(<!-- /INCLUDE:{module}:{section} -->)"
     
-    if not re.search(pattern, doc_content, re.DOTALL):
+    match = re.search(pattern, doc_content, re.DOTALL)
+    if not match:
         return False
     
+    existing_section = match.group(2)
+
+    # Merge checkbox state between incoming content and existing root doc
+    merged = _merge_checkboxes(content, existing_section)
+
     # Build replacement with source link
     header = f"\n_Source: [{source_path}/README.md]({source_path}/README.md)_\n\n"
-    replacement = f"\\g<1>{header}{content}\n\\g<3>"
+    replacement = f"{match.group(1)}{header}{merged}\n{match.group(3)}"
     
-    new_content = re.sub(pattern, replacement, doc_content, flags=re.DOTALL)
+    new_content = doc_content[:match.start()] + replacement + doc_content[match.end():]
     
     if new_content != doc_content:
         doc_path.write_text(new_content, encoding="utf-8")
@@ -118,8 +172,80 @@ def sync_all() -> dict:
     }
 
 
+def back_sync_checkboxes() -> dict:
+    """Propagate [x] checks from root docs back to module READMEs.
+
+    This is APPEND-ONLY: it only changes ``[ ]`` → ``[x]`` in module
+    READMEs when the root doc already has ``[x]``.  It never deletes
+    lines, never unchecks, and never adds new items.
+    """
+    total = 0
+    touched: list[str] = []
+
+    for path, module, _name in MODULES:
+        readme = PROJECT_ROOT / path / "README.md"
+        if not readme.exists():
+            continue
+
+        readme_text = readme.read_text(encoding="utf-8")
+        changed = False
+
+        for section, doc_path in ROOT_DOCS.items():
+            if not doc_path.exists():
+                continue
+            doc_text = doc_path.read_text(encoding="utf-8")
+
+            # Extract current root-doc section for this module
+            pattern = f"<!-- INCLUDE:{module}:{section} -->(.*?)<!-- /INCLUDE:{module}:{section} -->"
+            root_match = re.search(pattern, doc_text, re.DOTALL)
+            if not root_match:
+                continue
+            root_checks = _extract_checkboxes(root_match.group(1))
+            if not root_checks:
+                continue
+
+            # Extract corresponding section from module README
+            mod_pattern = f"(<!-- {section}:{module} -->)(.*?)(<!-- /{section}:{module} -->)"
+            mod_match = re.search(mod_pattern, readme_text, re.DOTALL)
+            if not mod_match:
+                continue
+
+            mod_section = mod_match.group(2)
+            new_lines: list[str] = []
+            section_changed = False
+
+            for line in mod_section.splitlines():
+                m = re.match(r"^(\s*-\s*)\[([ xX])\]\s*(.*)", line)
+                if m:
+                    prefix, state, text = m.group(1), m.group(2), m.group(3)
+                    key = text.strip()
+                    if state.lower() != "x" and root_checks.get(key, False):
+                        line = f"{prefix}[x] {text}"
+                        section_changed = True
+                new_lines.append(line)
+
+            if section_changed:
+                new_section = "\n".join(new_lines)
+                readme_text = (
+                    readme_text[:mod_match.start(2)]
+                    + new_section
+                    + readme_text[mod_match.end(2):]
+                )
+                changed = True
+                total += 1
+
+        if changed:
+            readme.write_text(readme_text, encoding="utf-8")
+            touched.append(module)
+
+    return {"total": total, "modules": touched}
+
+
 def main():
     """Main entry point."""
+    do_back_sync = "--back-sync" in sys.argv
+
+    # Forward sync: module READMEs → root docs (with checkbox merge)
     results = sync_all()
     
     if results["total_sections_synced"] > 0:
@@ -128,6 +254,14 @@ def main():
             print(f"    - {m}")
     else:
         print("  ✓ All docs already in sync")
+
+    # Back-sync: propagate [x] from root docs → module READMEs (append-only)
+    if do_back_sync:
+        bs = back_sync_checkboxes()
+        if bs["total"] > 0:
+            print(f"  ✓ Back-synced checkboxes to {len(bs['modules'])} module(s): {', '.join(bs['modules'])}")
+        else:
+            print("  ✓ Module READMEs already up to date")
     
     return 0
 

@@ -1137,6 +1137,25 @@ start.bat             # Windows
 <!-- INCLUDE:identity:CHANGELOG -->
 _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 
+### 2026-02-20
+- Universal contacts import via vCard (.vcf) files
+- Added `ContactsImportModal` component with guided flow (source → instructions → upload → preview → import)
+- Supports Google, iCloud, Outlook, and any vCard export
+- Upload/parse/commit API pattern: `POST /api/identity/import/upload`, `/parse`, `/commit`
+- Removed macOS-specific pyobjc-framework-Contacts dependency
+- Added vobject library for vCard parsing
+- Import button added to ProfilesPage sidebar
+
+### 2026-02-01
+- Added edit button (✏️) next to facts for inline editing
+- Added edit modal with L1/L2/L3 fields, type selector, weight slider
+- Added `ThemedSelect` component for consistent dropdown styling
+- Added PUT endpoint for editing facts (`api.py`)
+- Added `IdentityFactUpdate` model for partial updates (`api.py`)
+- New profiles get preset contact facts: name, email, phone, location, occupation, organization, relationship, notes (`schema.py`)
+- Added fact types: phone, organization, relationship, birthday (`schema.py`)
+- Updated API endpoints documentation (`README.md`)
+
 ### 2026-01-27
 - Profile-based schema with L1/L2/L3 values
 - Protected core profiles (machine, primary_user)
@@ -1155,6 +1174,14 @@ _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 <!-- INCLUDE:philosophy:CHANGELOG -->
 _Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md)_
 
+### 2026-02-01
+- Added edit button (✏️) next to stances for inline editing
+- Added edit modal with L1/L2/L3 fields, type selector, weight slider
+- Added `ThemedSelect` component for consistent dropdown styling
+- Added PUT endpoint for editing stances (`api.py`)
+- Added `PhilosophyFactUpdate` model for partial updates
+- Updated `SelectWithAdd` to use CSS theme variables
+
 ### 2026-01-27
 - Profile-based schema with L1/L2/L3 values
 - Relevance filtering via LinkingCore
@@ -1168,13 +1195,6 @@ _Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md
 <!-- INCLUDE:log:CHANGELOG -->
 _Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
 
-### 2026-02-01: Database Logging System
-- **New Tables**: Added `log_system` (daemon logs) and `log_server` (HTTP logs) 
-- **Helper Functions**: `log_system_event()`, `log_server_request()`, query functions
-- **API Endpoints**: `/api/log/daemon`, `/api/log/server`, `/api/log/server/stats`
-- **HTTP Middleware**: Auto-logging all requests with timing, client info, errors
-- **Monitoring**: Server statistics endpoint for error rates, avg duration, top paths
-
 ### 2026-01-27
 - Unified events table consolidates all event sources
 - Recency-based context levels (L1=10, L2=100, L3=1000)
@@ -1187,6 +1207,23 @@ _Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
 ### Form Thread
 <!-- INCLUDE:form:CHANGELOG -->
 _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
+
+### 2026-02-22
+- Text-native tool calling via `:::execute:::` / `:::result:::` block protocol
+- Scanner (`scanner.py`): regex parser for execute blocks, ToolCall dataclass, block replacement
+- Safety allowlist (`registry.py`): SAFE_ACTIONS, BLOCKED_ACTIONS, `is_action_safe()`
+- Four core executables: file_read, file_write, terminal, web_search
+- Agent tool loop: `_process_tool_calls()` in agent.py (max 5 rounds)
+- Form adapter injects `:::execute:::` usage instructions at L2+
+- Frontend ToolCallBlock / ToolResultBlock components in MessageList.tsx
+- WebSocket tool event forwarding (tool_executing, tool_complete)
+- 42 new tests in test_tool_calling.py (scanner, safety, executables, integration)
+
+### 2026-02-01
+- Fixed ToolDashboard.css to use theme CSS variables consistently
+- Removed hardcoded hex color fallbacks
+- Added ThemedSelect component for styled dropdowns
+- Dashboard now properly supports light/dark theme switching
 
 ### 2026-01-27
 - L1/L2/L3 tool architecture
@@ -1216,6 +1253,10 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 - Condition matching with operators (eq, contains, regex, etc.)
 - Auto-execution when feed events are emitted
 - Trigger test endpoint for manual testing
+
+### 2026-01-27
+- Three-tier reflex cascade (system → user → social)
+- Pattern matching with weight priorities
 
 ### 2026-01-20
 - Greeting and shortcut tables

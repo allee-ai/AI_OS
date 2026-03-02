@@ -147,6 +147,15 @@ class BaseThreadAdapter:
     ) -> None:
         """Push a row to a module. Override in subclass."""
         self._last_sync = datetime.now(timezone.utc).isoformat()
+
+    def sync(self) -> None:
+        """Periodic sync hook called by SyncLoop.
+
+        Base implementation updates the last-sync timestamp.
+        Subclasses can override to persist pending state, reconcile
+        conflicts, or run deferred maintenance.
+        """
+        self._last_sync = datetime.now(timezone.utc).isoformat()
     
     def get_metadata(self) -> Dict[str, Any]:
         """
@@ -241,6 +250,54 @@ class BaseThreadAdapter:
             break
 
         return result
+
+    def _relevance_boost(
+        self,
+        raw_facts: List[Dict[str, Any]],
+        query: str,
+    ) -> tuple:
+        """Boost weights of query-relevant facts so _budget_fill prioritises them.
+
+        Uses LinkingCore spread_activate to find concepts related to the
+        query, then bumps the weight of any raw_fact whose path / values
+        mention one of those concepts.
+
+        Returns (raw_facts, relevant_concepts).
+        Falls back to (raw_facts, []) if LinkingCore is unavailable.
+        """
+        try:
+            from agent.threads.linking_core.schema import (
+                spread_activate,
+                extract_concepts_from_text,
+            )
+
+            query_concepts = extract_concepts_from_text(query)
+            if not query_concepts:
+                return raw_facts, []
+
+            activated = spread_activate(
+                input_concepts=query_concepts,
+                activation_threshold=0.1,
+                max_hops=1,
+                limit=20,
+            )
+            relevant = set(query_concepts)
+            for a in activated:
+                relevant.add(a.get("concept", ""))
+
+            for fact in raw_facts:
+                text = (
+                    f"{fact.get('path', '')} {fact.get('key', '')} "
+                    f"{fact.get('l1_value', '')} {fact.get('l2_value', '')}"
+                ).lower()
+                for concept in relevant:
+                    if concept.lower() in text:
+                        fact["weight"] = min(1.0, fact.get("weight", 0.5) + 0.3)
+                        break
+
+            return raw_facts, list(relevant)
+        except Exception:
+            return raw_facts, []
 
     # =========================================================================
     # HEALTH & INTROSPECTION

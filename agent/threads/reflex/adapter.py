@@ -170,94 +170,112 @@ class ReflexThreadAdapter(BaseThreadAdapter):
     
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
-        Reflex introspection with pattern awareness.
-        
+        Reflex introspection with budget-aware fact packing.
+
+        Uses _budget_fill to fit pattern/shortcut facts within a
+        per-level token budget.
+
         Args:
             context_level: HEA level (1=lean, 2=medium, 3=full)
             query: Optional query for relevance filtering
             threshold: Minimum weight for patterns (0-10 scale)
-        
-        Returns:
-            IntrospectionResult with facts like:
-                "reflex.greetings.hello.response: Hi there!"
-                "reflex.greetings.hello.weight: 8.0"
-                "reflex.shortcuts.help.trigger: /help"
         """
-        facts = []
+        relevant_concepts: List[str] = []
+
         min_weight = threshold / 10.0
-        
-        # Greetings with dot notation
-        greetings = self.get_greetings(context_level)
-        for g in greetings:
-            key = g.get("key", "")
-            weight = g.get("weight", 0.8)
-            
-            if weight < min_weight:
-                continue
-                
-            data = g.get("data", {})
-            response = data.get("value", "")
-            
-            if key:
-                path = f"reflex.greetings.{key}"
-                facts.append(f"{path}.response: {response[:50] if response else ''}")
-                facts.append(f"{path}.weight: {weight}")
-        
-        # Shortcuts (L2+) with dot notation
-        if context_level >= 2:
-            shortcuts = self.get_shortcuts(context_level)
-            for s in shortcuts:
-                key = s.get("key", "")
-                weight = s.get("weight", 0.5)
-                
-                if weight < min_weight:
-                    continue
-                    
-                data = s.get("data", {})
-                trigger = data.get("trigger", "")
-                response = data.get("response", "")
-                
-                if trigger:
-                    # Clean key for path
-                    safe_key = key.replace("/", "_").replace(" ", "_") if key else trigger.replace("/", "_")
-                    path = f"reflex.shortcuts.{safe_key}"
-                    facts.append(f"{path}.trigger: {trigger}")
-                    facts.append(f"{path}.response: {response[:50] if response else ''}")
-                    facts.append(f"{path}.weight: {weight}")
-        
-        # System reflexes (L3 only) with dot notation
-        if context_level >= 3:
-            system = self.get_system_reflexes(context_level)
-            for r in system:
-                key = r.get("key", "")
-                weight = r.get("weight", 0.5)
-                
-                if weight < min_weight:
-                    continue
-                    
-                data = r.get("data", {})
-                action = data.get("action", "")
-                
-                if key:
-                    path = f"reflex.system.{key}"
-                    facts.append(f"{path}.action: {action}")
-                    facts.append(f"{path}.weight: {weight}")
-        
+        raw = self._get_raw_facts(min_weight=min_weight)
+
+        if query:
+            raw, relevant_concepts = self._relevance_boost(raw, query)
+
+        facts = self._budget_fill(raw, context_level)
+
         return IntrospectionResult(
             facts=facts,
             state=self.get_metadata(),
-            context_level=context_level
+            context_level=context_level,
+            health=self.health().to_dict(),
+            relevant_concepts=relevant_concepts,
         )
+
+    def _get_raw_facts(self, min_weight: float = 0.0, limit: int = 50) -> List[Dict]:
+        """Get raw facts with l1/l2/l3 value tiers for _budget_fill.
+
+        Returns dicts with: path, l1_value, l2_value, l3_value, weight.
+        """
+        raw: List[Dict] = []
+
+        # Greetings
+        greetings = self.get_greetings(3)
+        for g in greetings:
+            key = g.get("key", "")
+            weight = g.get("weight", 0.8)
+            if weight < min_weight or not key:
+                continue
+            data = g.get("data", {})
+            response = data.get("value", "")
+            raw.append({
+                "path": f"reflex.greetings.{key}",
+                "l1_value": key,
+                "l2_value": f"{key} → {response[:50]}" if response else key,
+                "l3_value": f"{key} → {response}" if response else key,
+                "weight": weight,
+            })
+
+        # Shortcuts
+        shortcuts = self.get_shortcuts(3)
+        for s in shortcuts:
+            key = s.get("key", "")
+            weight = s.get("weight", 0.5)
+            if weight < min_weight:
+                continue
+            data = s.get("data", {})
+            trigger = data.get("trigger", "")
+            response = data.get("response", "")
+            if trigger:
+                safe_key = (
+                    key.replace("/", "_").replace(" ", "_")
+                    if key
+                    else trigger.replace("/", "_")
+                )
+                raw.append({
+                    "path": f"reflex.shortcuts.{safe_key}",
+                    "l1_value": trigger,
+                    "l2_value": f"{trigger} → {response[:50]}" if response else trigger,
+                    "l3_value": f"{trigger} → {response}" if response else trigger,
+                    "weight": weight,
+                })
+
+        # System reflexes
+        system = self.get_system_reflexes(3)
+        for r in system:
+            key = r.get("key", "")
+            weight = r.get("weight", 0.5)
+            if weight < min_weight or not key:
+                continue
+            data = r.get("data", {})
+            action = data.get("action", "")
+            raw.append({
+                "path": f"reflex.system.{key}",
+                "l1_value": key,
+                "l2_value": f"{key}: {action[:50]}" if action else key,
+                "l3_value": f"{key}: {action}" if action else key,
+                "weight": weight,
+            })
+
+        return raw[:limit]
     
     def score_relevance(self, fact: str, context: Dict[str, Any] = None) -> float:
         """
         Score a fact by access frequency (Basal Ganglia function).
         
         High score if fact has been accessed many times.
-        This is habit/procedural memory - things we do often.
+        Uses stored weight when available; falls back to low default
+        for facts that haven't formed habits yet.
         """
-        # TODO: Wire up to actual access tracking when designed
-        return 0.3  # Low default - new facts haven't formed habits yet
+        if context and "weight" in context:
+            return float(context["weight"])
+        return 0.3
     
     def get_score_explanation(self, fact: str, score: float, context: Dict[str, Any] = None) -> str:
         """Explain frequency-based scoring."""

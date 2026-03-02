@@ -106,15 +106,14 @@ New profiles are created with empty preset facts for common contact information:
 <!-- ROADMAP:identity -->
 ### Ready for contributors
 - [ ] **Family/contacts UI** — Add/edit family members from dashboard
-- [ ] **Trust level indicators** — Visual badges for trust levels in UI
+- [x] **Trust level indicators** — Visual badges for trust levels in UI
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
 - [x] **Import from contacts** — Pull from vCard files (Google, iCloud, Outlook)
 
 ### Technical debt
 - [ ] Batch fact updates (currently one-at-a-time)
-- [ ] Fact history/versioning
-<!-- /ROADMAP:identity -->
+- [ ] Fact history/versioning<!-- /ROADMAP:identity -->
 
 ---
 
