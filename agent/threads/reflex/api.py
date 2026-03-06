@@ -54,8 +54,8 @@ class TriggerCreate(BaseModel):
     name: str
     feed_name: str  # e.g., "gmail", "discord"
     event_type: str  # e.g., "email_received", "message_received"
-    tool_name: str  # e.g., "file_reader", "web_search"
-    tool_action: str  # e.g., "read", "search"
+    tool_name: str = ""  # e.g., "file_reader", "web_search"  (optional for agent/notify)
+    tool_action: str = ""  # e.g., "read", "search"  (optional for agent/notify)
     description: Optional[str] = ""
     trigger_type: str = "webhook"  # webhook, poll, schedule
     condition: Optional[Dict[str, Any]] = None  # Optional filter
@@ -63,6 +63,7 @@ class TriggerCreate(BaseModel):
     poll_interval: Optional[int] = None  # For poll triggers (seconds)
     cron_expression: Optional[str] = None  # For schedule triggers
     priority: int = 5
+    response_mode: str = "tool"  # tool, agent, notify
 
 
 class TriggerUpdate(BaseModel):
@@ -75,6 +76,7 @@ class TriggerUpdate(BaseModel):
     enabled: Optional[bool] = None
     poll_interval: Optional[int] = None
     cron_expression: Optional[str] = None
+    response_mode: Optional[str] = None  # tool, agent, notify
 
 
 # ─────────────────────────────────────────────────────────────
@@ -408,6 +410,7 @@ async def create_new_trigger(trigger: TriggerCreate):
             poll_interval=trigger.poll_interval,
             cron_expression=trigger.cron_expression,
             priority=trigger.priority,
+            response_mode=trigger.response_mode,
         )
         return {
             "status": "created",
@@ -529,4 +532,120 @@ async def get_trigger_stats():
         "by_feed": by_feed,
         "by_tool": by_tool,
         "total_executions": total_executions,
+    }
+
+
+# ─────────────────────────────────────────────────────────────
+# Schedule Status
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/schedule/status")
+async def schedule_status():
+    """Return current reflex schedule-loop status."""
+    try:
+        from .schedule import get_schedule_status
+        return get_schedule_status()
+    except ImportError:
+        return {"status": "unavailable"}
+
+
+# ─────────────────────────────────────────────────────────────
+# Protocol Templates
+# ─────────────────────────────────────────────────────────────
+
+PROTOCOL_TEMPLATES: Dict[str, list] = {
+    "morning_briefing": [
+        {
+            "name": "Morning Briefing",
+            "description": "Agent summarises overnight emails & calendar at 8 AM on weekdays",
+            "feed_name": "schedule",
+            "event_type": "cron_fired",
+            "trigger_type": "schedule",
+            "cron_expression": "0 8 * * 1-5",
+            "response_mode": "agent",
+            "priority": 8,
+        },
+    ],
+    "email_triage": [
+        {
+            "name": "Email Triage",
+            "description": "Agent drafts a reply for every new email",
+            "feed_name": "email",
+            "event_type": "email_received",
+            "trigger_type": "webhook",
+            "response_mode": "agent",
+            "priority": 6,
+        },
+    ],
+    "github_review": [
+        {
+            "name": "GitHub Review Request",
+            "description": "Agent responds to review-requested notifications",
+            "feed_name": "github",
+            "event_type": "review_requested",
+            "trigger_type": "webhook",
+            "response_mode": "agent",
+            "priority": 7,
+        },
+    ],
+    "daily_digest": [
+        {
+            "name": "Daily Digest",
+            "description": "Notify about unread feed activity at 6 PM",
+            "feed_name": "schedule",
+            "event_type": "cron_fired",
+            "trigger_type": "schedule",
+            "cron_expression": "0 18 * * *",
+            "response_mode": "notify",
+            "priority": 4,
+        },
+    ],
+}
+
+
+@router.get("/protocols")
+async def list_protocols():
+    """List available protocol templates."""
+    return {
+        "protocols": {
+            name: {
+                "triggers": len(triggers),
+                "description": triggers[0].get("description", "") if triggers else "",
+            }
+            for name, triggers in PROTOCOL_TEMPLATES.items()
+        }
+    }
+
+
+@router.post("/protocols/{protocol_name}/install")
+async def install_protocol(protocol_name: str):
+    """Install a protocol template (creates its trigger bundle)."""
+    template = PROTOCOL_TEMPLATES.get(protocol_name)
+    if not template:
+        raise HTTPException(status_code=404, detail=f"Protocol '{protocol_name}' not found")
+
+    created_ids = []
+    for trig_def in template:
+        trigger_id = create_trigger(
+            name=trig_def["name"],
+            feed_name=trig_def["feed_name"],
+            event_type=trig_def["event_type"],
+            tool_name=trig_def.get("tool_name", ""),
+            tool_action=trig_def.get("tool_action", ""),
+            description=trig_def.get("description", ""),
+            trigger_type=trig_def.get("trigger_type", "webhook"),
+            condition=trig_def.get("condition"),
+            tool_params=trig_def.get("tool_params"),
+            poll_interval=trig_def.get("poll_interval"),
+            cron_expression=trig_def.get("cron_expression"),
+            priority=trig_def.get("priority", 5),
+            response_mode=trig_def.get("response_mode", "tool"),
+        )
+        created_ids.append(trigger_id)
+
+    return {
+        "status": "installed",
+        "protocol": protocol_name,
+        "triggers_created": len(created_ids),
+        "trigger_ids": created_ids,
     }

@@ -134,6 +134,10 @@ def init_triggers_table(conn: Optional[sqlite3.Connection] = None) -> None:
             tool_action TEXT NOT NULL,
             tool_params_json TEXT,
             
+            -- Response mode: tool (execute tool), agent (generate via bridge),
+            -- notify (surface in UI only)
+            response_mode TEXT NOT NULL DEFAULT 'tool',
+
             -- Settings
             enabled INTEGER NOT NULL DEFAULT 1,
             priority INTEGER NOT NULL DEFAULT 5,
@@ -155,6 +159,12 @@ def init_triggers_table(conn: Optional[sqlite3.Connection] = None) -> None:
         )
     """)
     
+    # Migrations for existing tables
+    try:
+        cur.execute("ALTER TABLE reflex_triggers ADD COLUMN response_mode TEXT NOT NULL DEFAULT 'tool'")
+    except Exception:
+        pass  # Column already exists
+
     cur.execute("CREATE INDEX IF NOT EXISTS idx_triggers_feed ON reflex_triggers(feed_name)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_triggers_enabled ON reflex_triggers(enabled)")
     
@@ -176,8 +186,17 @@ def create_trigger(
     poll_interval: Optional[int] = None,
     cron_expression: Optional[str] = None,
     priority: int = 5,
+    response_mode: str = "tool",
 ) -> int:
-    """Create a new trigger automation."""
+    """Create a new trigger automation.
+
+    Args:
+        response_mode: 'tool' (execute tool), 'agent' (generate via bridge),
+                       or 'notify' (surface in UI only).
+    """
+    if response_mode not in ("tool", "agent", "notify"):
+        raise ValueError(f"Invalid response_mode: {response_mode}")
+
     with closing(get_connection()) as conn:
         cur = conn.cursor()
         init_triggers_table(conn)
@@ -185,14 +204,15 @@ def create_trigger(
         cur.execute("""
             INSERT INTO reflex_triggers 
             (name, description, trigger_type, feed_name, event_type, condition_json,
-             tool_name, tool_action, tool_params_json, poll_interval, cron_expression, priority)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+             tool_name, tool_action, tool_params_json, poll_interval, cron_expression,
+             priority, response_mode)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
         """, (
             name, description, trigger_type, feed_name, event_type,
             json.dumps(condition) if condition else None,
             tool_name, tool_action,
             json.dumps(tool_params) if tool_params else None,
-            poll_interval, cron_expression, priority,
+            poll_interval, cron_expression, priority, response_mode,
         ))
         
         trigger_id = cur.lastrowid

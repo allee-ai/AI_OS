@@ -96,6 +96,25 @@ def check_condition(condition: Optional[Dict[str, Any]], event_payload: Dict[str
             if actual is None or value is None:
                 return False
             return bool(re.search(str(value), str(actual)))
+        elif operator == "concept_match":
+            # value = list of seed concepts OR a float threshold
+            # Check if the text in `actual` is conceptually related to seeds.
+            try:
+                from agent.threads.linking_core.schema import (
+                    extract_concepts_from_text,
+                    spread_activate,
+                )
+                if actual is None:
+                    return False
+                concepts = extract_concepts_from_text(str(actual))
+                if not concepts:
+                    return False
+                seeds = value if isinstance(value, list) else [str(value)]
+                scores = spread_activate(seeds, hops=1)
+                # If any extracted concept appears in the activation map → match
+                return any(c in scores for c in concepts)
+            except Exception:
+                return False
         
         return False
     
@@ -195,20 +214,32 @@ async def execute_matching_triggers(
             })
             continue
         
-        # Execute the tool
+        # Parse tool params
         tool_params = trigger.get("tool_params") or trigger.get("tool_params_json")
         if isinstance(tool_params, str):
             try:
                 tool_params = json.loads(tool_params)
             except json.JSONDecodeError:
                 tool_params = {}
-        
-        exec_result = await execute_tool_action(
-            tool_name=trigger["tool_name"],
-            tool_action=trigger["tool_action"],
-            tool_params=tool_params,
-            event_payload=event_payload,
-        )
+
+        response_mode = trigger.get("response_mode", "tool")
+
+        if response_mode == "agent":
+            # Escalate to the agent via the Feeds bridge
+            exec_result = await _escalate_to_agent(
+                trigger, event_payload, feed_name, event_type,
+            )
+        elif response_mode == "notify":
+            # Surface a notification only – no tool execution
+            exec_result = _notify_only(trigger, event_payload, feed_name, event_type)
+        else:
+            # Default: execute tool action
+            exec_result = await execute_tool_action(
+                tool_name=trigger["tool_name"],
+                tool_action=trigger["tool_action"],
+                tool_params=tool_params,
+                event_payload=event_payload,
+            )
         
         # Record execution
         record_trigger_execution(
@@ -276,12 +307,55 @@ def get_trigger_handler():
     return handler
 
 
-__all__ = [
-    'check_condition',
-    'execute_tool_action',
-    'execute_matching_triggers',
-    'get_trigger_handler',
-]
+# ---- response-mode helpers ----
+
+async def _escalate_to_agent(
+    trigger: Dict[str, Any],
+    event_payload: Dict[str, Any],
+    feed_name: str,
+    event_type: str,
+) -> Dict[str, Any]:
+    """Route a matched trigger through the Feeds bridge for agent reasoning."""
+    try:
+        from Feeds.bridge import _handle_event  # type: ignore
+        from Feeds.events import FeedEvent  # type: ignore
+
+        event = FeedEvent(
+            feed_name=feed_name,
+            event_type=event_type,
+            payload=event_payload,
+        )
+        await _handle_event(event)
+        return {"success": True, "mode": "agent", "trigger": trigger.get("name")}
+    except Exception as e:
+        return {"success": False, "mode": "agent", "error": str(e)}
+
+
+def _notify_only(
+    trigger: Dict[str, Any],
+    event_payload: Dict[str, Any],
+    feed_name: str,
+    event_type: str,
+) -> Dict[str, Any]:
+    """Log a notification event for the UI without executing anything."""
+    try:
+        from agent.threads.log.schema import log_event
+        log_event(
+            event_type="notification",
+            data=f"[{trigger.get('name', 'trigger')}] {feed_name}/{event_type}",
+            metadata={
+                "trigger_id": trigger.get("id"),
+                "feed_name": feed_name,
+                "event_type": event_type,
+                "payload_summary": str(event_payload)[:500],
+            },
+            source="reflex",
+        )
+    except Exception:
+        pass
+    return {"success": True, "mode": "notify"}
+
+
 __all__ = [
     'check_condition',
     'execute_tool_action',

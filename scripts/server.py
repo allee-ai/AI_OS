@@ -240,7 +240,7 @@ async def startup_event():
         except Exception as e:
             print(f"[Startup] identity ERROR: {e}")
 
-        # Start feed polling + bridge
+        # Start feed polling + bridge + schedule loop
         try:
             from Feeds.polling import start_polling
             from Feeds.bridge import start_bridge
@@ -249,6 +249,13 @@ async def startup_event():
             print("[Startup] Feed polling & bridge initialized")
         except Exception as e:
             print(f"[Startup] Feed polling/bridge skipped: {e}")
+
+        try:
+            from agent.threads.reflex.schedule import start_schedule_loop
+            start_schedule_loop()  # 60s tick — evaluates cron triggers
+            print("[Startup] Reflex schedule loop initialized")
+        except Exception as e:
+            print(f"[Startup] Schedule loop skipped: {e}")
 
     except Exception as e:
         import traceback
@@ -263,6 +270,13 @@ async def shutdown_event():
     try:
         from Feeds.polling import stop_polling
         stop_polling()
+    except Exception:
+        pass
+
+    # Stop schedule loop
+    try:
+        from agent.threads.reflex.schedule import stop_schedule_loop
+        stop_schedule_loop()
     except Exception:
         pass
 
