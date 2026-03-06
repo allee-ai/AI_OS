@@ -577,3 +577,44 @@ async def receive_webhook(feed_name: str, payload: Dict[str, Any]):
     )
     
     return {"status": "received", "event": event.to_dict()}
+
+
+# ============================================================================
+# Polling & Bridge
+# ============================================================================
+
+@router.get("/polling/status")
+async def polling_status():
+    """Get the status of the background feed polling loop."""
+    from .polling import get_polling_status
+    return get_polling_status()
+
+
+@router.post("/polling/start")
+async def polling_start(interval: int = Query(300, ge=30, le=3600)):
+    """Start the feed polling loop."""
+    from .polling import start_polling
+    start_polling(interval_seconds=interval)
+    return {"status": "started", "interval": interval}
+
+
+@router.post("/polling/stop")
+async def polling_stop():
+    """Stop the feed polling loop."""
+    from .polling import stop_polling
+    stop_polling()
+    return {"status": "stopped"}
+
+
+@router.get("/bridge/status")
+async def bridge_status():
+    """Get bridge configuration and recent responses."""
+    from .bridge import get_bridge_status
+    return get_bridge_status()
+
+
+@router.get("/bridge/responses")
+async def bridge_responses(limit: int = Query(20, ge=1, le=100)):
+    """Get recent bridge response log."""
+    from .bridge import get_response_log
+    return get_response_log(limit)

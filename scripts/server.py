@@ -239,7 +239,17 @@ async def startup_event():
             print(f"[Startup] identity check: {len(rows)} rows")
         except Exception as e:
             print(f"[Startup] identity ERROR: {e}")
-            
+
+        # Start feed polling + bridge
+        try:
+            from Feeds.polling import start_polling
+            from Feeds.bridge import start_bridge
+            start_bridge()   # register event handler (respects AIOS_FEED_BRIDGE env)
+            start_polling()  # start background poll loop (checks .enabled.json)
+            print("[Startup] Feed polling & bridge initialized")
+        except Exception as e:
+            print(f"[Startup] Feed polling/bridge skipped: {e}")
+
     except Exception as e:
         import traceback
         print(f"[Startup] Failed to wake subconscious: {e}")
@@ -248,7 +258,14 @@ async def startup_event():
 
 @app.on_event("shutdown")
 async def shutdown_event():
-    """Clean shutdown - checkpoint SQLite WAL to prevent lock issues."""
+    """Clean shutdown - stop loops, checkpoint SQLite WAL."""
+    # Stop feed polling
+    try:
+        from Feeds.polling import stop_polling
+        stop_polling()
+    except Exception:
+        pass
+
     try:
         from contextlib import closing
         from data.db import get_connection

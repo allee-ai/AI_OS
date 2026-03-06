@@ -6,6 +6,8 @@ External feed sources and routing.
 Exports:
 - api_router: FastAPI router for feeds management endpoints
 - FeedsRouter: Internal router for feeds processing
+- start_polling / stop_polling: Background feed polling
+- start_bridge: Event → Agent → Response bridge
 """
 
 from .api import router as api_router
