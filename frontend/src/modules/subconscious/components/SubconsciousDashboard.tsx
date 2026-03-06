@@ -26,6 +26,9 @@ interface LoopStats {
   name: string;
   status: string;
   interval: number;
+  enabled: boolean;
+  max_errors: number;
+  error_backoff: number;
   last_run: string | null;
   run_count: number;
   error_count: number;
@@ -37,6 +40,8 @@ interface LoopStats {
   target?: string;
   prompt_preview?: string;
   is_custom?: boolean;
+  auto_approve_threshold?: number;
+  duplicate_threshold?: number;
 }
 
 interface TempFact {
@@ -748,6 +753,30 @@ export default function SubconsciousDashboard() {
                     <div className="config-row">
                       <span className="config-label">Prompt</span>
                       <span className="config-value prompt-preview">{selected.prompt_preview}</span>
+                    </div>
+                  )}
+
+                  {/* Error tolerance */}
+                  <div className="config-row">
+                    <span className="config-label">Max Errors</span>
+                    <span className="config-value">{selected.max_errors ?? 3} consecutive</span>
+                  </div>
+                  <div className="config-row">
+                    <span className="config-label">Error Backoff</span>
+                    <span className="config-value">{selected.error_backoff ?? 2.0}× interval</span>
+                  </div>
+
+                  {/* Consolidation thresholds */}
+                  {selected.auto_approve_threshold != null && (
+                    <div className="config-row">
+                      <span className="config-label">Auto-Approve</span>
+                      <span className="config-value">≥ {(selected.auto_approve_threshold * 100).toFixed(0)}% confidence</span>
+                    </div>
+                  )}
+                  {selected.duplicate_threshold != null && (
+                    <div className="config-row">
+                      <span className="config-label">Dup Threshold</span>
+                      <span className="config-value">≥ {(selected.duplicate_threshold * 100).toFixed(0)}% similarity</span>
                     </div>
                   )}
                 </div>

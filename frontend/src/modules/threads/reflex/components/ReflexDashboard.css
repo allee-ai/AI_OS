@@ -578,3 +578,82 @@
 .add-btn:hover {
   background: var(--accent-hover);
 }
+
+/* ── Trigger detail styles ── */
+
+.toggle-btn {
+  padding: 0.3rem 0.7rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.75rem;
+  font-weight: 500;
+  background: transparent;
+  color: var(--text-muted);
+}
+.toggle-btn.enabled {
+  color: #22c55e;
+  border-color: #22c55e;
+}
+.toggle-btn.disabled {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+.trigger-config-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.trigger-config-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: baseline;
+  font-size: 0.85rem;
+}
+
+.trigger-config-row .config-label {
+  min-width: 80px;
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
+.trigger-config-row .config-value {
+  color: var(--text);
+  word-break: break-word;
+}
+
+.trigger-config-row .config-value.mono {
+  font-family: var(--font-mono, 'Menlo', monospace);
+  font-size: 0.8rem;
+  background: var(--bg-tertiary);
+  padding: 0.15rem 0.4rem;
+  border-radius: 3px;
+}
+
+.condition-json {
+  white-space: pre-wrap;
+  max-height: 120px;
+  overflow-y: auto;
+  display: block;
+}
+
+.error-text {
+  color: #ef4444;
+}
+
+/* ── Protocol install ── */
+
+.protocol-item {
+  border-left: 2px solid #ec4899;
+}
+
+.install-result {
+  padding: 0.4rem 0.75rem;
+  font-size: 0.8rem;
+  color: #22c55e;
+  background: var(--bg-tertiary);
+  border-radius: 4px;
+  margin: 0.25rem 0.5rem;
+}

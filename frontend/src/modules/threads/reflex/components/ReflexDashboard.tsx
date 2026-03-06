@@ -11,6 +11,33 @@ interface Reflex {
   icon: string;
 }
 
+interface Trigger {
+  id: number;
+  name: string;
+  description: string;
+  trigger_type: string;  // webhook | poll | schedule
+  feed_name: string;
+  event_type: string;
+  condition_json: string | null;
+  tool_name: string;
+  tool_action: string;
+  tool_params_json: string | null;
+  response_mode: string;  // tool | agent | notify
+  enabled: boolean;
+  priority: number;
+  poll_interval: number | null;
+  cron_expression: string | null;
+  execution_count: number;
+  last_executed: string | null;
+  last_error: string | null;
+  created_at: string;
+}
+
+interface Protocol {
+  triggers: number;
+  description: string;
+}
+
 interface ReflexStats {
   total: number;
   by_module: {
@@ -42,15 +69,31 @@ const MODULE_INFO: Record<string, { icon: string; label: string; color: string; 
   }
 };
 
+const RESPONSE_MODE_INFO: Record<string, { icon: string; label: string; color: string }> = {
+  tool:   { icon: '🔧', label: 'Tool',   color: '#6366f1' },
+  agent:  { icon: '🤖', label: 'Agent',  color: '#22c55e' },
+  notify: { icon: '🔔', label: 'Notify', color: '#f59e0b' },
+};
+
+const TRIGGER_TYPE_LABELS: Record<string, string> = {
+  webhook: '⚡ Webhook',
+  poll: '🔄 Poll',
+  schedule: '🕐 Schedule',
+};
+
 export default function ReflexDashboard() {
   const [reflexes, setReflexes] = useState<Reflex[]>([]);
+  const [triggers, setTriggers] = useState<Trigger[]>([]);
+  const [protocols, setProtocols] = useState<Record<string, Protocol>>({});
   const [stats, setStats] = useState<ReflexStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [selectedReflex, setSelectedReflex] = useState<Reflex | null>(null);
+  const [selectedTrigger, setSelectedTrigger] = useState<Trigger | null>(null);
   const [moduleFilter, setModuleFilter] = useState<string>('all');
   const [showAddModal, setShowAddModal] = useState(false);
   const [testInput, setTestInput] = useState('');
   const [testResult, setTestResult] = useState<{ matched: boolean; response: string | null } | null>(null);
+  const [installResult, setInstallResult] = useState<string | null>(null);
 
   // New reflex form state
   const [newModule, setNewModule] = useState<'greetings' | 'shortcuts' | 'system'>('greetings');
@@ -63,9 +106,11 @@ export default function ReflexDashboard() {
   const fetchReflexes = useCallback(async () => {
     try {
       setLoading(true);
-      const [allRes, statsRes] = await Promise.all([
+      const [allRes, statsRes, trigRes, protoRes] = await Promise.all([
         fetch('http://localhost:8000/api/reflex/all'),
-        fetch('http://localhost:8000/api/reflex/stats')
+        fetch('http://localhost:8000/api/reflex/stats'),
+        fetch('http://localhost:8000/api/reflex/triggers'),
+        fetch('http://localhost:8000/api/reflex/protocols'),
       ]);
       
       if (allRes.ok) {
@@ -76,6 +121,16 @@ export default function ReflexDashboard() {
       if (statsRes.ok) {
         const data = await statsRes.json();
         setStats(data);
+      }
+
+      if (trigRes.ok) {
+        const data = await trigRes.json();
+        setTriggers(data.triggers || []);
+      }
+
+      if (protoRes.ok) {
+        const data = await protoRes.json();
+        setProtocols(data.protocols || {});
       }
     } catch (err) {
       console.error('Failed to fetch reflexes:', err);
@@ -181,6 +236,45 @@ export default function ReflexDashboard() {
     setNewWeight(0.5);
   };
 
+  // ── Trigger actions ──
+
+  const toggleTrigger = async (id: number) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/reflex/triggers/${id}/toggle`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setTriggers(prev => prev.map(t => t.id === id ? { ...t, enabled: data.enabled } : t));
+        if (selectedTrigger?.id === id) setSelectedTrigger(prev => prev ? { ...prev, enabled: data.enabled } : null);
+      }
+    } catch (err) { console.error('Toggle failed:', err); }
+  };
+
+  const deleteTrigger = async (id: number) => {
+    if (!confirm('Delete this trigger?')) return;
+    try {
+      const res = await fetch(`http://localhost:8000/api/reflex/triggers/${id}`, { method: 'DELETE' });
+      if (res.ok) {
+        setSelectedTrigger(null);
+        fetchReflexes();
+      }
+    } catch (err) { console.error('Delete trigger failed:', err); }
+  };
+
+  const installProtocol = async (name: string) => {
+    try {
+      const res = await fetch(`http://localhost:8000/api/reflex/protocols/${name}/install`, { method: 'POST' });
+      if (res.ok) {
+        const data = await res.json();
+        setInstallResult(`✓ ${name}: ${data.triggers_created} trigger(s) installed`);
+        fetchReflexes();
+        setTimeout(() => setInstallResult(null), 4000);
+      }
+    } catch (err) {
+      setInstallResult(`✕ Failed to install ${name}`);
+      setTimeout(() => setInstallResult(null), 4000);
+    }
+  };
+
   const filteredReflexes = moduleFilter === 'all' 
     ? reflexes 
     : reflexes.filter(r => r.module === moduleFilter);
@@ -210,19 +304,15 @@ export default function ReflexDashboard() {
             <div className="stats-bar">
               <div className="stat-item">
                 <span className="stat-value">{stats.total}</span>
-                <span className="stat-label">Total</span>
+                <span className="stat-label">Patterns</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value">{stats.by_module.greetings}</span>
-                <span className="stat-label">👋</span>
+                <span className="stat-value">{triggers.length}</span>
+                <span className="stat-label">Triggers</span>
               </div>
               <div className="stat-item">
-                <span className="stat-value">{stats.by_module.shortcuts}</span>
-                <span className="stat-label">⚡</span>
-              </div>
-              <div className="stat-item">
-                <span className="stat-value">{stats.by_module.system}</span>
-                <span className="stat-label">🔧</span>
+                <span className="stat-value">{triggers.filter(t => t.enabled).length}</span>
+                <span className="stat-label">Active</span>
               </div>
             </div>
           )}
@@ -255,7 +345,7 @@ export default function ReflexDashboard() {
                   <button
                     key={reflex.key}
                     className={`reflex-item ${selectedReflex?.key === reflex.key ? 'active' : ''}`}
-                    onClick={() => setSelectedReflex(reflex)}
+                    onClick={() => { setSelectedTrigger(null); setSelectedReflex(reflex); }}
                   >
                     <div className="reflex-info">
                       <span className="reflex-pattern">{reflex.pattern || reflex.key}</span>
@@ -270,15 +360,207 @@ export default function ReflexDashboard() {
               </div>
             ))}
             
-            {filteredReflexes.length === 0 && (
-              <div className="no-reflexes">No reflexes found</div>
+            {filteredReflexes.length === 0 && triggers.length === 0 && (
+              <div className="no-reflexes">No reflexes or triggers found</div>
+            )}
+
+            {/* ── DB Triggers (persistent) ── */}
+            {triggers.length > 0 && (
+              <div className="reflex-group">
+                <div className="group-header" style={{ borderLeftColor: '#8b5cf6' }}>
+                  <span className="group-icon">🎯</span>
+                  <span className="group-label">Triggers</span>
+                  <span className="group-count">{triggers.length}</span>
+                </div>
+                {triggers.map(trig => (
+                  <button
+                    key={`trig-${trig.id}`}
+                    className={`reflex-item ${selectedTrigger?.id === trig.id ? 'active' : ''}`}
+                    onClick={() => { setSelectedReflex(null); setSelectedTrigger(trig); }}
+                  >
+                    <div className="reflex-info">
+                      <span className="reflex-pattern">
+                        {!trig.enabled && <span style={{ opacity: 0.4 }}>⏸ </span>}
+                        {trig.name}
+                      </span>
+                      <span className="reflex-response">
+                        {RESPONSE_MODE_INFO[trig.response_mode]?.icon || '🔧'}{' '}
+                        {trig.feed_name}/{trig.event_type}
+                      </span>
+                    </div>
+                    <div className="reflex-weight-indicator" style={{
+                      width: `${(trig.priority / 10) * 100}%`,
+                      background: RESPONSE_MODE_INFO[trig.response_mode]?.color || '#8b5cf6',
+                    }} />
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* ── Protocol Templates ── */}
+            {Object.keys(protocols).length > 0 && (
+              <div className="reflex-group">
+                <div className="group-header" style={{ borderLeftColor: '#ec4899' }}>
+                  <span className="group-icon">📋</span>
+                  <span className="group-label">Protocols</span>
+                  <span className="group-count">{Object.keys(protocols).length}</span>
+                </div>
+                {Object.entries(protocols).map(([name, proto]) => (
+                  <button
+                    key={`proto-${name}`}
+                    className="reflex-item protocol-item"
+                    onClick={() => installProtocol(name)}
+                    title={proto.description}
+                  >
+                    <div className="reflex-info">
+                      <span className="reflex-pattern">{name.replace(/_/g, ' ')}</span>
+                      <span className="reflex-response">{proto.description}</span>
+                    </div>
+                  </button>
+                ))}
+                {installResult && (
+                  <div className="install-result">{installResult}</div>
+                )}
+              </div>
             )}
           </div>
         </div>
         
         {/* Right: Detail Panel */}
         <div className="reflex-detail">
-          {selectedReflex ? (
+          {selectedTrigger ? (
+            /* ── Trigger Detail ── */
+            <>
+              <div className="detail-header">
+                <div className="detail-title">
+                  <span className="detail-icon">🎯</span>
+                  <div>
+                    <h2>{selectedTrigger.name}</h2>
+                    <span className="detail-module">
+                      {TRIGGER_TYPE_LABELS[selectedTrigger.trigger_type] || selectedTrigger.trigger_type}
+                      {' · '}
+                      {RESPONSE_MODE_INFO[selectedTrigger.response_mode]?.icon}{' '}
+                      {RESPONSE_MODE_INFO[selectedTrigger.response_mode]?.label}
+                    </span>
+                  </div>
+                </div>
+                <div className="detail-actions">
+                  <button
+                    className={`toggle-btn ${selectedTrigger.enabled ? 'enabled' : 'disabled'}`}
+                    onClick={() => toggleTrigger(selectedTrigger.id)}
+                  >
+                    {selectedTrigger.enabled ? '● Enabled' : '○ Disabled'}
+                  </button>
+                  <button className="delete-btn" onClick={() => deleteTrigger(selectedTrigger.id)}>Delete</button>
+                </div>
+              </div>
+
+              <div className="detail-sections">
+                {selectedTrigger.description && (
+                  <div className="detail-section">
+                    <h3>Description</h3>
+                    <p>{selectedTrigger.description}</p>
+                  </div>
+                )}
+
+                <div className="detail-section">
+                  <h3>Source</h3>
+                  <div className="trigger-config-grid">
+                    <div className="trigger-config-row">
+                      <span className="config-label">Feed</span>
+                      <span className="config-value">{selectedTrigger.feed_name}</span>
+                    </div>
+                    <div className="trigger-config-row">
+                      <span className="config-label">Event</span>
+                      <span className="config-value">{selectedTrigger.event_type}</span>
+                    </div>
+                    {selectedTrigger.cron_expression && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Cron</span>
+                        <code className="config-value mono">{selectedTrigger.cron_expression}</code>
+                      </div>
+                    )}
+                    {selectedTrigger.poll_interval && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Poll</span>
+                        <span className="config-value">Every {selectedTrigger.poll_interval}s</span>
+                      </div>
+                    )}
+                    {selectedTrigger.condition_json && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Condition</span>
+                        <code className="config-value mono condition-json">
+                          {typeof selectedTrigger.condition_json === 'string'
+                            ? selectedTrigger.condition_json
+                            : JSON.stringify(selectedTrigger.condition_json, null, 2)}
+                        </code>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h3>Action</h3>
+                  <div className="trigger-config-grid">
+                    <div className="trigger-config-row">
+                      <span className="config-label">Mode</span>
+                      <span className="config-value"
+                        style={{ color: RESPONSE_MODE_INFO[selectedTrigger.response_mode]?.color }}>
+                        {RESPONSE_MODE_INFO[selectedTrigger.response_mode]?.icon}{' '}
+                        {RESPONSE_MODE_INFO[selectedTrigger.response_mode]?.label}
+                      </span>
+                    </div>
+                    {selectedTrigger.tool_name && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Tool</span>
+                        <span className="config-value">{selectedTrigger.tool_name}</span>
+                      </div>
+                    )}
+                    {selectedTrigger.tool_action && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Action</span>
+                        <span className="config-value">{selectedTrigger.tool_action}</span>
+                      </div>
+                    )}
+                    <div className="trigger-config-row">
+                      <span className="config-label">Priority</span>
+                      <span className="config-value">{selectedTrigger.priority} / 10</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="detail-section">
+                  <h3>Stats</h3>
+                  <div className="trigger-config-grid">
+                    <div className="trigger-config-row">
+                      <span className="config-label">Executions</span>
+                      <span className="config-value">{selectedTrigger.execution_count}</span>
+                    </div>
+                    {selectedTrigger.last_executed && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Last Run</span>
+                        <span className="config-value">
+                          {new Date(selectedTrigger.last_executed).toLocaleString()}
+                        </span>
+                      </div>
+                    )}
+                    {selectedTrigger.last_error && (
+                      <div className="trigger-config-row">
+                        <span className="config-label">Last Error</span>
+                        <span className="config-value error-text">{selectedTrigger.last_error}</span>
+                      </div>
+                    )}
+                    <div className="trigger-config-row">
+                      <span className="config-label">Created</span>
+                      <span className="config-value">
+                        {new Date(selectedTrigger.created_at).toLocaleDateString()}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          ) : selectedReflex ? (
             <>
               <div className="detail-header">
                 <div className="detail-title">

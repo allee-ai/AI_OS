@@ -68,6 +68,9 @@ class BackgroundLoop:
             "name": self.config.name,
             "status": self._status.value,
             "interval": self.config.interval_seconds,
+            "enabled": self.config.enabled,
+            "max_errors": self.config.max_errors,
+            "error_backoff": self.config.error_backoff,
             "last_run": self._last_run,
             "run_count": self._run_count,
             "error_count": self._error_count,
@@ -559,6 +562,13 @@ class ConsolidationLoop(BackgroundLoop):
             enabled=True
         )
         super().__init__(config, self._consolidate)
+
+    @property
+    def stats(self) -> Dict[str, Any]:
+        base = super().stats
+        base["auto_approve_threshold"] = self.AUTO_APPROVE_THRESHOLD
+        base["duplicate_threshold"] = self.DUPLICATE_THRESHOLD
+        return base
     
     def _consolidate(self) -> None:
         """Run consolidation - score facts and promote approved ones."""
