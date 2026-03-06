@@ -1486,11 +1486,16 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
   const [reindexResult, setReindexResult] = useState<string | null>(null);
   const [debugInfo, setDebugInfo] = useState<string>('');
   const [pulseSpeed, setPulseSpeed] = useState(1);
+  const [anchored, setAnchored] = useState(true);
   
   // Fetch graph data
   const fetchGraph = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/linking_core/graph?max_nodes=200');
+      const params = new URLSearchParams({
+        max_nodes: '200',
+        anchored: anchored ? 'true' : 'false',
+      });
+      const res = await fetch(`http://localhost:8000/api/linking_core/graph?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setGraphData(data);
@@ -1501,7 +1506,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [anchored]);
   
   // Reindex all profiles into concept graph
   const handleReindex = useCallback(async () => {
@@ -1764,6 +1769,30 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
               cursor: 'pointer',
             }}
           />
+        </div>
+        <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
+          <button
+            onClick={() => setAnchored(prev => !prev)}
+            title={anchored ? 'Showing fact-anchored concepts only. Click to show all.' : 'Showing all concepts. Click to filter to stored facts.'}
+            style={{
+              width: '100%',
+              padding: '6px 10px',
+              background: anchored
+                ? 'linear-gradient(135deg, rgba(68, 204, 136, 0.35), rgba(34, 102, 68, 0.35))'
+                : 'linear-gradient(135deg, rgba(136, 68, 204, 0.25), rgba(68, 34, 102, 0.25))',
+              border: anchored
+                ? '1px solid rgba(100, 220, 150, 0.5)'
+                : '1px solid rgba(170, 100, 255, 0.3)',
+              borderRadius: 6,
+              color: anchored ? '#88ddaa' : '#9977bb',
+              fontSize: 11,
+              cursor: 'pointer',
+              fontWeight: 500,
+              textAlign: 'left',
+            }}
+          >
+            {anchored ? '🔒 Anchored facts' : '🌐 All concepts'}
+          </button>
         </div>
       </div>
     </div>

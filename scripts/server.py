@@ -220,6 +220,11 @@ async def startup_event():
         print(f"[Startup] DB_PATH: {DB_PATH}")
         print(f"[Startup] DB exists: {DB_PATH.exists()}")
         
+        # Ensure all tables + columns exist in both DBs
+        from agent.core.migrations import ensure_all_schemas
+        ensure_all_schemas()
+        print("[Startup] Schema synced")
+        
         # Wake subconscious
         from agent.subconscious import wake
         wake()

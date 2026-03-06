@@ -2,6 +2,9 @@
 Tests for Consolidation Loop
 ============================
 Tests for fact scoring, classification, and promotion to long-term memory.
+
+These tests verify behavior through LinkingCore's scoring pipeline
+rather than testing internal keyword lists.
 """
 
 import pytest
@@ -9,235 +12,235 @@ from unittest.mock import patch, MagicMock
 
 
 class TestFactClassification:
-    """Test fact classification into identity vs philosophy."""
+    """Test fact classification into identity vs philosophy via LinkingCore."""
     
-    def test_classify_identity_name(self):
-        """Name facts should route to identity."""
+    def _get_loop(self):
         from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
+        return ConsolidationLoop()
+    
+    def _get_loop_with_mock_scores(self, identity_score, philosophy_score):
+        """Create a loop with a mocked linking core returning given scores."""
+        loop = self._get_loop()
+        mock_lc = MagicMock()
+        mock_lc.score_threads.return_value = {
+            'identity': identity_score,
+            'philosophy': philosophy_score,
+            'log': 3.0, 'form': 3.0, 'reflex': 3.0,
+        }
+        loop._linking_core = mock_lc
+        return loop
+    
+    def test_classify_identity_when_identity_scores_higher(self):
+        """When identity scores higher, route to identity."""
+        loop = self._get_loop_with_mock_scores(identity_score=8.0, philosophy_score=4.0)
         assert loop._classify_fact_destination("My name is Sarah") == "identity"
-        assert loop._classify_fact_destination("I'm called Jordan") == "identity"
-        assert loop._classify_fact_destination("I am a software engineer") == "identity"
     
-    def test_classify_identity_preferences(self):
-        """Preference facts should route to identity."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        assert loop._classify_fact_destination("I like Python") == "identity"
-        assert loop._classify_fact_destination("My favorite color is blue") == "identity"
-        assert loop._classify_fact_destination("I prefer dark mode") == "identity"
-        assert loop._classify_fact_destination("I enjoy hiking on weekends") == "identity"
+    def test_classify_philosophy_when_philosophy_scores_higher(self):
+        """When philosophy scores clearly higher, route to philosophy."""
+        loop = self._get_loop_with_mock_scores(identity_score=4.0, philosophy_score=8.0)
+        assert loop._classify_fact_destination("I believe honesty is the most important virtue") == "philosophy"
     
-    def test_classify_identity_location(self):
-        """Location facts should route to identity."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        assert loop._classify_fact_destination("I live in Austin") == "identity"
-        assert loop._classify_fact_destination("I work at a tech startup") == "identity"
-        assert loop._classify_fact_destination("My job is data science") == "identity"
+    def test_classify_identity_when_scores_close(self):
+        """When scores are close (within 1.0), default to identity."""
+        loop = self._get_loop_with_mock_scores(identity_score=6.0, philosophy_score=6.5)
+        assert loop._classify_fact_destination("something ambiguous") == "identity"
     
-    def test_classify_philosophy_beliefs(self):
-        """Belief statements should route to philosophy."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_classify_philosophy_needs_clear_margin(self):
+        """Philosophy needs >1.0 margin over identity to win."""
+        loop = self._get_loop_with_mock_scores(identity_score=5.0, philosophy_score=6.0)
+        assert loop._classify_fact_destination("sort of philosophical") == "identity"
         
-        assert loop._classify_fact_destination("I believe honesty is important") == "philosophy"
-        assert loop._classify_fact_destination("I think that kindness matters most") == "philosophy"
-        assert loop._classify_fact_destination("My belief is that everyone deserves respect") == "philosophy"
+        loop2 = self._get_loop_with_mock_scores(identity_score=5.0, philosophy_score=6.5)
+        assert loop2._classify_fact_destination("sort of philosophical") == "philosophy"
     
-    def test_classify_philosophy_values(self):
-        """Value statements should route to philosophy."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        assert loop._classify_fact_destination("I value integrity above all") == "philosophy"
-        assert loop._classify_fact_destination("Family is important to me") == "philosophy"
-        assert loop._classify_fact_destination("What matters is being authentic") == "philosophy"
+    def test_classify_defaults_to_identity_without_linking_core(self):
+        """If linking core is unavailable, default to identity."""
+        loop = self._get_loop()
+        loop._linking_core = None  # Force no linking core
+        # Patch _get_linking_core to return None
+        with patch.object(loop, '_get_linking_core', return_value=None):
+            assert loop._classify_fact_destination("anything at all") == "identity"
     
-    def test_classify_philosophy_principles(self):
-        """Principle statements should route to philosophy."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        assert loop._classify_fact_destination("I always try to be fair") == "philosophy"
-        assert loop._classify_fact_destination("I never want to compromise on ethics") == "philosophy"
-        assert loop._classify_fact_destination("My principle is to treat others well") == "philosophy"
+    def test_classify_returns_valid_destination(self):
+        """Classification should only return 'identity' or 'philosophy'."""
+        loop = self._get_loop()
+        for text in ["random text", "hello world", "12345", "I believe in truth", "I live in NYC"]:
+            result = loop._classify_fact_destination(text)
+            assert result in ("identity", "philosophy"), f"Got '{result}' for '{text}'"
     
-    def test_classify_philosophy_ethics(self):
-        """Ethical statements should route to philosophy."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_classify_uses_score_threads(self):
+        """Verify classification actually calls score_threads on the linking core."""
+        loop = self._get_loop()
+        mock_lc = MagicMock()
+        mock_lc.score_threads.return_value = {'identity': 7.0, 'philosophy': 3.0}
+        loop._linking_core = mock_lc
         
-        assert loop._classify_fact_destination("Lying is wrong") == "philosophy"
-        assert loop._classify_fact_destination("We should help others") == "philosophy"
-        assert loop._classify_fact_destination("It's right to stand up for justice") == "philosophy"
-    
-    def test_classify_ambiguous_defaults_to_identity(self):
-        """Ambiguous facts should default to identity."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        # Neutral facts default to identity
-        assert loop._classify_fact_destination("Has two cats") == "identity"
-        assert loop._classify_fact_destination("Uses VS Code") == "identity"
+        loop._classify_fact_destination("test input")
+        mock_lc.score_threads.assert_called_once_with("test input")
 
 
 class TestKeyGeneration:
     """Test hierarchical key generation."""
     
-    def test_generate_key_identity_name(self):
-        """Name facts get identity.name category."""
+    def _get_loop(self):
         from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        key = loop._generate_key("My name is Sarah", "identity")
-        assert key.startswith("user.identity.")
-        assert "sarah" in key.lower()
+        return ConsolidationLoop()
     
-    def test_generate_key_identity_preferences(self):
-        """Preference facts get preferences category."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_generate_key_has_correct_prefix(self):
+        """Keys should start with 'user.' for identity and 'philosophy.' for philosophy."""
+        loop = self._get_loop()
         
-        key = loop._generate_key("I love hiking", "identity")
-        assert key.startswith("user.preferences.")
+        id_key = loop._generate_key("My name is Sarah", "identity")
+        assert id_key.startswith("user."), f"Identity key should start with 'user.': {id_key}"
+        
+        phil_key = loop._generate_key("I believe in honesty", "philosophy")
+        assert phil_key.startswith("philosophy."), f"Philosophy key should start with 'philosophy.': {phil_key}"
     
-    def test_generate_key_identity_professional(self):
-        """Work facts get professional category."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_generate_key_has_three_parts(self):
+        """Keys should have prefix.category.detail structure."""
+        loop = self._get_loop()
         
         key = loop._generate_key("I work as a developer", "identity")
-        assert key.startswith("user.professional.")
+        parts = key.split(".", 2)
+        assert len(parts) == 3, f"Key should have 3 dot-separated parts: {key}"
     
-    def test_generate_key_philosophy_beliefs(self):
-        """Philosophy beliefs get beliefs category."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_generate_key_extracts_meaningful_detail(self):
+        """Detail portion should contain content words, not stop words."""
+        loop = self._get_loop()
         
-        key = loop._generate_key("I believe in being honest", "philosophy")
-        assert key.startswith("philosophy.beliefs.")
+        key = loop._generate_key("Sarah works at Blue Bottle Coffee", "identity")
+        detail = key.split(".", 2)[2]
+        
+        # Should contain some meaningful words from the input
+        assert detail  # Not empty
+        assert "_the_" not in detail
+        assert "_is_" not in detail
     
-    def test_generate_key_philosophy_values(self):
-        """Philosophy values get values category."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_generate_key_handles_empty_text(self):
+        """Key generation should handle edge cases gracefully."""
+        loop = self._get_loop()
         
-        key = loop._generate_key("Family is important to me", "philosophy")
-        assert key.startswith("philosophy.values.")
+        # Should not crash, should produce a valid key
+        key = loop._generate_key("a", "identity")
+        assert key.startswith("user.")
     
-    def test_generate_key_philosophy_ethics(self):
-        """Ethical statements get ethics category."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_generate_key_identity_categories(self):
+        """Identity keys should use reasonable categories."""
+        loop = self._get_loop()
         
-        # "should" and "wrong" trigger ethics
-        key = loop._generate_key("Lying is wrong and we should avoid it", "philosophy")
-        assert key.startswith("philosophy.ethics.")
+        key = loop._generate_key("I work as a developer", "identity")
+        category = key.split(".")[1]
+        valid_categories = {"identity", "preferences", "professional", "hobbies", "location", "general"}
+        assert category in valid_categories, f"Unknown category '{category}' in key: {key}"
     
-    def test_generate_key_removes_stop_words(self):
-        """Keys should not include common stop words."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+    def test_generate_key_philosophy_categories(self):
+        """Philosophy keys should use reasonable categories."""
+        loop = self._get_loop()
         
-        key = loop._generate_key("I really like the color blue", "identity")
-        # "I", "really", "the" should be stripped
-        assert "_i_" not in key
-        assert "_the_" not in key
-        assert "_really_" not in key
+        key = loop._generate_key("I believe in honesty", "philosophy")
+        category = key.split(".")[1]
+        valid_categories = {"beliefs", "values", "principles", "ethics", "worldview", "stance"}
+        assert category in valid_categories, f"Unknown category '{category}' in key: {key}"
 
 
 class TestConfidenceScoring:
     """Test confidence score calculation."""
     
+    def _get_loop(self):
+        from agent.subconscious.loops import ConsolidationLoop
+        return ConsolidationLoop()
+    
     def test_confidence_base_score(self):
         """Facts start with base confidence."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+        loop = self._get_loop()
         
-        # Mock embedding function to return None (fallback mode)
-        def mock_get_embedding(text):
-            return None
-        
+        # No linking core → uses text quality heuristics only
         confidence = loop._calculate_confidence(
             "Short fact",
             [],  # No existing facts
-            mock_get_embedding,
-            lambda a, b: 0.0,
-            lambda q, t: 0.0
+            None  # No linking core
         )
         
         assert 0.0 <= confidence <= 1.0
     
     def test_confidence_longer_facts_score_higher(self):
         """Longer, more detailed facts should score higher."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        def mock_get_embedding(text):
-            return None
+        loop = self._get_loop()
         
         short_confidence = loop._calculate_confidence(
             "Likes blue",
             [],
-            mock_get_embedding,
-            lambda a, b: 0.0,
-            lambda q, t: 0.0
+            None
         )
         
         long_confidence = loop._calculate_confidence(
             "User prefers the color blue for their workspace theme and UI elements",
             [],
-            mock_get_embedding,
-            lambda a, b: 0.0,
-            lambda q, t: 0.0
+            None
         )
         
         assert long_confidence >= short_confidence
     
     def test_confidence_specific_facts_score_higher(self):
         """Facts with proper nouns/specifics should score higher."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
-        
-        def mock_get_embedding(text):
-            return None
+        loop = self._get_loop()
         
         generic_confidence = loop._calculate_confidence(
             "likes programming languages",
             [],
-            mock_get_embedding,
-            lambda a, b: 0.0,
-            lambda q, t: 0.0
+            None
         )
         
         specific_confidence = loop._calculate_confidence(
             "Sarah prefers Python over JavaScript",
             [],
-            mock_get_embedding,
-            lambda a, b: 0.0,
-            lambda q, t: 0.0
+            None
         )
         
         assert specific_confidence > generic_confidence
     
     def test_confidence_empty_fact_returns_zero(self):
         """Empty facts should return 0 confidence."""
-        from agent.subconscious.loops import ConsolidationLoop
-        loop = ConsolidationLoop()
+        loop = self._get_loop()
+        
+        assert loop._calculate_confidence("", [], None) == 0.0
+        assert loop._calculate_confidence("  ", [], None) == 0.0
+    
+    def test_confidence_with_mock_linking_core_dedup(self):
+        """When linking core detects a duplicate, confidence should be -1.0."""
+        loop = self._get_loop()
+        
+        # Mock a linking core that returns high similarity
+        mock_lc = MagicMock()
+        mock_lc.score_relevance.return_value = [("existing fact text", 0.95)]
         
         confidence = loop._calculate_confidence(
-            "",
-            [],
-            lambda t: None,
-            lambda a, b: 0.0,
-            lambda q, t: 0.0
+            "existing fact text",
+            ["existing fact text"],
+            mock_lc
         )
         
-        assert confidence == 0.0
+        assert confidence == -1.0
+    
+    def test_confidence_with_mock_linking_core_no_dup(self):
+        """When linking core sees low similarity, fact should pass through."""
+        loop = self._get_loop()
+        
+        mock_lc = MagicMock()
+        # First call for dedup returns low similarity
+        # Second call for relevance boost returns moderate
+        mock_lc.score_relevance.side_effect = [
+            [("some other fact", 0.3)],  # dedup check
+            [("some other fact", 0.4)],  # relevance boost
+        ]
+        
+        confidence = loop._calculate_confidence(
+            "A new and different fact about Python",
+            ["some other fact"],
+            mock_lc
+        )
+        
+        assert 0.0 < confidence <= 1.0
 
 
 class TestTempMemoryStatus:

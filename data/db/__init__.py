@@ -60,6 +60,9 @@ def set_demo_mode(demo: bool) -> None:
     """
     mode = "demo" if demo else "personal"
     _MODE_FILE.write_text(mode)
+    # Bring the newly-active DB up to current schema
+    from agent.core.migrations import ensure_schema
+    ensure_schema()
 
 
 def get_db_path() -> Path:

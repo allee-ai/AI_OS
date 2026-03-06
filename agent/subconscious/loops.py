@@ -571,9 +571,22 @@ class ConsolidationLoop(BackgroundLoop):
         # Step 3: Promote approved facts to long-term memory
         self._promote_approved_facts()
     
+    def _get_linking_core(self):
+        """Get or create the LinkingCore adapter for scoring."""
+        if not hasattr(self, '_linking_core') or self._linking_core is None:
+            try:
+                from agent.threads.linking_core.adapter import LinkingCoreThreadAdapter
+                self._linking_core = LinkingCoreThreadAdapter()
+            except Exception:
+                self._linking_core = None
+        return self._linking_core
+
     def _score_and_triage_pending(self) -> None:
         """
-        Score pending facts and set status based on confidence.
+        Score pending facts using LinkingCore's scoring pipeline.
+        
+        Uses the same embedding + spread activation + co-occurrence scoring
+        that the rest of the system uses, instead of hand-rolled heuristics.
         
         - High confidence → auto-approve
         - Low confidence → pending_review (requires user approval)
@@ -584,9 +597,6 @@ class ConsolidationLoop(BackgroundLoop):
                 get_all_pending, update_fact_status
             )
             from agent.threads.identity.schema import pull_profile_facts
-            from agent.threads.linking_core.scoring import (
-                get_embedding, cosine_similarity, keyword_fallback_score
-            )
             
             # Get all pending facts (not yet triaged)
             pending = get_all_pending()
@@ -599,6 +609,9 @@ class ConsolidationLoop(BackgroundLoop):
                 f"{f.get('key', '')} {f.get('l1_value', '')} {f.get('l2_value', '')} {f.get('l3_value', '')}"
                 for f in existing_facts
             ]
+            existing_texts = [t for t in existing_texts if t.strip()]
+            
+            linking_core = self._get_linking_core()
             
             for fact in pending:
                 # Skip already triaged facts
@@ -609,9 +622,7 @@ class ConsolidationLoop(BackgroundLoop):
                     confidence = self._calculate_confidence(
                         fact.text,
                         existing_texts,
-                        get_embedding,
-                        cosine_similarity,
-                        keyword_fallback_score
+                        linking_core
                     )
                     
                     # Determine status based on confidence
@@ -639,63 +650,72 @@ class ConsolidationLoop(BackgroundLoop):
         self,
         fact_text: str,
         existing_texts: list,
-        get_embedding,
-        cosine_similarity,
-        keyword_fallback_score
+        linking_core=None
     ) -> float:
         """
-        Calculate confidence score for a fact.
+        Calculate confidence score for a fact using LinkingCore scoring.
+        
+        Uses the same embedding similarity, co-occurrence, and spread
+        activation pipeline as the rest of the system.
         
         Returns:
             0.0-1.0 for valid facts (higher = more confident)
             -1.0 for duplicates
         """
-        if not fact_text:
+        if not fact_text or not fact_text.strip():
             return 0.0
         
-        # Check for duplicates
-        fact_emb = get_embedding(fact_text)
-        
-        for existing in existing_texts:
-            if not existing.strip():
-                continue
-            
-            if fact_emb is not None:
-                existing_emb = get_embedding(existing)
-                if existing_emb is not None:
-                    similarity = cosine_similarity(fact_emb, existing_emb)
-                    if similarity >= self.DUPLICATE_THRESHOLD:
+        # --- Duplicate detection via LinkingCore ---
+        if existing_texts and linking_core:
+            try:
+                scored = linking_core.score_relevance(
+                    fact_text, existing_texts,
+                    use_embeddings=True,
+                    use_cooccurrence=False,
+                    use_spread_activation=False
+                )
+                if scored:
+                    _, top_similarity = scored[0]
+                    if top_similarity >= self.DUPLICATE_THRESHOLD:
                         return -1.0  # Duplicate
-            else:
-                # Keyword fallback
-                similarity = keyword_fallback_score(fact_text, existing)
-                if similarity >= self.DUPLICATE_THRESHOLD:
-                    return -1.0  # Duplicate
+            except Exception:
+                pass
         
-        # Calculate confidence based on:
-        # 1. Length (very short facts are less trustworthy)
-        # 2. Specificity (contains concrete details)
-        # 3. Structure (proper hierarchical key)
+        # --- Quality scoring ---
+        # Base confidence from text quality signals
+        import re
+        confidence = 0.5
         
-        confidence = 0.5  # Base confidence
-        
-        # Length factor
         word_count = len(fact_text.split())
         if word_count >= 3:
             confidence += 0.1
         if word_count >= 5:
             confidence += 0.1
         
-        # Specificity factor (contains names, numbers, concrete nouns)
-        import re
-        if re.search(r'\b[A-Z][a-z]+\b', fact_text):  # Capitalized words
+        # Specificity: proper nouns, numbers
+        if re.search(r'\b[A-Z][a-z]+\b', fact_text):
             confidence += 0.1
-        if re.search(r'\d+', fact_text):  # Numbers
+        if re.search(r'\d+', fact_text):
             confidence += 0.05
         
-        # Source quality (explicit > conversation > inferred)
-        # This would come from fact.source but we don't have it here
-        # Could be enhanced later
+        # Boost from linking core: does this fact connect to existing knowledge?
+        if linking_core and existing_texts:
+            try:
+                scored = linking_core.score_relevance(
+                    fact_text, existing_texts[:50],
+                    use_embeddings=True,
+                    use_cooccurrence=True,
+                    use_spread_activation=True
+                )
+                if scored:
+                    # Average relevance to existing knowledge (excluding duplicates)
+                    non_dup = [(f, s) for f, s in scored if s < self.DUPLICATE_THRESHOLD]
+                    if non_dup:
+                        avg_relevance = sum(s for _, s in non_dup[:10]) / min(len(non_dup), 10)
+                        # Related-to-existing-knowledge boost (up to +0.15)
+                        confidence += min(0.15, avg_relevance * 0.3)
+            except Exception:
+                pass
         
         return min(1.0, max(0.0, confidence))
     
@@ -778,7 +798,14 @@ class ConsolidationLoop(BackgroundLoop):
                     
                     # Mark as consolidated
                     mark_consolidated(fact.id)
-                    
+
+                    # Strengthen concept graph around the new fact
+                    try:
+                        from agent.threads.linking_core.schema import index_key_in_concept_graph
+                        index_key_in_concept_graph(key, fact.text)
+                    except Exception:
+                        pass
+
                 except Exception as e:
                     import sys
                     print(f"Error promoting fact {fact.id}: {e}", file=sys.stderr)
@@ -804,115 +831,116 @@ class ConsolidationLoop(BackgroundLoop):
         """
         Classify whether a fact belongs in identity or philosophy thread.
         
+        Uses LinkingCore's score_threads — the same scoring the rest of the
+        system uses for context gating. LinkingCore handles its own fallback
+        (keyword scoring when embeddings are unavailable).
+        
         Identity: Personal details, preferences, biographical info
         Philosophy: Beliefs, values, principles, worldview
         
         Returns:
             "identity" or "philosophy"
         """
-        text_lower = fact_text.lower()
+        linking_core = self._get_linking_core()
         
-        # Philosophy indicators: beliefs, values, principles
-        philosophy_signals = [
-            'believe', 'belief', 'think that', 'feel that',
-            'value', 'values', 'important to me',
-            'principle', 'principles',
-            'philosophy', 'worldview',
-            'should', 'ought', 'must',
-            'right', 'wrong', 'good', 'bad', 'evil',
-            'fair', 'unfair', 'justice', 'ethical', 'moral',
-            'meaning', 'purpose', 'matters',
-            'truth', 'honest', 'integrity',
-            'freedom', 'liberty', 'autonomy',
-            'respect', 'dignity', 'compassion',
-            'always try to', 'never want to',
-            'my view on', 'my stance on',
-        ]
+        if not linking_core:
+            return "identity"  # Safe default if adapter can't load
         
-        # Identity indicators: personal facts
-        identity_signals = [
-            'my name', 'i am', "i'm", 'called',
-            'i live', 'i work', 'my job', 'my career',
-            'i like', 'i love', 'i prefer', 'i enjoy', 'favorite',
-            'i have', 'i own',
-            'my age', 'years old', 'born',
-            'my email', 'my phone', 'contact',
-            'my family', 'my wife', 'my husband', 'my kids',
-            'i studied', 'my degree', 'my school',
-            'my hobby', 'hobbies', 'free time',
-        ]
-        
-        philosophy_score = sum(1 for signal in philosophy_signals if signal in text_lower)
-        identity_score = sum(1 for signal in identity_signals if signal in text_lower)
-        
-        # Philosophy needs stronger signal since identity is default
-        if philosophy_score >= 2 or (philosophy_score >= 1 and identity_score == 0):
-            return "philosophy"
-        
-        return "identity"
+        try:
+            scores = linking_core.score_threads(fact_text)
+            identity_score = scores.get('identity', 5.0)
+            philosophy_score = scores.get('philosophy', 5.0)
+            
+            # Philosophy needs to clearly win — identity is the safe default
+            if philosophy_score > identity_score + 1.0:
+                return "philosophy"
+            return "identity"
+        except Exception:
+            return "identity"
     
     def _generate_key(self, fact_text: str, destination: str = "identity") -> str:
         """
         Generate a hierarchical key from fact text.
         
+        Uses LinkingCore's concept extraction for the detail portion,
+        and score_threads for category detection.
+        
         Examples:
             Identity: "User likes Python" → "user.preferences.python"
-            Philosophy: "I believe in honesty" → "values.honesty"
+            Philosophy: "I believe in honesty" → "philosophy.beliefs.honesty"
         """
-        import re
-        
         text_lower = fact_text.lower()
         
+        # Determine category using linking core thread scoring
+        linking_core = self._get_linking_core()
+        
         if destination == "philosophy":
-            # Philosophy categories
-            if any(w in text_lower for w in ['believe', 'belief', 'think that']):
-                category = "beliefs"
-            elif any(w in text_lower for w in ['value', 'important', 'matters']):
-                category = "values"
-            elif any(w in text_lower for w in ['principle', 'always', 'never']):
-                category = "principles"
-            elif any(w in text_lower for w in ['should', 'ought', 'right', 'wrong']):
-                category = "ethics"
-            elif any(w in text_lower for w in ['meaning', 'purpose', 'life']):
-                category = "worldview"
-            else:
-                category = "stance"
             prefix = "philosophy"
+            categories = {
+                "beliefs": "believe belief faith think opinion",
+                "values": "value important matters care priority",
+                "principles": "principle always never rule guideline",
+                "ethics": "should ought right wrong moral ethical",
+                "worldview": "meaning purpose life world perspective",
+            }
+            default_category = "stance"
         else:
-            # Identity categories
-            if any(w in text_lower for w in ['name', 'called', 'i am', "i'm"]):
-                category = "identity"
-            elif any(w in text_lower for w in ['like', 'love', 'prefer', 'enjoy', 'favorite']):
-                category = "preferences"
-            elif any(w in text_lower for w in ['work', 'job', 'career', 'profession']):
-                category = "professional"
-            elif any(w in text_lower for w in ['hobby', 'hobbies', 'free time', 'weekend']):
-                category = "hobbies"
-            elif any(w in text_lower for w in ['live', 'city', 'country', 'from']):
-                category = "location"
-            else:
-                category = "general"
             prefix = "user"
+            categories = {
+                "identity": "name called person who am age born",
+                "preferences": "like love prefer enjoy favorite",
+                "professional": "work job career profession company role",
+                "hobbies": "hobby hobbies free time weekend recreation",
+                "location": "live city country from location home",
+            }
+            default_category = "general"
         
-        # Extract key words (remove stop words)
-        stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
-                      'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
-                      'would', 'could', 'should', 'may', 'might', 'must', 'shall',
-                      'i', 'me', 'my', 'myself', 'we', 'our', 'you', 'your', 'he',
-                      'she', 'it', 'they', 'them', 'their', 'this', 'that', 'these',
-                      'those', 'and', 'but', 'or', 'so', 'for', 'to', 'of', 'in',
-                      'on', 'at', 'by', 'with', 'about', 'user', 'really', 'very',
-                      'believe', 'think', 'feel', 'value', 'important'}
+        # Use linking core to find best-matching category
+        category = default_category
+        if linking_core:
+            try:
+                scored = linking_core.score_relevance(
+                    fact_text,
+                    list(categories.values()),
+                    use_embeddings=True,
+                    use_cooccurrence=False,
+                    use_spread_activation=False
+                )
+                if scored:
+                    best_desc = scored[0][0]
+                    for name, desc in categories.items():
+                        if desc == best_desc:
+                            category = name
+                            break
+            except Exception:
+                pass
         
-        words = re.findall(r'\b[a-z]+\b', text_lower)
-        keywords = [w for w in words if w not in stop_words][:3]
-        
-        if keywords:
-            detail = "_".join(keywords)
-        else:
-            # Fallback: use hash of text
-            import hashlib
-            detail = hashlib.md5(fact_text.encode()).hexdigest()[:8]
+        # Extract key detail words using linking core's concept extraction
+        try:
+            from agent.threads.linking_core.schema import extract_concepts_from_text
+            concepts = extract_concepts_from_text(fact_text)[:3]
+            if concepts:
+                detail = "_".join(concepts)
+            else:
+                raise ValueError("no concepts")
+        except Exception:
+            # Fallback: manual extraction
+            import re
+            stop_words = {'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been',
+                          'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will',
+                          'would', 'could', 'should', 'may', 'might', 'must', 'shall',
+                          'i', 'me', 'my', 'myself', 'we', 'our', 'you', 'your', 'he',
+                          'she', 'it', 'they', 'them', 'their', 'this', 'that', 'these',
+                          'those', 'and', 'but', 'or', 'so', 'for', 'to', 'of', 'in',
+                          'on', 'at', 'by', 'with', 'about', 'user', 'really', 'very',
+                          'believe', 'think', 'feel', 'value', 'important'}
+            words = re.findall(r'\b[a-z]+\b', text_lower)
+            keywords = [w for w in words if w not in stop_words][:3]
+            if keywords:
+                detail = "_".join(keywords)
+            else:
+                import hashlib
+                detail = hashlib.md5(fact_text.encode()).hexdigest()[:8]
         
         return f"{prefix}.{category}.{detail}"
     

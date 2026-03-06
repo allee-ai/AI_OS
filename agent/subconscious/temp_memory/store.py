@@ -102,30 +102,6 @@ def _ensure_table() -> None:
             )
         """)
         
-        # Index for finding pending facts
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_temp_facts_pending 
-            ON temp_facts(consolidated, created_at)
-        """)
-        
-        # Index for session lookups
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_temp_facts_session 
-            ON temp_facts(session_id)
-        """)
-        
-        # Index for hierarchical key lookups
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_temp_facts_hier_key 
-            ON temp_facts(hier_key)
-        """)
-        
-        # Index for status lookups
-        cursor.execute("""
-            CREATE INDEX IF NOT EXISTS idx_temp_facts_status 
-            ON temp_facts(status)
-        """)
-        
         # Add columns if they don't exist (migration for existing DBs)
         try:
             cursor.execute("ALTER TABLE temp_facts ADD COLUMN hier_key TEXT")
@@ -146,6 +122,24 @@ def _ensure_table() -> None:
             cursor.execute("ALTER TABLE temp_facts ADD COLUMN confidence_score REAL")
         except sqlite3.OperationalError:
             pass  # Column already exists
+        
+        # Indexes (after migrations so all columns exist)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_pending 
+            ON temp_facts(consolidated, created_at)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_session 
+            ON temp_facts(session_id)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_hier_key 
+            ON temp_facts(hier_key)
+        """)
+        cursor.execute("""
+            CREATE INDEX IF NOT EXISTS idx_temp_facts_status 
+            ON temp_facts(status)
+        """)
         
         conn.commit()
 
@@ -453,6 +447,7 @@ def update_fact_status(fact_id: int, status: str, confidence_score: Optional[flo
         raise ValueError(f"Invalid status '{status}'. Must be one of: {valid_statuses}")
     
     with _db_lock:
+        _ensure_table()
         with closing(get_connection()) as conn:
             cursor = conn.cursor()
             

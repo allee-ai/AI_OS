@@ -275,7 +275,8 @@ class Subconscious:
         
         L1 — file metadata only (path, size, modified)
         L2 — metadata + stored LLM-generated summaries
-        L3 — summaries + FTS snippet matches for the query
+        L3 — summaries + FTS snippet matches for the query,
+              re-ranked by concept overlap via linking_core
         
         Level is determined by whether the query matches workspace content.
         """
@@ -298,7 +299,31 @@ class Subconscious:
                     fts_results = []
             
             facts = []
-            
+
+            # Re-rank FTS results by concept overlap with query
+            if fts_results and query:
+                try:
+                    from agent.threads.linking_core.schema import (
+                        extract_concepts_from_text, spread_activate,
+                    )
+                    query_concepts = extract_concepts_from_text(query)
+                    if query_concepts:
+                        activated = spread_activate(
+                            query_concepts, activation_threshold=0.1,
+                            max_hops=1, limit=30,
+                        )
+                        activated_set = {a["concept"] for a in activated}
+                        activated_set.update(query_concepts)
+
+                        def _concept_boost(result: dict) -> float:
+                            text = (result.get("path", "") + " " + result.get("snippet", "")).lower()
+                            hits = sum(1 for c in activated_set if c in text)
+                            return hits
+
+                        fts_results.sort(key=_concept_boost, reverse=True)
+                except Exception:
+                    pass  # Fallback to default FTS order
+
             if fts_results:
                 # L3 — we have direct query matches: summaries + snippets
                 for r in fts_results:

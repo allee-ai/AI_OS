@@ -93,6 +93,13 @@ except ImportError:
     _HAS_CHAT_SCHEMA = False
     print("⚠️ Chat schema not available - conversations disabled")
 
+# Concept graph learning from conversations
+try:
+    from agent.threads.linking_core.schema import extract_and_record_conversation_concepts
+    _HAS_CONCEPT_LEARNING = True
+except ImportError:
+    _HAS_CONCEPT_LEARNING = False
+
 # DB-backed identity - use new thread system
 try:
     from agent.threads import get_thread
@@ -221,7 +228,13 @@ class AgentService:
                 
                 # Persist to Feeds/conversations/
                 await self._save_conversation_turn(user_message, response_text, feed_type)
-                
+
+                # Record concept co-occurrences every 5 turns
+                # Full-conversation extraction captures cross-turn context
+                turn_count = len([m for m in self.message_history if m.role == 'user'])
+                if _HAS_CONCEPT_LEARNING and turn_count > 0 and turn_count % 5 == 0:
+                    asyncio.create_task(self._record_conversation_concepts())
+
             else:
                 # Mock response when the agent not available
                 response_text = f"[Agent offline] Echo: {user_message}"
@@ -246,15 +259,42 @@ class AgentService:
         return assistant_msg
 
     async def _score_and_persist_relevance(self, user_message: str, convo_context: str, feed_type: str) -> None:
-        """Run relevance scoring against identity and persist scores to DB.
-
-        Lightweight best-effort; failure does not block chat.
-        Note: The new subconscious system handles relevance internally during context assembly.
-        This method is now a no-op but kept for compatibility.
-        """
-        # The new thread/subconscious system handles relevance scoring internally
-        # when build_context() is called. No need for explicit scoring here.
+        """No-op — relevance scoring handled by subconscious during context assembly."""
         pass
+
+    async def _record_conversation_concepts(self) -> None:
+        """Extract concepts from the full conversation and record co-occurrences.
+
+        Called every 5 turns and at conversation end (clear_history).
+        Operates on the aggregate text so cross-turn associations are captured
+        (e.g. user mentions "sarah" in turn 1, "coffee" in turn 3 → linked).
+        """
+        if not _HAS_CONCEPT_LEARNING:
+            return
+        try:
+            turns = []
+            # Build turn list from message_history pairs
+            for i in range(0, len(self.message_history) - 1, 2):
+                user_msg = self.message_history[i]
+                asst_msg = self.message_history[i + 1] if i + 1 < len(self.message_history) else None
+                turn = {"user": user_msg.content if user_msg.role == "user" else ""}
+                if asst_msg and asst_msg.role == "assistant":
+                    turn["assistant"] = asst_msg.content
+                turns.append(turn)
+
+            if turns:
+                result = extract_and_record_conversation_concepts(
+                    turns, session_id=self.session_id
+                )
+                if result["links_created"] > 0 and _HAS_UNIFIED_LOG:
+                    unified_log(
+                        "system",
+                        f"Concept graph updated: {result['links_created']} links from {result['turn_count']} turns",
+                        {"concepts": result["concepts"][:10], "session": self.session_id},
+                        session_id=self.session_id,
+                    )
+        except Exception as e:
+            print(f"Warning: concept extraction failed: {e}")
     
     def _build_conversation_context(self, max_turns: int = 5) -> str:
         """Build conversation context string from recent history"""
@@ -450,7 +490,15 @@ class AgentService:
         }
     
     async def clear_history(self):
-        """Clear conversation history and start fresh session"""
+        """Clear conversation history and start fresh session.
+        
+        Before clearing, extracts concepts from the full conversation and
+        records co-occurrences so the concept graph learns from every session.
+        """
+        # Extract concepts from the ending conversation before clearing
+        if _HAS_CONCEPT_LEARNING and len(self.message_history) >= 2:
+            await self._record_conversation_concepts()
+
         self.message_history = []
         self.context_manager.reset()
         self.session_id = f"react_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
@@ -496,42 +544,28 @@ class AgentService:
         """
         Generate the agent's proactive intro for a new conversation.
         
-        Returns a message from agent introducing her current state:
-        - Recent memories/topics
-        - Graph stats (concepts, links)
-        - Prompt for user context
+        Uses linking_core's graph data (not raw SQL) to surface current state.
         
         Args:
             save_to_db: If True, saves the intro as the first turn in the conversation
         """
         intro_parts = ["Hello. "]
         
-        # Get graph stats
+        # Get graph stats via linking_core
         try:
-            from data.db import get_connection
-            conn = get_connection(readonly=True)
-            cur = conn.cursor()
-            
-            # Count links and concepts
-            cur.execute("SELECT COUNT(*) FROM concept_links")
-            link_count = cur.fetchone()[0]
-            
-            cur.execute("SELECT AVG(strength) FROM concept_links WHERE strength > 0.3")
-            avg_strength = cur.fetchone()[0] or 0
-            
-            # Get top concepts by link count
-            cur.execute("""
-                SELECT concept_a, COUNT(*) as cnt 
-                FROM concept_links 
-                WHERE strength > 0.3
-                GROUP BY concept_a 
-                ORDER BY cnt DESC 
-                LIMIT 3
-            """)
-            top_concepts = [row[0] for row in cur.fetchall()]
-            
+            from agent.threads.linking_core.schema import get_stats, get_graph_data
+            stats = get_stats()
+
+            link_count = stats.get("total_links", 0)
+            concept_count = stats.get("unique_concepts", 0)
+
             if link_count > 0:
-                intro_parts.append(f"I have {link_count} associations in my mind")
+                # Get top anchored concepts (real knowledge, not noise)
+                graph = get_graph_data(max_nodes=10, min_strength=0.3, anchored_only=True)
+                top_nodes = sorted(graph.get("nodes", []), key=lambda n: n["connections"], reverse=True)[:3]
+                top_concepts = [n["id"] for n in top_nodes]
+
+                intro_parts.append(f"I have {link_count} associations across {concept_count} concepts")
                 if top_concepts:
                     intro_parts.append(f", with strongest links around: {', '.join(top_concepts)}. ")
                 else:

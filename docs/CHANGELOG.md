@@ -5,6 +5,36 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-03-05 — Schema Migration System + Fact-Anchored Concept Graph
+
+### Schema Migration System (`agent/core/migrations.py`)
+- **New `migrations.py`**: `ensure_schema()` calls every module `init_*` function (26 tables across all threads); `ensure_all_schemas()` syncs both `state.db` and `state_demo.db` simultaneously by temporarily overriding `STATE_DB_PATH`
+- **Startup wiring**: `scripts/server.py` calls `ensure_all_schemas()` before `wake()` — logs `[Startup] Schema synced`; `set_demo_mode()` in `data/db/__init__.py` calls `ensure_schema()` after switching mode
+- **Guarantees**: Fresh `git clone + docker compose up` works on any machine without manual `ALTER TABLE` steps; `state_demo.db` always stays schema-parity with `state.db`
+- **`agent/core` added to `sync_docs.py` MODULES list**
+
+### Temp Memory Bug Fix
+- **Root cause**: `state_demo.db` predated the `status` and `confidence_score` columns; `CREATE INDEX IF NOT EXISTS idx_temp_facts_status` was executing before the `ALTER TABLE ADD COLUMN status` migration, crashing on stale DBs
+- **Fix**: `_ensure_table()` in `store.py` reordered — all `ALTER TABLE ADD COLUMN` migrations now run before any `CREATE INDEX` statements
+- **Guard**: `update_fact_status()` now calls `_ensure_table()` before acquiring a connection
+
+### Fact-Anchored Concept Graph
+- **`get_graph_data(anchored_only=True)`**: Filters concept nodes to only those that correspond to a real stored fact key (`profile_facts`, `philosophy_profile_facts`, `form_tools`) — eliminates raw tokenized conversation noise; supports exact, parent, and child dot-notation key matching
+- **API**: `GET /api/linking_core/graph?anchored=true` (default on) — concept graph now shows a map of actual stored knowledge rather than every word ever mentioned
+- **Frontend**: `ConceptGraph3D.tsx` defaults to anchored mode; Controls panel has a toggle button (🔒 Anchored facts / 🌐 All concepts) that reloads the graph live
+
+### Files Changed
+- `agent/core/migrations.py` — New
+- `data/db/__init__.py` — `set_demo_mode()` calls `ensure_schema()`
+- `scripts/server.py` — startup calls `ensure_all_schemas()`
+- `agent/subconscious/temp_memory/store.py` — `_ensure_table()` ordering fix, `update_fact_status()` guard
+- `agent/threads/linking_core/schema.py` — `get_graph_data()` + `_get_fact_anchor_prefixes()` + `_is_concept_anchored()`
+- `agent/threads/linking_core/api.py` — `anchored` query param on `/graph`
+- `frontend/src/modules/threads/linking_core/components/ConceptGraph3D.tsx` — anchored toggle + fetch URL
+- `scripts/sync_docs.py` — added `agent/core` to MODULES list
+
+---
+
 ## 2025-02-23 — Import Source Grouping
 
 ### Conversation Source Tracking
@@ -1263,9 +1293,35 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 - Basic pattern matching
 <!-- /INCLUDE:reflex:CHANGELOG -->
 
+### Core
+<!-- INCLUDE:core:CHANGELOG -->
+_Source: [agent/core/README.md](agent/core/README.md)_
+
+### 2026-03-05
+- New `migrations.py`: `ensure_schema()` calls every module `init_*` function so any table drift is repaired on startup; `ensure_all_schemas()` syncs both `state.db` and `state_demo.db` by temporarily overriding `STATE_DB_PATH`
+- `data/db/__init__.py` `set_demo_mode()` now calls `ensure_schema()` after writing the mode file
+- `scripts/server.py` startup calls `ensure_all_schemas()` before `wake()` — logs `[Startup] Schema synced`
+- Guarantees `git clone + docker compose up` works on any machine with zero manual DB steps
+
+### 2026-01-27
+- Secrets management with Fernet encryption
+- Machine-derived key for at-rest encryption
+
+### 2026-01-20
+- Config module with pydantic-settings
+- Thread locks for memory writes
+- Models API for model switching
+<!-- /INCLUDE:core:CHANGELOG -->
+
 ### Linking Core
 <!-- INCLUDE:linking_core:CHANGELOG -->
 _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/README.md)_
+
+### 2026-03-05
+- `get_graph_data()`: new `anchored_only: bool` param — filters concept nodes to only those anchored to a real stored fact key (`profile_facts`, `philosophy_profile_facts`, `form_tools`); supports exact, parent, and child dot-notation matching
+- `_get_fact_anchor_prefixes()` and `_is_concept_anchored()`: helper functions for fact-anchored filtering
+- API `/api/linking_core/graph`: new `anchored: bool = True` query param — default on, so raw conversation tokens are excluded unless explicitly requested
+- `ConceptGraph3D.tsx`: anchored toggle button in Controls panel; default view shows only knowledge-anchored concepts
 
 ### 2026-01-31
 - Potentiation column: SHORT/LONG memory stages
@@ -1304,6 +1360,10 @@ _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 ### Temp Memory
 <!-- INCLUDE:temp_memory:CHANGELOG -->
 _Source: [agent/subconscious/temp_memory/README.md](agent/subconscious/temp_memory/README.md)_
+
+### 2026-03-05
+- Fixed `no such column: status` crash: `_ensure_table()` reordered so `ALTER TABLE ADD COLUMN` migrations run before `CREATE INDEX` statements (index on `status` column was failing on stale DBs)
+- `update_fact_status()` now calls `_ensure_table()` before acquiring a connection, guarding any caller against stale schema
 
 ### 2026-01-27
 - Fixed log_event integration (correct parameter signature)

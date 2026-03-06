@@ -36,6 +36,7 @@ MODULES: List[Tuple[str, str, str]] = [
     ("agent/threads/form", "form", "Form Thread"),
     ("agent/threads/reflex", "reflex", "Reflex Thread"),
     ("agent/threads/linking_core", "linking_core", "Linking Core"),
+    ("agent/core", "core", "Core"),
     ("agent/subconscious", "subconscious", "Subconscious"),
     ("agent/subconscious/temp_memory", "temp_memory", "Temp Memory"),
     ("agent/services", "services", "Services"),

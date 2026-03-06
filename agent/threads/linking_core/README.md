@@ -92,6 +92,12 @@ new_strength = old_strength × decay_rate^days
 ## Changelog
 
 <!-- CHANGELOG:linking_core -->
+### 2026-03-05
+- `get_graph_data()`: new `anchored_only: bool` param — filters concept nodes to only those anchored to a real stored fact key (`profile_facts`, `philosophy_profile_facts`, `form_tools`); supports exact, parent, and child dot-notation matching
+- `_get_fact_anchor_prefixes()` and `_is_concept_anchored()`: helper functions for fact-anchored filtering
+- API `/api/linking_core/graph`: new `anchored: bool = True` query param — default on, so raw conversation tokens are excluded unless explicitly requested
+- `ConceptGraph3D.tsx`: anchored toggle button in Controls panel; default view shows only knowledge-anchored concepts
+
 ### 2026-01-31
 - Potentiation column: SHORT/LONG memory stages
 - `consolidate_links()` promotes high-fire links to LONG

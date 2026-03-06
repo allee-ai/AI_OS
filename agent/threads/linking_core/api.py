@@ -115,15 +115,19 @@ async def remove_concept_link(concept_a: str, concept_b: str):
 async def get_graph(
     center: Optional[str] = None,
     max_nodes: int = Query(100, ge=10, le=500),
-    min_strength: float = Query(0.1, ge=0, le=1)
+    min_strength: float = Query(0.1, ge=0, le=1),
+    anchored: bool = Query(True, description="Only return concepts anchored to real stored facts")
 ):
     """
     Get graph data for visualization.
-    
+
     Returns nodes and edges suitable for D3.js or similar.
     If center is provided, returns subgraph around that concept.
+    If anchored=true (default), only concepts that correspond to a real stored
+    fact key (profile_facts, philosophy_profile_facts, form_tools) are included,
+    filtering out raw tokenized conversation noise.
     """
-    return get_graph_data(center_concept=center, max_nodes=max_nodes, min_strength=min_strength)
+    return get_graph_data(center_concept=center, max_nodes=max_nodes, min_strength=min_strength, anchored_only=anchored)
 
 
 @router.get("/graph/path")

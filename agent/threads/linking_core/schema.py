@@ -494,6 +494,59 @@ def record_concept_cooccurrence(concepts: List[str], learning_rate: float = 0.1)
     return count
 
 
+def extract_and_record_conversation_concepts(
+    turns: List[Dict[str, str]],
+    session_id: str = "",
+    learning_rate: float = 0.1,
+) -> Dict[str, Any]:
+    """
+    Extract concepts from an entire conversation and record co-occurrences.
+
+    Operates on the aggregate text of all turns rather than individual messages,
+    so the graph captures conversational context (e.g. if "sarah" and "coffee"
+    appear in different turns of the same conversation, they still get linked).
+
+    Works identically for live conversations and imported chats (Discord,
+    ChatGPT, etc.) — anything that provides a list of turn dicts.
+
+    Args:
+        turns: List of dicts with at least ``"user"`` and/or ``"assistant"`` keys.
+        session_id: Optional identifier for logging.
+        learning_rate: Hebbian learning rate passed to ``record_concept_cooccurrence``.
+
+    Returns:
+        {"concepts": [...], "links_created": int, "turn_count": int}
+    """
+    # Build aggregate text from all turns
+    chunks: List[str] = []
+    for turn in turns:
+        if turn.get("user"):
+            chunks.append(turn["user"])
+        if turn.get("assistant"):
+            chunks.append(turn["assistant"])
+
+    if not chunks:
+        return {"concepts": [], "links_created": 0, "turn_count": 0}
+
+    aggregate = " ".join(chunks)
+    concepts = extract_concepts_from_text(aggregate)
+
+    # Cap at 60 concepts to keep O(n²) manageable
+    if len(concepts) > 60:
+        # Prefer concepts by frequency in the text
+        text_lower = aggregate.lower()
+        concepts.sort(key=lambda c: text_lower.count(c), reverse=True)
+        concepts = concepts[:60]
+
+    links_created = record_concept_cooccurrence(concepts, learning_rate=learning_rate)
+
+    return {
+        "concepts": concepts,
+        "links_created": links_created,
+        "turn_count": len(turns),
+    }
+
+
 # ─────────────────────────────────────────────────────────────
 # Fact Retrieval
 # ─────────────────────────────────────────────────────────────
@@ -723,15 +776,67 @@ def update_link_strength(concept_a: str, concept_b: str, strength: float) -> boo
 # Graph Visualization
 # ─────────────────────────────────────────────────────────────
 
-def get_graph_data(center_concept: str = None, max_nodes: int = 100, min_strength: float = 0.1) -> Dict[str, Any]: # pyright: ignore[reportArgumentType]
+def _get_fact_anchor_prefixes(conn: sqlite3.Connection) -> set:
+    """
+    Load all fact keys from profile_facts, philosophy_profile_facts, and form_tools.
+    Returns a set of keys used to anchor concept nodes to real stored knowledge.
+    """
+    anchors: set = set()
+    cur = conn.cursor()
+    for table, col in [
+        ("profile_facts", "key"),
+        ("philosophy_profile_facts", "key"),
+        ("form_tools", "name"),
+    ]:
+        try:
+            cur.execute(f"SELECT DISTINCT {col} FROM {table}")
+            for row in cur.fetchall():
+                if row[0]:
+                    anchors.add(row[0].strip().lower())
+        except sqlite3.OperationalError:
+            pass  # Table doesn't exist yet
+    return anchors
+
+
+def _is_concept_anchored(concept: str, anchor_keys: set) -> bool:
+    """
+    Return True if the concept is anchored to a real stored fact.
+
+    A concept 'a.b.c' is anchored when any stored key is:
+      - an exact match ('a.b.c'), OR
+      - a prefix of the concept ('a.b' → 'a.b.c' is a child), OR
+      - the concept itself is a prefix of a stored key ('a.b' stored, concept 'a' is its parent)
+
+    This accepts both parents and children of fact keys so the whole
+    identity subtree stays connected.
+    """
+    c = concept.strip().lower()
+    for key in anchor_keys:
+        if c == key:
+            return True
+        # concept is a child: key is 'sarah.email', concept is 'sarah.email.work'
+        if c.startswith(key + "."):
+            return True
+        # concept is a parent: key is 'sarah.email', concept is 'sarah'
+        if key.startswith(c + "."):
+            return True
+    return False
+
+
+def get_graph_data(center_concept: str = None, max_nodes: int = 100, min_strength: float = 0.1, anchored_only: bool = False) -> Dict[str, Any]: # pyright: ignore[reportArgumentType]
     """
     Get graph data for visualization (nodes and links).
-    
+
     If center_concept is provided, returns subgraph around that concept.
+    If anchored_only is True, only concepts that anchor to real stored facts
+    (profile_facts, philosophy_profile_facts, form_tools) are included.
     """
     with closing(get_connection(readonly=True)) as conn:
         cur = conn.cursor()
-        
+
+        # Pre-load anchor keys when filtering is requested
+        anchor_keys = _get_fact_anchor_prefixes(conn) if anchored_only else set()
+
         if center_concept:
             # Get subgraph around center concept using spread activation
             activated = spread_activate([center_concept], activation_threshold=min_strength, max_hops=2, limit=max_nodes)
@@ -754,7 +859,7 @@ def get_graph_data(center_concept: str = None, max_nodes: int = 100, min_strengt
                 WHERE strength >= ?
                 ORDER BY strength DESC
                 LIMIT ?
-            """, (min_strength, max_nodes * 2))
+            """, (min_strength, max_nodes * 4))
         
         # Build nodes and links
         nodes_set = set()
@@ -763,19 +868,37 @@ def get_graph_data(center_concept: str = None, max_nodes: int = 100, min_strengt
         max_strength_val = 0.0
         
         for row in cur.fetchall():
-            nodes_set.add(row[0])
-            nodes_set.add(row[1])
+            ca, cb = row[0], row[1]
+            # When anchored_only: skip links where neither endpoint is anchored
+            if anchored_only and not (_is_concept_anchored(ca, anchor_keys) or _is_concept_anchored(cb, anchor_keys)):
+                continue
+            nodes_set.add(ca)
+            nodes_set.add(cb)
             strength = row[2]
             total_strength += strength
             max_strength_val = max(max_strength_val, strength)
             links.append({
-                "concept_a": row[0],
-                "concept_b": row[1],
+                "concept_a": ca,
+                "concept_b": cb,
                 "strength": strength,
                 "fire_count": row[3] or 1,
                 "last_fired": row[4]
             })
-        
+            if len(nodes_set) >= max_nodes:
+                break
+
+        # When anchored_only, further filter nodes — remove unanchored orphans
+        if anchored_only:
+            anchored_nodes = {n for n in nodes_set if _is_concept_anchored(n, anchor_keys)}
+            # Keep links where BOTH endpoints survived
+            links = [l for l in links if l["concept_a"] in anchored_nodes and l["concept_b"] in anchored_nodes]
+            nodes_set = anchored_nodes
+
+        # Rebuild total_strength from filtered links
+        if anchored_only and links:
+            total_strength = sum(l["strength"] for l in links)
+            max_strength_val = max(l["strength"] for l in links)
+
         # Build node list with metadata
         nodes = []
         for concept in list(nodes_set)[:max_nodes]:

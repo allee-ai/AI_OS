@@ -84,6 +84,10 @@ PENDING → PENDING_REVIEW → APPROVED → CONSOLIDATED
 ## Changelog
 
 <!-- CHANGELOG:temp_memory -->
+### 2026-03-05
+- Fixed `no such column: status` crash: `_ensure_table()` reordered so `ALTER TABLE ADD COLUMN` migrations run before `CREATE INDEX` statements (index on `status` column was failing on stale DBs)
+- `update_fact_status()` now calls `_ensure_table()` before acquiring a connection, guarding any caller against stale schema
+
 ### 2026-01-27
 - Fixed log_event integration (correct parameter signature)
 - Added regression tests in test_consolidation.py

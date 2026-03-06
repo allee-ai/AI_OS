@@ -110,6 +110,12 @@ creds = get_secret("gmail")
 ## Changelog
 
 <!-- CHANGELOG:core -->
+### 2026-03-05
+- New `migrations.py`: `ensure_schema()` calls every module `init_*` function so any table drift is repaired on startup; `ensure_all_schemas()` syncs both `state.db` and `state_demo.db` by temporarily overriding `STATE_DB_PATH`
+- `data/db/__init__.py` `set_demo_mode()` now calls `ensure_schema()` after writing the mode file
+- `scripts/server.py` startup calls `ensure_all_schemas()` before `wake()` — logs `[Startup] Schema synced`
+- Guarantees `git clone + docker compose up` works on any machine with zero manual DB steps
+
 ### 2026-01-27
 - Secrets management with Fernet encryption
 - Machine-derived key for at-rest encryption
