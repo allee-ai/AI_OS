@@ -245,6 +245,17 @@ echo -e "${YELLOW}  Starting backend (scripts.server)...${NC}"
 export PYTHONDONTWRITEBYTECODE=1
 export AIOS_MODE="${AIOS_MODE}"
 
+# ── CLI-only mode ──────────────────────────────────────────────────────
+if [ "$1" = "--cli" ]; then
+    echo -e "${CYAN}  Launching CLI interface (no server, no frontend)...${NC}"
+    if command -v uv >/dev/null 2>&1; then
+        exec uv run python "$PROJECT_DIR/cli.py" "${@:2}"
+    else
+        exec "$VENV_DIR/bin/python" "$PROJECT_DIR/cli.py" "${@:2}"
+    fi
+fi
+# ───────────────────────────────────────────────────────────────────────
+
 # Use uv run if available (ensures correct venv), otherwise fallback to direct venv python
 if command -v uv >/dev/null 2>&1; then
     uv run python -m uvicorn scripts.server:app --host 0.0.0.0 --port 8000 &
