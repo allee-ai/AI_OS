@@ -613,7 +613,8 @@ async def create_custom_loop(body: dict):
     Create a new custom chain-of-thought loop.
     
     Required: name, source, prompt
-    Optional: target (default: temp_memory), interval (default: 300), model, enabled
+    Optional: target (default: temp_memory), interval (default: 300), model, enabled,
+              max_iterations (default: 1), max_tokens_per_iter (default: 2048)
     """
     from .loops import save_custom_loop_config, CustomLoop
     from . import _loop_manager
@@ -625,13 +626,15 @@ async def create_custom_loop(body: dict):
     interval = body.get("interval", 300)
     model = body.get("model") or None
     enabled = body.get("enabled", True)
+    max_iterations = int(body.get("max_iterations", 1))
+    max_tokens_per_iter = int(body.get("max_tokens_per_iter", 2048))
     
     if not name or not source or not prompt:
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail="name, source, and prompt are required")
     
     # Check for name conflict with built-in loops
-    builtin_names = {"memory", "consolidation", "sync", "health"}
+    builtin_names = {"memory", "consolidation", "sync", "health", "thought"}
     if name in builtin_names:
         from fastapi import HTTPException
         raise HTTPException(status_code=400, detail=f"'{name}' conflicts with a built-in loop name")
@@ -641,6 +644,8 @@ async def create_custom_loop(body: dict):
             name=name, source=source, target=target,
             interval=float(interval), model=model,
             prompt=prompt, enabled=enabled,
+            max_iterations=max_iterations,
+            max_tokens_per_iter=max_tokens_per_iter,
         )
     except ValueError as e:
         from fastapi import HTTPException
@@ -654,6 +659,8 @@ async def create_custom_loop(body: dict):
             name=name, source=source, target=target,
             interval=float(interval), model=model,
             prompt=prompt, enabled=enabled,
+            max_iterations=max_iterations,
+            max_tokens_per_iter=max_tokens_per_iter,
         )
         _loop_manager.add(loop)
         loop.start()
@@ -679,12 +686,16 @@ async def update_custom_loop(loop_name: str, body: dict):
     model = body.get("model", existing["model"])
     prompt = body.get("prompt", existing["prompt"])
     enabled = body.get("enabled", existing["enabled"])
+    max_iterations = int(body.get("max_iterations", existing.get("max_iterations", 1)))
+    max_tokens_per_iter = int(body.get("max_tokens_per_iter", existing.get("max_tokens_per_iter", 2048)))
     
     try:
         config = save_custom_loop_config(
             name=loop_name, source=source, target=target,
             interval=float(interval), model=model,
             prompt=prompt, enabled=enabled,
+            max_iterations=max_iterations,
+            max_tokens_per_iter=max_tokens_per_iter,
         )
     except ValueError as e:
         from fastapi import HTTPException
@@ -698,6 +709,8 @@ async def update_custom_loop(loop_name: str, body: dict):
                 name=loop_name, source=source, target=target,
                 interval=float(interval), model=model,
                 prompt=prompt, enabled=enabled,
+                max_iterations=max_iterations,
+                max_tokens_per_iter=max_tokens_per_iter,
             )
             _loop_manager.add(loop)
             loop.start()
@@ -721,3 +734,84 @@ async def delete_custom_loop(loop_name: str):
         raise HTTPException(status_code=404, detail=f"Custom loop '{loop_name}' not found")
     
     return {"status": "deleted", "loop": loop_name}
+
+
+# ─────────────────────────────────────────────────────────────
+# Thought Loop Endpoints
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/thoughts")
+async def list_thoughts(limit: int = 20, category: str = None):
+    """
+    Get recent thoughts from the proactive thought loop.
+    
+    Optional query params:
+    - limit: max thoughts to return (default 20)
+    - category: filter by category (insight, alert, reminder, suggestion, question)
+    """
+    from .loops import get_thought_log, THOUGHT_CATEGORIES, THOUGHT_PRIORITIES
+    
+    if category and category not in THOUGHT_CATEGORIES:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Invalid category. Must be one of: {THOUGHT_CATEGORIES}")
+    
+    thoughts = get_thought_log(limit=limit, category=category)
+    return {
+        "thoughts": thoughts,
+        "count": len(thoughts),
+        "categories": THOUGHT_CATEGORIES,
+        "priorities": THOUGHT_PRIORITIES,
+    }
+
+
+@router.post("/thoughts/{thought_id}/act")
+async def act_on_thought(thought_id: int):
+    """Mark a thought as acted upon."""
+    from .loops import mark_thought_acted
+    
+    success = mark_thought_acted(thought_id)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Thought {thought_id} not found")
+    
+    return {"status": "marked", "thought_id": thought_id}
+
+
+@router.post("/thoughts/think-now")
+async def trigger_thought_cycle():
+    """
+    Manually trigger one thought cycle immediately.
+    Returns the thoughts generated (if any).
+    """
+    from . import _loop_manager
+    from .loops import get_thought_log
+    
+    if not _loop_manager:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    thought_loop = _loop_manager.get_loop("thought")
+    if not thought_loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Thought loop not found")
+    
+    # Get thought count before
+    before = get_thought_log(limit=1)
+    before_id = before[0]["id"] if before else 0
+    
+    # Run one cycle
+    try:
+        thought_loop.task()
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=f"Thought cycle failed: {e}")
+    
+    # Get new thoughts
+    new_thoughts = get_thought_log(limit=5)
+    new_thoughts = [t for t in new_thoughts if t["id"] > before_id]
+    
+    return {
+        "status": "completed",
+        "new_thoughts": new_thoughts,
+        "count": len(new_thoughts),
+    }

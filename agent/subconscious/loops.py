@@ -1153,6 +1153,456 @@ class HealthLoop(BackgroundLoop):
 
 
 # ─────────────────────────────────────────────────────────────
+# Thought Loop — Proactive Agent Reasoning
+# ─────────────────────────────────────────────────────────────
+
+def _ensure_thought_log_table() -> None:
+    """Create thought_log table if it doesn't exist."""
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            conn.execute("""
+                CREATE TABLE IF NOT EXISTS thought_log (
+                    id INTEGER PRIMARY KEY AUTOINCREMENT,
+                    thought TEXT NOT NULL,
+                    category TEXT NOT NULL DEFAULT 'insight',
+                    priority TEXT NOT NULL DEFAULT 'low',
+                    source_summary TEXT,
+                    acted_on INTEGER NOT NULL DEFAULT 0,
+                    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+                )
+            """)
+            conn.commit()
+    except Exception as e:
+        print(f"[ThoughtLoop] Failed to create table: {e}")
+
+
+def get_thought_log(limit: int = 20, category: Optional[str] = None) -> List[Dict[str, Any]]:
+    """Get recent thoughts from the thought log."""
+    _ensure_thought_log_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            cur = conn.cursor()
+            if category:
+                cur.execute(
+                    "SELECT id, thought, category, priority, source_summary, acted_on, created_at "
+                    "FROM thought_log WHERE category = ? ORDER BY id DESC LIMIT ?",
+                    (category, limit)
+                )
+            else:
+                cur.execute(
+                    "SELECT id, thought, category, priority, source_summary, acted_on, created_at "
+                    "FROM thought_log ORDER BY id DESC LIMIT ?",
+                    (limit,)
+                )
+            return [
+                {
+                    "id": r[0], "thought": r[1], "category": r[2],
+                    "priority": r[3], "source_summary": r[4],
+                    "acted_on": bool(r[5]), "created_at": r[6],
+                }
+                for r in cur.fetchall()
+            ]
+    except Exception:
+        return []
+
+
+def save_thought(thought: str, category: str = "insight", priority: str = "low",
+                 source_summary: str = "") -> int:
+    """Save a thought to the log. Returns the thought ID."""
+    _ensure_thought_log_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "INSERT INTO thought_log (thought, category, priority, source_summary) VALUES (?, ?, ?, ?)",
+                (thought, category, priority, source_summary)
+            )
+            conn.commit()
+            return cur.lastrowid or 0
+    except Exception as e:
+        print(f"[ThoughtLoop] Failed to save thought: {e}")
+        return 0
+
+
+def mark_thought_acted(thought_id: int) -> bool:
+    """Mark a thought as acted upon."""
+    _ensure_thought_log_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            conn.execute("UPDATE thought_log SET acted_on = 1 WHERE id = ?", (thought_id,))
+            conn.commit()
+            return True
+    except Exception:
+        return False
+
+
+THOUGHT_CATEGORIES = ["insight", "alert", "reminder", "suggestion", "question"]
+THOUGHT_PRIORITIES = ["low", "medium", "high", "urgent"]
+
+
+class ThoughtLoop(BackgroundLoop):
+    """
+    Proactive reasoning loop — the agent thinks without being asked.
+    
+    Gathers context from multiple sources (events, facts, feeds, conversations),
+    passes it through the LLM with a metacognitive prompt, and logs insights,
+    alerts, and suggestions to the thought_log table.
+    
+    Thoughts are broadcast via WebSocket for real-time frontend notifications.
+    """
+    
+    def __init__(self, interval: float = 120.0, model: Optional[str] = None, enabled: bool = True):
+        config = LoopConfig(
+            interval_seconds=interval,
+            name="thought",
+            enabled=enabled,
+        )
+        super().__init__(config, self._think)
+        self._model = model
+        self._thought_count = 0
+    
+    @property
+    def model(self) -> str:
+        import os
+        if self._model:
+            return self._model
+        return os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+    
+    @model.setter
+    def model(self, value: str) -> None:
+        self._model = value
+    
+    @property
+    def stats(self) -> Dict[str, Any]:
+        base = super().stats
+        base["model"] = self.model
+        base["thought_count"] = self._thought_count
+        return base
+    
+    def _gather_context(self) -> Dict[str, List[str]]:
+        """Gather context from all available sources for proactive reasoning."""
+        ctx: Dict[str, List[str]] = {}
+        
+        # Recent events
+        try:
+            from agent.threads.log import get_recent_events
+            events = get_recent_events(limit=15)
+            ctx["recent_events"] = [
+                f"[{e.get('timestamp', '')}] {e.get('event_type', '')}: {e.get('description', '')}"
+                for e in events
+            ]
+        except Exception:
+            pass
+        
+        # Pending facts awaiting review
+        try:
+            from agent.subconscious.temp_memory import get_all_pending
+            pending = get_all_pending()
+            if pending:
+                ctx["pending_facts"] = [
+                    f"[{f.status}] {f.text}" for f in pending[:10]
+                ]
+        except Exception:
+            pass
+        
+        # Recent conversation turns
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT user_message, assistant_message
+                    FROM convo_turns ORDER BY id DESC LIMIT 5
+                """)
+                turns = []
+                for row in cur.fetchall():
+                    t = f"User: {row[0]}"
+                    if row[1]:
+                        t += f"\nAssistant: {row[1][:200]}"
+                    turns.append(t)
+                if turns:
+                    ctx["recent_conversations"] = turns
+        except Exception:
+            pass
+        
+        # Feed events
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT event_type, description, timestamp
+                    FROM unified_events
+                    WHERE source LIKE 'feed:%'
+                    ORDER BY id DESC LIMIT 10
+                """)
+                feed_events = [
+                    f"[{r[2]}] {r[0]}: {r[1]}" for r in cur.fetchall()
+                ]
+                if feed_events:
+                    ctx["feed_activity"] = feed_events
+        except Exception:
+            pass
+        
+        # Identity highlights
+        try:
+            from agent.threads.identity.schema import pull_profile_facts
+            facts = pull_profile_facts(profile_id="primary_user", limit=8)
+            if facts:
+                ctx["user_profile"] = [
+                    f"{f.get('key', '')}: {f.get('l1_value', '')}" for f in facts if f.get('l1_value')
+                ]
+        except Exception:
+            pass
+        
+        # Previous thoughts (avoid repetition)
+        try:
+            recent_thoughts = get_thought_log(limit=5)
+            if recent_thoughts:
+                ctx["previous_thoughts"] = [t["thought"] for t in recent_thoughts]
+        except Exception:
+            pass
+        
+        return ctx
+    
+    def _think(self) -> None:
+        """Execute one proactive thinking cycle."""
+        context = self._gather_context()
+        
+        # Skip if nothing to think about
+        total_items = sum(len(v) for v in context.values())
+        if total_items < 2:
+            return
+        
+        # Format context
+        ctx_parts = []
+        for source, items in context.items():
+            ctx_parts.append(f"## {source.replace('_', ' ').title()}")
+            ctx_parts.extend(items)
+            ctx_parts.append("")
+        ctx_text = "\n".join(ctx_parts)
+        
+        prompt = f"""You are the proactive thinking module of a personal AI assistant.
+Your job: review the current state below and surface anything the user should know,
+any connections worth noting, or actions worth suggesting.
+
+Categories (pick one per thought):
+- insight: a pattern, connection, or synthesis you noticed
+- alert: something time-sensitive or important the user should see
+- reminder: something the user might have forgotten or should follow up on
+- suggestion: a helpful action the user could take
+- question: something you'd like to ask the user to improve your understanding
+
+Priority levels: low, medium, high, urgent
+
+CURRENT STATE:
+\"\"\"
+{ctx_text}
+\"\"\"
+
+PREVIOUS THOUGHTS (do NOT repeat these):
+{json.dumps(context.get('previous_thoughts', []))}
+
+If there's nothing genuinely worth surfacing, output exactly: []
+
+Otherwise output a Python list of dicts. Each dict has:
+- "thought": the insight text (1-2 sentences, conversational)
+- "category": one of [insight, alert, reminder, suggestion, question]
+- "priority": one of [low, medium, high, urgent]
+
+Be selective — only surface things that genuinely matter. Quality over quantity.
+Maximum 3 thoughts per cycle.
+
+Python list:"""
+        
+        try:
+            response = self._call_model(prompt)
+            results = self._parse_results(response)
+            
+            for result in results[:3]:  # Hard cap
+                thought_text = result.get("thought", "").strip()
+                category = result.get("category", "insight")
+                priority = result.get("priority", "low")
+                
+                if not thought_text:
+                    continue
+                if category not in THOUGHT_CATEGORIES:
+                    category = "insight"
+                if priority not in THOUGHT_PRIORITIES:
+                    priority = "low"
+                
+                # Save to thought log
+                thought_id = save_thought(
+                    thought=thought_text,
+                    category=category,
+                    priority=priority,
+                    source_summary=f"{total_items} items from {len(context)} sources",
+                )
+                self._thought_count += 1
+                
+                # If high/urgent, also store as temp fact for consolidation review
+                if priority in ("high", "urgent"):
+                    try:
+                        from agent.subconscious.temp_memory import add_fact
+                        add_fact(
+                            session_id="thought_loop",
+                            text=thought_text,
+                            source="thought_loop",
+                            metadata={
+                                "category": category,
+                                "priority": priority,
+                                "thought_id": thought_id,
+                            }
+                        )
+                    except Exception:
+                        pass
+                
+                # Broadcast via WebSocket (fire-and-forget from thread)
+                self._broadcast_thought(thought_id, thought_text, category, priority)
+                
+                # Log it
+                try:
+                    from agent.threads.log import log_event
+                    log_event(
+                        "system:thought",
+                        "thought_loop",
+                        f"[{priority}:{category}] {thought_text[:120]}"
+                    )
+                except Exception:
+                    pass
+        
+        except Exception as e:
+            print(f"[ThoughtLoop] Error: {e}")
+    
+    def _call_model(self, prompt: str) -> str:
+        """Call the LLM for thinking."""
+        import os
+        provider = os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama"))
+        
+        if provider == "openai":
+            return self._call_openai(prompt)
+        return self._call_ollama(prompt)
+    
+    def _call_ollama(self, prompt: str) -> str:
+        import ollama
+        response = ollama.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            options={"temperature": 0.3}
+        )
+        return response["message"]["content"].strip()
+    
+    def _call_openai(self, prompt: str) -> str:
+        import os, requests
+        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        resp = requests.post(
+            f"{base_url}/chat/completions",
+            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+            json={
+                "model": self.model,
+                "messages": [{"role": "user", "content": prompt}],
+                "temperature": 0.3,
+            },
+            timeout=60,
+        )
+        resp.raise_for_status()
+        return resp.json()["choices"][0]["message"]["content"].strip()
+    
+    def _broadcast_thought(self, thought_id: int, text: str, category: str, priority: str) -> None:
+        """Broadcast a thought to connected WebSocket clients (async-safe from thread)."""
+        try:
+            import asyncio
+            from chat.api import websocket_manager
+            
+            message = {
+                "type": "thought",
+                "thought_id": thought_id,
+                "text": text,
+                "category": category,
+                "priority": priority,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            
+            # Schedule the async broadcast from this sync thread
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_running():
+                    asyncio.run_coroutine_threadsafe(websocket_manager.broadcast(message), loop)
+                    return
+            except RuntimeError:
+                pass
+            
+            # Fallback: create a new event loop
+            try:
+                new_loop = asyncio.new_event_loop()
+                new_loop.run_until_complete(websocket_manager.broadcast(message))
+                new_loop.close()
+            except Exception:
+                pass
+                
+        except Exception:
+            pass  # Best effort broadcast
+    
+    def _parse_results(self, raw: str) -> List[Dict[str, Any]]:
+        """Parse LLM output into list of thought dicts."""
+        import ast
+        
+        if not raw:
+            return []
+        raw = raw.strip()
+        
+        code_match = re.search(r'```(?:python)?\s*([\s\S]*?)```', raw)
+        if code_match:
+            raw = code_match.group(1).strip()
+        
+        list_start = raw.find('[')
+        if list_start < 0:
+            return []
+        raw = raw[list_start:]
+        
+        bracket_count = 0
+        end_pos = 0
+        for i, char in enumerate(raw):
+            if char == '[':
+                bracket_count += 1
+            elif char == ']':
+                bracket_count -= 1
+                if bracket_count == 0:
+                    end_pos = i + 1
+                    break
+        if end_pos > 0:
+            raw = raw[:end_pos]
+        
+        try:
+            result = ast.literal_eval(raw)
+            if isinstance(result, list):
+                return [r for r in result if isinstance(r, dict) and r.get("thought")]
+        except (ValueError, SyntaxError):
+            pass
+        
+        try:
+            fixed = raw.replace('true', 'True').replace('false', 'False').replace('null', 'None')
+            result = ast.literal_eval(fixed)
+            if isinstance(result, list):
+                return [r for r in result if isinstance(r, dict) and r.get("thought")]
+        except (ValueError, SyntaxError):
+            pass
+        
+        return []
+
+
+# ─────────────────────────────────────────────────────────────
 # Custom Chain-of-Thought Loops
 # ─────────────────────────────────────────────────────────────
 
@@ -1189,10 +1639,21 @@ def _ensure_custom_loops_table() -> None:
                     model TEXT,
                     prompt TEXT NOT NULL,
                     enabled INTEGER NOT NULL DEFAULT 1,
+                    max_iterations INTEGER NOT NULL DEFAULT 1,
+                    max_tokens_per_iter INTEGER NOT NULL DEFAULT 2048,
                     created_at TEXT NOT NULL DEFAULT (datetime('now')),
                     updated_at TEXT NOT NULL DEFAULT (datetime('now'))
                 )
             """)
+            # Migrate: add columns if table pre-dates this version
+            try:
+                conn.execute("ALTER TABLE custom_loops ADD COLUMN max_iterations INTEGER NOT NULL DEFAULT 1")
+            except Exception:
+                pass
+            try:
+                conn.execute("ALTER TABLE custom_loops ADD COLUMN max_tokens_per_iter INTEGER NOT NULL DEFAULT 2048")
+            except Exception:
+                pass
             conn.commit()
     except Exception as e:
         print(f"[CustomLoop] Failed to create table: {e}")
@@ -1206,6 +1667,8 @@ def save_custom_loop_config(
     model: Optional[str],
     prompt: str,
     enabled: bool = True,
+    max_iterations: int = 1,
+    max_tokens_per_iter: int = 2048,
 ) -> Dict[str, Any]:
     """Save or update a custom loop config in the database."""
     _ensure_custom_loops_table()
@@ -1220,6 +1683,12 @@ def save_custom_loop_config(
         raise ValueError("Prompt cannot be empty")
     if not name.strip():
         raise ValueError("Name cannot be empty")
+    if max_iterations < 1:
+        raise ValueError("max_iterations must be >= 1")
+    if max_iterations > 20:
+        raise ValueError("max_iterations must be <= 20")
+    if max_tokens_per_iter < 64:
+        raise ValueError("max_tokens_per_iter must be >= 64")
     
     try:
         from data.db import get_connection
@@ -1227,9 +1696,11 @@ def save_custom_loop_config(
         with closing(get_connection()) as conn:
             conn.execute("""
                 INSERT OR REPLACE INTO custom_loops
-                    (name, source, target, interval_seconds, model, prompt, enabled, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'))
-            """, (name.strip(), source, target, interval, model, prompt.strip(), int(enabled)))
+                    (name, source, target, interval_seconds, model, prompt, enabled,
+                     max_iterations, max_tokens_per_iter, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+            """, (name.strip(), source, target, interval, model, prompt.strip(),
+                  int(enabled), max_iterations, max_tokens_per_iter))
             conn.commit()
         
         return {
@@ -1240,6 +1711,8 @@ def save_custom_loop_config(
             "model": model,
             "prompt": prompt.strip(),
             "enabled": enabled,
+            "max_iterations": max_iterations,
+            "max_tokens_per_iter": max_tokens_per_iter,
         }
     except Exception as e:
         raise RuntimeError(f"Failed to save custom loop: {e}")
@@ -1253,13 +1726,20 @@ def get_custom_loop_configs() -> List[Dict[str, Any]]:
         from contextlib import closing
         with closing(get_connection(readonly=True)) as conn:
             cur = conn.cursor()
-            cur.execute("SELECT name, source, target, interval_seconds, model, prompt, enabled, created_at, updated_at FROM custom_loops")
+            cur.execute("""
+                SELECT name, source, target, interval_seconds, model, prompt,
+                       enabled, max_iterations, max_tokens_per_iter, created_at, updated_at
+                FROM custom_loops
+            """)
             rows = cur.fetchall()
             return [
                 {
                     "name": r[0], "source": r[1], "target": r[2],
                     "interval_seconds": r[3], "model": r[4], "prompt": r[5],
-                    "enabled": bool(r[6]), "created_at": r[7], "updated_at": r[8],
+                    "enabled": bool(r[6]),
+                    "max_iterations": r[7] if r[7] else 1,
+                    "max_tokens_per_iter": r[8] if r[8] else 2048,
+                    "created_at": r[9], "updated_at": r[10],
                 }
                 for r in rows
             ]
@@ -1293,10 +1773,14 @@ def delete_custom_loop_config(name: str) -> bool:
 
 class CustomLoop(BackgroundLoop):
     """
-    User-defined chain-of-thought loop.
+    User-defined chain-of-thought loop with iterative reasoning.
     
     Reads from a source, passes through an LLM with a custom prompt,
     and writes results to a target.
+    
+    When max_iterations > 1, each iteration receives the previous iteration's
+    output as additional context, building a chain of thought. The loop tracks
+    accumulated tokens and stops when max_tokens_per_iter is reached.
     
     Sources: convos, feeds, temp_memory, identity, philosophy, log, workspace
     Targets: temp_memory, log
@@ -1311,6 +1795,8 @@ class CustomLoop(BackgroundLoop):
         model: Optional[str] = None,
         prompt: str = "",
         enabled: bool = True,
+        max_iterations: int = 1,
+        max_tokens_per_iter: int = 2048,
     ):
         config = LoopConfig(
             interval_seconds=interval,
@@ -1322,6 +1808,10 @@ class CustomLoop(BackgroundLoop):
         self.target = target
         self._model = model
         self.prompt = prompt
+        self.max_iterations = max(1, min(max_iterations, 20))
+        self.max_tokens_per_iter = max(64, max_tokens_per_iter)
+        self._last_iteration_count = 0
+        self._last_token_estimate = 0
     
     @property
     def model(self) -> str:
@@ -1343,6 +1833,10 @@ class CustomLoop(BackgroundLoop):
         base["model"] = self.model
         base["prompt_preview"] = self.prompt[:80] + ("..." if len(self.prompt) > 80 else "")
         base["is_custom"] = True
+        base["max_iterations"] = self.max_iterations
+        base["max_tokens_per_iter"] = self.max_tokens_per_iter
+        base["last_iteration_count"] = self._last_iteration_count
+        base["last_token_estimate"] = self._last_token_estimate
         return base
     
     def to_config_dict(self) -> Dict[str, Any]:
@@ -1355,6 +1849,8 @@ class CustomLoop(BackgroundLoop):
             "model": self._model,
             "prompt": self.prompt,
             "enabled": self.config.enabled,
+            "max_iterations": self.max_iterations,
+            "max_tokens_per_iter": self.max_tokens_per_iter,
         }
     
     def _read_source(self) -> List[str]:
@@ -1457,57 +1953,132 @@ class CustomLoop(BackgroundLoop):
         return written
     
     def _run_chain(self) -> None:
-        """Execute the chain-of-thought: read source → LLM → write target."""
+        """Execute iterative chain-of-thought: read source → LLM × N → write target."""
         # 1. Read from source
         source_items = self._read_source()
         if not source_items:
             return
         
-        # 2. Build prompt with source content
         source_text = "\n---\n".join(source_items)
-        full_prompt = f"""{self.prompt}
+        total_tokens = 0
+        chain_history: List[str] = []
+        all_results: List[Dict[str, Any]] = []
+        
+        for iteration in range(self.max_iterations):
+            # Build prompt for this iteration
+            if iteration == 0:
+                # First iteration: source data only
+                full_prompt = f"""{self.prompt}
 
 SOURCE DATA:
 \"\"\"
 {source_text}
 \"\"\"
 
+{f"[Iteration {iteration + 1} of {self.max_iterations}]" if self.max_iterations > 1 else ""}
+
 Output a Python list of dicts with "key" and "text" fields.
 If nothing worth noting, output: []
 
 Python list:"""
+            else:
+                # Subsequent iterations: feed back previous output as context
+                chain_context = "\n\n".join(
+                    f"--- Iteration {i+1} output ---\n{h}" for i, h in enumerate(chain_history)
+                )
+                full_prompt = f"""{self.prompt}
+
+SOURCE DATA:
+\"\"\"
+{source_text}
+\"\"\"
+
+PREVIOUS ITERATIONS (build on these, go deeper, refine, or synthesize):
+\"\"\"
+{chain_context}
+\"\"\"
+
+[Iteration {iteration + 1} of {self.max_iterations}] — Deepen your analysis. Find what you missed. Refine or challenge previous outputs.
+
+Output a Python list of dicts with "key" and "text" fields.
+If nothing new worth adding, output: []
+
+Python list:"""
+            
+            # Estimate prompt tokens (~4 chars per token)
+            prompt_tokens = len(full_prompt) // 4
+            if total_tokens + prompt_tokens > self.max_tokens_per_iter:
+                break
+            
+            # Call LLM
+            try:
+                raw = self._call_model_chain(full_prompt)
+                
+                # Track tokens
+                response_tokens = len(raw) // 4
+                total_tokens += prompt_tokens + response_tokens
+                
+                # Parse results
+                results = self._parse_results(raw)
+                
+                # Store raw output for next iteration's context
+                chain_history.append(raw)
+                all_results.extend(results)
+                
+                # Break early if empty response (nothing more to say)
+                if not results and iteration > 0:
+                    break
+                    
+            except Exception as e:
+                print(f"[CustomLoop:{self.config.name}] Iteration {iteration + 1} error: {e}")
+                break
         
-        # 3. Call LLM
-        try:
-            import ollama
-            response = ollama.chat(
-                model=self.model,
-                messages=[{"role": "user", "content": full_prompt}],
-                options={"temperature": 0.1}
+        self._last_iteration_count = len(chain_history)
+        self._last_token_estimate = total_tokens
+        
+        # Write accumulated results to target
+        if all_results:
+            written = self._write_target(all_results)
+            try:
+                from agent.threads.log import log_event
+                log_event(
+                    f"custom:{self.config.name}",
+                    "custom_loop",
+                    f"Processed {len(source_items)} items in {len(chain_history)} iterations (~{total_tokens} tokens), wrote {written} results"
+                )
+            except Exception:
+                pass
+    
+    def _call_model_chain(self, prompt: str) -> str:
+        """Call the LLM for a chain iteration. Supports Ollama + OpenAI providers."""
+        import os
+        provider = os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama"))
+        
+        if provider == "openai":
+            base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            import requests
+            resp = requests.post(
+                f"{base_url}/chat/completions",
+                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
+                json={
+                    "model": self.model,
+                    "messages": [{"role": "user", "content": prompt}],
+                    "temperature": 0.1,
+                },
+                timeout=60,
             )
-            raw = response["message"]["content"].strip()
-            
-            # 4. Parse results
-            import ast
-            results = self._parse_results(raw)
-            
-            # 5. Write to target
-            if results:
-                written = self._write_target(results)
-                try:
-                    from agent.threads.log import log_event
-                    log_event(
-                        f"custom:{self.config.name}",
-                        "custom_loop",
-                        f"Processed {len(source_items)} items, wrote {written} results"
-                    )
-                except Exception:
-                    pass
+            resp.raise_for_status()
+            return resp.json()["choices"][0]["message"]["content"].strip()
         
-        except ImportError:
-            print(f"[CustomLoop:{self.config.name}] ollama not installed")
-        except Exception as e:
-            print(f"[CustomLoop:{self.config.name}] LLM error: {e}")
+        # Default: Ollama
+        import ollama
+        response = ollama.chat(
+            model=self.model,
+            messages=[{"role": "user", "content": prompt}],
+            options={"temperature": 0.1}
+        )
+        return response["message"]["content"].strip()
     
     def _parse_results(self, raw: str) -> List[Dict[str, Any]]:
         """Parse LLM output into list of result dicts."""
@@ -1623,6 +2194,8 @@ class LoopManager:
                 model=cfg["model"],
                 prompt=cfg["prompt"],
                 enabled=cfg["enabled"],
+                max_iterations=cfg.get("max_iterations", 1),
+                max_tokens_per_iter=cfg.get("max_tokens_per_iter", 2048),
             )
             self.add(loop)
             loop.start()
@@ -1637,11 +2210,20 @@ def create_default_loops() -> LoopManager:
     Returns:
         Configured LoopManager ready to start
     """
+    import os
     manager = LoopManager()
     manager.add(MemoryLoop())       # Extract facts from conversations
     manager.add(ConsolidationLoop()) # Promote approved facts
     manager.add(SyncLoop())          # Sync state across threads
     manager.add(HealthLoop())        # Monitor thread health
+    
+    # Thought loop — proactive agent reasoning
+    thought_enabled = os.getenv("AIOS_THOUGHT_LOOP", "1") == "1"
+    thought_interval = float(os.getenv("AIOS_THOUGHT_INTERVAL", "120"))
+    manager.add(ThoughtLoop(
+        interval=thought_interval,
+        enabled=thought_enabled,
+    ))
     
     # Load user-defined custom loops from DB
     try:
@@ -1660,13 +2242,19 @@ __all__ = [
     "ConsolidationLoop",
     "SyncLoop",
     "HealthLoop",
+    "ThoughtLoop",
     "CustomLoop",
     "LoopManager",
     "create_default_loops",
     "CUSTOM_LOOP_SOURCES",
     "CUSTOM_LOOP_TARGETS",
+    "THOUGHT_CATEGORIES",
+    "THOUGHT_PRIORITIES",
     "save_custom_loop_config",
     "get_custom_loop_configs",
     "get_custom_loop_config",
     "delete_custom_loop_config",
+    "get_thought_log",
+    "save_thought",
+    "mark_thought_acted",
 ]

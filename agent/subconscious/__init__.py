@@ -89,15 +89,21 @@ from .loops import (
     ConsolidationLoop,
     SyncLoop,
     HealthLoop,
+    ThoughtLoop,
     CustomLoop,
     LoopManager,
     create_default_loops,
     CUSTOM_LOOP_SOURCES,
     CUSTOM_LOOP_TARGETS,
+    THOUGHT_CATEGORIES,
+    THOUGHT_PRIORITIES,
     save_custom_loop_config,
     get_custom_loop_configs,
     get_custom_loop_config,
     delete_custom_loop_config,
+    get_thought_log,
+    save_thought,
+    mark_thought_acted,
 )
 
 # Triggers

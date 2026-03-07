@@ -22,6 +22,8 @@ Slash commands:
     /loops extract <text> — dry-run fact extraction on text
     /loops model <name>   — change extraction model
     /loops provider <name>— change provider (ollama|openai)
+    /thoughts        — show recent proactive thoughts
+    /thoughts think  — trigger one thought cycle now
     /triggers        — list reflex triggers
     /triggers toggle <id> — toggle a trigger on/off
     /protocols       — list protocol templates
@@ -457,6 +459,67 @@ def _cmd_loops(args: str):
         print(f"  extract provider: {os.environ.get('AIOS_EXTRACT_PROVIDER', os.environ.get('AIOS_MODEL_PROVIDER', 'ollama'))}")
 
 
+def _cmd_thoughts(args: str):
+    """Manage and inspect the proactive thought loop.
+
+    /thoughts               — show recent thoughts
+    /thoughts think         — trigger one thought cycle now
+    /thoughts <category>    — filter by category (insight, alert, reminder, suggestion, question)
+    """
+    tokens = args.strip().split(maxsplit=1)
+    verb = tokens[0] if tokens else ""
+
+    # /thoughts think  — run one thought cycle
+    if verb == "think":
+        print(f"  {DIM}running thought cycle...{RESET}")
+        try:
+            from agent.subconscious.loops import ThoughtLoop, get_thought_log
+            tl = ThoughtLoop.__new__(ThoughtLoop)
+            tl._model = None
+            tl._thought_count = 0
+            tl.config = type('C', (), {'name': 'thought', 'enabled': True})()
+            
+            before = get_thought_log(limit=1)
+            before_id = before[0]["id"] if before else 0
+            
+            tl._think()
+            
+            after = get_thought_log(limit=5)
+            new_thoughts = [t for t in after if t["id"] > before_id]
+            
+            if not new_thoughts:
+                print(f"  {DIM}no new thoughts — nothing notable right now{RESET}")
+            else:
+                for t in new_thoughts:
+                    pcolor = RED if t["priority"] in ("high", "urgent") else YELLOW if t["priority"] == "medium" else GREEN
+                    cat_icon = {"insight": "💡", "alert": "🚨", "reminder": "📌", "suggestion": "💬", "question": "❓"}.get(t["category"], "•")
+                    print(f"  {cat_icon} {pcolor}[{t['priority']}]{RESET} {t['thought']}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /thoughts <category>  or  /thoughts  (show all)
+    try:
+        from agent.subconscious.loops import get_thought_log, THOUGHT_CATEGORIES
+        category = verb if verb in THOUGHT_CATEGORIES else None
+        limit = 15
+        
+        thoughts = get_thought_log(limit=limit, category=category)
+        if not thoughts:
+            title = f"no {category} thoughts" if category else "no thoughts yet — run /thoughts think"
+            print(f"  {DIM}{title}{RESET}")
+        else:
+            title = f"Recent {category} thoughts:" if category else "Recent thoughts:"
+            print(f"  {BOLD}{title}{RESET}")
+            for t in thoughts:
+                pcolor = RED if t["priority"] in ("high", "urgent") else YELLOW if t["priority"] == "medium" else GREEN
+                cat_icon = {"insight": "💡", "alert": "🚨", "reminder": "📌", "suggestion": "💬", "question": "❓"}.get(t["category"], "•")
+                acted = " ✓" if t["acted_on"] else ""
+                print(f"  {DIM}#{t['id']}{RESET} {cat_icon} {pcolor}[{t['priority']}]{RESET} {t['thought']}{acted}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
 def _cmd_config(args: str):
     tokens = args.strip().split(maxsplit=2)
 
@@ -508,6 +571,9 @@ def _cmd_help():
   {BOLD}/loops extract <text>{RESET}  Dry-run fact extraction
   {BOLD}/loops model <name>{RESET}   Change extraction model
   {BOLD}/loops provider <name>{RESET} Change extraction provider (ollama|openai)
+  {BOLD}/thoughts{RESET}   Show recent proactive thoughts
+  {BOLD}/thoughts think{RESET}  Trigger one thought cycle now
+  {BOLD}/thoughts <cat>{RESET} Filter: insight, alert, reminder, suggestion, question
   {BOLD}/config{RESET}     Show config
   {BOLD}/config set <key> <value>{RESET}  Set env var
   {BOLD}/test{RESET}       Run all tests
@@ -522,6 +588,7 @@ _COMMANDS = {
     "/status": lambda a: _cmd_status(),
     "/memory": _cmd_memory,
     "/loops": _cmd_loops,
+    "/thoughts": _cmd_thoughts,
     "/triggers": _cmd_triggers,
     "/protocols": _cmd_protocols,
     "/graph": _cmd_graph,
