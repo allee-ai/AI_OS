@@ -60,7 +60,7 @@ class TestMemoryPipeline:
         from agent.subconscious.loops import MemoryLoop
 
         ml = MemoryLoop.__new__(MemoryLoop)
-        ml.model = "qwen2.5:7b"
+        ml._model = None
 
         facts = ml._extract_facts_from_text(
             "I'm building a project called TaskMaster and I love coffee while coding.",
@@ -71,6 +71,71 @@ class TestMemoryPipeline:
         assert len(facts) >= 1
         assert "key" in facts[0]
         assert "text" in facts[0]
+
+    def test_extracted_keys_are_flat(self):
+        """Fact keys should be flat labels, not hierarchical dot-paths."""
+        from agent.subconscious.loops import MemoryLoop
+
+        ml = MemoryLoop.__new__(MemoryLoop)
+        ml._model = None
+
+        facts = ml._extract_facts_from_text(
+            "User: My name is Jordan and I work at Acme Corp as a software engineer.",
+            session_id="test_flat_keys",
+        )
+        assert isinstance(facts, list)
+        for f in facts:
+            key = f.get("key", "")
+            # Keys must not contain dots (flat, not hierarchical)
+            assert "." not in key, f"Key should be flat, got: {key}"
+
+    def test_validate_fact_strips_hierarchy(self):
+        """_validate_fact normalises dotted keys to their final segment."""
+        from agent.subconscious.loops import MemoryLoop
+
+        ml = MemoryLoop.__new__(MemoryLoop)
+        ml._model = None
+
+        fact = {"key": "user.preference.coffee", "text": "User enjoys coffee while coding"}
+        result = ml._validate_fact(fact)
+        assert result is True
+        assert fact["key"] == "coffee", f"Expected 'coffee', got '{fact['key']}'"
+
+    def test_extract_with_cloud_model(self, live_mode):
+        """Extract facts using a cloud model (only runs with --live)."""
+        if not live_mode:
+            pytest.skip("cloud test requires --live")
+
+        from agent.subconscious.loops import MemoryLoop
+        import os
+
+        ml = MemoryLoop.__new__(MemoryLoop)
+        # Use a cloud model available in ollama list
+        ml._model = os.environ.get("AIOS_EXTRACT_MODEL", "gpt-oss:20b-cloud")
+
+        facts = ml._extract_facts_from_text(
+            "User: I'm a machine learning engineer and I love hiking on weekends.",
+            session_id="test_cloud",
+        )
+        assert isinstance(facts, list)
+        assert len(facts) >= 1
+        for f in facts:
+            assert "." not in f.get("key", ""), f"Cloud model key should be flat: {f.get('key')}"
+            assert len(f.get("text", "")) >= 10
+
+    def test_call_model_provider_routing(self):
+        """_call_model routes to the correct provider based on env."""
+        from agent.subconscious.loops import MemoryLoop
+        import os
+
+        ml = MemoryLoop.__new__(MemoryLoop)
+        ml._model = None
+
+        # Default provider should be ollama
+        assert ml.provider == os.environ.get(
+            "AIOS_EXTRACT_PROVIDER",
+            os.environ.get("AIOS_MODEL_PROVIDER", "ollama")
+        ).lower()
 
     def test_approve_fact(self):
         from agent.subconscious.temp_memory.store import add_fact, approve_fact, get_facts

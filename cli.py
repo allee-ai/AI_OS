@@ -17,6 +17,11 @@ Slash commands:
     /memory          — list recent temp_memory facts
     /memory approve <id>  — approve a pending fact
     /memory reject  <id>  — reject a pending fact
+    /loops           — show background loop stats
+    /loops run memory     — run one extraction cycle now
+    /loops extract <text> — dry-run fact extraction on text
+    /loops model <name>   — change extraction model
+    /loops provider <name>— change provider (ollama|openai)
     /triggers        — list reflex triggers
     /triggers toggle <id> — toggle a trigger on/off
     /protocols       — list protocol templates
@@ -270,6 +275,188 @@ def _cmd_graph(query: str):
         print(f"  {score:.2f} {bar} {concept}")
 
 
+def _cmd_mindmap(args: str):
+    """Show the structural shape of the agent's mind.
+
+    /mindmap            — show thread hierarchy with node counts
+    /mindmap links      — also show cross-thread associative links
+    /mindmap <thread>   — show details for one thread (identity, philosophy, form, reflex, log)
+    """
+    tokens = args.strip().split()
+    verb = tokens[0] if tokens else ""
+
+    try:
+        from agent.threads.linking_core.schema import get_structural_graph
+        show_cross = (verb == "links")
+        data = get_structural_graph(include_cross_links=show_cross)
+
+        nodes = data["nodes"]
+        structural = data["structural"]
+        associative = data.get("associative", [])
+
+        # Filter to specific thread if requested
+        filter_thread = None
+        if verb and verb not in ("links",):
+            filter_thread = verb
+
+        # Build children map from structural edges
+        children: dict = {}
+        for edge in structural:
+            children.setdefault(edge["source"], []).append(edge["target"])
+
+        thread_colors = {
+            "identity": CYAN, "philosophy": YELLOW, "form": GREEN,
+            "reflex": RED, "log": DIM, "linking_core": BOLD,
+        }
+
+        def _print_tree(node_id: str, indent: int = 0):
+            node = next((n for n in nodes if n["id"] == node_id), None)
+            if not node:
+                return
+            color = thread_colors.get(node["thread"], "")
+            label = node["label"]
+            value = node.get("data", {}).get("value", "")
+            suffix = f"  = {value}" if value else ""
+            kind_badge = f"[{node['kind']}]" if node["kind"] not in ("thread",) else ""
+            weight = node.get("weight", 0)
+            weight_str = f" w={weight:.1f}" if weight and node["kind"] == "fact" else ""
+            prefix = "  " * indent
+            print(f"{prefix}{color}{label}{RESET} {DIM}{kind_badge}{weight_str}{suffix}{RESET}")
+
+            for child_id in children.get(node_id, []):
+                _print_tree(child_id, indent + 1)
+
+        # Print thread trees
+        thread_nodes = [n for n in nodes if n["kind"] == "thread"]
+        for tn in sorted(thread_nodes, key=lambda n: n["id"]):
+            if filter_thread and tn["id"] != filter_thread:
+                continue
+            _print_tree(tn["id"], indent=1)
+            print()
+
+        # Stats
+        stats = data["stats"]
+        print(f"{DIM}  {stats['node_count']} nodes, "
+              f"{stats['structural_count']} structural edges, "
+              f"{stats['associative_count']} associative edges{RESET}")
+
+        # Show cross-thread links
+        if associative:
+            cross_thread = [l for l in associative if l.get("cross_thread")]
+            if cross_thread:
+                print(f"\n  {BOLD}Cross-thread links:{RESET}")
+                for link in cross_thread[:20]:
+                    s = link["strength"]
+                    bar = "█" * int(s * 15)
+                    print(f"    {s:.2f} {bar}  {link['source']} ↔ {link['target']}")
+
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
+def _cmd_loops(args: str):
+    """Manage and inspect background loops.
+
+    /loops                  — show all loop stats
+    /loops run memory       — run one memory-extraction cycle now
+    /loops run consolidation — run one consolidation cycle now
+    /loops model <name>     — change extraction model
+    /loops provider <name>  — change extraction provider (ollama|openai)
+    /loops extract <text>   — extract facts from text (dry-run)
+    """
+    tokens = args.strip().split(maxsplit=1)
+    verb = tokens[0] if tokens else ""
+    rest = tokens[1] if len(tokens) > 1 else ""
+
+    # /loops run <name>  — run one cycle of a loop
+    if verb == "run":
+        loop_name = rest.strip() or "memory"
+        try:
+            from agent.subconscious.loops import MemoryLoop, ConsolidationLoop
+            if loop_name == "memory":
+                ml = MemoryLoop.__new__(MemoryLoop)
+                ml._model = None
+                ml._last_processed_turn_id = None
+                ml.config = type('C', (), {'name': 'memory', 'enabled': True})()
+                ml._extract()
+                print(f"  {GREEN}memory extraction cycle complete{RESET}")
+            elif loop_name == "consolidation":
+                cl = ConsolidationLoop.__new__(ConsolidationLoop)
+                cl.DUPLICATE_THRESHOLD = 0.85
+                cl.AUTO_APPROVE_THRESHOLD = 0.8
+                cl.AUTO_REJECT_THRESHOLD = 0.2
+                cl._linking_core = None
+                cl.config = type('C', (), {'name': 'consolidation', 'enabled': True})()
+                cl._consolidate()
+                print(f"  {GREEN}consolidation cycle complete{RESET}")
+            else:
+                print(f"  unknown loop: {loop_name}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /loops model <name>  — set extraction model
+    if verb == "model":
+        name = rest.strip()
+        if not name:
+            print(f"  current extract model: {os.environ.get('AIOS_EXTRACT_MODEL', os.environ.get('AIOS_MODEL_NAME', 'qwen2.5:7b'))}")
+            return
+        os.environ["AIOS_EXTRACT_MODEL"] = name
+        print(f"  extract model → {name}")
+        return
+
+    # /loops provider <name>  — set extraction provider
+    if verb == "provider":
+        name = rest.strip()
+        if not name:
+            print(f"  current extract provider: {os.environ.get('AIOS_EXTRACT_PROVIDER', os.environ.get('AIOS_MODEL_PROVIDER', 'ollama'))}")
+            return
+        os.environ["AIOS_EXTRACT_PROVIDER"] = name
+        print(f"  extract provider → {name}")
+        return
+
+    # /loops extract <text>  — dry-run extraction
+    if verb == "extract":
+        text = rest.strip()
+        if not text:
+            print("  usage: /loops extract <conversation text>")
+            return
+        try:
+            from agent.subconscious.loops import MemoryLoop
+            ml = MemoryLoop.__new__(MemoryLoop)
+            ml._model = None
+            facts = ml._extract_facts_from_text(f"User: {text}", session_id="cli_test")
+            if not facts:
+                print("  no facts extracted")
+            else:
+                for f in facts:
+                    print(f"  {GREEN}{f.get('key', '?')}{RESET}: {f.get('text', '')}")
+            print(f"  {DIM}(model: {ml.model} | provider: {ml.provider}){RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # Default: show all loop stats
+    try:
+        from agent.subconscious import _loop_manager
+        if _loop_manager:
+            for s in _loop_manager.get_stats():
+                status = s.get('status', '?')
+                color = GREEN if status == 'running' else YELLOW if status == 'paused' else DIM
+                model_str = f"  model={s['model']}" if 'model' in s else ""
+                provider_str = f"  provider={s['provider']}" if 'provider' in s else ""
+                print(f"  {color}{s['name']:20s} {status:10s}{RESET}"
+                      f"  runs={s.get('run_count', 0)}"
+                      f"  errors={s.get('error_count', 0)}"
+                      f"{model_str}{provider_str}")
+        else:
+            print("  loops not started (run /status to check)")
+    except Exception:
+        # Fallback: just show config
+        print(f"  extract model:    {os.environ.get('AIOS_EXTRACT_MODEL', os.environ.get('AIOS_MODEL_NAME', 'qwen2.5:7b'))}")
+        print(f"  extract provider: {os.environ.get('AIOS_EXTRACT_PROVIDER', os.environ.get('AIOS_MODEL_PROVIDER', 'ollama'))}")
+
+
 def _cmd_config(args: str):
     tokens = args.strip().split(maxsplit=2)
 
@@ -279,11 +466,13 @@ def _cmd_config(args: str):
         return
 
     from data.db import get_db_path
-    print(f"  AIOS_MODE       = {os.environ.get('AIOS_MODE', 'not set')}")
-    print(f"  DB_PATH         = {get_db_path()}")
-    print(f"  AIOS_MODEL_NAME = {os.environ.get('AIOS_MODEL_NAME', 'qwen2.5:7b')}")
-    print(f"  AIOS_FEED_BRIDGE= {os.environ.get('AIOS_FEED_BRIDGE', '0')}")
-    print(f"  AIOS_TEST_LIVE  = {os.environ.get('AIOS_TEST_LIVE', '0')}")
+    print(f"  AIOS_MODE            = {os.environ.get('AIOS_MODE', 'not set')}")
+    print(f"  DB_PATH              = {get_db_path()}")
+    print(f"  AIOS_MODEL_NAME      = {os.environ.get('AIOS_MODEL_NAME', 'qwen2.5:7b')}")
+    print(f"  AIOS_EXTRACT_MODEL   = {os.environ.get('AIOS_EXTRACT_MODEL', '(uses AIOS_MODEL_NAME)')}")
+    print(f"  AIOS_EXTRACT_PROVIDER= {os.environ.get('AIOS_EXTRACT_PROVIDER', os.environ.get('AIOS_MODEL_PROVIDER', 'ollama'))}")
+    print(f"  AIOS_FEED_BRIDGE     = {os.environ.get('AIOS_FEED_BRIDGE', '0')}")
+    print(f"  AIOS_TEST_LIVE       = {os.environ.get('AIOS_TEST_LIVE', '0')}")
 
 
 def _cmd_test(args: str):
@@ -310,6 +499,15 @@ def _cmd_help():
   {BOLD}/protocols{RESET}  List protocol templates
   {BOLD}/protocols install <name>{RESET}  Install a protocol
   {BOLD}/graph <query>{RESET}  Spread-activate concept graph
+  {BOLD}/mindmap{RESET}     Structural shape of the agent's mind
+  {BOLD}/mindmap links{RESET} Include cross-thread associative edges
+  {BOLD}/mindmap <thread>{RESET} Show one thread (identity, philosophy, form, ...)
+  {BOLD}/loops{RESET}      Show background loop stats
+  {BOLD}/loops run memory{RESET}  Run one extraction cycle
+  {BOLD}/loops run consolidation{RESET}  Run one consolidation cycle
+  {BOLD}/loops extract <text>{RESET}  Dry-run fact extraction
+  {BOLD}/loops model <name>{RESET}   Change extraction model
+  {BOLD}/loops provider <name>{RESET} Change extraction provider (ollama|openai)
   {BOLD}/config{RESET}     Show config
   {BOLD}/config set <key> <value>{RESET}  Set env var
   {BOLD}/test{RESET}       Run all tests
@@ -323,9 +521,11 @@ def _cmd_help():
 _COMMANDS = {
     "/status": lambda a: _cmd_status(),
     "/memory": _cmd_memory,
+    "/loops": _cmd_loops,
     "/triggers": _cmd_triggers,
     "/protocols": _cmd_protocols,
     "/graph": _cmd_graph,
+    "/mindmap": _cmd_mindmap,
     "/config": _cmd_config,
     "/test": _cmd_test,
     "/help": lambda a: _cmd_help(),

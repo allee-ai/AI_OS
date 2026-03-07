@@ -13,6 +13,7 @@ from .schema import (
     create_link, delete_link, update_link_strength,
     get_graph_data, get_activation_path, get_stats,
     spread_activate, extract_concepts_from_text,
+    get_structural_graph,
 )
 from .adapter import LinkingCoreThreadAdapter
 
@@ -135,6 +136,34 @@ async def find_path(source: str, target: str, max_hops: int = Query(3, ge=1, le=
     """Find activation path between two concepts."""
     result = get_activation_path(source, target, max_hops)
     return result
+
+
+@router.get("/graph/structural")
+async def get_structural(
+    cross_links: bool = Query(True, description="Include associative cross-thread links from concept graph"),
+    min_cross_strength: float = Query(0.15, ge=0, le=1, description="Minimum strength for cross-thread links"),
+    max_cross_links: int = Query(200, ge=0, le=1000),
+):
+    """
+    Structural mind map of the entire agent.
+
+    Returns the hierarchical shape of the machine:
+      - Thread nodes (identity, philosophy, form, reflex, log, linking_core)
+      - Internal hierarchy branching from each thread (profiles → facts, tools → actions, etc.)
+      - Cross-thread associative links from the concept graph
+
+    Two edge types:
+      - ``structural``: parent→child within a thread's data tree
+      - ``associative``: learned connections across threads (from concept_links)
+
+    Use this to visualise which identity facts connect to which philosophy stances,
+    which tools relate to which concepts, etc.
+    """
+    return get_structural_graph(
+        include_cross_links=cross_links,
+        min_cross_strength=min_cross_strength,
+        max_cross_links=max_cross_links,
+    )
 
 
 # ─────────────────────────────────────────────────────────────

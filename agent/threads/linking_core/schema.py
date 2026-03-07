@@ -773,6 +773,254 @@ def update_link_strength(concept_a: str, concept_b: str, strength: float) -> boo
 
 
 # ─────────────────────────────────────────────────────────────
+# Structural Mind Map — the shape of the machine
+# ─────────────────────────────────────────────────────────────
+
+def get_structural_graph(
+    include_cross_links: bool = True,
+    min_cross_strength: float = 0.15,
+    max_cross_links: int = 200,
+) -> Dict[str, Any]:
+    """
+    Build a hierarchical graph of the entire agent architecture.
+
+    Returns *two* kinds of edges:
+      1. **structural** — parent→child within a thread's data hierarchy
+         (identity → primary_user → name, philosophy → core.values → honesty, etc.)
+      2. **associative** — cross-thread concept_links discovered by LinkingCore
+         (an identity fact linked to a philosophy stance, a tool to a concept, etc.)
+
+    Nodes carry a ``thread``, ``depth``, and ``kind`` field so the frontend can
+    size / colour them by hierarchy level and thread membership.
+    """
+    nodes: Dict[str, Dict[str, Any]] = {}   # id → node dict
+    structural_links: list = []              # parent→child edges
+    cross_links: list = []                   # associative edges
+
+    def _add_node(node_id: str, label: str, thread: str, kind: str, depth: int = 0,
+                  weight: float = 1.0, data: dict = None):
+        nodes[node_id] = {
+            "id":     node_id,
+            "label":  label,
+            "thread": thread,
+            "kind":   kind,     # thread | group | fact | tool | trigger | event
+            "depth":  depth,
+            "weight": weight,
+            "data":   data or {},
+        }
+
+    def _add_structural(parent_id: str, child_id: str):
+        structural_links.append({
+            "source": parent_id,
+            "target": child_id,
+            "type":   "structural",
+        })
+
+    # ── 1. Identity thread ───────────────────────────────────────────
+    _add_node("identity", "Identity", "identity", "thread", depth=0, weight=10)
+    try:
+        from agent.threads.identity.schema import get_profiles, pull_profile_facts
+        for profile in get_profiles():
+            pid = profile.get("profile_id", "")
+            p_node = f"identity.{pid}"
+            _add_node(p_node, pid, "identity", "group", depth=1,
+                      data={"type_name": profile.get("type_name", "")})
+            _add_structural("identity", p_node)
+
+            for fact in pull_profile_facts(profile_id=pid, limit=200):
+                key   = fact.get("key", "")
+                value = fact.get("l1_value", "") or fact.get("l2_value", "") or ""
+                if not key:
+                    continue
+                f_node = f"identity.{pid}.{key}"
+                _add_node(f_node, key, "identity", "fact", depth=2,
+                          weight=fact.get("weight", 0.5),
+                          data={"value": value, "fact_type": fact.get("fact_type", "")})
+                _add_structural(p_node, f_node)
+    except Exception:
+        pass
+
+    # ── 2. Philosophy thread ─────────────────────────────────────────
+    _add_node("philosophy", "Philosophy", "philosophy", "thread", depth=0, weight=10)
+    try:
+        from agent.threads.philosophy.schema import (
+            get_philosophy_profiles, pull_philosophy_profile_facts,
+        )
+        for profile in get_philosophy_profiles():
+            pid = profile.get("profile_id", "")
+            p_node = f"philosophy.{pid}"
+            _add_node(p_node, pid, "philosophy", "group", depth=1,
+                      data={"type_name": profile.get("type_name", "")})
+            _add_structural("philosophy", p_node)
+
+            for fact in pull_philosophy_profile_facts(profile_id=pid, limit=200):
+                key   = fact.get("key", "")
+                value = fact.get("l1_value", "") or fact.get("l2_value", "") or ""
+                if not key:
+                    continue
+                f_node = f"philosophy.{pid}.{key}"
+                _add_node(f_node, key, "philosophy", "fact", depth=2,
+                          weight=fact.get("weight", 0.5),
+                          data={"value": value, "fact_type": fact.get("fact_type", "")})
+                _add_structural(p_node, f_node)
+    except Exception:
+        pass
+
+    # ── 3. Form thread (tools) ───────────────────────────────────────
+    _add_node("form", "Form", "form", "thread", depth=0, weight=10)
+    try:
+        from agent.threads.form.schema import get_tools
+        for tool in get_tools():
+            name = tool.get("name", "")
+            t_node = f"form.{name}"
+            _add_node(t_node, name, "form", "tool", depth=1,
+                      weight=tool.get("weight", 0.5),
+                      data={"category": tool.get("category", ""),
+                            "enabled": tool.get("enabled", True)})
+            _add_structural("form", t_node)
+
+            # Actions as children of the tool
+            actions = tool.get("actions", [])
+            if isinstance(actions, str):
+                import json as _json
+                try: actions = _json.loads(actions)
+                except Exception: actions = []
+            for action in (actions or []):
+                a_name = action if isinstance(action, str) else action.get("name", "")
+                if a_name:
+                    a_node = f"form.{name}.{a_name}"
+                    _add_node(a_node, a_name, "form", "fact", depth=2)
+                    _add_structural(t_node, a_node)
+    except Exception:
+        pass
+
+    # ── 4. Reflex thread (triggers) ──────────────────────────────────
+    _add_node("reflex", "Reflex", "reflex", "thread", depth=0, weight=10)
+    try:
+        from agent.threads.reflex.schema import get_triggers
+        for trig in get_triggers():
+            t_id = trig.get("id", "")
+            name  = trig.get("name", f"trigger_{t_id}")
+            t_node = f"reflex.{name}"
+            _add_node(t_node, name, "reflex", "trigger", depth=1,
+                      data={"feed_name": trig.get("feed_name", ""),
+                            "event_type": trig.get("event_type", ""),
+                            "response_mode": trig.get("response_mode", "tool"),
+                            "enabled": trig.get("enabled", True)})
+            _add_structural("reflex", t_node)
+    except Exception:
+        pass
+
+    # ── 5. Log thread (summary only — not every event) ───────────────
+    _add_node("log", "Log", "log", "thread", depth=0, weight=10)
+    try:
+        from data.db import get_connection as _get_conn
+        from contextlib import closing
+        with closing(_get_conn(readonly=True)) as conn:
+            cur = conn.cursor()
+            # Show event type distribution
+            cur.execute("""
+                SELECT event_type, COUNT(*) as cnt
+                FROM unified_events
+                GROUP BY event_type
+                ORDER BY cnt DESC
+                LIMIT 20
+            """)
+            for row in cur.fetchall():
+                etype = row[0] or "unknown"
+                count = row[1]
+                e_node = f"log.{etype}"
+                _add_node(e_node, etype, "log", "group", depth=1,
+                          weight=min(10, count / 10),
+                          data={"count": count})
+                _add_structural("log", e_node)
+    except Exception:
+        pass
+
+    # ── 6. Linking Core (the graph itself — meta node) ───────────────
+    _add_node("linking_core", "Linking Core", "linking_core", "thread", depth=0, weight=10)
+    try:
+        stats = get_stats()
+        _add_node("linking_core.concepts", f"{stats.get('concept_count', 0)} concepts",
+                  "linking_core", "group", depth=1,
+                  data={"concept_count": stats.get("concept_count", 0)})
+        _add_structural("linking_core", "linking_core.concepts")
+        _add_node("linking_core.links", f"{stats.get('link_count', 0)} links",
+                  "linking_core", "group", depth=1,
+                  data={"link_count": stats.get("link_count", 0),
+                        "avg_strength": stats.get("average_strength", 0)})
+        _add_structural("linking_core", "linking_core.links")
+    except Exception:
+        pass
+
+    # ── 7. Cross-thread associative links (from concept_links) ───────
+    if include_cross_links:
+        try:
+            # Build a set of all node IDs for matching
+            node_ids = set(nodes.keys())
+            # Also build a reverse map: leaf label → full node IDs
+            label_to_nodes: Dict[str, list] = {}
+            for nid, ndata in nodes.items():
+                label_lower = ndata["label"].lower()
+                label_to_nodes.setdefault(label_lower, []).append(nid)
+                # Also map the last segment of the node id
+                last_seg = nid.rsplit(".", 1)[-1].lower()
+                if last_seg != label_lower:
+                    label_to_nodes.setdefault(last_seg, []).append(nid)
+
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    SELECT concept_a, concept_b, strength, fire_count
+                    FROM concept_links
+                    WHERE strength >= ?
+                    ORDER BY strength DESC
+                    LIMIT ?
+                """, (min_cross_strength, max_cross_links * 4))
+
+                for row in cur.fetchall():
+                    ca, cb, strength, fire_count = row[0].lower(), row[1].lower(), row[2], row[3]
+
+                    # Try to match each concept to a structural node
+                    a_matches = label_to_nodes.get(ca, [])
+                    b_matches = label_to_nodes.get(cb, [])
+
+                    if not a_matches or not b_matches:
+                        continue
+
+                    # Find cross-thread links (skip same-node self-links)
+                    for a_id in a_matches:
+                        a_thread = nodes[a_id]["thread"]
+                        for b_id in b_matches:
+                            b_thread = nodes[b_id]["thread"]
+                            if a_id != b_id:
+                                cross_links.append({
+                                    "source":     a_id,
+                                    "target":     b_id,
+                                    "type":       "associative",
+                                    "strength":   strength,
+                                    "fire_count": fire_count or 1,
+                                    "cross_thread": a_thread != b_thread,
+                                })
+                    if len(cross_links) >= max_cross_links:
+                        break
+        except Exception:
+            pass
+
+    return {
+        "nodes":      list(nodes.values()),
+        "structural": structural_links,
+        "associative": cross_links,
+        "stats": {
+            "node_count":       len(nodes),
+            "structural_count": len(structural_links),
+            "associative_count": len(cross_links),
+            "threads":          ["identity", "philosophy", "form", "reflex", "log", "linking_core"],
+        },
+    }
+
+
+# ─────────────────────────────────────────────────────────────
 # Graph Visualization
 # ─────────────────────────────────────────────────────────────
 

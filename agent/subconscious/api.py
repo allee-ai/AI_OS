@@ -477,8 +477,17 @@ async def resume_loop(loop_name: str):
 
 @router.put("/loops/memory/model")
 async def set_memory_model(body: dict):
-    """Set the LLM model used by the memory loop for fact extraction."""
+    """Set the LLM model (and optionally provider) used by the memory loop for fact extraction.
+    
+    Body:
+        model: str  — model name (e.g. "gpt-4o-mini", "qwen2.5:7b")
+        provider: str (optional) — "ollama" (default) or "openai"
+    
+    For cloud extraction, set provider="openai" and ensure OPENAI_API_KEY
+    is set (or AIOS_EXTRACT_ENDPOINT for non-OpenAI compatible APIs).
+    """
     from . import _loop_manager
+    import os
     
     if _loop_manager is None:
         from fastapi import HTTPException
@@ -495,7 +504,16 @@ async def set_memory_model(body: dict):
         raise HTTPException(status_code=400, detail="model is required")
     
     loop.model = model
-    return {"status": "updated", "model": model}
+
+    provider = body.get("provider", "").strip()
+    if provider:
+        os.environ["AIOS_EXTRACT_PROVIDER"] = provider
+
+    return {
+        "status": "updated",
+        "model": model,
+        "provider": loop.provider,
+    }
 
 
 @router.get("/queue")

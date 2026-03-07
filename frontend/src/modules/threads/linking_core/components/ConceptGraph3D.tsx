@@ -181,6 +181,60 @@ interface ConceptGraph3DProps {
   activationQuery?: string;
 }
 
+// ── Structural graph types (from /api/linking_core/graph/structural) ──
+
+interface StructuralNode {
+  id: string;
+  label: string;
+  thread: string;   // identity | philosophy | form | reflex | log | linking_core
+  kind: string;     // thread | group | fact | tool | trigger | event
+  depth: number;    // 0 = thread root, 1 = profile/group, 2 = leaf fact
+  weight: number;
+  data: Record<string, any>;
+}
+
+interface StructuralEdge {
+  source: string;
+  target: string;
+  type: 'structural' | 'associative';
+  strength?: number;
+  fire_count?: number;
+  cross_thread?: boolean;
+}
+
+interface StructuralGraphData {
+  nodes: StructuralNode[];
+  structural: StructuralEdge[];
+  associative: StructuralEdge[];
+  stats: {
+    node_count: number;
+    structural_count: number;
+    associative_count: number;
+    threads: string[];
+  };
+}
+
+type ViewMode = 'cluster' | 'structure';
+
+// Thread color palette
+const THREAD_COLORS: Record<string, string> = {
+  identity:     '#00ccff',  // cyan
+  philosophy:   '#ffcc00',  // gold
+  form:         '#00ff88',  // green
+  reflex:       '#ff4466',  // coral
+  log:          '#8899bb',  // silver
+  linking_core: '#cc88ff',  // purple
+};
+
+const THREAD_HSL: Record<string, [number, number, number]> = {
+  identity:     [0.52, 0.9, 0.55],
+  philosophy:   [0.13, 0.9, 0.55],
+  form:         [0.42, 0.9, 0.55],
+  reflex:       [0.97, 0.85, 0.6],
+  log:          [0.6,  0.2, 0.6],
+  linking_core: [0.76, 0.6, 0.7],
+};
+
 // ============================================================================
 // Create circular sprite texture (dots not squares!)
 // ============================================================================
@@ -1473,11 +1527,291 @@ function Scene({ graphData, activatedConcepts, onNodeClick, pulseSpeed = 1 }: Sc
 }
 
 // ============================================================================
+// Structural Scene — hierarchical thread-based layout
+// ============================================================================
+
+interface StructuralSceneProps {
+  data: StructuralGraphData;
+  onNodeClick?: (nodeId: string) => void;
+}
+
+function StructuralNodeMesh(
+  { position, node, onClick }: {
+    position: [number, number, number];
+    node: StructuralNode;
+    onClick?: () => void;
+  }
+) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const glowRef = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+
+  const hsl = THREAD_HSL[node.thread] || [0.76, 0.5, 0.5];
+
+  // Size by depth: thread hub = big, group = medium, leaf = small
+  const baseSize = node.depth === 0 ? 0.22 : node.depth === 1 ? 0.09 : 0.035;
+  const size = hovered ? baseSize * 1.6 : baseSize;
+
+  const nodeColor = useMemo(() => {
+    const lightnessBoost = node.depth === 0 ? 0.15 : node.depth === 1 ? 0.05 : -0.05;
+    return new THREE.Color().setHSL(hsl[0], hsl[1], Math.min(1, hsl[2] + lightnessBoost));
+  }, [hsl, node.depth]);
+
+  const glowColor = useMemo(() => {
+    return new THREE.Color().setHSL(hsl[0], hsl[1] * 0.8, hsl[2] * 0.7);
+  }, [hsl]);
+
+  useFrame((state) => {
+    if (meshRef.current && node.depth > 0) {
+      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.5 + position[0] * 3) * 0.03;
+    }
+    if (glowRef.current && node.depth === 0) {
+      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.2) * 0.12;
+      glowRef.current.scale.setScalar(pulse);
+    }
+  });
+
+  return (
+    <group position={position}>
+      <mesh ref={meshRef}
+        onClick={onClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[size, node.depth === 0 ? 32 : 16, node.depth === 0 ? 32 : 16]} />
+        <meshStandardMaterial
+          color={nodeColor}
+          emissive={nodeColor}
+          emissiveIntensity={node.depth === 0 ? 0.5 : 0.2}
+          metalness={0.5}
+          roughness={0.3}
+        />
+      </mesh>
+      <mesh ref={glowRef}>
+        <sphereGeometry args={[size * (node.depth === 0 ? 2.5 : 2), 16, 16]} />
+        <meshBasicMaterial
+          color={glowColor}
+          transparent
+          opacity={node.depth === 0 ? 0.25 : 0.08}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      {(node.depth <= 1 || hovered) && (
+        <Text
+          position={[0, size + 0.1, 0]}
+          fontSize={node.depth === 0 ? 0.14 : 0.07}
+          color={hovered ? '#ffffff' : THREAD_COLORS[node.thread] || '#aaaacc'}
+          anchorX="center"
+          anchorY="bottom"
+          outlineWidth={0.004}
+          outlineColor="#000000"
+          fontWeight={node.depth === 0 ? 700 : undefined}
+        >
+          {node.label.length > 24 ? node.label.slice(0, 24) + '…' : node.label}
+        </Text>
+      )}
+    </group>
+  );
+}
+
+function StructuralEdgeVisual(
+  { start, end, type }: {
+    start: [number, number, number];
+    end: [number, number, number];
+    type: 'structural' | 'associative';
+  }
+) {
+  const lineObject = useMemo(() => {
+    if (type === 'structural') {
+      // Straight line for parent→child
+      const geometry = new THREE.BufferGeometry().setFromPoints([
+        new THREE.Vector3(...start),
+        new THREE.Vector3(...end),
+      ]);
+      const material = new THREE.LineBasicMaterial({
+        color: new THREE.Color(0.35, 0.3, 0.5),
+        transparent: true,
+        opacity: 0.35,
+      });
+      return new THREE.Line(geometry, material);
+    } else {
+      // Curved arc for cross-thread associations
+      const mid: [number, number, number] = [
+        (start[0] + end[0]) / 2,
+        (start[1] + end[1]) / 2 + 1.0,
+        (start[2] + end[2]) / 2,
+      ];
+      const curve = new THREE.QuadraticBezierCurve3(
+        new THREE.Vector3(...start),
+        new THREE.Vector3(...mid),
+        new THREE.Vector3(...end)
+      );
+      const points = curve.getPoints(24);
+      const geometry = new THREE.BufferGeometry().setFromPoints(points);
+      const material = new THREE.LineBasicMaterial({
+        color: new THREE.Color(1, 0.7, 0.2),
+        transparent: true,
+        opacity: 0.5,
+      });
+      return new THREE.Line(geometry, material);
+    }
+  }, [start, end, type]);
+
+  return <primitive object={lineObject} />;
+}
+
+function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
+  const positions = useMemo(() => {
+    const pos = new Map<string, [number, number, number]>();
+    const threads = data.stats.threads;
+
+    // Build parent→children map
+    const children = new Map<string, string[]>();
+    for (const edge of data.structural) {
+      const list = children.get(edge.source) || [];
+      list.push(edge.target);
+      children.set(edge.source, list);
+    }
+
+    // 1. Place thread hubs in a hexagonal ring
+    const hubRadius = 5;
+    threads.forEach((thread, i) => {
+      const angle = (i / threads.length) * Math.PI * 2 - Math.PI / 2;
+      pos.set(thread, [
+        hubRadius * Math.cos(angle),
+        0,
+        hubRadius * Math.sin(angle),
+      ]);
+    });
+
+    // 2. Place depth-1 groups in a smaller ring around their thread hub
+    for (const thread of threads) {
+      const hubPos = pos.get(thread)!;
+      const kids = (children.get(thread) || []).filter(id =>
+        data.nodes.find(n => n.id === id && n.depth === 1)
+      );
+      const groupRadius = 1.2 + Math.min(kids.length, 8) * 0.2;
+      kids.forEach((kid, j) => {
+        const angle = (j / Math.max(kids.length, 1)) * Math.PI * 2;
+        pos.set(kid, [
+          hubPos[0] + groupRadius * Math.cos(angle),
+          hubPos[1] + (Math.random() - 0.5) * 0.3,
+          hubPos[2] + groupRadius * Math.sin(angle),
+        ]);
+      });
+
+      // 3. Place depth-2 leaves in a shell around their group parent
+      for (const kid of kids) {
+        const kidPos = pos.get(kid)!;
+        const leaves = (children.get(kid) || []).filter(id =>
+          data.nodes.find(n => n.id === id && n.depth === 2)
+        );
+        const leafRadius = 0.35 + Math.min(leaves.length, 30) * 0.015;
+        leaves.forEach((leaf, k) => {
+          // Golden-angle sphere packing
+          const phi = Math.acos(1 - 2 * (k + 0.5) / Math.max(leaves.length, 1));
+          const theta = Math.PI * (1 + Math.sqrt(5)) * k;
+          pos.set(leaf, [
+            kidPos[0] + leafRadius * Math.sin(phi) * Math.cos(theta),
+            kidPos[1] + leafRadius * Math.cos(phi),
+            kidPos[2] + leafRadius * Math.sin(phi) * Math.sin(theta),
+          ]);
+        });
+      }
+    }
+
+    return pos;
+  }, [data]);
+
+  return (
+    <RotatingGroup speed={0.015}>
+      {/* Thread-colored ambient nebula per hub */}
+      {data.stats.threads.map(thread => {
+        const p = positions.get(thread);
+        if (!p) return null;
+        const col = THREAD_COLORS[thread] || '#cc88ff';
+        return (
+          <group key={`nebula-${thread}`} position={p}>
+            <Sphere args={[1.8, 24, 24]}>
+              <meshBasicMaterial color={col} transparent opacity={0.04} />
+            </Sphere>
+          </group>
+        );
+      })}
+
+      {/* Structural edges */}
+      {data.structural.map((edge, i) => {
+        const s = positions.get(edge.source);
+        const t = positions.get(edge.target);
+        if (!s || !t) return null;
+        return (
+          <StructuralEdgeVisual
+            key={`se-${i}`}
+            start={s}
+            end={t}
+            type="structural"
+          />
+        );
+      })}
+
+      {/* Associative cross-links */}
+      {data.associative.map((edge, i) => {
+        const s = positions.get(edge.source);
+        const t = positions.get(edge.target);
+        if (!s || !t) return null;
+        return (
+          <StructuralEdgeVisual
+            key={`ae-${i}`}
+            start={s}
+            end={t}
+            type="associative"
+          />
+        );
+      })}
+
+      {/* All nodes */}
+      {data.nodes.map(node => {
+        const p = positions.get(node.id);
+        if (!p) return null;
+        return (
+          <StructuralNodeMesh
+            key={node.id}
+            position={p}
+            node={node}
+            onClick={() => onNodeClick?.(node.id)}
+          />
+        );
+      })}
+
+      {/* Lighting */}
+      <ambientLight intensity={0.5} />
+      <pointLight position={[0, 3, 0]} intensity={0.8} color="#ffffff" />
+      {data.stats.threads.map((thread) => {
+        const p = positions.get(thread);
+        if (!p) return null;
+        return (
+          <pointLight
+            key={`light-${thread}`}
+            position={[p[0], p[1] + 1.5, p[2]]}
+            intensity={0.4}
+            color={THREAD_COLORS[thread] || '#cc88ff'}
+            distance={8}
+          />
+        );
+      })}
+    </RotatingGroup>
+  );
+}
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
 export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activationQuery }: ConceptGraph3DProps) {
   const [graphData, setGraphData] = useState<GraphData | null>(null);
+  const [structuralData, setStructuralData] = useState<StructuralGraphData | null>(null);
+  const [viewMode, setViewMode] = useState<ViewMode>('cluster');
   const [activatedConcepts, setActivatedConcepts] = useState<Map<string, number>>(new Map());
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -1488,7 +1822,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
   const [pulseSpeed, setPulseSpeed] = useState(1);
   const [anchored, setAnchored] = useState(true);
   
-  // Fetch graph data
+  // Fetch cluster graph data (existing concept graph)
   const fetchGraph = useCallback(async () => {
     try {
       const params = new URLSearchParams({
@@ -1507,6 +1841,27 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
       setLoading(false);
     }
   }, [anchored]);
+
+  // Fetch structural hierarchy graph
+  const fetchStructural = useCallback(async () => {
+    try {
+      const params = new URLSearchParams({
+        cross_links: 'true',
+        min_cross_strength: '0.15',
+        max_cross_links: '200',
+      });
+      const res = await fetch(`http://localhost:8000/api/linking_core/graph/structural?${params}`);
+      if (!res.ok) throw new Error('Failed to fetch structural graph');
+      const data = await res.json();
+      setStructuralData(data);
+      setError(null);
+    } catch (e) {
+      setError('Could not load structural graph');
+      console.error(e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
   
   // Reindex all profiles into concept graph
   const handleReindex = useCallback(async () => {
@@ -1563,10 +1918,15 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     }
   }, []);
   
-  // Load graph on mount
+  // Load graph on mount / when view mode changes
   useEffect(() => {
-    fetchGraph();
-  }, [fetchGraph]);
+    setLoading(true);
+    if (viewMode === 'cluster') {
+      fetchGraph();
+    } else {
+      fetchStructural();
+    }
+  }, [fetchGraph, fetchStructural, viewMode]);
   
   // Run activation when query changes (live mode)
   useEffect(() => {
@@ -1590,17 +1950,25 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     >
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, 12], fov: 50 }}
+        camera={{ position: [0, 0, viewMode === 'structure' ? 18 : 12], fov: 50 }}
         style={{ width: '100%', height: '100%', touchAction: 'none' }}
+        key={viewMode}  // remount Canvas on mode switch to reset camera
       >
-        <Scene
-          graphData={graphData}
-          activatedConcepts={activatedConcepts}
-          onNodeClick={onNodeClick}
-          pulseSpeed={pulseSpeed}
-        />
+        {viewMode === 'cluster' ? (
+          <Scene
+            graphData={graphData}
+            activatedConcepts={activatedConcepts}
+            onNodeClick={onNodeClick}
+            pulseSpeed={pulseSpeed}
+          />
+        ) : structuralData ? (
+          <StructuralScene
+            data={structuralData}
+            onNodeClick={onNodeClick}
+          />
+        ) : null}
         <FlyControls
-          moveSpeed={8}
+          moveSpeed={viewMode === 'structure' ? 12 : 8}
           lookSpeed={0.002}
         />
       </Canvas>
@@ -1617,72 +1985,123 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
         ↑↓ forward/back • ←→ turn • WASD move • Q/E up/down • Drag look
       </div>
       
-      {/* Query input overlay */}
-      <div style={{
-        position: 'absolute',
-        bottom: 20,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: 8,
-      }}>
+      {/* Query input overlay — cluster mode only */}
+      {viewMode === 'cluster' && (
         <div style={{
+          position: 'absolute',
+          bottom: 20,
+          left: '50%',
+          transform: 'translateX(-50%)',
           display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
           gap: 8,
-          padding: 12,
-          background: 'rgba(20, 10, 40, 0.9)',
-          borderRadius: 12,
-          border: '1px solid rgba(170, 100, 255, 0.3)',
-          boxShadow: '0 0 30px rgba(136, 68, 204, 0.3)',
         }}>
-          <input
-            type="text"
-            value={queryInput}
-            onChange={(e) => setQueryInput(e.target.value)}
-            placeholder="Type to activate concepts..."
-            style={{
-              width: 300,
-              padding: '10px 14px',
-              background: 'rgba(0, 0, 0, 0.5)',
-              border: '1px solid rgba(170, 100, 255, 0.4)',
-              borderRadius: 8,
-              color: '#fff',
-              fontSize: 14,
-              outline: 'none',
-            }}
-          />
-          <button
-            onClick={() => {
-              setQueryInput('');
-              setActivatedConcepts(new Map());
-              setDebugInfo('');
-            }}
-            style={{
-              padding: '10px 20px',
-              background: 'linear-gradient(135deg, rgba(136, 68, 204, 0.4), rgba(68, 34, 102, 0.4))',
-              border: '1px solid rgba(170, 100, 255, 0.4)',
-              borderRadius: 8,
-              color: '#fff',
-              cursor: 'pointer',
-              fontWeight: 500,
-            }}
-          >
-            Clear
-          </button>
-        </div>
-        {debugInfo && (
-          <div style={{ fontSize: 11, color: '#aa88cc', background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: 4 }}>
-            {debugInfo}
+          <div style={{
+            display: 'flex',
+            gap: 8,
+            padding: 12,
+            background: 'rgba(20, 10, 40, 0.9)',
+            borderRadius: 12,
+            border: '1px solid rgba(170, 100, 255, 0.3)',
+            boxShadow: '0 0 30px rgba(136, 68, 204, 0.3)',
+          }}>
+            <input
+              type="text"
+              value={queryInput}
+              onChange={(e) => setQueryInput(e.target.value)}
+              placeholder="Type to activate concepts..."
+              style={{
+                width: 300,
+                padding: '10px 14px',
+                background: 'rgba(0, 0, 0, 0.5)',
+                border: '1px solid rgba(170, 100, 255, 0.4)',
+                borderRadius: 8,
+                color: '#fff',
+                fontSize: 14,
+                outline: 'none',
+              }}
+            />
+            <button
+              onClick={() => {
+                setQueryInput('');
+                setActivatedConcepts(new Map());
+                setDebugInfo('');
+              }}
+              style={{
+                padding: '10px 20px',
+                background: 'linear-gradient(135deg, rgba(136, 68, 204, 0.4), rgba(68, 34, 102, 0.4))',
+                border: '1px solid rgba(170, 100, 255, 0.4)',
+                borderRadius: 8,
+                color: '#fff',
+                cursor: 'pointer',
+                fontWeight: 500,
+              }}
+            >
+              Clear
+            </button>
           </div>
-        )}
-      </div>
+          {debugInfo && (
+            <div style={{ fontSize: 11, color: '#aa88cc', background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: 4 }}>
+              {debugInfo}
+            </div>
+          )}
+        </div>
+      )}
       
-      {/* Stats overlay */}
+      {/* View mode toggle */}
       <div style={{
         position: 'absolute',
         top: 16,
+        left: '50%',
+        transform: 'translateX(-50%)',
+        display: 'flex',
+        gap: 4,
+        background: 'rgba(20, 10, 40, 0.9)',
+        borderRadius: 10,
+        border: '1px solid rgba(170, 100, 255, 0.3)',
+        padding: 4,
+      }}>
+        <button
+          onClick={() => setViewMode('cluster')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 8,
+            border: 'none',
+            background: viewMode === 'cluster'
+              ? 'linear-gradient(135deg, rgba(136, 68, 204, 0.6), rgba(100, 40, 180, 0.6))'
+              : 'transparent',
+            color: viewMode === 'cluster' ? '#fff' : '#8877aa',
+            fontSize: 12,
+            fontWeight: viewMode === 'cluster' ? 600 : 400,
+            cursor: 'pointer',
+          }}
+        >
+          🔮 Concept Cluster
+        </button>
+        <button
+          onClick={() => setViewMode('structure')}
+          style={{
+            padding: '8px 18px',
+            borderRadius: 8,
+            border: 'none',
+            background: viewMode === 'structure'
+              ? 'linear-gradient(135deg, rgba(0, 180, 220, 0.5), rgba(0, 100, 160, 0.5))'
+              : 'transparent',
+            color: viewMode === 'structure' ? '#fff' : '#8877aa',
+            fontSize: 12,
+            fontWeight: viewMode === 'structure' ? 600 : 400,
+            cursor: 'pointer',
+          }}
+        >
+          🧬 Architecture
+        </button>
+      </div>
+
+      {/* Stats overlay */}
+      <div style={{
+        position: 'absolute',
+        top: 60,
         left: 16,
         padding: 14,
         background: 'rgba(20, 10, 40, 0.85)',
@@ -1696,7 +2115,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
           <span>Loading graph...</span>
         ) : error ? (
           <span style={{ color: '#ff6b6b' }}>{error}</span>
-        ) : graphData ? (
+        ) : viewMode === 'cluster' && graphData ? (
           <>
             <div style={{ fontWeight: 600, marginBottom: 6, color: '#dd99ff', fontSize: 14 }}>
               🔮 Linking Core
@@ -1732,13 +2151,38 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
               </div>
             )}
           </>
+        ) : viewMode === 'structure' && structuralData ? (
+          <>
+            <div style={{ fontWeight: 600, marginBottom: 6, color: '#88ddff', fontSize: 14 }}>
+              🧬 Architecture
+            </div>
+            <div>{structuralData.stats.node_count} nodes</div>
+            <div>{structuralData.stats.structural_count} edges</div>
+            <div>{structuralData.stats.associative_count} cross-links</div>
+            <div style={{ marginTop: 8, fontSize: 11 }}>
+              {structuralData.stats.threads.map(t => (
+                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
+                  <span style={{
+                    display: 'inline-block',
+                    width: 8, height: 8,
+                    borderRadius: '50%',
+                    background: THREAD_COLORS[t] || '#888',
+                  }} />
+                  <span>{t}</span>
+                  <span style={{ color: '#776699', marginLeft: 'auto' }}>
+                    {structuralData.nodes.filter(n => n.thread === t).length}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </>
         ) : null}
       </div>
       
       {/* Instructions */}
       <div style={{
         position: 'absolute',
-        top: 16,
+        top: 60,
         right: 16,
         padding: 12,
         background: 'rgba(20, 10, 40, 0.75)',
@@ -1751,49 +2195,53 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
         <div style={{ fontWeight: 600, marginBottom: 6, color: '#aa99cc' }}>Controls</div>
         <div>🖱️ Drag to orbit</div>
         <div>⚙️ Scroll to zoom</div>
-        <div>⌨️ Type to activate</div>
+        {viewMode === 'cluster' && <div>⌨️ Type to activate</div>}
         <div>💡 Click nodes</div>
         
-        <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
-          <div style={{ marginBottom: 4 }}>⚡ Pulse Speed: {pulseSpeed.toFixed(1)}x</div>
-          <input
-            type="range"
-            min="0.2"
-            max="3"
-            step="0.1"
-            value={pulseSpeed}
-            onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
-            style={{
-              width: '100%',
-              accentColor: '#aa66ff',
-              cursor: 'pointer',
-            }}
-          />
-        </div>
-        <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
-          <button
-            onClick={() => setAnchored(prev => !prev)}
-            title={anchored ? 'Showing fact-anchored concepts only. Click to show all.' : 'Showing all concepts. Click to filter to stored facts.'}
-            style={{
-              width: '100%',
-              padding: '6px 10px',
-              background: anchored
-                ? 'linear-gradient(135deg, rgba(68, 204, 136, 0.35), rgba(34, 102, 68, 0.35))'
-                : 'linear-gradient(135deg, rgba(136, 68, 204, 0.25), rgba(68, 34, 102, 0.25))',
-              border: anchored
-                ? '1px solid rgba(100, 220, 150, 0.5)'
-                : '1px solid rgba(170, 100, 255, 0.3)',
-              borderRadius: 6,
-              color: anchored ? '#88ddaa' : '#9977bb',
-              fontSize: 11,
-              cursor: 'pointer',
-              fontWeight: 500,
-              textAlign: 'left',
-            }}
-          >
-            {anchored ? '🔒 Anchored facts' : '🌐 All concepts'}
-          </button>
-        </div>
+        {viewMode === 'cluster' && (
+          <>
+            <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
+              <div style={{ marginBottom: 4 }}>⚡ Pulse Speed: {pulseSpeed.toFixed(1)}x</div>
+              <input
+                type="range"
+                min="0.2"
+                max="3"
+                step="0.1"
+                value={pulseSpeed}
+                onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
+                style={{
+                  width: '100%',
+                  accentColor: '#aa66ff',
+                  cursor: 'pointer',
+                }}
+              />
+            </div>
+            <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
+              <button
+                onClick={() => setAnchored(prev => !prev)}
+                title={anchored ? 'Showing fact-anchored concepts only. Click to show all.' : 'Showing all concepts. Click to filter to stored facts.'}
+                style={{
+                  width: '100%',
+                  padding: '6px 10px',
+                  background: anchored
+                    ? 'linear-gradient(135deg, rgba(68, 204, 136, 0.35), rgba(34, 102, 68, 0.35))'
+                    : 'linear-gradient(135deg, rgba(136, 68, 204, 0.25), rgba(68, 34, 102, 0.25))',
+                  border: anchored
+                    ? '1px solid rgba(100, 220, 150, 0.5)'
+                    : '1px solid rgba(170, 100, 255, 0.3)',
+                  borderRadius: 6,
+                  color: anchored ? '#88ddaa' : '#9977bb',
+                  fontSize: 11,
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  textAlign: 'left',
+                }}
+              >
+                {anchored ? '🔒 Anchored facts' : '🌐 All concepts'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
     </div>
   );

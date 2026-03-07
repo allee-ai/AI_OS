@@ -60,7 +60,7 @@ _MOCK_CHAT_RESPONSE = {
 _MOCK_EXTRACT_RESPONSE = {
     "message": {
         "role": "assistant",
-        "content": '[{"key": "user.preference.coffee", "text": "User enjoys coffee while coding"}]',
+        "content": '[{"key": "coffee_preference", "text": "User enjoys coffee while coding"}]',
     }
 }
 
@@ -85,7 +85,12 @@ def _mock_ollama_chat(model=None, messages=None, **kwargs):
 
 @pytest.fixture(autouse=True)
 def maybe_mock_ollama(live_mode):
-    """Patch ``ollama.chat`` unless --live is set."""
+    """Patch ``ollama.chat`` unless --live is set.
+
+    The extraction loop now calls ``ollama.chat`` via
+    ``MemoryLoop._call_ollama_extract``, so we also patch the method-level
+    import path to ensure the mock is visible everywhere.
+    """
     if live_mode:
         yield
     else:

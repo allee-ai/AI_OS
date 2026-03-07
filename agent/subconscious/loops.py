@@ -188,6 +188,65 @@ class MemoryLoop(BackgroundLoop):
     @model.setter
     def model(self, value: str) -> None:
         self._model = value
+
+    @property
+    def provider(self) -> str:
+        """Get the provider for the extraction model (ollama | openai)."""
+        import os
+        return os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
+
+    def _call_model(self, messages: list, temperature: float = 0.1) -> str:
+        """
+        Route extraction call to the configured provider.
+
+        Supports:
+          - ollama  (default, local)
+          - openai  (OpenAI-compatible API — works with OpenAI, Groq,
+                     OpenRouter, Together, etc.)
+        """
+        model = self.model
+        prov = self.provider
+
+        if prov == "openai":
+            return self._call_openai(model, messages, temperature)
+
+        # Default: ollama
+        return self._call_ollama_extract(model, messages, temperature)
+
+    def _call_ollama_extract(self, model: str, messages: list, temperature: float) -> str:
+        import ollama
+        response = ollama.chat(
+            model=model,
+            messages=messages,
+            options={"temperature": temperature},
+        )
+        return response['message']['content'].strip()
+
+    def _call_openai(self, model: str, messages: list, temperature: float) -> str:
+        """Call an OpenAI-compatible endpoint for extraction."""
+        import os, json, urllib.request
+
+        api_key = os.getenv("OPENAI_API_KEY", "")
+        base_url = os.getenv(
+            "AIOS_EXTRACT_ENDPOINT",
+            os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
+        ).rstrip("/")
+
+        url = f"{base_url}/chat/completions"
+        headers = {"Content-Type": "application/json"}
+        if api_key:
+            headers["Authorization"] = f"Bearer {api_key}"
+
+        payload = json.dumps({
+            "model": model,
+            "messages": messages,
+            "temperature": temperature,
+        }).encode("utf-8")
+
+        req = urllib.request.Request(url, data=payload, headers=headers, method="POST")
+        with urllib.request.urlopen(req, timeout=30) as resp:
+            body = json.loads(resp.read().decode("utf-8"))
+            return body["choices"][0]["message"]["content"].strip()
     
     def _load_last_turn_id(self) -> Optional[int]:
         """Load _last_processed_turn_id from DB so it survives restart."""
@@ -253,6 +312,7 @@ class MemoryLoop(BackgroundLoop):
     def stats(self) -> Dict[str, Any]:
         base = super().stats
         base["model"] = self.model
+        base["provider"] = self.provider
         base["unprocessed_turns"] = self.get_unprocessed_count()
         base["last_processed_turn_id"] = self._last_processed_turn_id
         return base
@@ -363,14 +423,15 @@ class MemoryLoop(BackgroundLoop):
         if len(text) < 30:
             return []
         
-        prompt = '''Extract facts from this conversation as a Python list.
+        prompt = '''Extract facts about the user from this conversation as a Python list.
 Each fact is a dict with "key" and "text".
-Keys are hierarchical like: user.preference.coffee, user.project.name, user.relationship.sarah
+Keys should be simple, flat names (1-2 words joined by underscore) — NOT hierarchical.
+Think of them like field labels: favorite_language, project_name, pet, coffee_preference.
 
 ONLY output a Python list. No explanation.
 
 Example:
-[{"key": "user.preference.language", "text": "User prefers Python"}, {"key": "user.project.taskmaster", "text": "User is building TaskMaster app"}]
+[{"key": "favorite_language", "text": "User prefers Python"}, {"key": "current_project", "text": "User is building TaskMaster app"}]
 
 If nothing worth remembering, output: []
 
@@ -382,18 +443,13 @@ Conversation:
 Python list:'''
 
         try:
-            import ollama
-            model = self.model
-            
             max_attempts = 3
             for attempt in range(max_attempts):
                 try:
-                    response = ollama.chat(
-                        model=model,
-                        messages=[{"role": "user", "content": prompt}],
-                        options={"temperature": 0.1}
+                    raw_output = self._call_model(
+                        [{"role": "user", "content": prompt}],
+                        temperature=0.1,
                     )
-                    raw_output = response['message']['content'].strip()
                     
                     # Try to parse as Python literal
                     facts = self._parse_python_list(raw_output)
@@ -409,7 +465,7 @@ Python list:'''
 {raw_output}
 
 Try again. Output ONLY a Python list like:
-[{{"key": "user.x.y", "text": "fact"}}]
+[{{"key": "favorite_food", "text": "fact"}}]
 
 Or if no facts: []'''
                         
@@ -419,9 +475,6 @@ Or if no facts: []'''
             
             return []  # All attempts failed
             
-        except ImportError:
-            print("[MemoryLoop] ollama not installed, skipping extraction")
-            return []
         except Exception as e:
             print(f"[MemoryLoop] Extraction error: {e}")
             return []
@@ -525,10 +578,14 @@ Or if no facts: []'''
             if re.match(pattern, text, re.IGNORECASE):
                 return False
         
-        # Key should be hierarchical (has at least one dot)
-        if "." not in key:
-            # Auto-fix: prepend "user."
-            fact["key"] = f"user.{key}"
+        # Normalise key to flat form (strip hierarchy if LLM included it)
+        if "." in key:
+            # Take only the final segment: "user.preference.coffee" → "coffee"
+            fact["key"] = key.rsplit(".", 1)[-1]
+        
+        # Reject empty keys after normalisation
+        if not fact["key"].strip():
+            return False
         
         return True
 
@@ -753,9 +810,9 @@ class ConsolidationLoop(BackgroundLoop):
             # Ensure default user profile exists (for identity facts)
             try:
                 profiles = get_profiles()
-                user_exists = any(p.get('profile_id') == 'user' for p in profiles)
+                user_exists = any(p.get('profile_id') == 'primary_user' for p in profiles)
                 if not user_exists:
-                    create_profile("user", "human", "User")
+                    create_profile("primary_user", "human", "User")
             except Exception:
                 pass
             
@@ -776,9 +833,11 @@ class ConsolidationLoop(BackgroundLoop):
                     # Detect fact type: identity vs philosophy
                     fact_destination = self._classify_fact_destination(fact.text)
                     
-                    # Generate key
+                    # Generate key — use only the leaf segment so promoted
+                    # facts appear as flat names (like "name", "occupation")
                     if fact.hier_key:
-                        key = fact.hier_key
+                        # Strip hierarchy: "user.preference.coffee" → "coffee"
+                        key = fact.hier_key.rsplit(".", 1)[-1]
                     else:
                         key = self._generate_key(fact.text, fact_destination)
                     
@@ -952,7 +1011,9 @@ class ConsolidationLoop(BackgroundLoop):
                 import hashlib
                 detail = hashlib.md5(fact_text.encode()).hexdigest()[:8]
         
-        return f"{prefix}.{category}.{detail}"
+        # Return flat key — profile_id already captures the owner,
+        # and fact_type captures the classification.
+        return detail
     
     def _update_thread_summaries(self) -> None:
         """
