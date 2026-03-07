@@ -4,6 +4,7 @@ import {
   MemoryDashboard, 
   ConsolidationDashboard, 
   FactExtractorDashboard,
+  IntegrationsDashboard,
   KernelDashboard,
   AgentDashboard 
 } from '../components';
@@ -155,6 +156,10 @@ export const SettingsPage = () => {
     if (activeSection === 'general') {
       return <GeneralSettings onChangesMade={() => setHasUnsavedChanges(true)} />;
     }
+
+    if (activeSection === 'integrations') {
+      return <IntegrationsDashboard />;
+    }
     
     // Find the service
     const service = services.find(s => s.id === activeSection);
@@ -210,6 +215,14 @@ export const SettingsPage = () => {
             <span>General</span>
           </button>
           
+          <button
+            className={`sidebar-item ${activeSection === 'integrations' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/integrations')}
+          >
+            <span className="sidebar-icon">🔌</span>
+            <span>Integrations</span>
+          </button>
+
           <div className="sidebar-section-header">Services</div>
           
           {loading ? (

@@ -1086,3 +1086,96 @@
   
   .custom-badge { background: #1e1b4b; color: #c4b5fd; }
 }
+
+/* ── Prompt Editor ───────────────────────────────── */
+
+.prompts-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.prompt-item {
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.prompt-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.prompt-stage {
+  font-weight: 600;
+  font-size: 13px;
+  color: #6d28d9;
+  font-family: 'SF Mono', monospace;
+}
+
+.prompt-edit-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.prompt-preview-block {
+  margin: 0;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #374151;
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 180px;
+  overflow-y: auto;
+  background: #fff;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.prompt-textarea {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 12px;
+  line-height: 1.5;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+  border: none;
+  outline: none;
+  resize: vertical;
+  background: #fffbeb;
+  color: #1f2937;
+  box-sizing: border-box;
+}
+
+.prompt-textarea:focus {
+  background: #fefce8;
+}
+
+/* ── Dark mode overrides ─────────────────────────── */
+
+@media (prefers-color-scheme: dark) {
+  .prompt-item {
+    border-color: #374151;
+  }
+  .prompt-header {
+    background: #1f2937;
+    border-bottom-color: #374151;
+  }
+  .prompt-stage {
+    color: #c4b5fd;
+  }
+  .prompt-preview-block {
+    background: #111827;
+    color: #d1d5db;
+  }
+  .prompt-textarea {
+    background: #1a1a2e;
+    color: #e5e7eb;
+  }
+  .prompt-textarea:focus {
+    background: #1e1b4b;
+  }
+}

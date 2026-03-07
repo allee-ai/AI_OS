@@ -8,6 +8,8 @@ interface FileViewerProps {
   onClose: () => void;
   onSummarize: (path: string) => Promise<string | null>;
   getImageUrl: (path: string) => Promise<string>;
+  onSave?: (path: string, content: string) => Promise<boolean>;
+  onPin?: (path: string, pinned: boolean) => Promise<void>;
 }
 
 /** Map mime/extension → language label for syntax display */
@@ -64,10 +66,15 @@ export const FileViewer: React.FC<FileViewerProps> = ({
   onClose,
   onSummarize,
   getImageUrl,
+  onSave,
+  onPin,
 }) => {
   const [summarizing, setSummarizing] = useState(false);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [pdfUrl, setPdfUrl] = useState<string | null>(null);
+  const [editing, setEditing] = useState(false);
+  const [editContent, setEditContent] = useState('');
+  const [saving, setSaving] = useState(false);
 
   // Load image URL if file is an image
   useEffect(() => {
@@ -133,6 +140,26 @@ export const FileViewer: React.FC<FileViewerProps> = ({
     setSummarizing(false);
   };
 
+  const isEditable = !!file.content && !isImage && !isPdf && !isDocx;
+
+  const startEditing = () => {
+    setEditContent(file.content || '');
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    setEditing(false);
+    setEditContent('');
+  };
+
+  const handleSave = async () => {
+    if (!onSave) return;
+    setSaving(true);
+    const ok = await onSave(file.path, editContent);
+    setSaving(false);
+    if (ok) setEditing(false);
+  };
+
   return (
     <div className="file-viewer">
       {/* Header */}
@@ -141,7 +168,19 @@ export const FileViewer: React.FC<FileViewerProps> = ({
           <span className="viewer-filename">{file.name}</span>
           <span className="viewer-path">{file.path}</span>
         </div>
-        <button className="viewer-close" onClick={onClose} title="Close">×</button>
+        <div className="viewer-header-actions">
+          {onPin && (
+            <button className="viewer-pin" onClick={() => onPin(file.path, true)} title="Pin file">
+              📌
+            </button>
+          )}
+          {isEditable && !editing && (
+            <button className="viewer-edit-btn" onClick={startEditing} title="Edit file">
+              ✎
+            </button>
+          )}
+          <button className="viewer-close" onClick={onClose} title="Close">×</button>
+        </div>
       </div>
 
       {/* Meta bar */}
@@ -174,7 +213,25 @@ export const FileViewer: React.FC<FileViewerProps> = ({
 
       {/* Content */}
       <div className="file-viewer-content">
-        {isImage && imageUrl ? (
+        {editing ? (
+          <div className="edit-mode">
+            <div className="edit-toolbar">
+              <span className="edit-label">Editing — {file.name}</span>
+              <div className="edit-actions">
+                <button className="edit-cancel" onClick={cancelEditing}>Cancel</button>
+                <button className="edit-save" onClick={handleSave} disabled={saving}>
+                  {saving ? 'Saving...' : '💾 Save'}
+                </button>
+              </div>
+            </div>
+            <textarea
+              className="edit-textarea"
+              value={editContent}
+              onChange={e => setEditContent(e.target.value)}
+              spellCheck={false}
+            />
+          </div>
+        ) : isImage && imageUrl ? (
           <div className="image-preview">
             <img src={imageUrl} alt={file.name} />
           </div>

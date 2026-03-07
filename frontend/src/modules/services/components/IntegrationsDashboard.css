@@ -1,0 +1,441 @@
+/* ═══════════════════════════════════════════════════════════
+   IntegrationsDashboard.css — Feed Connection Settings
+   ═══════════════════════════════════════════════════════════ */
+
+.integrations-dashboard {
+  padding: 0;
+}
+
+.integ-header h1 {
+  margin: 0 0 4px 0;
+  font-size: 1.5rem;
+}
+
+.integ-subtitle {
+  color: var(--text-secondary, #999);
+  margin: 0 0 20px 0;
+  font-size: 0.9rem;
+}
+
+.integ-loading {
+  padding: 40px;
+  text-align: center;
+  color: var(--text-secondary, #999);
+}
+
+/* ── Polling bar ──────────────────────────────────────────── */
+
+.polling-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 14px;
+  background: var(--bg-secondary, #1e1e2e);
+  border-radius: 8px;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #aaa);
+  margin-bottom: 16px;
+}
+
+.polling-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+
+.polling-dot.on {
+  background: #4ade80;
+  box-shadow: 0 0 6px #4ade80;
+}
+
+.polling-dot.off {
+  background: #666;
+}
+
+.polling-feeds {
+  margin-left: auto;
+  color: var(--text-tertiary, #777);
+}
+
+/* ── Integration cards ────────────────────────────────────── */
+
+.integ-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.integ-card {
+  border: 1px solid var(--border-color, #333);
+  border-radius: 10px;
+  background: var(--bg-secondary, #1a1a2e);
+  overflow: hidden;
+  transition: border-color 0.2s;
+}
+
+.integ-card.connected {
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.integ-card.expanded {
+  border-color: var(--accent-color, #7c5bf5);
+}
+
+.integ-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  cursor: pointer;
+  user-select: none;
+}
+
+.integ-card-header:hover {
+  background: var(--bg-hover, rgba(124, 91, 245, 0.06));
+}
+
+.integ-card-left {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.integ-icon {
+  font-size: 1.8rem;
+}
+
+.integ-name {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 600;
+}
+
+.integ-desc {
+  margin: 2px 0 0 0;
+  font-size: 0.82rem;
+  color: var(--text-secondary, #999);
+}
+
+.integ-card-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.integ-status {
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.integ-status.on {
+  color: #4ade80;
+}
+
+.integ-status.off {
+  color: #666;
+}
+
+.integ-chevron {
+  font-size: 0.85rem;
+  color: #666;
+}
+
+/* ── Card body (expanded) ─────────────────────────────────── */
+
+.integ-card-body {
+  padding: 0 20px 20px 20px;
+  border-top: 1px solid var(--border-color, #333);
+}
+
+.integ-connect-section {
+  margin: 16px 0;
+}
+
+.integ-connect-section h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary, #ccc);
+}
+
+/* Provider grid (email) */
+
+.provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 10px;
+}
+
+.provider-card {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  background: var(--bg-primary, #12121a);
+}
+
+.provider-card.connected {
+  border-color: rgba(74, 222, 128, 0.3);
+}
+
+.provider-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.provider-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.connected-badge {
+  color: #4ade80;
+  font-size: 0.82rem;
+  font-weight: 500;
+}
+
+.connected-status {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.username {
+  color: var(--accent-color, #7c5bf5);
+  font-family: monospace;
+  font-size: 0.9rem;
+}
+
+/* Buttons */
+
+.btn-sm {
+  padding: 5px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.15s;
+}
+
+.btn-connect {
+  padding: 8px 16px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background: var(--accent-color, #7c5bf5);
+  color: white;
+}
+
+.btn-connect:hover,
+.btn-sm.btn-connect:hover {
+  filter: brightness(1.15);
+}
+
+.btn-sm.btn-connect {
+  background: var(--accent-color, #7c5bf5);
+  color: white;
+}
+
+.btn-sm.btn-danger {
+  background: rgba(239, 68, 68, 0.15);
+  color: #ef4444;
+}
+
+.btn-sm.btn-danger:hover {
+  background: rgba(239, 68, 68, 0.3);
+}
+
+.btn-sm.btn-install {
+  background: rgba(124, 91, 245, 0.15);
+  color: var(--accent-color, #7c5bf5);
+}
+
+.btn-sm.btn-install:hover {
+  background: rgba(124, 91, 245, 0.3);
+}
+
+.btn-sm.btn-installed {
+  background: rgba(74, 222, 128, 0.15);
+  color: #4ade80;
+  cursor: default;
+}
+
+/* Token input */
+
+.token-input-row {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.token-input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  background: var(--bg-primary, #12121a);
+  color: var(--text-primary, #eee);
+  font-family: monospace;
+  font-size: 0.85rem;
+}
+
+.token-input:focus {
+  outline: none;
+  border-color: var(--accent-color, #7c5bf5);
+}
+
+/* Device flow */
+
+.device-flow-box {
+  padding: 16px;
+  background: var(--bg-primary, #12121a);
+  border: 1px solid var(--border-color, #333);
+  border-radius: 8px;
+  text-align: center;
+}
+
+.device-flow-box p {
+  margin: 0 0 8px 0;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #aaa);
+}
+
+.device-code {
+  font-size: 1.8rem;
+  font-weight: 700;
+  font-family: monospace;
+  color: var(--accent-color, #7c5bf5);
+  letter-spacing: 4px;
+  margin: 12px 0;
+}
+
+.device-flow-box a {
+  color: var(--accent-color, #7c5bf5);
+  text-decoration: underline;
+  font-size: 0.85rem;
+}
+
+.polling-msg {
+  color: #f59e0b;
+  font-size: 0.85rem;
+  margin-top: 10px;
+}
+
+/* Toggle row */
+
+.integ-toggle-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-top: 1px solid var(--border-color, #252535);
+  margin-top: 12px;
+}
+
+.integ-toggle-label {
+  font-size: 0.9rem;
+  color: var(--text-secondary, #ccc);
+}
+
+.toggle-btn {
+  padding: 4px 14px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.toggle-btn.on {
+  background: #4ade80;
+  color: #000;
+}
+
+.toggle-btn.off {
+  background: var(--bg-primary, #12121a);
+  color: #666;
+  border: 1px solid #444;
+}
+
+/* Docs link */
+
+.docs-link {
+  display: inline-block;
+  margin-top: 8px;
+  font-size: 0.85rem;
+  color: var(--accent-color, #7c5bf5);
+  text-decoration: none;
+}
+
+.docs-link:hover {
+  text-decoration: underline;
+}
+
+/* Protocol suggestions */
+
+.integ-protocols {
+  margin-top: 16px;
+  padding-top: 12px;
+  border-top: 1px solid var(--border-color, #252535);
+}
+
+.integ-protocols h4 {
+  margin: 0 0 10px 0;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: var(--text-secondary, #ccc);
+}
+
+.protocol-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+}
+
+.protocol-row + .protocol-row {
+  border-top: 1px solid var(--border-very-subtle, #1e1e2e);
+}
+
+.protocol-name {
+  font-weight: 600;
+  font-size: 0.88rem;
+  color: var(--text-primary, #eee);
+  display: block;
+}
+
+.protocol-desc {
+  font-size: 0.78rem;
+  color: var(--text-tertiary, #777);
+  display: block;
+  margin-top: 2px;
+}
+
+/* Flash messages */
+
+.integ-flash {
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.85rem;
+  margin-bottom: 12px;
+}
+
+.integ-flash.success {
+  background: rgba(74, 222, 128, 0.12);
+  color: #4ade80;
+  border: 1px solid rgba(74, 222, 128, 0.25);
+}
+
+.integ-flash.error {
+  background: rgba(239, 68, 68, 0.12);
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}

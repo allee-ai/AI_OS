@@ -5,6 +5,72 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-03-07 — Context-Aware Loops, Editable Prompts, Integrations Hub, Workspace Upgrades
+
+### Context-Aware Loops (`agent/subconscious/loops/`)
+- **`context_aware` field**: New boolean on `LoopConfig` in `base.py`; when enabled, the loop's STATE prompt is enriched with live agent context (recent conversation, active facts, current goals)
+- **All loops updated**: `thought.py`, `memory.py`, `task_planner.py`, `custom.py` respect the flag; `manager.py` passes it through on create
+- **API**: `PUT /api/subconscious/loops/{name}/context-aware` toggle endpoint in `api.py`
+- **CLI**: `/loops context <name> on|off` command
+- **Frontend**: Toggle switch per loop in `SubconsciousDashboard.tsx`
+
+### Editable Loop Prompts (`agent/subconscious/loops/`)
+- **`DEFAULT_PROMPTS`**: Each loop defines stage-keyed prompt defaults — `thought.py` (observe/orient/decide/act), `memory.py` (scan/evaluate/consolidate), `task_planner.py` (plan/execute_llm/synthesize)
+- **Runtime override**: Loops store `self._prompts` dict; `getattr(self, '_prompts', DEFAULT_PROMPTS)` guards against `__new__` singleton edge case
+- **API**: `GET /api/subconscious/loops/{name}/prompts` + `PUT` to read/edit per-stage prompts
+- **CLI**: `/loops prompts <name>` displays current prompts, `/loops prompts <name> <stage> <text>` updates
+- **Frontend**: Expandable prompt editor per loop in `SubconsciousDashboard` with textarea per stage + save
+
+### Feeds Integrations Hub (`Feeds/api.py`, `frontend/.../IntegrationsDashboard`)
+- **Backend**: `GET /api/feeds/integrations` returns unified status for Email, GitHub, Discord sources; `POST .../connect`, `POST .../disconnect`, `POST .../configure` per-source endpoints
+- **IntegrationsDashboard.tsx** (new ~340 lines): Settings → Integrations page with expandable cards per source, OAuth/device-flow connect buttons, reflex protocol install section
+- **IntegrationsDashboard.css** (new ~380 lines): Card layout, status badges, expand/collapse animation
+- **SettingsPage.tsx**: Added Integrations entry in sidebar navigation
+
+### Workspace Upgrades (`workspace/`)
+- **File editing**: `PUT /api/workspace/file` endpoint; `FileViewer.tsx` edit mode (✎ button → textarea → save)
+- **Recent files**: `GET /api/workspace/recent` endpoint
+- **Pinned files**: `POST /api/workspace/file/pin` + `GET /api/workspace/pinned`; `pinned` column added via migration in `schema.py`
+- **Quick notes**: `POST /api/workspace/note` + `GET /api/workspace/notes`
+- **Frontend**: `WorkspacePanel.tsx` sidebar tabs (📁 Files | 🕐 Recent | 📌 Pinned | 📝 Notes), pin button on files, note creation form
+- **Hooks/API**: `useWorkspace.ts` + `workspaceApi.ts` extended with editFile, pinFile, getPinnedFiles, getRecentFiles, createNote, listNotes
+
+### New Tools (`agent/threads/form/tools/`)
+- **regex_search.py**: Search workspace files by regex pattern with match highlighting
+- **cli_command.py**: Execute whitelisted CLI commands (ls, cat, grep, find, wc, head, tail, echo, date, pwd)
+- **registry.py**: Both tools registered in tool registry
+
+### Files Changed
+- `agent/subconscious/loops/base.py` — `context_aware` field on LoopConfig
+- `agent/subconscious/loops/thought.py` — DEFAULT_PROMPTS + context-aware STATE injection
+- `agent/subconscious/loops/memory.py` — DEFAULT_PROMPTS + prompt override
+- `agent/subconscious/loops/task_planner.py` — DEFAULT_PROMPTS + prompt override
+- `agent/subconscious/loops/custom.py` — context_aware DB column
+- `agent/subconscious/loops/manager.py` — context_aware flag passthrough
+- `agent/subconscious/api.py` — context-aware toggle + prompts GET/PUT endpoints
+- `cli.py` — `/loops context` + `/loops prompts` commands
+- `Feeds/api.py` — integrations status + connect/disconnect/configure
+- `workspace/api.py` — PUT file, GET recent, POST pin, GET pinned, POST note, GET notes
+- `workspace/schema.py` — `pinned` column migration, pin/note helpers
+- `agent/threads/form/tools/registry.py` — regex_search + cli_command registration
+- `agent/threads/form/tools/executables/regex_search.py` — New
+- `agent/threads/form/tools/executables/cli_command.py` — New
+- `frontend/src/modules/subconscious/components/SubconsciousDashboard.tsx` — context toggle + prompt editor
+- `frontend/src/modules/subconscious/components/SubconsciousDashboard.css` — prompt editor styles
+- `frontend/src/modules/services/components/IntegrationsDashboard.tsx` — New
+- `frontend/src/modules/services/components/IntegrationsDashboard.css` — New
+- `frontend/src/modules/services/components/index.ts` — IntegrationsDashboard export
+- `frontend/src/modules/services/pages/SettingsPage.tsx` — Integrations sidebar entry
+- `frontend/src/modules/workspace/components/FileViewer.tsx` — edit mode + pin
+- `frontend/src/modules/workspace/components/FileViewer.css` — edit/pin styles
+- `frontend/src/modules/workspace/components/WorkspacePanel.tsx` — sidebar tabs + notes
+- `frontend/src/modules/workspace/components/WorkspacePanel.css` — tab/note styles
+- `frontend/src/modules/workspace/hooks/useWorkspace.ts` — new API hooks
+- `frontend/src/modules/workspace/services/workspaceApi.ts` — new API methods
+- `tests/test_task_planner.py` — New
+
+---
+
 ## 2026-03-05 — Schema Migration System + Fact-Anchored Concept Graph
 
 ### Schema Migration System (`agent/core/migrations.py`)

@@ -85,6 +85,12 @@ def init_workspace_tables():
         except sqlite3.OperationalError:
             pass  # Column already exists
 
+        # Add pinned column if missing (migration)
+        try:
+            cursor.execute("ALTER TABLE workspace_files ADD COLUMN pinned INTEGER DEFAULT 0")
+        except sqlite3.OperationalError:
+            pass  # Column already exists
+
         # Indexes
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_ws_parent ON workspace_files(parent_path)")
         cursor.execute("CREATE INDEX IF NOT EXISTS idx_ws_mime ON workspace_files(mime_type)")
@@ -583,6 +589,49 @@ def search_file_content(path: str, query: str, max_snippets: int = 3) -> List[st
             return [row[0] for row in cursor.fetchall()]
         except Exception:
             return []
+
+
+# =============================================================================
+# Pins
+# =============================================================================
+
+def set_file_pinned(path: str, pinned: bool = True) -> bool:
+    """Pin or unpin a file."""
+    with closing(get_connection()) as conn:
+        cursor = conn.cursor()
+        path = normalize_path(path)
+        cursor.execute(
+            "UPDATE workspace_files SET pinned = ? WHERE path = ?",
+            (1 if pinned else 0, path),
+        )
+        updated = cursor.rowcount > 0
+        conn.commit()
+    return updated
+
+
+def get_pinned_files() -> List[Dict[str, Any]]:
+    """Get all pinned files."""
+    with closing(get_connection(readonly=True)) as conn:
+        cursor = conn.cursor()
+        cursor.execute("""
+            SELECT path, name, is_folder, mime_type, size, modified_at, summary
+            FROM workspace_files
+            WHERE pinned = 1
+            ORDER BY modified_at DESC
+        """)
+        return [
+            {
+                "path": row[0],
+                "name": row[1],
+                "is_folder": bool(row[2]),
+                "mime_type": row[3],
+                "size": row[4],
+                "modified_at": row[5],
+                "summary": row[6],
+                "pinned": True,
+            }
+            for row in cursor.fetchall()
+        ]
 
 
 # Initialize on import

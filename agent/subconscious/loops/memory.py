@@ -11,6 +11,23 @@ from typing import Optional, Dict, Any
 from .base import BackgroundLoop, LoopConfig
 
 
+# ── Default prompts (editable at runtime) ───────────────────
+
+DEFAULT_PROMPTS = {
+    "extract": """Extract facts about the user from this conversation as a Python list.
+Each fact is a dict with "key" and "text".
+Keys should be simple, flat names (1-2 words joined by underscore) — NOT hierarchical.
+Think of them like field labels: favorite_language, project_name, pet, coffee_preference.
+
+ONLY output a Python list. No explanation.
+
+Example:
+[{"key": "favorite_language", "text": "User prefers Python"}, {"key": "current_project", "text": "User is building TaskMaster app"}]
+
+If nothing worth remembering, output: []""",
+}
+
+
 class MemoryLoop(BackgroundLoop):
     """
     Periodically extracts facts from recent conversations.
@@ -28,6 +45,7 @@ class MemoryLoop(BackgroundLoop):
         super().__init__(config, self._extract)
         self._last_processed_turn_id: Optional[int] = self._load_last_turn_id()
         self._model = model  # None = use env/default
+        self._prompts: Dict[str, str] = {k: v for k, v in DEFAULT_PROMPTS.items()}
     
     @property
     def model(self) -> str:
@@ -159,6 +177,7 @@ class MemoryLoop(BackgroundLoop):
         base["provider"] = self.provider
         base["unprocessed_turns"] = self.get_unprocessed_count()
         base["last_processed_turn_id"] = self._last_processed_turn_id
+        base["prompts"] = {k: v for k, v in getattr(self, '_prompts', DEFAULT_PROMPTS).items()}
         return base
     
     def _extract(self) -> None:
@@ -257,17 +276,20 @@ class MemoryLoop(BackgroundLoop):
         if len(text) < 30:
             return []
         
-        prompt = '''Extract facts about the user from this conversation as a Python list.
-Each fact is a dict with "key" and "text".
-Keys should be simple, flat names (1-2 words joined by underscore) — NOT hierarchical.
-Think of them like field labels: favorite_language, project_name, pet, coffee_preference.
+        # Build STATE preamble when context_aware is enabled
+        state_block = self._get_state("extract facts from conversation")
+        state_preamble = ""
+        if state_block:
+            state_preamble = f"""You have access to the following consciousness context about yourself and the user:
 
-ONLY output a Python list. No explanation.
+{state_block}
 
-Example:
-[{"key": "favorite_language", "text": "User prefers Python"}, {"key": "current_project", "text": "User is building TaskMaster app"}]
+Use this context to extract MORE RELEVANT facts — avoid duplicating what you already know,
+and pay attention to the user's identity/interests when deciding what's worth remembering.
 
-If nothing worth remembering, output: []
+"""
+        
+        prompt = state_preamble + getattr(self, '_prompts', DEFAULT_PROMPTS).get("extract", DEFAULT_PROMPTS["extract"]) + '''
 
 Conversation:
 """

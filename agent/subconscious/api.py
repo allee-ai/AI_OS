@@ -475,6 +475,127 @@ async def resume_loop(loop_name: str):
     return {"status": "resumed", "loop": loop_name}
 
 
+@router.put("/loops/{loop_name}/context-aware")
+async def set_loop_context_aware(loop_name: str, body: dict):
+    """Toggle context_aware (orchestrator STATE injection) for a loop.
+    
+    When enabled, the loop's LLM calls receive the full consciousness STATE
+    (identity, philosophy, linking, log, workspace) as additional context.
+    
+    Body: {"enabled": true/false}
+    """
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    enabled = body.get("enabled")
+    if not isinstance(enabled, bool):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="'enabled' must be a boolean")
+    
+    loop.config.context_aware = enabled
+    return {
+        "status": "updated",
+        "loop": loop_name,
+        "context_aware": enabled,
+    }
+
+
+@router.get("/loops/{loop_name}/prompts")
+async def get_loop_prompts(loop_name: str):
+    """Get all editable prompts for a loop.
+    
+    Returns a dict of stage_name → prompt_text.
+    Only loops with LLM prompts have prompt stages:
+      - memory: extract
+      - thought: think
+      - task_planner: plan, execute_llm, synthesize
+      - custom loops: (user-defined prompt field)
+    """
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    prompts = getattr(loop, '_prompts', None)
+    if prompts is None:
+        return {"loop": loop_name, "prompts": {}, "note": "This loop has no editable prompts"}
+    
+    return {"loop": loop_name, "prompts": dict(prompts)}
+
+
+@router.put("/loops/{loop_name}/prompts/{stage}")
+async def set_loop_prompt(loop_name: str, stage: str, body: dict):
+    """Update a specific prompt stage for a loop.
+    
+    Body: {"prompt": "new prompt text..."}
+    
+    Set prompt to empty string "" to reset to default.
+    """
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    prompts = getattr(loop, '_prompts', None)
+    if prompts is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Loop '{loop_name}' has no editable prompts")
+    
+    if stage not in prompts:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=404,
+            detail=f"Stage '{stage}' not found. Available: {list(prompts.keys())}",
+        )
+    
+    new_prompt = body.get("prompt")
+    if new_prompt is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="'prompt' field is required")
+    
+    new_prompt = str(new_prompt).strip()
+    
+    if not new_prompt:
+        # Reset to default
+        from agent.subconscious.loops.memory import DEFAULT_PROMPTS as MEM_DEFAULTS
+        from agent.subconscious.loops.thought import DEFAULT_PROMPTS as THOUGHT_DEFAULTS
+        from agent.subconscious.loops.task_planner import DEFAULT_PROMPTS as TASK_DEFAULTS
+        all_defaults = {**MEM_DEFAULTS, **THOUGHT_DEFAULTS, **TASK_DEFAULTS}
+        if stage in all_defaults:
+            prompts[stage] = all_defaults[stage]
+            return {"status": "reset_to_default", "loop": loop_name, "stage": stage}
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"No default found for stage '{stage}'")
+    
+    prompts[stage] = new_prompt
+    return {
+        "status": "updated",
+        "loop": loop_name,
+        "stage": stage,
+        "prompt_length": len(new_prompt),
+    }
+
+
 @router.put("/loops/memory/model")
 async def set_memory_model(body: dict):
     """Set the LLM model (and optionally provider) used by the memory loop for fact extraction.

@@ -59,6 +59,10 @@ def _ensure_custom_loops_table() -> None:
                 conn.execute("ALTER TABLE custom_loops ADD COLUMN max_tokens_per_iter INTEGER NOT NULL DEFAULT 2048")
             except Exception:
                 pass
+            try:
+                conn.execute("ALTER TABLE custom_loops ADD COLUMN context_aware INTEGER NOT NULL DEFAULT 0")
+            except Exception:
+                pass
             conn.commit()
     except Exception as e:
         print(f"[CustomLoop] Failed to create table: {e}")
@@ -74,6 +78,7 @@ def save_custom_loop_config(
     enabled: bool = True,
     max_iterations: int = 1,
     max_tokens_per_iter: int = 2048,
+    context_aware: bool = False,
 ) -> Dict[str, Any]:
     """Save or update a custom loop config in the database."""
     _ensure_custom_loops_table()
@@ -102,10 +107,10 @@ def save_custom_loop_config(
             conn.execute("""
                 INSERT OR REPLACE INTO custom_loops
                     (name, source, target, interval_seconds, model, prompt, enabled,
-                     max_iterations, max_tokens_per_iter, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+                     max_iterations, max_tokens_per_iter, context_aware, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
             """, (name.strip(), source, target, interval, model, prompt.strip(),
-                  int(enabled), max_iterations, max_tokens_per_iter))
+                  int(enabled), max_iterations, max_tokens_per_iter, int(context_aware)))
             conn.commit()
         
         return {
@@ -118,6 +123,7 @@ def save_custom_loop_config(
             "enabled": enabled,
             "max_iterations": max_iterations,
             "max_tokens_per_iter": max_tokens_per_iter,
+            "context_aware": context_aware,
         }
     except Exception as e:
         raise RuntimeError(f"Failed to save custom loop: {e}")
@@ -133,7 +139,8 @@ def get_custom_loop_configs() -> List[Dict[str, Any]]:
             cur = conn.cursor()
             cur.execute("""
                 SELECT name, source, target, interval_seconds, model, prompt,
-                       enabled, max_iterations, max_tokens_per_iter, created_at, updated_at
+                       enabled, max_iterations, max_tokens_per_iter, created_at, updated_at,
+                       context_aware
                 FROM custom_loops
             """)
             rows = cur.fetchall()
@@ -145,6 +152,7 @@ def get_custom_loop_configs() -> List[Dict[str, Any]]:
                     "max_iterations": r[7] if r[7] else 1,
                     "max_tokens_per_iter": r[8] if r[8] else 2048,
                     "created_at": r[9], "updated_at": r[10],
+                    "context_aware": bool(r[11]) if len(r) > 11 else False,
                 }
                 for r in rows
             ]
@@ -363,9 +371,22 @@ class CustomLoop(BackgroundLoop):
         chain_history: List[str] = []
         all_results: List[Dict[str, Any]] = []
         
+        # Build STATE preamble when context_aware is enabled
+        state_block = self._get_state(f"custom loop: {self.config.name}")
+        state_preamble = ""
+        if state_block:
+            state_preamble = f"""CONSCIOUSNESS CONTEXT (who you are, who your user is, what you know):
+\"\"\"
+{state_block}
+\"\"\"
+
+Use this context to produce more relevant, personalized output.
+
+"""
+        
         for iteration in range(self.max_iterations):
             if iteration == 0:
-                full_prompt = f"""{self.prompt}
+                full_prompt = f"""{state_preamble}{self.prompt}
 
 SOURCE DATA:
 \"\"\"
@@ -382,7 +403,7 @@ Python list:"""
                 chain_context = "\n\n".join(
                     f"--- Iteration {i+1} output ---\n{h}" for i, h in enumerate(chain_history)
                 )
-                full_prompt = f"""{self.prompt}
+                full_prompt = f"""{state_preamble}{self.prompt}
 
 SOURCE DATA:
 \"\"\"

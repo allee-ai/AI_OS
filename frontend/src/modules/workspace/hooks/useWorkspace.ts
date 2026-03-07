@@ -303,6 +303,55 @@ export function useWorkspace() {
     return URL.createObjectURL(blob);
   }, []);
 
+  // Edit (save) a file
+  const editFile = useCallback(async (path: string, content: string): Promise<boolean> => {
+    try {
+      await workspaceApi.editFile(path, content);
+      // Refresh the open file metadata
+      const meta = await workspaceApi.getFileMeta(path);
+      dispatch({ type: 'SET_OPEN_FILE', payload: meta });
+      return true;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      return false;
+    }
+  }, []);
+
+  // Pin / unpin a file
+  const pinFile = useCallback(async (path: string, pinned: boolean): Promise<void> => {
+    try {
+      await workspaceApi.pinFile(path, pinned);
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+    }
+  }, []);
+
+  // Get pinned files
+  const getPinnedFiles = useCallback(async () => {
+    return workspaceApi.getPinnedFiles();
+  }, []);
+
+  // Get recent files
+  const getRecentFiles = useCallback(async (limit = 15) => {
+    return workspaceApi.getRecentFiles(limit);
+  }, []);
+
+  // Create a note
+  const createNote = useCallback(async (title: string, content: string) => {
+    try {
+      const result = await workspaceApi.createNote(title, content);
+      return result;
+    } catch (error) {
+      dispatch({ type: 'SET_ERROR', payload: (error as Error).message });
+      return null;
+    }
+  }, []);
+
+  // List notes
+  const listNotes = useCallback(async () => {
+    return workspaceApi.listNotes();
+  }, []);
+
   return {
     ...state,
     loadFiles,
@@ -322,5 +371,11 @@ export function useWorkspace() {
     summarizeFile,
     searchFiles,
     getImageUrl,
+    editFile,
+    pinFile,
+    getPinnedFiles,
+    getRecentFiles,
+    createNote,
+    listNotes,
   };
 }

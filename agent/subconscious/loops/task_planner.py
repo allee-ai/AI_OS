@@ -24,6 +24,38 @@ from typing import Optional, Dict, Any, List
 from .base import BackgroundLoop, LoopConfig
 
 
+# ── Default prompts (editable at runtime) ───────────────────
+
+DEFAULT_PROMPTS = {
+    "plan": """You are the task planning module of a personal AI assistant.
+Decompose this goal into concrete, ordered steps that can be executed.
+
+Each step must be a dict with:
+- "description": what this step does (1 sentence)
+- "tool": the tool name to use (or "llm" for reasoning/writing tasks, "none" for no-action steps)
+- "action": the specific action to call on the tool
+- "params": dict of parameters for the tool action
+- "depends_on": list of step indices this depends on (0-indexed), or [] if none
+
+Rules:
+- Keep it to 2-6 steps. Simpler is better.
+- Use tool names and actions exactly as shown above.
+- For research/analysis/writing tasks, use "llm" as the tool.
+- If a step needs output from a previous step, reference it in depends_on.
+- Be specific with params - include file paths, search terms, etc.
+
+Output ONLY a Python list. No explanation.""",
+
+    "execute_llm": """You are a personal AI assistant executing a task step.
+Complete this step thoroughly. Be specific and actionable.
+Output your result directly — no preamble, no \"here is the result\".""",
+
+    "synthesize": """Summarize the results of this completed task.
+Write a concise summary (2-4 sentences) of what was accomplished.
+If any steps failed, mention what didn't work. Be direct.""",
+}
+
+
 # ─────────────────────────────────────────────────────────────
 # Task DB helpers
 # ─────────────────────────────────────────────────────────────
@@ -223,6 +255,7 @@ class TaskPlanner(BackgroundLoop):
         self._tasks_completed = 0
         self._tasks_failed = 0
         self._currently_executing: Optional[int] = None
+        self._prompts: Dict[str, str] = {k: v for k, v in DEFAULT_PROMPTS.items()}
     
     @property
     def model(self) -> str:
@@ -242,6 +275,7 @@ class TaskPlanner(BackgroundLoop):
         base["tasks_completed"] = self._tasks_completed
         base["tasks_failed"] = self._tasks_failed
         base["currently_executing"] = self._currently_executing
+        base["prompts"] = {k: v for k, v in getattr(self, '_prompts', DEFAULT_PROMPTS).items()}
         return base
     
     # ── Main loop tick ──────────────────────────────────────
@@ -409,6 +443,11 @@ class TaskPlanner(BackgroundLoop):
         parts.append(f"Available tools: {len(ctx.get('tools', []))}")
         ctx["summary"] = " | ".join(parts)
         
+        # When context_aware, inject the full orchestrator STATE block
+        state_block = self._get_state(goal)
+        if state_block:
+            ctx["state"] = state_block
+        
         return ctx
     
     # ── Step planning ───────────────────────────────────────
@@ -426,10 +465,21 @@ class TaskPlanner(BackgroundLoop):
         
         tools_block = context.get("tools_prompt", "No tools available.")
         
-        prompt = f"""You are the task planning module of a personal AI assistant.
-Decompose this goal into concrete, ordered steps that can be executed.
+        # Full consciousness context when available
+        state_block = context.get("state", "")
+        state_section = ""
+        if state_block:
+            state_section = f"""
+CONSCIOUSNESS CONTEXT (your identity, user profile, concept graph, recent history):
+\"\"\"
+{state_block}
+\"\"\"
+"""
+        
+        prompt = f"""{getattr(self, '_prompts', DEFAULT_PROMPTS).get("plan", DEFAULT_PROMPTS["plan"])}
 
 GOAL: {goal}
+{state_section}
 
 {f"USER CONTEXT:{chr(10)}{identity_block}" if identity_block else ""}
 
@@ -437,22 +487,6 @@ GOAL: {goal}
 
 AVAILABLE TOOLS:
 {tools_block}
-
-Each step must be a dict with:
-- "description": what this step does (1 sentence)
-- "tool": the tool name to use (or "llm" for reasoning/writing tasks, "none" for no-action steps)
-- "action": the specific action to call on the tool
-- "params": dict of parameters for the tool action
-- "depends_on": list of step indices this depends on (0-indexed), or [] if none
-
-Rules:
-- Keep it to 2-6 steps. Simpler is better.
-- Use tool names and actions exactly as shown above.
-- For research/analysis/writing tasks, use "llm" as the tool.
-- If a step needs output from a previous step, reference it in depends_on.
-- Be specific with params - include file paths, search terms, etc.
-
-Output ONLY a Python list. No explanation.
 
 Python list:"""
         
@@ -498,6 +532,10 @@ Python list:"""
         action = step.get("action", "")
         params = step.get("params", {})
         description = step.get("description", "")
+        
+        # Normalize LLM-hallucinated tool aliases
+        _LLM_ALIASES = {"ask_llm": "llm", "reason": "llm", "think": "llm", "generate": "llm"}
+        tool_name = _LLM_ALIASES.get(tool_name, tool_name)
         
         # Inject previous step results into params if referenced
         depends = step.get("depends_on", [])
@@ -586,15 +624,12 @@ Python list:"""
         
         custom_prompt = params.get("prompt", "")
         
-        prompt = f"""You are a personal AI assistant executing a task step.
+        prompt = f"""{getattr(self, '_prompts', DEFAULT_PROMPTS).get("execute_llm", DEFAULT_PROMPTS["execute_llm"])}
 
 STEP: {description}
 {f"ADDITIONAL INSTRUCTIONS: {custom_prompt}" if custom_prompt else ""}
 {f"CONTEXT FROM PREVIOUS STEPS: {prev_context}" if prev_context else ""}
-{identity_block}
-
-Complete this step thoroughly. Be specific and actionable.
-Output your result directly — no preamble, no "here is the result"."""
+{identity_block}"""
         
         return self._call_model(prompt)
     
@@ -614,15 +649,12 @@ Output your result directly — no preamble, no "here is the result"."""
             output = str(result.get("output", result.get("error", "")))[:300]
             steps_summary.append(f"Step {i+1} [{status}] {step.get('description', '')}: {output}")
         
-        prompt = f"""Summarize the results of this completed task.
+        prompt = f"""{getattr(self, '_prompts', DEFAULT_PROMPTS).get("synthesize", DEFAULT_PROMPTS["synthesize"])}
 
 GOAL: {goal}
 
 STEP RESULTS:
-{chr(10).join(steps_summary)}
-
-Write a concise summary (2-4 sentences) of what was accomplished.
-If any steps failed, mention what didn't work. Be direct."""
+{chr(10).join(steps_summary)}"""
         
         try:
             return self._call_model(prompt)

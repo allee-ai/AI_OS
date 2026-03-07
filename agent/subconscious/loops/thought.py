@@ -108,6 +108,34 @@ THOUGHT_CATEGORIES = ["insight", "alert", "reminder", "suggestion", "question"]
 THOUGHT_PRIORITIES = ["low", "medium", "high", "urgent"]
 
 
+# ── Default prompts (editable at runtime) ───────────────────
+
+DEFAULT_PROMPTS = {
+    "think": """You are the proactive thinking module of a personal AI assistant.
+Your job: review the current state below and surface anything the user should know,
+any connections worth noting, or actions worth suggesting.
+
+Categories (pick one per thought):
+- insight: a pattern, connection, or synthesis you noticed
+- alert: something time-sensitive or important the user should see
+- reminder: something the user might have forgotten or should follow up on
+- suggestion: a helpful action the user could take
+- question: something you'd like to ask the user to improve your understanding
+
+Priority levels: low, medium, high, urgent
+
+If there's nothing genuinely worth surfacing, output exactly: []
+
+Otherwise output a Python list of dicts. Each dict has:
+- "thought": the insight text (1-2 sentences, conversational)
+- "category": one of [insight, alert, reminder, suggestion, question]
+- "priority": one of [low, medium, high, urgent]
+
+Be selective — only surface things that genuinely matter. Quality over quantity.
+Maximum 3 thoughts per cycle.""",
+}
+
+
 # ─────────────────────────────────────────────────────────────
 # ThoughtLoop class
 # ─────────────────────────────────────────────────────────────
@@ -132,6 +160,7 @@ class ThoughtLoop(BackgroundLoop):
         super().__init__(config, self._think)
         self._model = model
         self._thought_count = 0
+        self._prompts: Dict[str, str] = {k: v for k, v in DEFAULT_PROMPTS.items()}
     
     @property
     def model(self) -> str:
@@ -149,6 +178,7 @@ class ThoughtLoop(BackgroundLoop):
         base = super().stats
         base["model"] = self.model
         base["thought_count"] = self._thought_count
+        base["prompts"] = {k: v for k, v in getattr(self, '_prompts', DEFAULT_PROMPTS).items()}
         return base
     
     def _gather_context(self) -> Dict[str, List[str]]:
@@ -241,31 +271,34 @@ class ThoughtLoop(BackgroundLoop):
     
     def _think(self) -> None:
         """Execute one proactive thinking cycle."""
-        context = self._gather_context()
+        # When context_aware, use the full orchestrator STATE instead of ad-hoc context
+        state_block = self._get_state("proactive thinking about the user")
         
-        total_items = sum(len(v) for v in context.values())
-        if total_items < 2:
-            return
+        if state_block:
+            # Full STATE path — the orchestrator already assembled identity,
+            # philosophy, linking, log, workspace, etc.
+            ctx_text = state_block
+            total_items = len(state_block.splitlines())
+        else:
+            # Fallback: manual context gathering
+            context = self._gather_context()
+            total_items = sum(len(v) for v in context.values())
+            if total_items < 2:
+                return
+            ctx_parts = []
+            for source, items in context.items():
+                ctx_parts.append(f"## {source.replace('_', ' ').title()}")
+                ctx_parts.extend(items)
+                ctx_parts.append("")
+            ctx_text = "\n".join(ctx_parts)
         
-        ctx_parts = []
-        for source, items in context.items():
-            ctx_parts.append(f"## {source.replace('_', ' ').title()}")
-            ctx_parts.extend(items)
-            ctx_parts.append("")
-        ctx_text = "\n".join(ctx_parts)
+        # Grab previous thoughts either way (needed for de-dup)
+        try:
+            previous_thoughts = [t["thought"] for t in get_thought_log(limit=5)]
+        except Exception:
+            previous_thoughts = []
         
-        prompt = f"""You are the proactive thinking module of a personal AI assistant.
-Your job: review the current state below and surface anything the user should know,
-any connections worth noting, or actions worth suggesting.
-
-Categories (pick one per thought):
-- insight: a pattern, connection, or synthesis you noticed
-- alert: something time-sensitive or important the user should see
-- reminder: something the user might have forgotten or should follow up on
-- suggestion: a helpful action the user could take
-- question: something you'd like to ask the user to improve your understanding
-
-Priority levels: low, medium, high, urgent
+        prompt = f"""{getattr(self, '_prompts', DEFAULT_PROMPTS).get("think", DEFAULT_PROMPTS["think"])}
 
 CURRENT STATE:
 \"\"\"
@@ -273,17 +306,7 @@ CURRENT STATE:
 \"\"\"
 
 PREVIOUS THOUGHTS (do NOT repeat these):
-{json.dumps(context.get('previous_thoughts', []))}
-
-If there's nothing genuinely worth surfacing, output exactly: []
-
-Otherwise output a Python list of dicts. Each dict has:
-- "thought": the insight text (1-2 sentences, conversational)
-- "category": one of [insight, alert, reminder, suggestion, question]
-- "priority": one of [low, medium, high, urgent]
-
-Be selective — only surface things that genuinely matter. Quality over quantity.
-Maximum 3 thoughts per cycle.
+{json.dumps(previous_thoughts)}
 
 Python list:"""
         

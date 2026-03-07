@@ -81,6 +81,7 @@ class LoopManager:
                 max_iterations=cfg.get("max_iterations", 1),
                 max_tokens_per_iter=cfg.get("max_tokens_per_iter", 2048),
             )
+            loop.config.context_aware = cfg.get("context_aware", False)
             self.add(loop)
             loop.start()
             loaded += 1

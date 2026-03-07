@@ -396,3 +396,86 @@ async def get_files_metadata(limit: int = 50):
     """Get metadata for all files (L1 context)."""
     files = get_all_files_metadata(limit=limit)
     return {"files": files, "count": len(files)}
+
+
+# ─────────────────────────────────────────────────────────────
+# Recent Files, Pins & Notes
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/recent")
+async def recent_files(limit: int = 20):
+    """Get recently modified files, newest first."""
+    return get_all_files_metadata(limit=limit)
+
+
+@router.post("/file/pin")
+async def pin_file(body: dict):
+    """Pin or unpin a file."""
+    path = body.get("path", "")
+    pinned = body.get("pinned", True)
+    if not path:
+        raise HTTPException(status_code=400, detail="path required")
+    from .schema import set_file_pinned
+    ok = set_file_pinned(path, pinned)
+    if not ok:
+        raise HTTPException(status_code=404, detail="File not found")
+    return {"path": path, "pinned": pinned}
+
+
+@router.get("/pinned")
+async def get_pinned_files():
+    """Get all pinned files."""
+    from .schema import get_pinned_files as _get_pinned
+    return _get_pinned()
+
+
+@router.post("/note")
+async def create_note(body: dict):
+    """Quick-create a note in /notes/."""
+    title = body.get("title", "").strip()
+    content_text = body.get("content", "").strip()
+    if not title:
+        from datetime import datetime
+        title = f"Note {datetime.utcnow().strftime('%Y-%m-%d %H:%M')}"
+
+    # Sanitise title for path
+    safe_title = "".join(c if c.isalnum() or c in " -_" else "_" for c in title)
+    path = f"/notes/{safe_title}.md"
+
+    md = f"# {title}\n\n{content_text}\n"
+    result = create_file(
+        path=path,
+        content=md.encode("utf-8"),
+        mime_type="text/markdown",
+    )
+    return {**result, "title": title}
+
+
+@router.get("/notes")
+async def list_notes():
+    """List all notes (files under /notes/)."""
+    from .schema import ensure_folder as _ef, list_directory as _ld
+    _ef("/notes")
+    return _ld("/notes")
+
+
+@router.put("/file")
+async def edit_file(body: dict):
+    """Edit a file's content in-place."""
+    path = body.get("path", "")
+    content_text = body.get("content", "")
+    if not path:
+        raise HTTPException(status_code=400, detail="path required")
+
+    existing = get_file(path)
+    if not existing:
+        raise HTTPException(status_code=404, detail="File not found")
+    if existing["is_folder"]:
+        raise HTTPException(status_code=400, detail="Cannot edit a folder")
+
+    result = create_file(
+        path=path,
+        content=content_text.encode("utf-8") if isinstance(content_text, str) else content_text,
+        mime_type=existing.get("mime_type"),
+    )
+    return result

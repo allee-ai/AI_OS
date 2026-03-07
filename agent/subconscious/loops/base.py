@@ -28,6 +28,7 @@ class LoopConfig:
     enabled: bool = True
     max_errors: int = 3  # Stop after this many consecutive errors
     error_backoff: float = 2.0  # Multiply interval by this on error
+    context_aware: bool = False  # When True, loop injects orchestrator STATE into prompts
 
 
 class BackgroundLoop:
@@ -60,6 +61,7 @@ class BackgroundLoop:
             "status": self._status.value,
             "interval": self.config.interval_seconds,
             "enabled": self.config.enabled,
+            "context_aware": self.config.context_aware,
             "max_errors": self.config.max_errors,
             "error_backoff": self.config.error_backoff,
             "last_run": self._last_run,
@@ -67,6 +69,25 @@ class BackgroundLoop:
             "error_count": self._error_count,
             "consecutive_errors": self._consecutive_errors,
         }
+
+    def _get_state(self, query: str = "") -> str:
+        """
+        Fetch the orchestrator's STATE block for context-aware loops.
+
+        Returns the full STATE (identity, philosophy, linking, log, etc.)
+        when ``self.config.context_aware`` is True, otherwise returns "".
+        """
+        try:
+            if not self.config.context_aware:
+                return ""
+        except AttributeError:
+            return ""
+        try:
+            from agent.subconscious.orchestrator import build_state
+            return build_state(query)
+        except Exception as e:
+            print(f"[{self.config.name}] Failed to get STATE: {e}")
+            return ""
     
     def start(self) -> None:
         """Start the background loop."""

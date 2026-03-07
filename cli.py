@@ -365,6 +365,11 @@ def _cmd_loops(args: str):
     /loops model <name>     — change extraction model
     /loops provider <name>  — change extraction provider (ollama|openai)
     /loops extract <text>   — extract facts from text (dry-run)
+    /loops context <name> [on|off] — toggle context-aware mode (STATE injection) for a loop
+    /loops prompts <name>          — show all prompt stages for a loop
+    /loops prompts <name> <stage>  — show full prompt for a stage
+    /loops prompts <name> <stage> <text> — replace prompt text
+    /loops prompts <name> <stage> default — reset to default
     """
     tokens = args.strip().split(maxsplit=1)
     verb = tokens[0] if tokens else ""
@@ -438,6 +443,108 @@ def _cmd_loops(args: str):
             print(f"  {RED}error: {e}{RESET}")
         return
 
+    # /loops context <name> [on|off]  — toggle context-aware (STATE injection)
+    if verb == "context":
+        ctx_tokens = rest.strip().split()
+        if not ctx_tokens:
+            print("  usage: /loops context <loop_name> [on|off]")
+            return
+        loop_name = ctx_tokens[0]
+        toggle = ctx_tokens[1].lower() if len(ctx_tokens) > 1 else None
+        try:
+            from agent.subconscious import _loop_manager
+            if not _loop_manager:
+                print(f"  {RED}loops not started{RESET}")
+                return
+            loop = _loop_manager.get_loop(loop_name)
+            if not loop:
+                print(f"  {RED}unknown loop: {loop_name}{RESET}")
+                return
+            if toggle is None:
+                status = GREEN + "on" + RESET if loop.config.context_aware else DIM + "off" + RESET
+                print(f"  {loop_name} context_aware: {status}")
+                print(f"  {DIM}when on, the orchestrator STATE (identity/philosophy/linking/log) is injected into LLM prompts{RESET}")
+            elif toggle in ("on", "true", "1"):
+                loop.config.context_aware = True
+                print(f"  {GREEN}{loop_name} context_aware → on{RESET}")
+            elif toggle in ("off", "false", "0"):
+                loop.config.context_aware = False
+                print(f"  {YELLOW}{loop_name} context_aware → off{RESET}")
+            else:
+                print(f"  usage: /loops context {loop_name} on|off")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /loops prompts <name> [stage [new_text]]  — view/edit prompts
+    if verb == "prompts":
+        p_tokens = rest.strip().split(maxsplit=1)
+        if not p_tokens:
+            print("  usage: /loops prompts <loop_name> [stage [new prompt text]]")
+            return
+        loop_name = p_tokens[0]
+        stage_rest = p_tokens[1] if len(p_tokens) > 1 else ""
+        try:
+            from agent.subconscious import _loop_manager
+            if not _loop_manager:
+                print(f"  {RED}loops not started{RESET}")
+                return
+            loop = _loop_manager.get_loop(loop_name)
+            if not loop:
+                print(f"  {RED}unknown loop: {loop_name}{RESET}")
+                return
+            prompts = getattr(loop, '_prompts', None)
+            if prompts is None:
+                print(f"  {DIM}{loop_name} has no editable prompts{RESET}")
+                return
+
+            if not stage_rest:
+                # Show all stages
+                print(f"  {BOLD}Prompts for {loop_name}:{RESET}")
+                for stage, text in prompts.items():
+                    preview = text.replace('\n', ' ')[:100]
+                    print(f"    {GREEN}{stage}{RESET}: {DIM}{preview}...{RESET}")
+                print(f"  {DIM}edit: /loops prompts {loop_name} <stage> <new prompt>{RESET}")
+                print(f"  {DIM}reset: /loops prompts {loop_name} <stage> default{RESET}")
+                return
+
+            s_tokens = stage_rest.split(maxsplit=1)
+            stage = s_tokens[0]
+            new_text = s_tokens[1] if len(s_tokens) > 1 else ""
+
+            if stage not in prompts:
+                print(f"  {RED}unknown stage: {stage}{RESET}")
+                print(f"  {DIM}available: {', '.join(prompts.keys())}{RESET}")
+                return
+
+            if not new_text:
+                # Show the full prompt for this stage
+                print(f"  {BOLD}{loop_name} → {stage}:{RESET}")
+                print(f"  {'─' * 60}")
+                for line in prompts[stage].splitlines():
+                    print(f"  {line}")
+                print(f"  {'─' * 60}")
+                return
+
+            if new_text.strip().lower() == "default":
+                # Reset to default
+                from agent.subconscious.loops.memory import DEFAULT_PROMPTS as MEM_D
+                from agent.subconscious.loops.thought import DEFAULT_PROMPTS as TH_D
+                from agent.subconscious.loops.task_planner import DEFAULT_PROMPTS as TP_D
+                all_d = {**MEM_D, **TH_D, **TP_D}
+                if stage in all_d:
+                    prompts[stage] = all_d[stage]
+                    print(f"  {GREEN}{loop_name} → {stage} reset to default{RESET}")
+                else:
+                    print(f"  {RED}no default for stage '{stage}'{RESET}")
+                return
+
+            prompts[stage] = new_text
+            print(f"  {GREEN}{loop_name} → {stage} updated ({len(new_text)} chars){RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
     # Default: show all loop stats
     try:
         from agent.subconscious import _loop_manager
@@ -447,10 +554,11 @@ def _cmd_loops(args: str):
                 color = GREEN if status == 'running' else YELLOW if status == 'paused' else DIM
                 model_str = f"  model={s['model']}" if 'model' in s else ""
                 provider_str = f"  provider={s['provider']}" if 'provider' in s else ""
+                ctx_str = f"  {GREEN}◉ ctx{RESET}" if s.get('context_aware') else ""
                 print(f"  {color}{s['name']:20s} {status:10s}{RESET}"
                       f"  runs={s.get('run_count', 0)}"
                       f"  errors={s.get('error_count', 0)}"
-                      f"{model_str}{provider_str}")
+                      f"{model_str}{provider_str}{ctx_str}")
         else:
             print("  loops not started (run /status to check)")
     except Exception:

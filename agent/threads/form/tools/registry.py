@@ -280,6 +280,28 @@ TOOLS: List[ToolDefinition] = [
         weight=0.5,
     ),
     
+    # --- Search & Retrieval ---
+    ToolDefinition(
+        name="regex_search",
+        description="Regex search across code, memory, logs, and concepts",
+        category=ToolCategory.FILES,
+        actions=["search", "search_memory", "search_logs", "search_concepts"],
+        run_file="regex_search.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.7,
+    ),
+    ToolDefinition(
+        name="cli_command",
+        description="Execute AI OS internal CLI commands (/identity, /memory, /links, /tasks, etc.)",
+        category=ToolCategory.AUTOMATION,
+        actions=["run", "list_commands", "help"],
+        run_file="cli_command.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.7,
+    ),
+    
     # --- Internal Tools ---
     ToolDefinition(
         name="ask_llm",
@@ -371,6 +393,8 @@ SAFE_ACTIONS: Dict[str, List[str]] = {
     "memory_log": ["search_logs", "get_recent", "get_session"],
     "memory_linking": ["spread_activate", "find_related"],
     "introspect": ["get_context", "get_recent_thoughts", "get_active_threads"],
+    "regex_search": ["search", "search_memory", "search_logs", "search_concepts"],
+    "cli_command": ["run", "list_commands", "help"],
 }
 
 # Actions that are blocked by default (require user to toggle allowed)
@@ -426,6 +450,18 @@ _ACTION_PARAM_SCHEMAS: Dict[str, Dict[str, str]] = {
     "memory_log__get_session":         {},
     "memory_linking__spread_activate": {"concept": "Concept name to activate"},
     "memory_linking__find_related":    {"concept": "Concept name to find links for"},
+    # regex_search
+    "regex_search__search":            {"pattern": "Regex pattern to search for",
+                                        "directory": "Directory to search (default '.')",
+                                        "file_pattern": "File glob e.g. *.py (default '*')"},
+    "regex_search__search_memory":     {"pattern": "Regex pattern to match against memory facts"},
+    "regex_search__search_logs":       {"pattern": "Regex pattern to match in conversation logs",
+                                        "limit": "Max turns to search (default 100)"},
+    "regex_search__search_concepts":   {"pattern": "Regex pattern to match concept names"},
+    # cli_command
+    "cli_command__run":                {"command": "CLI command e.g. /identity, /tasks pending"},
+    "cli_command__list_commands":      {},
+    "cli_command__help":               {"command": "Command to get help for"},
 }
 
 

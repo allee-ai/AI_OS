@@ -618,3 +618,189 @@ async def bridge_responses(limit: int = Query(20, ge=1, le=100)):
     """Get recent bridge response log."""
     from .bridge import get_response_log
     return get_response_log(limit)
+
+
+# ============================================================================
+# Integrations Hub — unified status for connecting feeds in Settings
+# ============================================================================
+
+class IntegrationConfig(BaseModel):
+    """Configuration update for an integration."""
+    key: str              # e.g. "bot_token", "client_id"
+    value: str
+    secret: bool = True   # store encrypted?
+
+
+@router.get("/integrations")
+async def list_integrations():
+    """
+    Unified integration status for the Settings UI.
+    Returns all supported feeds with connection status, config requirements,
+    and suggested reflex protocols.
+    """
+    from agent.core.secrets import get_oauth_tokens, get_secret
+
+    integrations = []
+
+    # ── Email ──────────────────────────────────────────────────
+    email_providers = {}
+    for provider in ["gmail", "outlook"]:
+        tokens = get_oauth_tokens(f"email_{provider}")
+        email_providers[provider] = {
+            "connected": bool(tokens and tokens.get("access_token")),
+            "label": provider.title(),
+            "auth_method": "oauth2",
+        }
+    integrations.append({
+        "id": "email",
+        "name": "Email",
+        "icon": "📧",
+        "description": "Gmail and Outlook integration — inbox, send, drafts",
+        "category": "communication",
+        "providers": email_providers,
+        "connected": any(p["connected"] for p in email_providers.values()),
+        "auth_method": "oauth2",
+        "config_fields": [
+            {"key": "GOOGLE_CLIENT_ID", "label": "Google Client ID", "type": "env", "secret": False},
+            {"key": "GOOGLE_CLIENT_SECRET", "label": "Google Client Secret", "type": "env", "secret": True},
+        ],
+        "suggested_protocols": ["email_triage", "morning_briefing"],
+        "docs_url": "https://console.cloud.google.com/apis/credentials",
+    })
+
+    # ── GitHub ─────────────────────────────────────────────────
+    gh_tokens = get_oauth_tokens("github")
+    gh_connected = bool(gh_tokens and gh_tokens.get("access_token"))
+    gh_username = None
+    if gh_connected:
+        try:
+            from .sources.github import get_adapter
+            adapter = get_adapter()
+            import asyncio
+            user = asyncio.get_event_loop().run_until_complete(adapter.get_user())
+            gh_username = user.get("login")
+        except Exception:
+            pass
+    integrations.append({
+        "id": "github",
+        "name": "GitHub",
+        "icon": "🐙",
+        "description": "Notifications, issues, PRs, code review alerts",
+        "category": "development",
+        "connected": gh_connected,
+        "username": gh_username,
+        "auth_method": "device_flow",
+        "config_fields": [
+            {"key": "GITHUB_CLIENT_ID", "label": "GitHub OAuth App Client ID", "type": "env", "secret": False},
+        ],
+        "suggested_protocols": ["github_review"],
+        "docs_url": "https://github.com/settings/developers",
+    })
+
+    # ── Discord ────────────────────────────────────────────────
+    discord_token = get_secret("bot_token", "discord")
+    integrations.append({
+        "id": "discord",
+        "name": "Discord",
+        "icon": "🎮",
+        "description": "Bot messages, DMs, server monitoring",
+        "category": "communication",
+        "connected": bool(discord_token),
+        "auth_method": "bot_token",
+        "config_fields": [
+            {"key": "bot_token", "label": "Discord Bot Token", "type": "secret", "secret": True},
+        ],
+        "suggested_protocols": [],
+        "docs_url": "https://discord.com/developers/applications",
+    })
+
+    # ── Polling status ─────────────────────────────────────────
+    from .polling import get_polling_status
+    polling = get_polling_status()
+
+    return {
+        "integrations": integrations,
+        "polling": polling,
+    }
+
+
+@router.post("/integrations/{feed_name}/connect")
+async def connect_integration(feed_name: str, config: Optional[IntegrationConfig] = None):
+    """
+    Start connection flow for an integration.
+    - email: redirects to OAuth (returns auth_url)
+    - github: starts device flow (returns user_code)
+    - discord: stores bot token directly
+    """
+    if feed_name == "email":
+        provider = "gmail"
+        if config and config.key == "provider":
+            provider = config.value
+        from .sources.email import get_oauth_url
+        import uuid
+        state = str(uuid.uuid4())
+        try:
+            url = get_oauth_url(provider, state)
+            return {"action": "redirect", "auth_url": url, "state": state, "provider": provider}
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    if feed_name == "github":
+        from .sources.github import start_device_flow
+        try:
+            result = await start_device_flow()
+            return {
+                "action": "device_flow",
+                "user_code": result["user_code"],
+                "verification_uri": result["verification_uri"],
+                "device_code": result["device_code"],
+                "expires_in": result.get("expires_in", 900),
+                "interval": result.get("interval", 5),
+            }
+        except ValueError as e:
+            raise HTTPException(status_code=400, detail=str(e))
+
+    if feed_name == "discord":
+        if not config or config.key != "bot_token" or not config.value:
+            raise HTTPException(status_code=400, detail="Provide bot_token")
+        from agent.core.secrets import store_secret
+        store_secret("bot_token", config.value, feed_name="discord", secret_type="bot_token")
+        return {"action": "stored", "connected": True}
+
+    raise HTTPException(status_code=404, detail=f"Unknown integration: {feed_name}")
+
+
+@router.post("/integrations/{feed_name}/disconnect")
+async def disconnect_integration(feed_name: str, provider: Optional[str] = None):
+    """Disconnect an integration (remove all tokens/secrets)."""
+    from agent.core.secrets import delete_secrets_for_feed
+
+    if feed_name == "email" and provider:
+        count = delete_secrets_for_feed(f"email_{provider}")
+    elif feed_name == "email":
+        count = sum(delete_secrets_for_feed(f"email_{p}") for p in ["gmail", "outlook", "proton"])
+    else:
+        count = delete_secrets_for_feed(feed_name)
+
+    return {"status": "disconnected", "secrets_removed": count}
+
+
+@router.post("/integrations/{feed_name}/configure")
+async def configure_integration(feed_name: str, body: Dict[str, Any]):
+    """
+    Update integration settings — polling interval, enabled state, env hints.
+    """
+    from .polling import get_polling_status
+
+    # Toggle enabled
+    if "enabled" in body:
+        state = _load_enabled()
+        state[feed_name] = bool(body["enabled"])
+        _save_enabled(state)
+
+    # Update polling interval goes through polling module
+    if "poll_interval" in body:
+        # Stored alongside feed state (future: per-feed intervals)
+        pass
+
+    return {"status": "ok", "polling": get_polling_status()}

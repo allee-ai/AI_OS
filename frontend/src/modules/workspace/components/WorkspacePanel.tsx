@@ -1,13 +1,43 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { FileExplorer } from './FileExplorer';
 import { FileViewer } from './FileViewer';
 import { useWorkspace } from '../hooks/useWorkspace';
 import './WorkspacePanel.css';
 
+interface QuickFile {
+  path: string;
+  name: string;
+  size?: number;
+  modified_at?: string;
+  mime_type?: string;
+  summary?: string | null;
+  pinned?: boolean;
+}
+
 export const WorkspacePanel: React.FC = () => {
   const workspace = useWorkspace();
   const [searchInput, setSearchInput] = useState('');
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Sidebar tabs: explorer | recent | pinned | notes
+  const [sidebarTab, setSidebarTab] = useState<'explorer' | 'recent' | 'pinned' | 'notes'>('explorer');
+  const [recentFiles, setRecentFiles] = useState<QuickFile[]>([]);
+  const [pinnedFiles, setPinnedFiles] = useState<QuickFile[]>([]);
+  const [notes, setNotes] = useState<QuickFile[]>([]);
+  const [showNewNote, setShowNewNote] = useState(false);
+  const [noteTitle, setNoteTitle] = useState('');
+  const [noteContent, setNoteContent] = useState('');
+
+  // Fetch sidebar data on tab switch
+  useEffect(() => {
+    if (sidebarTab === 'recent') {
+      workspace.getRecentFiles(20).then(setRecentFiles);
+    } else if (sidebarTab === 'pinned') {
+      workspace.getPinnedFiles().then(setPinnedFiles);
+    } else if (sidebarTab === 'notes') {
+      workspace.listNotes().then(setNotes);
+    }
+  }, [sidebarTab]);
 
   // Debounced search
   const handleSearchChange = useCallback((value: string) => {
@@ -17,6 +47,31 @@ export const WorkspacePanel: React.FC = () => {
       workspace.searchFiles(value);
     }, 300);
   }, [workspace.searchFiles]);
+
+  const openQuickFile = (f: QuickFile) => {
+    workspace.handleOpenFile({
+      id: f.path,
+      name: f.name,
+      path: f.path,
+      type: 'file',
+      createdAt: new Date(),
+      updatedAt: new Date(f.modified_at || Date.now()),
+    });
+  };
+
+  const handleCreateNote = async () => {
+    if (!noteTitle.trim() && !noteContent.trim()) return;
+    await workspace.createNote(noteTitle || '', noteContent || '');
+    setNoteTitle('');
+    setNoteContent('');
+    setShowNewNote(false);
+    workspace.listNotes().then(setNotes);
+  };
+
+  const formatDate = (iso?: string) => {
+    if (!iso) return '';
+    return new Date(iso).toLocaleDateString('en', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
 
   return (
     <div className="workspace-panel-container">
@@ -74,25 +129,106 @@ export const WorkspacePanel: React.FC = () => {
       )}
 
       <div className="workspace-split">
-        {/* Left: File explorer */}
+        {/* Left: Sidebar with tabs */}
         <div className="workspace-explorer-pane">
-          <FileExplorer
-            files={workspace.files}
-            currentPath={workspace.currentPath}
-            selectedFiles={workspace.selectedFiles}
-            isLoading={workspace.isLoading}
-            error={workspace.error}
-            onNavigateTo={workspace.navigateTo}
-            onNavigateUp={workspace.navigateUp}
-            onUploadFiles={workspace.uploadFiles}
-            onDeleteFile={workspace.deleteFile}
-            onCreateFolder={workspace.createFolder}
-            onDownloadFile={workspace.downloadFile}
-            onToggleSelect={workspace.toggleSelect}
-            onMoveFile={workspace.moveFile}
-            onOpenFile={workspace.handleOpenFile}
-            activeFilePath={workspace.openFile?.path ?? null}
-          />
+          <div className="ws-sidebar-tabs">
+            <button className={sidebarTab === 'explorer' ? 'active' : ''} onClick={() => setSidebarTab('explorer')} title="Files">📁</button>
+            <button className={sidebarTab === 'recent' ? 'active' : ''} onClick={() => setSidebarTab('recent')} title="Recent">🕐</button>
+            <button className={sidebarTab === 'pinned' ? 'active' : ''} onClick={() => setSidebarTab('pinned')} title="Pinned">📌</button>
+            <button className={sidebarTab === 'notes' ? 'active' : ''} onClick={() => setSidebarTab('notes')} title="Notes">📝</button>
+          </div>
+
+          {sidebarTab === 'explorer' && (
+            <FileExplorer
+              files={workspace.files}
+              currentPath={workspace.currentPath}
+              selectedFiles={workspace.selectedFiles}
+              isLoading={workspace.isLoading}
+              error={workspace.error}
+              onNavigateTo={workspace.navigateTo}
+              onNavigateUp={workspace.navigateUp}
+              onUploadFiles={workspace.uploadFiles}
+              onDeleteFile={workspace.deleteFile}
+              onCreateFolder={workspace.createFolder}
+              onDownloadFile={workspace.downloadFile}
+              onToggleSelect={workspace.toggleSelect}
+              onMoveFile={workspace.moveFile}
+              onOpenFile={workspace.handleOpenFile}
+              activeFilePath={workspace.openFile?.path ?? null}
+            />
+          )}
+
+          {sidebarTab === 'recent' && (
+            <div className="ws-quick-list">
+              <div className="ws-quick-header">Recent Files</div>
+              {recentFiles.length === 0 ? (
+                <div className="ws-quick-empty">No recent files</div>
+              ) : (
+                recentFiles.map((f, i) => (
+                  <div key={i} className="ws-quick-item" onClick={() => openQuickFile(f)}>
+                    <span className="ws-quick-name">{f.name}</span>
+                    <span className="ws-quick-meta">{formatDate(f.modified_at)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {sidebarTab === 'pinned' && (
+            <div className="ws-quick-list">
+              <div className="ws-quick-header">Pinned Files</div>
+              {pinnedFiles.length === 0 ? (
+                <div className="ws-quick-empty">No pinned files — click 📌 on a file to pin it</div>
+              ) : (
+                pinnedFiles.map((f, i) => (
+                  <div key={i} className="ws-quick-item" onClick={() => openQuickFile(f)}>
+                    <span className="ws-quick-name">📌 {f.name}</span>
+                    <span className="ws-quick-meta">{f.path}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
+
+          {sidebarTab === 'notes' && (
+            <div className="ws-quick-list">
+              <div className="ws-quick-header">
+                <span>Notes</span>
+                <button className="ws-note-add" onClick={() => setShowNewNote(!showNewNote)}>+ New</button>
+              </div>
+              {showNewNote && (
+                <div className="ws-new-note">
+                  <input
+                    className="ws-note-title-input"
+                    placeholder="Note title..."
+                    value={noteTitle}
+                    onChange={e => setNoteTitle(e.target.value)}
+                  />
+                  <textarea
+                    className="ws-note-content-input"
+                    placeholder="Write something..."
+                    value={noteContent}
+                    onChange={e => setNoteContent(e.target.value)}
+                    rows={4}
+                  />
+                  <div className="ws-note-actions">
+                    <button className="ws-note-cancel" onClick={() => setShowNewNote(false)}>Cancel</button>
+                    <button className="ws-note-save" onClick={handleCreateNote}>Save Note</button>
+                  </div>
+                </div>
+              )}
+              {notes.length === 0 && !showNewNote ? (
+                <div className="ws-quick-empty">No notes yet — create one above</div>
+              ) : (
+                notes.map((f, i) => (
+                  <div key={i} className="ws-quick-item" onClick={() => openQuickFile(f)}>
+                    <span className="ws-quick-name">📝 {f.name}</span>
+                    <span className="ws-quick-meta">{formatDate(f.modified_at)}</span>
+                  </div>
+                ))
+              )}
+            </div>
+          )}
         </div>
 
         {/* Right: File viewer */}
@@ -103,6 +239,8 @@ export const WorkspacePanel: React.FC = () => {
             onClose={workspace.closeFile}
             onSummarize={workspace.summarizeFile}
             getImageUrl={workspace.getImageUrl}
+            onSave={workspace.editFile}
+            onPin={workspace.pinFile}
           />
         </div>
       </div>

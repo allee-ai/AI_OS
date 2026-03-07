@@ -27,6 +27,7 @@ interface LoopStats {
   status: string;
   interval: number;
   enabled: boolean;
+  context_aware: boolean;
   max_errors: number;
   error_backoff: number;
   last_run: string | null;
@@ -42,6 +43,7 @@ interface LoopStats {
   is_custom?: boolean;
   auto_approve_threshold?: number;
   duplicate_threshold?: number;
+  prompts?: Record<string, string>;
 }
 
 interface TempFact {
@@ -106,6 +108,8 @@ export default function SubconsciousDashboard() {
   const [editText, setEditText] = useState('');
   const [editingModel, setEditingModel] = useState(false);
   const [modelValue, setModelValue] = useState('');
+  const [editingPrompt, setEditingPrompt] = useState<string | null>(null);
+  const [promptValue, setPromptValue] = useState('');
   const [exporting, setExporting] = useState(false);
   const [exportResult, setExportResult] = useState<string | null>(null);
 
@@ -277,6 +281,27 @@ export default function SubconsciousDashboard() {
   const toggleLoop = async (loopName: string, currentStatus: string) => {
     const action = currentStatus === 'paused' ? 'resume' : 'pause';
     await fetch(`${API}/loops/${loopName}/${action}`, { method: 'POST' });
+    fetchData();
+  };
+
+  const toggleContextAware = async (loopName: string, currentValue: boolean) => {
+    await fetch(`${API}/loops/${loopName}/context-aware`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ enabled: !currentValue }),
+    });
+    fetchData();
+  };
+
+  const savePrompt = async (stage: string) => {
+    if (!selected) return;
+    const isReset = promptValue.trim() === '';
+    await fetch(`${API}/loops/${selected.name}/prompts/${stage}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt: isReset ? '' : promptValue }),
+    });
+    setEditingPrompt(null);
     fetchData();
   };
 
@@ -756,6 +781,21 @@ export default function SubconsciousDashboard() {
                     </div>
                   )}
 
+                  {/* Context-Aware toggle */}
+                  <div className="config-row">
+                    <span className="config-label">Context-Aware</span>
+                    <span
+                      className="config-value editable"
+                      onClick={() => toggleContextAware(selected.name, selected.context_aware)}
+                      title="When ON, the orchestrator STATE (identity, philosophy, linking, log) is injected into this loop's LLM prompts"
+                    >
+                      {selected.context_aware
+                        ? <span style={{ color: '#22c55e' }}>◉ ON — full STATE injection</span>
+                        : <span style={{ color: '#6b7280' }}>○ OFF — raw prompts only</span>
+                      }
+                    </span>
+                  </div>
+
                   {/* Error tolerance */}
                   <div className="config-row">
                     <span className="config-label">Max Errors</span>
@@ -781,6 +821,49 @@ export default function SubconsciousDashboard() {
                   )}
                 </div>
               </div>
+
+              {/* Prompts section — visible for loops that have LLM prompts */}
+              {selected.prompts && Object.keys(selected.prompts).length > 0 && (
+                <div className="detail-section">
+                  <h4>Prompts</h4>
+                  <div className="prompts-list">
+                    {Object.entries(selected.prompts).map(([stage, text]) => (
+                      <div key={stage} className="prompt-item">
+                        <div className="prompt-header">
+                          <span className="prompt-stage">{stage}</span>
+                          {editingPrompt === stage ? (
+                            <div className="prompt-edit-actions">
+                              <button onClick={() => savePrompt(stage)} className="btn-sm save">Save</button>
+                              <button onClick={() => setEditingPrompt(null)} className="btn-sm cancel">Cancel</button>
+                              <button
+                                onClick={() => { setPromptValue(''); savePrompt(stage); }}
+                                className="btn-sm"
+                                title="Reset to default"
+                              >↺ Default</button>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => { setEditingPrompt(stage); setPromptValue(text); }}
+                              className="btn-sm edit"
+                            >✎ Edit</button>
+                          )}
+                        </div>
+                        {editingPrompt === stage ? (
+                          <textarea
+                            value={promptValue}
+                            onChange={e => setPromptValue(e.target.value)}
+                            className="prompt-textarea"
+                            rows={Math.min(20, Math.max(6, text.split('\n').length + 2))}
+                            spellCheck={false}
+                          />
+                        ) : (
+                          <pre className="prompt-preview-block">{text}</pre>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Stats section */}
               <div className="detail-section">

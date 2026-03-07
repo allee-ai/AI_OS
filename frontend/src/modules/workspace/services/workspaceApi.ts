@@ -194,6 +194,76 @@ class WorkspaceAPIService {
     }
     return response.blob();
   }
+
+  /**
+   * Edit (update) a file's content in-place
+   */
+  async editFile(path: string, content: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/file`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, content }),
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to save file: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  /**
+   * Get recently modified files
+   */
+  async getRecentFiles(limit = 20): Promise<any[]> {
+    const response = await fetch(
+      `${this.baseUrl}/api/workspace/recent?limit=${limit}`
+    );
+    if (!response.ok) return [];
+    return response.json();
+  }
+
+  /**
+   * Pin / unpin a file
+   */
+  async pinFile(path: string, pinned = true): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/file/pin`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, pinned }),
+    });
+    if (!response.ok) throw new Error('Failed to pin');
+    return response.json();
+  }
+
+  /**
+   * Get all pinned files
+   */
+  async getPinnedFiles(): Promise<any[]> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/pinned`);
+    if (!response.ok) return [];
+    return response.json();
+  }
+
+  /**
+   * Create a quick note
+   */
+  async createNote(title: string, content: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/note`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ title, content }),
+    });
+    if (!response.ok) throw new Error('Failed to create note');
+    return response.json();
+  }
+
+  /**
+   * List all notes
+   */
+  async listNotes(): Promise<any[]> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/notes`);
+    if (!response.ok) return [];
+    return response.json();
+  }
 }
 
 export const workspaceApi = new WorkspaceAPIService();
