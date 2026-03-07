@@ -1745,7 +1745,7 @@ function OrbitalBody({
       </mesh>
       {/* Thread-colored point light for planets */}
       {node.depth === 0 && (
-        <pointLight color={threadColor} intensity={0.5} distance={5} decay={2} />
+        <pointLight color={threadColor} intensity={0.5} distance={3} decay={2} />
       )}
       {/* Label */}
       {(node.depth <= 1 || hovered) && (
@@ -1845,9 +1845,9 @@ function GravitationalLensFlare() {
 
   return (
     <group ref={ringsRef}>
-      {[1.0, 1.4, 1.9].map((r, i) => (
+      {[0.7, 1.0, 1.3].map((r, i) => (
         <mesh key={i} rotation={[Math.PI / 2, 0, 0]}>
-          <ringGeometry args={[r - 0.04, r + 0.04, 64]} />
+          <ringGeometry args={[r - 0.03, r + 0.03, 64]} />
           <meshBasicMaterial
             color="#ffcc66"
             transparent
@@ -1906,9 +1906,9 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
   const threadOrbits = useMemo(() => {
     return threads.map((tid, i) => {
       const mass = descendantCount.get(tid) || 1;
-      // Kepler-ish: bigger mass = closer orbit, faster. But not too close.
-      const baseRadius = 4 + i * 1.3;
-      const radiusPull = Math.min(mass / 80, 1) * 1.0; // pull inward
+      // Kepler-ish: bigger mass = closer orbit, faster. Tight cluster.
+      const baseRadius = 2.2 + i * 0.7;
+      const radiusPull = Math.min(mass / 80, 1) * 0.5; // pull inward
       const orbitRadius = baseRadius - radiusPull;
       // Speed inversely proportional to sqrt(radius) — Kepler's 3rd law
       const baseSpeed = 0.12 / Math.sqrt(orbitRadius / 4);
@@ -1969,20 +1969,20 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
           >
             {/* Particle trail ring around the planet */}
             <ParticleTrail
-              radius={0.3 + Math.min(o.mass, 60) * 0.005}
+              radius={0.2 + Math.min(o.mass, 60) * 0.003}
               color={THREAD_COLORS[o.threadId] || '#cc88ff'}
               count={30 + Math.min(o.mass, 60)}
             />
 
             {/* Orbit rings for moons */}
             {d1Kids.map((kidId, j) => {
-              const moonRadius = 0.6 + j * 0.35;
+              const moonRadius = 0.35 + j * 0.2;
               return (
                 <OrbitRing
                   key={`mring-${kidId}`}
                   radius={moonRadius}
                   color={THREAD_COLORS[o.threadId] || '#888'}
-                  tilt={0.1 + j * 0.08}
+                  tilt={0.08 + j * 0.05}
                 />
               );
             })}
@@ -1992,8 +1992,8 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
               const kidNode = nodeMap.get(kidId);
               if (!kidNode) return null;
               const kidMass = descendantCount.get(kidId) || 1;
-              const moonRadius = 0.6 + j * 0.35;
-              const moonSpeed = 0.3 / Math.sqrt(moonRadius / 0.6) * (1 + Math.log10(kidMass + 1) * 0.1);
+              const moonRadius = 0.35 + j * 0.2;
+              const moonSpeed = 0.3 / Math.sqrt(moonRadius / 0.35) * (1 + Math.log10(kidMass + 1) * 0.1);
 
               // Depth-2 leaves orbit this moon
               const d2Kids = (childMap.get(kidId) || []).filter(id =>
@@ -2015,7 +2015,7 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
                   {d2Kids.slice(0, 40).map((leafId, k) => {
                     const leafNode = nodeMap.get(leafId);
                     if (!leafNode) return null;
-                    const dustRadius = 0.12 + k * 0.01;
+                    const dustRadius = 0.08 + k * 0.006;
                     const dustSpeed = 0.8 + (k % 5) * 0.15;
                     return (
                       <OrbitalBody
@@ -2033,7 +2033,7 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
                   {/* Extra glow ring if many leaves */}
                   {d2Kids.length > 10 && (
                     <ParticleTrail
-                      radius={0.12 + d2Kids.length * 0.01}
+                      radius={0.08 + d2Kids.length * 0.006}
                       color={THREAD_COLORS[o.threadId] || '#888'}
                       count={Math.min(d2Kids.length, 40)}
                     />
@@ -2232,7 +2232,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
       {/* 3D Canvas */}
       <Canvas
         camera={{
-          position: viewMode === 'structure' ? [8, 10, 14] : [0, 0, 12],
+          position: viewMode === 'structure' ? [5, 6, 9] : [0, 0, 12],
           fov: 50,
         }}
         style={{ width: '100%', height: '100%', touchAction: 'none' }}
