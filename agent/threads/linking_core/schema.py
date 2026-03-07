@@ -817,13 +817,22 @@ def get_structural_graph(
         })
 
     # ── 0. Self — the unified agent at the center ──────────────────
-    agent_name = "Self"
+    agent_name = "AI·OS"
     try:
-        from agent.threads.identity.schema import pull_profile_facts as _pf
-        for f in _pf(profile_id="primary_user", limit=10):
-            if f.get("key", "").lower() == "name" and f.get("l1_value"):
-                agent_name = f["l1_value"]
-                break
+        from agent.threads.identity.schema import get_profiles as _gp, pull_profile_facts as _pf
+        # Try machine profile name fact first
+        for f in _pf(profile_id="machine", limit=10):
+            if f.get("key", "").lower() == "name":
+                val = f.get("l1_value") or f.get("l2_value") or ""
+                if val.strip():
+                    agent_name = val.strip()
+                    break
+        # Fallback to machine profile display_name
+        if agent_name == "AI·OS":
+            for p in _gp():
+                if p.get("profile_id") == "machine" and p.get("display_name"):
+                    agent_name = p["display_name"]
+                    break
     except Exception:
         pass
     _add_node("self", agent_name, "self", "self", depth=-1, weight=20)
