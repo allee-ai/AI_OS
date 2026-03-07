@@ -538,6 +538,112 @@ def _cmd_config(args: str):
     print(f"  AIOS_TEST_LIVE       = {os.environ.get('AIOS_TEST_LIVE', '0')}")
 
 
+def _cmd_tasks(args: str):
+    """Handle /tasks command — manage context-aware task planner."""
+    tokens = args.strip().split(maxsplit=1)
+    verb = tokens[0] if tokens else ""
+    rest = tokens[1] if len(tokens) > 1 else ""
+
+    # /tasks new <goal>  — create and execute a task
+    if verb == "new" and rest:
+        print(f"  {DIM}planning task: {rest}{RESET}")
+        try:
+            from agent.subconscious.loops import create_task, TaskPlanner
+            task = create_task(rest, source="cli")
+            print(f"  {DIM}task #{task['id']} created — executing...{RESET}")
+
+            planner = TaskPlanner(enabled=False)
+            result = planner.execute_task(task["id"])
+
+            status = result.get("status", "unknown")
+            scolor = GREEN if status == "completed" else RED if status == "failed" else YELLOW
+            print(f"  {scolor}[{status}]{RESET} task #{result.get('id', '?')}")
+
+            steps = result.get("steps", [])
+            results = result.get("results", [])
+            for i, step in enumerate(steps):
+                r = results[i] if i < len(results) else {}
+                icon = "✓" if r.get("success") else "✗"
+                rcolor = GREEN if r.get("success") else RED
+                print(f"    {rcolor}{icon}{RESET} {step.get('description', f'Step {i+1}')}")
+                if r.get("error"):
+                    print(f"      {RED}{r['error'][:120]}{RESET}")
+
+            # Print summary if present
+            summary_results = [r for r in results if r.get("step") == "summary"]
+            if summary_results:
+                print(f"\n  {BOLD}Summary:{RESET} {summary_results[0].get('output', '')[:300]}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /tasks queue <goal>  — create task but don't execute (wait for planner loop)
+    if verb == "queue" and rest:
+        try:
+            from agent.subconscious.loops import create_task
+            task = create_task(rest, source="cli")
+            print(f"  {GREEN}queued{RESET} task #{task['id']}: {rest}")
+            print(f"  {DIM}will be picked up by the task planner loop{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /tasks <id>  — show details for a specific task
+    if verb.isdigit():
+        try:
+            from agent.subconscious.loops import get_task
+            task = get_task(int(verb))
+            if not task:
+                print(f"  {RED}task #{verb} not found{RESET}")
+                return
+            scolor = GREEN if task["status"] == "completed" else RED if task["status"] == "failed" else YELLOW
+            print(f"  {BOLD}Task #{task['id']}{RESET} {scolor}[{task['status']}]{RESET}")
+            print(f"  {BOLD}Goal:{RESET} {task['goal']}")
+            print(f"  {DIM}source: {task['source']} | step: {task['current_step']}/{len(task['steps'])}{RESET}")
+            if task.get("context_summary"):
+                print(f"  {DIM}context: {task['context_summary'][:100]}{RESET}")
+            for i, step in enumerate(task.get("steps", [])):
+                results = task.get("results", [])
+                r = results[i] if i < len(results) else {}
+                icon = "✓" if r.get("success") else "✗" if r else "○"
+                rcolor = GREEN if r.get("success") else RED if r.get("error") else DIM
+                tool_info = f"[{step.get('tool', '?')}]" if step.get('tool') else ""
+                print(f"    {rcolor}{icon}{RESET} {step.get('description', f'Step {i+1}')} {DIM}{tool_info}{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /tasks cancel <id>
+    if verb == "cancel" and rest.isdigit():
+        try:
+            from agent.subconscious.loops import cancel_task
+            success = cancel_task(int(rest))
+            if success:
+                print(f"  {GREEN}cancelled{RESET} task #{rest}")
+            else:
+                print(f"  {RED}cannot cancel — task not found or already done{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # /tasks  or  /tasks <status>  — list tasks
+    try:
+        from agent.subconscious.loops import get_tasks, TASK_STATUSES
+        status_filter = verb if verb in TASK_STATUSES else None
+        tasks = get_tasks(status=status_filter, limit=15)
+
+        if not tasks:
+            title = f"no {status_filter} tasks" if status_filter else "no tasks yet — run /tasks new <goal>"
+            print(f"  {DIM}{title}{RESET}")
+        else:
+            title = f"Recent {status_filter} tasks:" if status_filter else "Recent tasks:"
+            print(f"  {BOLD}{title}{RESET}")
+            for t in tasks:
+                scolor = GREEN if t["status"] == "completed" else RED if t["status"] == "failed" else YELLOW
+                step_info = f"{t['current_step']}/{len(t['steps'])}" if t['steps'] else "0/?"
+                print(f"  {DIM}#{t['id']}{RESET} {scolor}[{t['status']}]{RESET} ({step_info}) {t['goal'][:60]}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
 def _cmd_test(args: str):
     target = args.strip()
     if target == "flows":
@@ -574,6 +680,11 @@ def _cmd_help():
   {BOLD}/thoughts{RESET}   Show recent proactive thoughts
   {BOLD}/thoughts think{RESET}  Trigger one thought cycle now
   {BOLD}/thoughts <cat>{RESET} Filter: insight, alert, reminder, suggestion, question
+  {BOLD}/tasks{RESET}      List tasks
+  {BOLD}/tasks new <goal>{RESET}  Create and execute a task now
+  {BOLD}/tasks queue <goal>{RESET}  Queue a task for background execution
+  {BOLD}/tasks <id>{RESET}  Show task details
+  {BOLD}/tasks cancel <id>{RESET}  Cancel a pending task
   {BOLD}/config{RESET}     Show config
   {BOLD}/config set <key> <value>{RESET}  Set env var
   {BOLD}/test{RESET}       Run all tests
@@ -589,6 +700,7 @@ _COMMANDS = {
     "/memory": _cmd_memory,
     "/loops": _cmd_loops,
     "/thoughts": _cmd_thoughts,
+    "/tasks": _cmd_tasks,
     "/triggers": _cmd_triggers,
     "/protocols": _cmd_protocols,
     "/graph": _cmd_graph,

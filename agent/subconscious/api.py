@@ -815,3 +815,127 @@ async def trigger_thought_cycle():
         "new_thoughts": new_thoughts,
         "count": len(new_thoughts),
     }
+
+
+# ─────────────────────────────────────────────────────────────
+# Task Planner endpoints
+# ─────────────────────────────────────────────────────────────
+
+class CreateTaskRequest(BaseModel):
+    goal: str
+    execute_now: bool = False
+
+
+@router.post("/tasks")
+async def create_new_task(req: CreateTaskRequest):
+    """
+    Create a new task for the planner.
+    
+    If execute_now=True, the task is immediately planned and executed
+    (synchronous — may take a while for multi-step tasks).
+    Otherwise, the task is queued for the background planner loop.
+    """
+    from .loops import create_task
+    
+    if not req.goal.strip():
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Goal cannot be empty")
+    
+    task = create_task(req.goal.strip(), source="api")
+    
+    if req.execute_now:
+        from . import _loop_manager
+        if _loop_manager:
+            planner = _loop_manager.get_loop("task_planner")
+            if planner and hasattr(planner, 'execute_task'):
+                task = planner.execute_task(task["id"])
+            else:
+                # No planner loop — create ad-hoc planner and execute
+                from .loops import TaskPlanner
+                adhoc = TaskPlanner(enabled=False)
+                task = adhoc.execute_task(task["id"])
+        else:
+            from .loops import TaskPlanner
+            adhoc = TaskPlanner(enabled=False)
+            task = adhoc.execute_task(task["id"])
+    
+    return task
+
+
+@router.get("/tasks")
+async def list_tasks(
+    status: Optional[str] = Query(None, description="Filter by status"),
+    limit: int = Query(20, ge=1, le=100),
+):
+    """
+    List tasks, optionally filtered by status.
+    
+    Status values: pending, planning, executing, completed, failed, cancelled
+    """
+    from .loops import get_tasks, TASK_STATUSES
+    
+    if status and status not in TASK_STATUSES:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Invalid status. Must be one of: {TASK_STATUSES}")
+    
+    tasks = get_tasks(status=status, limit=limit)
+    return {
+        "tasks": tasks,
+        "count": len(tasks),
+        "statuses": TASK_STATUSES,
+    }
+
+
+@router.get("/tasks/{task_id}")
+async def get_single_task(task_id: int):
+    """Get a single task by ID with full step details."""
+    from .loops import get_task
+    
+    task = get_task(task_id)
+    if not task:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    
+    return task
+
+
+@router.post("/tasks/{task_id}/execute")
+async def execute_task_now(task_id: int):
+    """
+    Execute a pending task immediately (synchronous).
+    Returns the completed/failed task state.
+    """
+    from .loops import get_task, TaskPlanner
+    from . import _loop_manager
+    
+    task = get_task(task_id)
+    if not task:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Task {task_id} not found")
+    
+    if task["status"] not in ("pending", "executing"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail=f"Task status is '{task['status']}', cannot execute")
+    
+    if _loop_manager:
+        planner = _loop_manager.get_loop("task_planner")
+        if planner and hasattr(planner, 'execute_task'):
+            result = planner.execute_task(task_id)
+            return result
+    
+    # Fallback: ad-hoc planner
+    adhoc = TaskPlanner(enabled=False)
+    return adhoc.execute_task(task_id)
+
+
+@router.post("/tasks/{task_id}/cancel")
+async def cancel_task_endpoint(task_id: int):
+    """Cancel a pending or executing task."""
+    from .loops import cancel_task
+    
+    success = cancel_task(task_id)
+    if not success:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="Cannot cancel — task not found or already completed/failed")
+    
+    return {"status": "cancelled", "task_id": task_id}
