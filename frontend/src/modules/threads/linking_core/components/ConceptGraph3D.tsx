@@ -1530,6 +1530,8 @@ function Scene({ graphData, activatedConcepts, onNodeClick, pulseSpeed = 1 }: Sc
 // Structural Scene — orbital solar-system layout
 // ============================================================================
 
+const GOLDEN_ANGLE = 2.399963; // ~137.5° — Fibonacci optimal spread
+
 interface StructuralSceneProps {
   data: StructuralGraphData;
   onNodeClick?: (nodeId: string) => void;
@@ -1537,7 +1539,9 @@ interface StructuralSceneProps {
 
 // ── Orbital ring (orbit path indicator) ──
 
-function OrbitRing({ radius, color, tilt = 0 }: { radius: number; color: string; tilt?: number }) {
+function OrbitRing({ radius, color, inclination = 0, ascendingNode = 0 }: {
+  radius: number; color: string; inclination?: number; ascendingNode?: number;
+}) {
   const points = useMemo(() => {
     const pts: THREE.Vector3[] = [];
     const segs = 96;
@@ -1559,7 +1563,7 @@ function OrbitRing({ radius, color, tilt = 0 }: { radius: number; color: string;
   }, [points, color]);
 
   return (
-    <group rotation={[tilt, 0, 0]}>
+    <group rotation={[inclination, ascendingNode, 0]}>
       <primitive object={lineObj} />
     </group>
   );
@@ -1656,7 +1660,8 @@ function OrbitalBody({
   orbitRadius,
   orbitSpeed,
   orbitOffset,
-  orbitTilt,
+  inclination,
+  ascendingNode,
   childCount,
   children,
   onClick,
@@ -1665,7 +1670,8 @@ function OrbitalBody({
   orbitRadius: number;
   orbitSpeed: number;
   orbitOffset: number;
-  orbitTilt: number;
+  inclination: number;
+  ascendingNode: number;
   childCount: number;
   children?: React.ReactNode;
   onClick?: () => void;
@@ -1698,11 +1704,16 @@ function OrbitalBody({
   useFrame((state) => {
     if (!groupRef.current) return;
     const t = state.clock.elapsedTime;
-    // Orbital motion
+    // Orbital motion — true 3D orbital plane
     const angle = orbitOffset + t * orbitSpeed;
-    groupRef.current.position.x = Math.cos(angle) * orbitRadius;
-    groupRef.current.position.z = Math.sin(angle) * orbitRadius;
-    groupRef.current.position.y = Math.sin(angle * 0.5 + orbitOffset) * orbitTilt;
+    const fx = Math.cos(angle) * orbitRadius;
+    const fz = Math.sin(angle) * orbitRadius;
+    // Rotate by inclination (x-axis) then ascending node (y-axis)
+    const ci = Math.cos(inclination), si = Math.sin(inclination);
+    const ca = Math.cos(ascendingNode), sa = Math.sin(ascendingNode);
+    groupRef.current.position.x = fx * ca + fz * ci * sa;
+    groupRef.current.position.y = -fz * si;
+    groupRef.current.position.z = -fx * sa + fz * ci * ca;
 
     // Gentle spin
     if (meshRef.current) {
@@ -1902,25 +1913,31 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
   const selfNode = nodeMap.get('self');
   const threads = data.stats.threads;
 
-  // Orbital parameters for thread planets (more children → closer orbit, faster speed)
+  // Orbital parameters: mass-sorted (heaviest = innermost), true 3D planes
   const threadOrbits = useMemo(() => {
-    return threads.map((tid, i) => {
-      const mass = descendantCount.get(tid) || 1;
-      // Kepler-ish: bigger mass = closer orbit, faster. Tight cluster.
-      const baseRadius = 2.2 + i * 0.7;
-      const radiusPull = Math.min(mass / 80, 1) * 0.5; // pull inward
-      const orbitRadius = baseRadius - radiusPull;
-      // Speed inversely proportional to sqrt(radius) — Kepler's 3rd law
-      const baseSpeed = 0.12 / Math.sqrt(orbitRadius / 4);
-      // More mass = slightly faster (gravitational boost)
-      const massBoost = 1 + Math.log10(mass + 1) * 0.15;
+    const ranked = threads
+      .map(tid => ({ tid, mass: descendantCount.get(tid) || 1 }))
+      .sort((a, b) => b.mass - a.mass);
+    const n = ranked.length;
+    return ranked.map((item, rank) => {
+      const normRank = n > 1 ? rank / (n - 1) : 0;
+      // Orbit radius: heaviest innermost, sqrt spacing for visual balance
+      const orbitRadius = 1.8 + Math.sqrt(normRank) * 3.2;
+      // Kepler speed: inversely proportional to sqrt(radius)
+      const baseSpeed = 0.1 / Math.sqrt(orbitRadius / 2.5);
+      const massBoost = 1 + Math.log10(item.mass + 1) * 0.15;
+      // Inclination: heavier ≈ ecliptic, lighter = more tilted (up to ~50°)
+      const inclination = 0.15 + normRank * 0.75;
+      // Ascending node: golden angle for maximum 3D separation
+      const ascendingNode = rank * GOLDEN_ANGLE;
       return {
-        threadId: tid,
+        threadId: item.tid,
         orbitRadius,
         orbitSpeed: baseSpeed * massBoost,
-        orbitOffset: (i / threads.length) * Math.PI * 2, // evenly spaced start
-        orbitTilt: 0.15 + (i % 3) * 0.1, // slight vertical wobble
-        mass,
+        orbitOffset: rank * GOLDEN_ANGLE * 0.7,
+        inclination,
+        ascendingNode,
+        mass: item.mass,
       };
     });
   }, [threads, descendantCount]);
@@ -1937,12 +1954,14 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
       />
       <GravitationalLensFlare />
 
-      {/* Orbit rings for each thread */}
+      {/* Orbit rings for each thread — 3D inclined planes */}
       {threadOrbits.map(o => (
         <OrbitRing
           key={`ring-${o.threadId}`}
           radius={o.orbitRadius}
           color={THREAD_COLORS[o.threadId] || '#cc88ff'}
+          inclination={o.inclination}
+          ascendingNode={o.ascendingNode}
         />
       ))}
 
@@ -1951,10 +1970,12 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
         const threadNode = nodeMap.get(o.threadId);
         if (!threadNode) return null;
 
-        // Depth-1 children (groups/profiles)
-        const d1Kids = (childMap.get(o.threadId) || []).filter(id =>
-          nodeMap.get(id)?.depth === 1
-        );
+        // Depth-1 children sorted by mass (heaviest = innermost moon)
+        const d1Kids = (childMap.get(o.threadId) || [])
+          .filter(id => nodeMap.get(id)?.depth === 1)
+          .map(id => ({ id, mass: descendantCount.get(id) || 1 }))
+          .sort((a, b) => b.mass - a.mass);
+        const moonCount = d1Kids.length;
 
         return (
           <OrbitalBody
@@ -1963,7 +1984,8 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
             orbitRadius={o.orbitRadius}
             orbitSpeed={o.orbitSpeed}
             orbitOffset={o.orbitOffset}
-            orbitTilt={o.orbitTilt}
+            inclination={o.inclination}
+            ascendingNode={o.ascendingNode}
             childCount={o.mass}
             onClick={() => onNodeClick?.(o.threadId)}
           >
@@ -1974,31 +1996,38 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
               count={30 + Math.min(o.mass, 60)}
             />
 
-            {/* Orbit rings for moons */}
-            {d1Kids.map((kidId, j) => {
-              const moonRadius = 0.35 + j * 0.2;
+            {/* Orbit rings for moons — 3D inclined planes */}
+            {d1Kids.map(({ id: kidId }, j) => {
+              const normJ = moonCount > 1 ? j / (moonCount - 1) : 0;
+              const moonRadius = 0.3 + normJ * 0.5;
+              const moonInc = 0.3 + j * 0.45;
+              const moonAsc = j * GOLDEN_ANGLE;
               return (
                 <OrbitRing
                   key={`mring-${kidId}`}
                   radius={moonRadius}
                   color={THREAD_COLORS[o.threadId] || '#888'}
-                  tilt={0.08 + j * 0.05}
+                  inclination={moonInc}
+                  ascendingNode={moonAsc}
                 />
               );
             })}
 
-            {/* Depth-1 moons orbiting the planet */}
-            {d1Kids.map((kidId, j) => {
+            {/* Depth-1 moons — mass-sorted, 3D orbital planes */}
+            {d1Kids.map(({ id: kidId, mass: kidMass }, j) => {
               const kidNode = nodeMap.get(kidId);
               if (!kidNode) return null;
-              const kidMass = descendantCount.get(kidId) || 1;
-              const moonRadius = 0.35 + j * 0.2;
-              const moonSpeed = 0.3 / Math.sqrt(moonRadius / 0.35) * (1 + Math.log10(kidMass + 1) * 0.1);
+              const normJ = moonCount > 1 ? j / (moonCount - 1) : 0;
+              const moonRadius = 0.3 + normJ * 0.5;
+              const moonSpeed = 0.3 / Math.sqrt(moonRadius / 0.3) * (1 + Math.log10(kidMass + 1) * 0.1);
+              const moonInc = 0.3 + j * 0.45;
+              const moonAsc = j * GOLDEN_ANGLE;
 
               // Depth-2 leaves orbit this moon
               const d2Kids = (childMap.get(kidId) || []).filter(id =>
                 nodeMap.get(id)?.depth === 2
               );
+              const leafCount = d2Kids.length;
 
               return (
                 <OrbitalBody
@@ -2006,25 +2035,30 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
                   node={kidNode}
                   orbitRadius={moonRadius}
                   orbitSpeed={moonSpeed}
-                  orbitOffset={j * 1.8}
-                  orbitTilt={0.05 + j * 0.03}
+                  orbitOffset={j * GOLDEN_ANGLE * 0.7}
+                  inclination={moonInc}
+                  ascendingNode={moonAsc}
                   childCount={kidMass}
                   onClick={() => onNodeClick?.(kidId)}
                 >
-                  {/* Depth-2 leaf dust orbiting the moon */}
+                  {/* Depth-2 leaf dust — Fibonacci sphere distribution */}
                   {d2Kids.slice(0, 40).map((leafId, k) => {
                     const leafNode = nodeMap.get(leafId);
                     if (!leafNode) return null;
-                    const dustRadius = 0.08 + k * 0.006;
-                    const dustSpeed = 0.8 + (k % 5) * 0.15;
+                    const dustRadius = 0.07 + k * 0.004;
+                    const dustSpeed = 0.6 + (k % 5) * 0.15;
+                    // Fibonacci sphere: inclinations spread for full 3D coverage
+                    const leafInc = Math.acos(1 - 2 * (k + 0.5) / Math.max(leafCount, 1));
+                    const leafAsc = k * GOLDEN_ANGLE;
                     return (
                       <OrbitalBody
                         key={leafId}
                         node={leafNode}
                         orbitRadius={dustRadius}
                         orbitSpeed={dustSpeed}
-                        orbitOffset={k * 2.399} // golden angle
-                        orbitTilt={0.02}
+                        orbitOffset={k * GOLDEN_ANGLE}
+                        inclination={leafInc}
+                        ascendingNode={leafAsc}
                         childCount={0}
                         onClick={() => onNodeClick?.(leafId)}
                       />
@@ -2033,7 +2067,7 @@ function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
                   {/* Extra glow ring if many leaves */}
                   {d2Kids.length > 10 && (
                     <ParticleTrail
-                      radius={0.08 + d2Kids.length * 0.006}
+                      radius={0.07 + d2Kids.length * 0.004}
                       color={THREAD_COLORS[o.threadId] || '#888'}
                       count={Math.min(d2Kids.length, 40)}
                     />
