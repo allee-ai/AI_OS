@@ -13,7 +13,7 @@
 
 import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
-import { Text, Sphere } from '@react-three/drei';
+import { Text, Sphere, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
 
 // ============================================================================
@@ -1950,7 +1950,10 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     >
       {/* 3D Canvas */}
       <Canvas
-        camera={{ position: [0, 0, viewMode === 'structure' ? 18 : 12], fov: 50 }}
+        camera={{
+          position: viewMode === 'structure' ? [8, 10, 14] : [0, 0, 12],
+          fov: 50,
+        }}
         style={{ width: '100%', height: '100%', touchAction: 'none' }}
         key={viewMode}  // remount Canvas on mode switch to reset camera
       >
@@ -1967,10 +1970,22 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
             onNodeClick={onNodeClick}
           />
         ) : null}
-        <FlyControls
-          moveSpeed={viewMode === 'structure' ? 12 : 8}
-          lookSpeed={0.002}
-        />
+        {viewMode === 'structure' ? (
+          <OrbitControls
+            enableDamping
+            dampingFactor={0.12}
+            rotateSpeed={0.8}
+            zoomSpeed={1.2}
+            panSpeed={0.8}
+            minDistance={3}
+            maxDistance={40}
+          />
+        ) : (
+          <FlyControls
+            moveSpeed={8}
+            lookSpeed={0.002}
+          />
+        )}
       </Canvas>
       
       {/* Controls hint */}
@@ -1982,7 +1997,9 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
         color: 'rgba(180, 160, 220, 0.6)',
         pointerEvents: 'none',
       }}>
-        ↑↓ forward/back • ←→ turn • WASD move • Q/E up/down • Drag look
+        {viewMode === 'cluster'
+          ? '↑↓ forward/back • ←→ turn • WASD move • Q/E up/down • Drag look'
+          : '🖱️ Drag orbit • Scroll zoom • Right-drag pan'}
       </div>
       
       {/* Query input overlay — cluster mode only */}
