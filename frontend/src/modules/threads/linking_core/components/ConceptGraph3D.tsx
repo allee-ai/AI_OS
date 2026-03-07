@@ -1527,7 +1527,7 @@ function Scene({ graphData, activatedConcepts, onNodeClick, pulseSpeed = 1 }: Sc
 }
 
 // ============================================================================
-// Structural Scene — hierarchical thread-based layout
+// Structural Scene — orbital solar-system layout
 // ============================================================================
 
 interface StructuralSceneProps {
@@ -1535,44 +1535,189 @@ interface StructuralSceneProps {
   onNodeClick?: (nodeId: string) => void;
 }
 
-function StructuralNodeMesh(
-  { position, node, onClick }: {
-    position: [number, number, number];
-    node: StructuralNode;
-    onClick?: () => void;
-  }
-) {
+// ── Orbital ring (orbit path indicator) ──
+
+function OrbitRing({ radius, color, tilt = 0 }: { radius: number; color: string; tilt?: number }) {
+  const points = useMemo(() => {
+    const pts: THREE.Vector3[] = [];
+    const segs = 96;
+    for (let i = 0; i <= segs; i++) {
+      const a = (i / segs) * Math.PI * 2;
+      pts.push(new THREE.Vector3(Math.cos(a) * radius, 0, Math.sin(a) * radius));
+    }
+    return pts;
+  }, [radius]);
+
+  const lineObj = useMemo(() => {
+    const geometry = new THREE.BufferGeometry().setFromPoints(points);
+    const material = new THREE.LineBasicMaterial({
+      color: new THREE.Color(color),
+      transparent: true,
+      opacity: 0.12,
+    });
+    return new THREE.Line(geometry, material);
+  }, [points, color]);
+
+  return (
+    <group rotation={[tilt, 0, 0]}>
+      <primitive object={lineObj} />
+    </group>
+  );
+}
+
+// ── Self node — the glowing sun at the center ──
+
+function SelfNode({ label, onClick }: { label: string; onClick?: () => void }) {
+  const meshRef = useRef<THREE.Mesh>(null);
+  const coronaRef = useRef<THREE.Mesh>(null);
+  const outerRef = useRef<THREE.Mesh>(null);
+  const [hovered, setHovered] = useState(false);
+
+  useFrame((state) => {
+    const t = state.clock.elapsedTime;
+    if (coronaRef.current) {
+      const pulse = 1 + Math.sin(t * 1.5) * 0.15;
+      coronaRef.current.scale.setScalar(pulse);
+      (coronaRef.current.material as THREE.MeshBasicMaterial).opacity =
+        0.18 + Math.sin(t * 2.3) * 0.06;
+    }
+    if (outerRef.current) {
+      const pulse2 = 1 + Math.sin(t * 0.8) * 0.1;
+      outerRef.current.scale.setScalar(pulse2);
+    }
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.002;
+    }
+  });
+
+  return (
+    <group position={[0, 0, 0]}>
+      {/* Core */}
+      <mesh ref={meshRef}
+        onClick={onClick}
+        onPointerOver={() => setHovered(true)}
+        onPointerOut={() => setHovered(false)}
+      >
+        <sphereGeometry args={[0.35, 48, 48]} />
+        <meshStandardMaterial
+          color="#fff8ee"
+          emissive="#ffcc66"
+          emissiveIntensity={1.5}
+          metalness={0.2}
+          roughness={0.1}
+        />
+      </mesh>
+      {/* Corona glow */}
+      <mesh ref={coronaRef}>
+        <sphereGeometry args={[0.7, 32, 32]} />
+        <meshBasicMaterial
+          color="#ffaa33"
+          transparent
+          opacity={0.2}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      {/* Outer haze */}
+      <mesh ref={outerRef}>
+        <sphereGeometry args={[1.2, 24, 24]} />
+        <meshBasicMaterial
+          color="#ff8800"
+          transparent
+          opacity={0.06}
+          blending={THREE.AdditiveBlending}
+          depthWrite={false}
+        />
+      </mesh>
+      {/* Point light (the sun illuminates the system) */}
+      <pointLight color="#ffcc88" intensity={2.5} distance={25} decay={1.5} />
+      <pointLight color="#ff9944" intensity={1} distance={10} decay={2} />
+      {/* Label */}
+      <Text
+        position={[0, 0.6, 0]}
+        fontSize={hovered ? 0.22 : 0.18}
+        color="#ffddaa"
+        anchorX="center"
+        anchorY="bottom"
+        outlineWidth={0.006}
+        outlineColor="#000000"
+        fontWeight={700}
+      >
+        {label}
+      </Text>
+    </group>
+  );
+}
+
+// ── Thread planet — orbits the self sun ──
+
+function OrbitalBody({
+  node,
+  orbitRadius,
+  orbitSpeed,
+  orbitOffset,
+  orbitTilt,
+  childCount,
+  children,
+  onClick,
+}: {
+  node: StructuralNode;
+  orbitRadius: number;
+  orbitSpeed: number;
+  orbitOffset: number;
+  orbitTilt: number;
+  childCount: number;
+  children?: React.ReactNode;
+  onClick?: () => void;
+}) {
+  const groupRef = useRef<THREE.Group>(null);
   const meshRef = useRef<THREE.Mesh>(null);
   const glowRef = useRef<THREE.Mesh>(null);
   const [hovered, setHovered] = useState(false);
 
   const hsl = THREAD_HSL[node.thread] || [0.76, 0.5, 0.5];
+  const threadColor = THREAD_COLORS[node.thread] || '#cc88ff';
 
-  // Size by depth: thread hub = big, group = medium, leaf = small
-  const baseSize = node.depth === 0 ? 0.22 : node.depth === 1 ? 0.09 : 0.035;
-  const size = hovered ? baseSize * 1.6 : baseSize;
+  // Size: thread hubs are planets, groups are moons, leaves are dust
+  const baseSize = node.depth === 0
+    ? 0.15 + Math.min(childCount, 80) * 0.002  // more children = bigger planet
+    : node.depth === 1
+      ? 0.06 + Math.min(childCount, 30) * 0.001
+      : 0.02;
+  const size = hovered ? baseSize * 1.5 : baseSize;
 
   const nodeColor = useMemo(() => {
-    const lightnessBoost = node.depth === 0 ? 0.15 : node.depth === 1 ? 0.05 : -0.05;
-    return new THREE.Color().setHSL(hsl[0], hsl[1], Math.min(1, hsl[2] + lightnessBoost));
+    const lBoost = node.depth === 0 ? 0.15 : node.depth === 1 ? 0.05 : -0.05;
+    return new THREE.Color().setHSL(hsl[0], hsl[1], Math.min(1, hsl[2] + lBoost));
   }, [hsl, node.depth]);
 
-  const glowColor = useMemo(() => {
-    return new THREE.Color().setHSL(hsl[0], hsl[1] * 0.8, hsl[2] * 0.7);
-  }, [hsl]);
+  const glowColor = useMemo(() =>
+    new THREE.Color().setHSL(hsl[0], hsl[1] * 0.8, hsl[2] * 0.7),
+  [hsl]);
 
   useFrame((state) => {
-    if (meshRef.current && node.depth > 0) {
-      meshRef.current.position.y = position[1] + Math.sin(state.clock.elapsedTime * 0.5 + position[0] * 3) * 0.03;
+    if (!groupRef.current) return;
+    const t = state.clock.elapsedTime;
+    // Orbital motion
+    const angle = orbitOffset + t * orbitSpeed;
+    groupRef.current.position.x = Math.cos(angle) * orbitRadius;
+    groupRef.current.position.z = Math.sin(angle) * orbitRadius;
+    groupRef.current.position.y = Math.sin(angle * 0.5 + orbitOffset) * orbitTilt;
+
+    // Gentle spin
+    if (meshRef.current) {
+      meshRef.current.rotation.y += 0.008;
     }
-    if (glowRef.current && node.depth === 0) {
-      const pulse = 1 + Math.sin(state.clock.elapsedTime * 1.2) * 0.12;
+    // Glow pulse
+    if (glowRef.current) {
+      const pulse = 1 + Math.sin(t * 1.8 + orbitOffset) * 0.15;
       glowRef.current.scale.setScalar(pulse);
     }
   });
 
   return (
-    <group position={position}>
+    <group ref={groupRef}>
+      {/* Planet/moon body */}
       <mesh ref={meshRef}
         onClick={onClick}
         onPointerOver={() => setHovered(true)}
@@ -1582,26 +1727,32 @@ function StructuralNodeMesh(
         <meshStandardMaterial
           color={nodeColor}
           emissive={nodeColor}
-          emissiveIntensity={node.depth === 0 ? 0.5 : 0.2}
-          metalness={0.5}
-          roughness={0.3}
+          emissiveIntensity={node.depth === 0 ? 0.6 : 0.25}
+          metalness={0.4}
+          roughness={0.35}
         />
       </mesh>
+      {/* Glow */}
       <mesh ref={glowRef}>
-        <sphereGeometry args={[size * (node.depth === 0 ? 2.5 : 2), 16, 16]} />
+        <sphereGeometry args={[size * (node.depth === 0 ? 2.2 : 1.8), 16, 16]} />
         <meshBasicMaterial
           color={glowColor}
           transparent
-          opacity={node.depth === 0 ? 0.25 : 0.08}
+          opacity={node.depth === 0 ? 0.2 : 0.08}
           blending={THREE.AdditiveBlending}
           depthWrite={false}
         />
       </mesh>
+      {/* Thread-colored point light for planets */}
+      {node.depth === 0 && (
+        <pointLight color={threadColor} intensity={0.5} distance={5} decay={2} />
+      )}
+      {/* Label */}
       {(node.depth <= 1 || hovered) && (
         <Text
           position={[0, size + 0.1, 0]}
-          fontSize={node.depth === 0 ? 0.14 : 0.07}
-          color={hovered ? '#ffffff' : THREAD_COLORS[node.thread] || '#aaaacc'}
+          fontSize={node.depth === 0 ? 0.13 : 0.06}
+          color={hovered ? '#ffffff' : threadColor}
           anchorX="center"
           anchorY="bottom"
           outlineWidth={0.004}
@@ -1611,196 +1762,326 @@ function StructuralNodeMesh(
           {node.label.length > 24 ? node.label.slice(0, 24) + '…' : node.label}
         </Text>
       )}
+      {/* Sub-orbital children are nested inside so they orbit relative to this body */}
+      {children}
     </group>
   );
 }
 
-function StructuralEdgeVisual(
-  { start, end, type }: {
-    start: [number, number, number];
-    end: [number, number, number];
-    type: 'structural' | 'associative';
-  }
-) {
-  const lineObject = useMemo(() => {
-    if (type === 'structural') {
-      // Straight line for parent→child
-      const geometry = new THREE.BufferGeometry().setFromPoints([
-        new THREE.Vector3(...start),
-        new THREE.Vector3(...end),
-      ]);
-      const material = new THREE.LineBasicMaterial({
-        color: new THREE.Color(0.35, 0.3, 0.5),
-        transparent: true,
-        opacity: 0.35,
-      });
-      return new THREE.Line(geometry, material);
-    } else {
-      // Curved arc for cross-thread associations
-      const mid: [number, number, number] = [
-        (start[0] + end[0]) / 2,
-        (start[1] + end[1]) / 2 + 1.0,
-        (start[2] + end[2]) / 2,
-      ];
-      const curve = new THREE.QuadraticBezierCurve3(
-        new THREE.Vector3(...start),
-        new THREE.Vector3(...mid),
-        new THREE.Vector3(...end)
+// ── Particle trail ring around planets ──
+
+function ParticleTrail({ radius, color, count = 60 }: { radius: number; color: string; count?: number }) {
+  const pointsRef = useRef<THREE.Points>(null);
+
+  const { positions, velocities } = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    const vel = new Float32Array(count); // angular velocity variation
+    for (let i = 0; i < count; i++) {
+      const angle = (i / count) * Math.PI * 2;
+      const r = radius + (Math.random() - 0.5) * 0.1;
+      pos[i * 3] = Math.cos(angle) * r;
+      pos[i * 3 + 1] = (Math.random() - 0.5) * 0.06;
+      pos[i * 3 + 2] = Math.sin(angle) * r;
+      vel[i] = 0.5 + Math.random() * 0.5;
+    }
+    return { positions: pos, velocities: vel };
+  }, [radius, count]);
+
+  useFrame((state) => {
+    if (!pointsRef.current) return;
+    const geo = pointsRef.current.geometry;
+    const posAttr = geo.getAttribute('position') as THREE.BufferAttribute;
+    const t = state.clock.elapsedTime;
+    for (let i = 0; i < count; i++) {
+      const baseAngle = (i / count) * Math.PI * 2;
+      const angle = baseAngle + t * velocities[i] * 0.3;
+      const r = radius + Math.sin(t * 2 + i) * 0.04;
+      posAttr.setXYZ(
+        i,
+        Math.cos(angle) * r,
+        Math.sin(t * 1.5 + i * 0.5) * 0.04,
+        Math.sin(angle) * r,
       );
-      const points = curve.getPoints(24);
-      const geometry = new THREE.BufferGeometry().setFromPoints(points);
-      const material = new THREE.LineBasicMaterial({
-        color: new THREE.Color(1, 0.7, 0.2),
-        transparent: true,
-        opacity: 0.5,
-      });
-      return new THREE.Line(geometry, material);
     }
-  }, [start, end, type]);
-
-  return <primitive object={lineObject} />;
-}
-
-function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
-  const positions = useMemo(() => {
-    const pos = new Map<string, [number, number, number]>();
-    const threads = data.stats.threads;
-
-    // Build parent→children map
-    const children = new Map<string, string[]>();
-    for (const edge of data.structural) {
-      const list = children.get(edge.source) || [];
-      list.push(edge.target);
-      children.set(edge.source, list);
-    }
-
-    // 1. Place thread hubs in a hexagonal ring
-    const hubRadius = 5;
-    threads.forEach((thread, i) => {
-      const angle = (i / threads.length) * Math.PI * 2 - Math.PI / 2;
-      pos.set(thread, [
-        hubRadius * Math.cos(angle),
-        0,
-        hubRadius * Math.sin(angle),
-      ]);
-    });
-
-    // 2. Place depth-1 groups in a smaller ring around their thread hub
-    for (const thread of threads) {
-      const hubPos = pos.get(thread)!;
-      const kids = (children.get(thread) || []).filter(id =>
-        data.nodes.find(n => n.id === id && n.depth === 1)
-      );
-      const groupRadius = 1.2 + Math.min(kids.length, 8) * 0.2;
-      kids.forEach((kid, j) => {
-        const angle = (j / Math.max(kids.length, 1)) * Math.PI * 2;
-        pos.set(kid, [
-          hubPos[0] + groupRadius * Math.cos(angle),
-          hubPos[1] + (Math.random() - 0.5) * 0.3,
-          hubPos[2] + groupRadius * Math.sin(angle),
-        ]);
-      });
-
-      // 3. Place depth-2 leaves in a shell around their group parent
-      for (const kid of kids) {
-        const kidPos = pos.get(kid)!;
-        const leaves = (children.get(kid) || []).filter(id =>
-          data.nodes.find(n => n.id === id && n.depth === 2)
-        );
-        const leafRadius = 0.35 + Math.min(leaves.length, 30) * 0.015;
-        leaves.forEach((leaf, k) => {
-          // Golden-angle sphere packing
-          const phi = Math.acos(1 - 2 * (k + 0.5) / Math.max(leaves.length, 1));
-          const theta = Math.PI * (1 + Math.sqrt(5)) * k;
-          pos.set(leaf, [
-            kidPos[0] + leafRadius * Math.sin(phi) * Math.cos(theta),
-            kidPos[1] + leafRadius * Math.cos(phi),
-            kidPos[2] + leafRadius * Math.sin(phi) * Math.sin(theta),
-          ]);
-        });
-      }
-    }
-
-    return pos;
-  }, [data]);
+    posAttr.needsUpdate = true;
+  });
 
   return (
-    <RotatingGroup speed={0.015}>
-      {/* Thread-colored ambient nebula per hub */}
-      {data.stats.threads.map(thread => {
-        const p = positions.get(thread);
-        if (!p) return null;
-        const col = THREAD_COLORS[thread] || '#cc88ff';
+    <points ref={pointsRef}>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.015}
+        color={color}
+        transparent
+        opacity={0.5}
+        blending={THREE.AdditiveBlending}
+        depthWrite={false}
+        sizeAttenuation
+      />
+    </points>
+  );
+}
+
+// ── Gravitational lensing — subtle light distortion near Self ──
+
+function GravitationalLensFlare() {
+  const ringsRef = useRef<THREE.Group>(null);
+
+  useFrame((state) => {
+    if (!ringsRef.current) return;
+    const t = state.clock.elapsedTime;
+    ringsRef.current.rotation.x = Math.sin(t * 0.3) * 0.2;
+    ringsRef.current.rotation.z = Math.cos(t * 0.4) * 0.15;
+    ringsRef.current.children.forEach((child, i) => {
+      const mesh = child as THREE.Mesh;
+      if (mesh.material) {
+        (mesh.material as THREE.MeshBasicMaterial).opacity =
+          0.03 + Math.sin(t * 1.5 + i * 1.2) * 0.02;
+      }
+    });
+  });
+
+  return (
+    <group ref={ringsRef}>
+      {[1.0, 1.4, 1.9].map((r, i) => (
+        <mesh key={i} rotation={[Math.PI / 2, 0, 0]}>
+          <ringGeometry args={[r - 0.04, r + 0.04, 64]} />
+          <meshBasicMaterial
+            color="#ffcc66"
+            transparent
+            opacity={0.04}
+            blending={THREE.AdditiveBlending}
+            depthWrite={false}
+            side={THREE.DoubleSide}
+          />
+        </mesh>
+      ))}
+    </group>
+  );
+}
+
+// ── Main StructuralScene — the solar system ──
+
+function StructuralScene({ data, onNodeClick }: StructuralSceneProps) {
+  // Build parent→children map
+  const childMap = useMemo(() => {
+    const map = new Map<string, string[]>();
+    for (const edge of data.structural) {
+      const list = map.get(edge.source) || [];
+      list.push(edge.target);
+      map.set(edge.source, list);
+    }
+    return map;
+  }, [data]);
+
+  // Build node lookup
+  const nodeMap = useMemo(() => {
+    const map = new Map<string, StructuralNode>();
+    for (const n of data.nodes) map.set(n.id, n);
+    return map;
+  }, [data]);
+
+  // Count descendants for gravitational mass
+  const descendantCount = useMemo(() => {
+    const counts = new Map<string, number>();
+    const count = (id: string): number => {
+      if (counts.has(id)) return counts.get(id)!;
+      const kids = childMap.get(id) || [];
+      let total = kids.length;
+      for (const kid of kids) total += count(kid);
+      counts.set(id, total);
+      return total;
+    };
+    for (const n of data.nodes) count(n.id);
+    return counts;
+  }, [data, childMap]);
+
+  // Self node
+  const selfNode = nodeMap.get('self');
+  const threads = data.stats.threads;
+
+  // Orbital parameters for thread planets (more children → closer orbit, faster speed)
+  const threadOrbits = useMemo(() => {
+    return threads.map((tid, i) => {
+      const mass = descendantCount.get(tid) || 1;
+      // Kepler-ish: bigger mass = closer orbit, faster. But not too close.
+      const baseRadius = 4 + i * 1.3;
+      const radiusPull = Math.min(mass / 80, 1) * 1.0; // pull inward
+      const orbitRadius = baseRadius - radiusPull;
+      // Speed inversely proportional to sqrt(radius) — Kepler's 3rd law
+      const baseSpeed = 0.12 / Math.sqrt(orbitRadius / 4);
+      // More mass = slightly faster (gravitational boost)
+      const massBoost = 1 + Math.log10(mass + 1) * 0.15;
+      return {
+        threadId: tid,
+        orbitRadius,
+        orbitSpeed: baseSpeed * massBoost,
+        orbitOffset: (i / threads.length) * Math.PI * 2, // evenly spaced start
+        orbitTilt: 0.15 + (i % 3) * 0.1, // slight vertical wobble
+        mass,
+      };
+    });
+  }, [threads, descendantCount]);
+
+  return (
+    <>
+      {/* Ambient light */}
+      <ambientLight intensity={0.15} />
+
+      {/* Sun: Self */}
+      <SelfNode
+        label={selfNode?.label || 'Self'}
+        onClick={() => onNodeClick?.('self')}
+      />
+      <GravitationalLensFlare />
+
+      {/* Orbit rings for each thread */}
+      {threadOrbits.map(o => (
+        <OrbitRing
+          key={`ring-${o.threadId}`}
+          radius={o.orbitRadius}
+          color={THREAD_COLORS[o.threadId] || '#cc88ff'}
+        />
+      ))}
+
+      {/* Thread planets and their sub-systems */}
+      {threadOrbits.map(o => {
+        const threadNode = nodeMap.get(o.threadId);
+        if (!threadNode) return null;
+
+        // Depth-1 children (groups/profiles)
+        const d1Kids = (childMap.get(o.threadId) || []).filter(id =>
+          nodeMap.get(id)?.depth === 1
+        );
+
         return (
-          <group key={`nebula-${thread}`} position={p}>
-            <Sphere args={[1.8, 24, 24]}>
-              <meshBasicMaterial color={col} transparent opacity={0.04} />
-            </Sphere>
-          </group>
+          <OrbitalBody
+            key={o.threadId}
+            node={threadNode}
+            orbitRadius={o.orbitRadius}
+            orbitSpeed={o.orbitSpeed}
+            orbitOffset={o.orbitOffset}
+            orbitTilt={o.orbitTilt}
+            childCount={o.mass}
+            onClick={() => onNodeClick?.(o.threadId)}
+          >
+            {/* Particle trail ring around the planet */}
+            <ParticleTrail
+              radius={0.3 + Math.min(o.mass, 60) * 0.005}
+              color={THREAD_COLORS[o.threadId] || '#cc88ff'}
+              count={30 + Math.min(o.mass, 60)}
+            />
+
+            {/* Orbit rings for moons */}
+            {d1Kids.map((kidId, j) => {
+              const moonRadius = 0.6 + j * 0.35;
+              return (
+                <OrbitRing
+                  key={`mring-${kidId}`}
+                  radius={moonRadius}
+                  color={THREAD_COLORS[o.threadId] || '#888'}
+                  tilt={0.1 + j * 0.08}
+                />
+              );
+            })}
+
+            {/* Depth-1 moons orbiting the planet */}
+            {d1Kids.map((kidId, j) => {
+              const kidNode = nodeMap.get(kidId);
+              if (!kidNode) return null;
+              const kidMass = descendantCount.get(kidId) || 1;
+              const moonRadius = 0.6 + j * 0.35;
+              const moonSpeed = 0.3 / Math.sqrt(moonRadius / 0.6) * (1 + Math.log10(kidMass + 1) * 0.1);
+
+              // Depth-2 leaves orbit this moon
+              const d2Kids = (childMap.get(kidId) || []).filter(id =>
+                nodeMap.get(id)?.depth === 2
+              );
+
+              return (
+                <OrbitalBody
+                  key={kidId}
+                  node={kidNode}
+                  orbitRadius={moonRadius}
+                  orbitSpeed={moonSpeed}
+                  orbitOffset={j * 1.8}
+                  orbitTilt={0.05 + j * 0.03}
+                  childCount={kidMass}
+                  onClick={() => onNodeClick?.(kidId)}
+                >
+                  {/* Depth-2 leaf dust orbiting the moon */}
+                  {d2Kids.slice(0, 40).map((leafId, k) => {
+                    const leafNode = nodeMap.get(leafId);
+                    if (!leafNode) return null;
+                    const dustRadius = 0.12 + k * 0.01;
+                    const dustSpeed = 0.8 + (k % 5) * 0.15;
+                    return (
+                      <OrbitalBody
+                        key={leafId}
+                        node={leafNode}
+                        orbitRadius={dustRadius}
+                        orbitSpeed={dustSpeed}
+                        orbitOffset={k * 2.399} // golden angle
+                        orbitTilt={0.02}
+                        childCount={0}
+                        onClick={() => onNodeClick?.(leafId)}
+                      />
+                    );
+                  })}
+                  {/* Extra glow ring if many leaves */}
+                  {d2Kids.length > 10 && (
+                    <ParticleTrail
+                      radius={0.12 + d2Kids.length * 0.01}
+                      color={THREAD_COLORS[o.threadId] || '#888'}
+                      count={Math.min(d2Kids.length, 40)}
+                    />
+                  )}
+                </OrbitalBody>
+              );
+            })}
+          </OrbitalBody>
         );
       })}
 
-      {/* Structural edges */}
-      {data.structural.map((edge, i) => {
-        const s = positions.get(edge.source);
-        const t = positions.get(edge.target);
-        if (!s || !t) return null;
-        return (
-          <StructuralEdgeVisual
-            key={`se-${i}`}
-            start={s}
-            end={t}
-            type="structural"
-          />
-        );
-      })}
+      {/* Distant star field background */}
+      <StarField />
+    </>
+  );
+}
 
-      {/* Associative cross-links */}
-      {data.associative.map((edge, i) => {
-        const s = positions.get(edge.source);
-        const t = positions.get(edge.target);
-        if (!s || !t) return null;
-        return (
-          <StructuralEdgeVisual
-            key={`ae-${i}`}
-            start={s}
-            end={t}
-            type="associative"
-          />
-        );
-      })}
+// ── Starfield background ──
 
-      {/* All nodes */}
-      {data.nodes.map(node => {
-        const p = positions.get(node.id);
-        if (!p) return null;
-        return (
-          <StructuralNodeMesh
-            key={node.id}
-            position={p}
-            node={node}
-            onClick={() => onNodeClick?.(node.id)}
-          />
-        );
-      })}
+function StarField() {
+  const count = 800;
+  const positions = useMemo(() => {
+    const pos = new Float32Array(count * 3);
+    for (let i = 0; i < count; i++) {
+      // Place stars on a large sphere
+      const theta = Math.random() * Math.PI * 2;
+      const phi = Math.acos(2 * Math.random() - 1);
+      const r = 30 + Math.random() * 20;
+      pos[i * 3] = r * Math.sin(phi) * Math.cos(theta);
+      pos[i * 3 + 1] = r * Math.sin(phi) * Math.sin(theta);
+      pos[i * 3 + 2] = r * Math.cos(phi);
+    }
+    return pos;
+  }, []);
 
-      {/* Lighting */}
-      <ambientLight intensity={0.5} />
-      <pointLight position={[0, 3, 0]} intensity={0.8} color="#ffffff" />
-      {data.stats.threads.map((thread) => {
-        const p = positions.get(thread);
-        if (!p) return null;
-        return (
-          <pointLight
-            key={`light-${thread}`}
-            position={[p[0], p[1] + 1.5, p[2]]}
-            intensity={0.4}
-            color={THREAD_COLORS[thread] || '#cc88ff'}
-            distance={8}
-          />
-        );
-      })}
-    </RotatingGroup>
+  return (
+    <points>
+      <bufferGeometry>
+        <bufferAttribute attach="attributes-position" args={[positions, 3]} />
+      </bufferGeometry>
+      <pointsMaterial
+        size={0.08}
+        color="#aabbdd"
+        transparent
+        opacity={0.6}
+        sizeAttenuation
+      />
+    </points>
   );
 }
 

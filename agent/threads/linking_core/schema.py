@@ -816,8 +816,21 @@ def get_structural_graph(
             "type":   "structural",
         })
 
+    # ── 0. Self — the unified agent at the center ──────────────────
+    agent_name = "Self"
+    try:
+        from agent.threads.identity.schema import pull_profile_facts as _pf
+        for f in _pf(profile_id="primary_user", limit=10):
+            if f.get("key", "").lower() == "name" and f.get("l1_value"):
+                agent_name = f["l1_value"]
+                break
+    except Exception:
+        pass
+    _add_node("self", agent_name, "self", "self", depth=-1, weight=20)
+
     # ── 1. Identity thread ───────────────────────────────────────────
     _add_node("identity", "Identity", "identity", "thread", depth=0, weight=10)
+    _add_structural("self", "identity")
     try:
         from agent.threads.identity.schema import get_profiles, pull_profile_facts
         for profile in get_profiles():
@@ -842,6 +855,7 @@ def get_structural_graph(
 
     # ── 2. Philosophy thread ─────────────────────────────────────────
     _add_node("philosophy", "Philosophy", "philosophy", "thread", depth=0, weight=10)
+    _add_structural("self", "philosophy")
     try:
         from agent.threads.philosophy.schema import (
             get_philosophy_profiles, pull_philosophy_profile_facts,
@@ -868,6 +882,7 @@ def get_structural_graph(
 
     # ── 3. Form thread (tools) ───────────────────────────────────────
     _add_node("form", "Form", "form", "thread", depth=0, weight=10)
+    _add_structural("self", "form")
     try:
         from agent.threads.form.schema import get_tools
         for tool in get_tools():
@@ -896,6 +911,7 @@ def get_structural_graph(
 
     # ── 4. Reflex thread (triggers) ──────────────────────────────────
     _add_node("reflex", "Reflex", "reflex", "thread", depth=0, weight=10)
+    _add_structural("self", "reflex")
     try:
         from agent.threads.reflex.schema import get_triggers
         for trig in get_triggers():
@@ -913,6 +929,7 @@ def get_structural_graph(
 
     # ── 5. Log thread (summary only — not every event) ───────────────
     _add_node("log", "Log", "log", "thread", depth=0, weight=10)
+    _add_structural("self", "log")
     try:
         from data.db import get_connection as _get_conn
         from contextlib import closing
@@ -939,6 +956,7 @@ def get_structural_graph(
 
     # ── 6. Linking Core (the graph itself — meta node) ───────────────
     _add_node("linking_core", "Linking Core", "linking_core", "thread", depth=0, weight=10)
+    _add_structural("self", "linking_core")
     try:
         stats = get_stats()
         _add_node("linking_core.concepts", f"{stats.get('concept_count', 0)} concepts",
