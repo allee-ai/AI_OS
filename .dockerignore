@@ -3,8 +3,9 @@
 # Keep the Docker image lean
 
 # Git
-.git
+.git/
 .gitignore
+.github/
 
 # Dependencies (will be installed fresh)
 node_modules
@@ -38,6 +39,7 @@ Thumbs.db
 .pytest_cache
 coverage
 .nyc_output
+htmlcov
 
 # Logs (will be generated fresh)
 *.log
@@ -45,6 +47,9 @@ logs/
 
 # Database files (will be mounted as volume)
 data/db/*.db
+data/db/*.db-shm
+data/db/*.db-wal
+data/db/*.db-journal
 !data/db/state_demo.db
 
 # Temporary
@@ -59,7 +64,8 @@ docs/_archive
 # Development scripts
 *.dmg
 *.icns
-*.app
+assets/*.dmg
+scripts/AIOS.app/
 
 # Eval transcripts
 eval/transcripts/*.json

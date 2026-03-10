@@ -23,9 +23,13 @@ numpy>=1.24.0
 ollama>=0.1.0
 
 # Optional: Kernel browser automation (for "living body" features)
-# Uncomment if you have a KERNEL_API_KEY
-# kernel>=0.1.0
-# playwright>=1.40.0
+# Install with: pip install -e ".[automation]"
+# kernel>=0.26.0
+# playwright>=1.57.0
+
+# Optional: Encryption for secrets (falls back to base64 without it)
+# Install with: pip install -e ".[encryption]"
+# cryptography>=41.0.0
 
 # vCard parsing for contacts import
 vobject>=0.9.6

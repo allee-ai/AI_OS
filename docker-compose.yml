@@ -17,6 +17,8 @@ services:
       - aios-logs:/app/data/logs
       # Optional: Mount workspace for file access
       # - ./workspace:/app/workspace
+    extra_hosts:
+      - "host.docker.internal:host-gateway"  # Linux compat
     environment:
       - AIOS_MODE=personal
       - OLLAMA_HOST=http://host.docker.internal:11434

@@ -4,22 +4,31 @@ version = "0.1.0"
 description = "Local-first AI with hierarchical experiential attention"
 requires-python = ">=3.11"
 dependencies = [
-    "aiofiles>=25.1.0",
-    "beautifulsoup4>=4.14.3",
-    "fastapi>=0.128.0",
-    "httpx>=0.28.1",
+    "aiofiles>=23.2.1",
+    "beautifulsoup4>=4.12.0",
+    "duckduckgo-search>=7.0.0",
+    "fastapi>=0.104.1",
+    "httpx>=0.25.0",
+    "lxml>=4.9.0",
+    "numpy>=1.24.0",
+    "ollama>=0.1.0",
+    "pydantic>=2.5.0",
+    "pydantic-settings>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "python-multipart>=0.0.6",
+    "starlette>=0.27.0",
+    "uvicorn[standard]>=0.24.0",
+    "vobject>=0.9.6",
+    "websockets>=12.0",
+]
+
+[project.optional-dependencies]
+automation = [
     "kernel>=0.26.0",
-    "lxml>=6.0.2",
-    "numpy>=2.4.1",
-    "ollama>=0.6.1",
     "playwright>=1.57.0",
-    "pydantic>=2.12.5",
-    "pydantic-settings>=2.12.0",
-    "python-dotenv>=1.2.1",
-    "python-multipart>=0.0.21",
-    "starlette>=0.50.0",
-    "uvicorn[standard]>=0.40.0",
-    "websockets>=16.0",
+]
+encryption = [
+    "cryptography>=41.0.0",
 ]
 
 [project.scripts]

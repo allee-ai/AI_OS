@@ -43,6 +43,7 @@ COPY Feeds/ ./Feeds/
 COPY finetune/ ./finetune/
 COPY scripts/ ./scripts/
 COPY workspace/ ./workspace/
+COPY cli.py ./
 COPY pyproject.toml ./
 
 # Copy built frontend from Stage 1

@@ -224,7 +224,19 @@ async def startup_event():
         from agent.core.migrations import ensure_all_schemas
         ensure_all_schemas()
         print("[Startup] Schema synced")
-        
+
+        # Check Ollama connectivity
+        import os
+        ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
+        try:
+            import urllib.request
+            urllib.request.urlopen(f"{ollama_host}/api/tags", timeout=3)
+            print(f"[Startup] Ollama reachable at {ollama_host}")
+        except Exception:
+            print(f"[Startup] WARNING: Ollama not reachable at {ollama_host}")
+            print(f"[Startup] LLM calls will fail until Ollama is running with a model pulled")
+            print(f"[Startup] Install: https://ollama.com  |  Pull: ollama pull qwen2.5:7b")
+
         # Wake subconscious
         from agent.subconscious import wake
         wake()
