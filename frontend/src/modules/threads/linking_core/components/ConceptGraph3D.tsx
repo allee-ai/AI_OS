@@ -214,7 +214,45 @@ interface StructuralGraphData {
   };
 }
 
-type ViewMode = 'cluster' | 'structure';
+type ViewMode = 'cluster' | 'structure' | 'cooccurrence';
+
+interface ViewDef {
+  id: ViewMode;
+  icon: string;
+  label: string;
+}
+
+const VIEWS: ViewDef[] = [
+  { id: 'cluster', icon: '🔮', label: 'Concept Cluster' },
+  { id: 'structure', icon: '🧬', label: 'Architecture' },
+  { id: 'cooccurrence', icon: '🔗', label: 'Co-occurrence' },
+];
+
+// ============================================================================
+// Co-occurrence types
+// ============================================================================
+
+interface CooccurrencePair {
+  key_a: string;
+  key_b: string;
+  count: number;
+  last_seen: string | null;
+}
+
+interface CooccurrenceConcept {
+  concept: string;
+  total_count: number;
+}
+
+interface CooccurrenceData {
+  pairs: CooccurrencePair[];
+  top_concepts: CooccurrenceConcept[];
+  stats: {
+    total_pairs: number;
+    returned: number;
+    max_count: number;
+  };
+}
 
 // Thread color palette
 const THREAD_COLORS: Record<string, string> = {
@@ -609,6 +647,20 @@ function ConceptNodeMesh({ position, node, isActivated, activationLevel, onClick
           outlineColor="#000000"
         >
           {node.label.length > 20 ? node.label.slice(0, 20) + '…' : node.label}
+        </Text>
+      )}
+      {/* Strength info on hover */}
+      {hovered && (
+        <Text
+          position={[0, size + 0.04, 0]}
+          fontSize={0.05}
+          color="#aa88cc"
+          anchorX="center"
+          anchorY="top"
+          outlineWidth={0.003}
+          outlineColor="#000000"
+        >
+          {`s=${node.total_strength?.toFixed(2) ?? '?'}  c=${node.connections}`}
         </Text>
       )}
     </group>
@@ -2120,6 +2172,120 @@ function StarField() {
 }
 
 // ============================================================================
+// Co-occurrence View (2D)
+// ============================================================================
+
+function CooccurrenceView() {
+  const [data, setData] = useState<CooccurrenceData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [minCount, setMinCount] = useState(2);
+
+  useEffect(() => {
+    setLoading(true);
+    fetch(`http://localhost:8000/api/linking_core/cooccurrence?limit=200&min_count=${minCount}`)
+      .then(r => r.ok ? r.json() : Promise.reject('Failed'))
+      .then(d => { setData(d); setLoading(false); })
+      .catch(() => setLoading(false));
+  }, [minCount]);
+
+  if (loading) return <div style={{ color: '#bb99dd', padding: 40, textAlign: 'center' }}>Loading co-occurrence data...</div>;
+  if (!data || data.pairs.length === 0) return <div style={{ color: '#8877aa', padding: 40, textAlign: 'center' }}>No co-occurrence data yet. Chat more to build associations.</div>;
+
+  const maxCount = data.stats.max_count || 1;
+
+  return (
+    <div style={{
+      width: '100%', height: '100%', overflow: 'auto',
+      background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #0a0612 100%)',
+      padding: 24, boxSizing: 'border-box',
+    }}>
+      {/* Header + filter */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 16, marginBottom: 20 }}>
+        <h3 style={{ color: '#dd99ff', margin: 0, fontSize: 16, fontWeight: 600 }}>
+          🔗 Co-occurrence Pairs
+        </h3>
+        <span style={{ color: '#776699', fontSize: 12 }}>
+          {data.stats.returned} of {data.stats.total_pairs} pairs
+        </span>
+        <label style={{ color: '#8877aa', fontSize: 12, marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: 6 }}>
+          Min count:
+          <input type="range" min={1} max={20} value={minCount}
+            onChange={e => setMinCount(Number(e.target.value))}
+            style={{ width: 80, accentColor: '#aa66ff' }} />
+          <span style={{ color: '#bb99dd', minWidth: 16 }}>{minCount}</span>
+        </label>
+      </div>
+
+      {/* Top concepts bar chart */}
+      <div style={{ marginBottom: 24 }}>
+        <div style={{ color: '#aa88cc', fontSize: 12, marginBottom: 8, fontWeight: 500 }}>Top Concepts</div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {data.top_concepts.slice(0, 20).map(c => {
+            const pct = c.total_count / (data.top_concepts[0]?.total_count || 1);
+            return (
+              <div key={c.concept} style={{
+                padding: '4px 10px', borderRadius: 6, fontSize: 11,
+                background: `rgba(136, 68, 204, ${0.15 + pct * 0.45})`,
+                border: '1px solid rgba(170, 100, 255, 0.3)',
+                color: '#ddbbff',
+              }}>
+                {c.concept} <span style={{ color: '#aa88cc' }}>({c.total_count})</span>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Pair table */}
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 12 }}>
+        <thead>
+          <tr style={{ borderBottom: '1px solid rgba(170, 100, 255, 0.3)' }}>
+            <th style={thStyle}>Concept A</th>
+            <th style={thStyle}>Concept B</th>
+            <th style={{ ...thStyle, width: 200 }}>Strength</th>
+            <th style={{ ...thStyle, width: 60, textAlign: 'right' }}>Count</th>
+            <th style={{ ...thStyle, width: 100, textAlign: 'right' }}>Last Seen</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.pairs.map((p, i) => {
+            const pct = p.count / maxCount;
+            return (
+              <tr key={i} style={{ borderBottom: '1px solid rgba(170, 100, 255, 0.1)' }}>
+                <td style={tdStyle}>{p.key_a}</td>
+                <td style={tdStyle}>{p.key_b}</td>
+                <td style={tdStyle}>
+                  <div style={{
+                    height: 8, borderRadius: 4, overflow: 'hidden',
+                    background: 'rgba(170, 100, 255, 0.15)',
+                  }}>
+                    <div style={{
+                      height: '100%', borderRadius: 4, width: `${pct * 100}%`,
+                      background: `linear-gradient(90deg, rgba(136, 68, 204, 0.8), rgba(200, 120, 255, 0.8))`,
+                    }} />
+                  </div>
+                </td>
+                <td style={{ ...tdStyle, textAlign: 'right', fontVariantNumeric: 'tabular-nums' }}>{p.count}</td>
+                <td style={{ ...tdStyle, textAlign: 'right', color: '#776699', fontSize: 10 }}>
+                  {p.last_seen ? new Date(p.last_seen).toLocaleDateString() : '—'}
+                </td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+const thStyle: React.CSSProperties = {
+  textAlign: 'left', padding: '8px 10px', color: '#aa88cc', fontWeight: 500,
+};
+const tdStyle: React.CSSProperties = {
+  padding: '6px 10px', color: '#ccbbdd',
+};
+
+// ============================================================================
 // Main Component
 // ============================================================================
 
@@ -2235,6 +2401,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
   
   // Load graph on mount / when view mode changes
   useEffect(() => {
+    if (viewMode === 'cooccurrence') return; // CooccurrenceView handles its own fetch
     setLoading(true);
     if (viewMode === 'cluster') {
       fetchGraph();
@@ -2258,321 +2425,262 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     return () => clearTimeout(timer);
   }, [queryInput, runActivation]);
   
+  const is3D = viewMode === 'cluster' || viewMode === 'structure';
+
   return (
-    <div 
-      style={{ width: '100%', height: '100%', position: 'relative', background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #0a0612 100%)' }}
-      onWheel={(e) => e.preventDefault()}
-    >
-      {/* 3D Canvas */}
-      <Canvas
-        camera={{
-          position: viewMode === 'structure' ? [5, 6, 9] : [0, 0, 12],
-          fov: 50,
-        }}
-        style={{ width: '100%', height: '100%', touchAction: 'none' }}
-        key={viewMode}  // remount Canvas on mode switch to reset camera
-      >
-        {viewMode === 'cluster' ? (
-          <Scene
-            graphData={graphData}
-            activatedConcepts={activatedConcepts}
-            onNodeClick={onNodeClick}
-            pulseSpeed={pulseSpeed}
-          />
-        ) : structuralData ? (
-          <StructuralScene
-            data={structuralData}
-            onNodeClick={onNodeClick}
-          />
-        ) : null}
-        {viewMode === 'structure' ? (
-          <OrbitControls
-            enableDamping
-            dampingFactor={0.12}
-            rotateSpeed={0.8}
-            zoomSpeed={1.2}
-            panSpeed={0.8}
-            minDistance={3}
-            maxDistance={40}
-          />
-        ) : (
-          <FlyControls
-            moveSpeed={8}
-            lookSpeed={0.002}
-          />
-        )}
-      </Canvas>
-      
-      {/* Controls hint */}
+    <div style={{ width: '100%', height: '100%', display: 'flex', position: 'relative' }}>
+      {/* ── Sidebar ── */}
       <div style={{
-        position: 'absolute',
-        top: 12,
-        left: 12,
-        fontSize: '0.7rem',
-        color: 'rgba(180, 160, 220, 0.6)',
-        pointerEvents: 'none',
+        width: 52, minWidth: 52,
+        background: 'rgba(12, 6, 24, 0.95)',
+        borderRight: '1px solid rgba(170, 100, 255, 0.2)',
+        display: 'flex', flexDirection: 'column',
+        paddingTop: 8, alignItems: 'center', gap: 2,
+        zIndex: 10,
       }}>
-        {viewMode === 'cluster'
-          ? '↑↓ forward/back • ←→ turn • WASD move • Q/E up/down • Drag look'
-          : '🖱️ Drag orbit • Scroll zoom • Right-drag pan'}
-      </div>
-      
-      {/* Query input overlay — cluster mode only */}
-      {viewMode === 'cluster' && (
-        <div style={{
-          position: 'absolute',
-          bottom: 20,
-          left: '50%',
-          transform: 'translateX(-50%)',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: 8,
-        }}>
-          <div style={{
-            display: 'flex',
-            gap: 8,
-            padding: 12,
-            background: 'rgba(20, 10, 40, 0.9)',
-            borderRadius: 12,
-            border: '1px solid rgba(170, 100, 255, 0.3)',
-            boxShadow: '0 0 30px rgba(136, 68, 204, 0.3)',
-          }}>
-            <input
-              type="text"
-              value={queryInput}
-              onChange={(e) => setQueryInput(e.target.value)}
-              placeholder="Type to activate concepts..."
-              style={{
-                width: 300,
-                padding: '10px 14px',
-                background: 'rgba(0, 0, 0, 0.5)',
-                border: '1px solid rgba(170, 100, 255, 0.4)',
-                borderRadius: 8,
-                color: '#fff',
-                fontSize: 14,
-                outline: 'none',
-              }}
-            />
+        {VIEWS.map(v => {
+          const active = viewMode === v.id;
+          return (
             <button
-              onClick={() => {
-                setQueryInput('');
-                setActivatedConcepts(new Map());
-                setDebugInfo('');
-              }}
+              key={v.id}
+              onClick={() => setViewMode(v.id)}
+              title={v.label}
               style={{
-                padding: '10px 20px',
-                background: 'linear-gradient(135deg, rgba(136, 68, 204, 0.4), rgba(68, 34, 102, 0.4))',
-                border: '1px solid rgba(170, 100, 255, 0.4)',
-                borderRadius: 8,
-                color: '#fff',
-                cursor: 'pointer',
-                fontWeight: 500,
+                width: 40, height: 40, borderRadius: 8, border: 'none',
+                background: active
+                  ? 'linear-gradient(135deg, rgba(136, 68, 204, 0.6), rgba(100, 40, 180, 0.6))'
+                  : 'transparent',
+                color: active ? '#fff' : '#665588',
+                fontSize: 18, cursor: 'pointer',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                transition: 'background 0.15s',
               }}
             >
-              Clear
+              {v.icon}
             </button>
+          );
+        })}
+
+        {/* Divider */}
+        <div style={{ width: 28, height: 1, background: 'rgba(170, 100, 255, 0.2)', margin: '6px 0' }} />
+
+        {/* Stats summary */}
+        {graphData && (
+          <div style={{ fontSize: 9, color: '#776699', textAlign: 'center', lineHeight: 1.4, padding: '0 4px' }}>
+            <div>{graphData.stats.unique_concepts}</div>
+            <div style={{ fontSize: 8, color: '#554477' }}>nodes</div>
+            <div style={{ marginTop: 4 }}>{graphData.stats.total_links}</div>
+            <div style={{ fontSize: 8, color: '#554477' }}>links</div>
           </div>
-          {debugInfo && (
-            <div style={{ fontSize: 11, color: '#aa88cc', background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: 4 }}>
-              {debugInfo}
-            </div>
-          )}
-        </div>
-      )}
-      
-      {/* View mode toggle */}
-      <div style={{
-        position: 'absolute',
-        top: 16,
-        left: '50%',
-        transform: 'translateX(-50%)',
-        display: 'flex',
-        gap: 4,
-        background: 'rgba(20, 10, 40, 0.9)',
-        borderRadius: 10,
-        border: '1px solid rgba(170, 100, 255, 0.3)',
-        padding: 4,
-      }}>
-        <button
-          onClick={() => setViewMode('cluster')}
-          style={{
-            padding: '8px 18px',
-            borderRadius: 8,
-            border: 'none',
-            background: viewMode === 'cluster'
-              ? 'linear-gradient(135deg, rgba(136, 68, 204, 0.6), rgba(100, 40, 180, 0.6))'
-              : 'transparent',
-            color: viewMode === 'cluster' ? '#fff' : '#8877aa',
-            fontSize: 12,
-            fontWeight: viewMode === 'cluster' ? 600 : 400,
-            cursor: 'pointer',
-          }}
-        >
-          🔮 Concept Cluster
-        </button>
-        <button
-          onClick={() => setViewMode('structure')}
-          style={{
-            padding: '8px 18px',
-            borderRadius: 8,
-            border: 'none',
-            background: viewMode === 'structure'
-              ? 'linear-gradient(135deg, rgba(0, 180, 220, 0.5), rgba(0, 100, 160, 0.5))'
-              : 'transparent',
-            color: viewMode === 'structure' ? '#fff' : '#8877aa',
-            fontSize: 12,
-            fontWeight: viewMode === 'structure' ? 600 : 400,
-            cursor: 'pointer',
-          }}
-        >
-          🧬 Architecture
-        </button>
+        )}
+
+        {/* Spacer → reindex at bottom */}
+        <div style={{ flex: 1 }} />
+
+        {viewMode === 'cluster' && (
+          <button
+            onClick={handleReindex}
+            disabled={reindexing}
+            title={reindexing ? 'Reindexing...' : 'Reindex concept graph'}
+            style={{
+              width: 36, height: 36, borderRadius: 8, border: 'none',
+              background: reindexing ? 'rgba(100,100,100,0.2)' : 'rgba(136, 68, 204, 0.25)',
+              color: '#bb99dd', fontSize: 14, cursor: reindexing ? 'wait' : 'pointer',
+              marginBottom: 8, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+          >
+            {reindexing ? '🔄' : '📊'}
+          </button>
+        )}
+        {reindexResult && (
+          <div style={{ fontSize: 8, color: reindexResult.includes('🌀') ? '#88cc88' : '#ff6b6b', textAlign: 'center', marginBottom: 6, padding: '0 2px' }}>
+            {reindexResult}
+          </div>
+        )}
       </div>
 
-      {/* Stats overlay */}
-      <div style={{
-        position: 'absolute',
-        top: 60,
-        left: 16,
-        padding: 14,
-        background: 'rgba(20, 10, 40, 0.85)',
-        borderRadius: 12,
-        border: '1px solid rgba(170, 100, 255, 0.25)',
-        color: '#bb99dd',
-        fontSize: 12,
-        boxShadow: '0 0 20px rgba(136, 68, 204, 0.2)',
-      }}>
-        {loading ? (
-          <span>Loading graph...</span>
-        ) : error ? (
-          <span style={{ color: '#ff6b6b' }}>{error}</span>
-        ) : viewMode === 'cluster' && graphData ? (
-          <>
-            <div style={{ fontWeight: 600, marginBottom: 6, color: '#dd99ff', fontSize: 14 }}>
-              🔮 Linking Core
-            </div>
-            <div>{graphData.stats.unique_concepts} concepts</div>
-            <div>{graphData.stats.total_links} links</div>
-            <div>Avg: {graphData.stats.avg_strength.toFixed(2)}</div>
-            {activatedConcepts.size > 0 && (
-              <div style={{ marginTop: 8, color: '#ffcc66', fontWeight: 500 }}>
-                ⚡ {activatedConcepts.size} active
-              </div>
-            )}
-            <button
-              onClick={handleReindex}
-              disabled={reindexing}
-              style={{
-                marginTop: 12,
-                padding: '8px 14px',
-                background: reindexing ? 'rgba(100, 100, 100, 0.3)' : 'linear-gradient(135deg, rgba(136, 68, 204, 0.5), rgba(68, 34, 102, 0.5))',
-                border: '1px solid rgba(170, 100, 255, 0.4)',
-                borderRadius: 6,
-                color: '#fff',
-                fontSize: 11,
-                cursor: reindexing ? 'wait' : 'pointer',
-                width: '100%',
+      {/* ── Main content area ── */}
+      <div style={{ flex: 1, position: 'relative', overflow: 'hidden' }}>
+        {viewMode === 'cooccurrence' ? (
+          <CooccurrenceView />
+        ) : (
+          <div
+            style={{ width: '100%', height: '100%', background: 'radial-gradient(ellipse at center, #1a0a2e 0%, #0a0612 100%)' }}
+            onWheel={(e) => e.preventDefault()}
+          >
+            {/* 3D Canvas */}
+            <Canvas
+              camera={{
+                position: viewMode === 'structure' ? [5, 6, 9] : [0, 0, 12],
+                fov: 50,
               }}
+              style={{ width: '100%', height: '100%', touchAction: 'none' }}
+              key={viewMode}
             >
-              {reindexing ? '🔄 Indexing...' : '📊 Reindex'}
-            </button>
-            {reindexResult && (
-              <div style={{ marginTop: 6, fontSize: 10, color: reindexResult.includes('🌀') ? '#88cc88' : '#ff6b6b' }}>
-                {reindexResult}
+              {viewMode === 'cluster' ? (
+                <Scene
+                  graphData={graphData}
+                  activatedConcepts={activatedConcepts}
+                  onNodeClick={onNodeClick}
+                  pulseSpeed={pulseSpeed}
+                />
+              ) : structuralData ? (
+                <StructuralScene
+                  data={structuralData}
+                  onNodeClick={onNodeClick}
+                />
+              ) : null}
+              {viewMode === 'structure' ? (
+                <OrbitControls
+                  enableDamping dampingFactor={0.12}
+                  rotateSpeed={0.8} zoomSpeed={1.2} panSpeed={0.8}
+                  minDistance={3} maxDistance={40}
+                />
+              ) : (
+                <FlyControls moveSpeed={8} lookSpeed={0.002} />
+              )}
+            </Canvas>
+
+            {/* Controls hint */}
+            <div style={{
+              position: 'absolute', top: 12, left: 12,
+              fontSize: '0.7rem', color: 'rgba(180, 160, 220, 0.6)', pointerEvents: 'none',
+            }}>
+              {viewMode === 'cluster'
+                ? '↑↓ forward/back • ←→ turn • WASD move • Q/E up/down • Drag look'
+                : '🖱️ Drag orbit • Scroll zoom • Right-drag pan'}
+            </div>
+
+            {/* Query input — cluster mode only */}
+            {viewMode === 'cluster' && (
+              <div style={{
+                position: 'absolute', bottom: 20, left: '50%', transform: 'translateX(-50%)',
+                display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 8,
+              }}>
+                <div style={{
+                  display: 'flex', gap: 8, padding: 12,
+                  background: 'rgba(20, 10, 40, 0.9)', borderRadius: 12,
+                  border: '1px solid rgba(170, 100, 255, 0.3)',
+                  boxShadow: '0 0 30px rgba(136, 68, 204, 0.3)',
+                }}>
+                  <input
+                    type="text" value={queryInput}
+                    onChange={(e) => setQueryInput(e.target.value)}
+                    placeholder="Type to activate concepts..."
+                    style={{
+                      width: 300, padding: '10px 14px',
+                      background: 'rgba(0, 0, 0, 0.5)',
+                      border: '1px solid rgba(170, 100, 255, 0.4)',
+                      borderRadius: 8, color: '#fff', fontSize: 14, outline: 'none',
+                    }}
+                  />
+                  <button
+                    onClick={() => { setQueryInput(''); setActivatedConcepts(new Map()); setDebugInfo(''); }}
+                    style={{
+                      padding: '10px 20px',
+                      background: 'linear-gradient(135deg, rgba(136, 68, 204, 0.4), rgba(68, 34, 102, 0.4))',
+                      border: '1px solid rgba(170, 100, 255, 0.4)',
+                      borderRadius: 8, color: '#fff', cursor: 'pointer', fontWeight: 500,
+                    }}
+                  >Clear</button>
+                </div>
+                {debugInfo && (
+                  <div style={{ fontSize: 11, color: '#aa88cc', background: 'rgba(0,0,0,0.5)', padding: '4px 12px', borderRadius: 4 }}>
+                    {debugInfo}
+                  </div>
+                )}
               </div>
             )}
-          </>
-        ) : viewMode === 'structure' && structuralData ? (
-          <>
-            <div style={{ fontWeight: 600, marginBottom: 6, color: '#88ddff', fontSize: 14 }}>
-              🧬 Architecture
+
+            {/* Stats overlay */}
+            <div style={{
+              position: 'absolute', top: 12, left: 12,
+              padding: 12, marginTop: 24,
+              background: 'rgba(20, 10, 40, 0.85)', borderRadius: 10,
+              border: '1px solid rgba(170, 100, 255, 0.25)',
+              color: '#bb99dd', fontSize: 12,
+            }}>
+              {loading ? (
+                <span>Loading...</span>
+              ) : error ? (
+                <span style={{ color: '#ff6b6b' }}>{error}</span>
+              ) : viewMode === 'cluster' && graphData ? (
+                <>
+                  <div>{graphData.stats.unique_concepts} concepts • {graphData.stats.total_links} links</div>
+                  <div>Avg strength: {graphData.stats.avg_strength.toFixed(2)}</div>
+                  {activatedConcepts.size > 0 && (
+                    <div style={{ color: '#ffcc66', fontWeight: 500, marginTop: 4 }}>
+                      ⚡ {activatedConcepts.size} active
+                    </div>
+                  )}
+                </>
+              ) : viewMode === 'structure' && structuralData ? (
+                <>
+                  <div>{structuralData.stats.node_count} nodes • {structuralData.stats.structural_count} edges</div>
+                  <div>{structuralData.stats.associative_count} cross-links</div>
+                  <div style={{ marginTop: 6, fontSize: 11 }}>
+                    {structuralData.stats.threads.map(t => (
+                      <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 2 }}>
+                        <span style={{
+                          display: 'inline-block', width: 8, height: 8, borderRadius: '50%',
+                          background: THREAD_COLORS[t] || '#888',
+                        }} />
+                        <span>{t}</span>
+                        <span style={{ color: '#776699', marginLeft: 'auto' }}>
+                          {structuralData.nodes.filter(n => n.thread === t).length}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </>
+              ) : null}
             </div>
-            <div>{structuralData.stats.node_count} nodes</div>
-            <div>{structuralData.stats.structural_count} edges</div>
-            <div>{structuralData.stats.associative_count} cross-links</div>
-            <div style={{ marginTop: 8, fontSize: 11 }}>
-              {structuralData.stats.threads.map(t => (
-                <div key={t} style={{ display: 'flex', alignItems: 'center', gap: 6, marginTop: 3 }}>
-                  <span style={{
-                    display: 'inline-block',
-                    width: 8, height: 8,
-                    borderRadius: '50%',
-                    background: THREAD_COLORS[t] || '#888',
-                  }} />
-                  <span>{t}</span>
-                  <span style={{ color: '#776699', marginLeft: 'auto' }}>
-                    {structuralData.nodes.filter(n => n.thread === t).length}
-                  </span>
-                </div>
-              ))}
-            </div>
-          </>
-        ) : null}
-      </div>
-      
-      {/* Instructions */}
-      <div style={{
-        position: 'absolute',
-        top: 60,
-        right: 16,
-        padding: 12,
-        background: 'rgba(20, 10, 40, 0.75)',
-        borderRadius: 10,
-        border: '1px solid rgba(170, 100, 255, 0.2)',
-        color: '#8877aa',
-        fontSize: 11,
-        maxWidth: 160,
-      }}>
-        <div style={{ fontWeight: 600, marginBottom: 6, color: '#aa99cc' }}>Controls</div>
-        <div>🖱️ Drag to orbit</div>
-        <div>⚙️ Scroll to zoom</div>
-        {viewMode === 'cluster' && <div>⌨️ Type to activate</div>}
-        <div>💡 Click nodes</div>
-        
-        {viewMode === 'cluster' && (
-          <>
-            <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
-              <div style={{ marginBottom: 4 }}>⚡ Pulse Speed: {pulseSpeed.toFixed(1)}x</div>
-              <input
-                type="range"
-                min="0.2"
-                max="3"
-                step="0.1"
-                value={pulseSpeed}
-                onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
-                style={{
-                  width: '100%',
-                  accentColor: '#aa66ff',
-                  cursor: 'pointer',
-                }}
-              />
-            </div>
-            <div style={{ marginTop: 10, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 10 }}>
-              <button
-                onClick={() => setAnchored(prev => !prev)}
-                title={anchored ? 'Showing fact-anchored concepts only. Click to show all.' : 'Showing all concepts. Click to filter to stored facts.'}
-                style={{
-                  width: '100%',
-                  padding: '6px 10px',
-                  background: anchored
-                    ? 'linear-gradient(135deg, rgba(68, 204, 136, 0.35), rgba(34, 102, 68, 0.35))'
-                    : 'linear-gradient(135deg, rgba(136, 68, 204, 0.25), rgba(68, 34, 102, 0.25))',
-                  border: anchored
-                    ? '1px solid rgba(100, 220, 150, 0.5)'
-                    : '1px solid rgba(170, 100, 255, 0.3)',
-                  borderRadius: 6,
-                  color: anchored ? '#88ddaa' : '#9977bb',
-                  fontSize: 11,
-                  cursor: 'pointer',
-                  fontWeight: 500,
-                  textAlign: 'left',
-                }}
-              >
-                {anchored ? '🔒 Anchored facts' : '🌐 All concepts'}
-              </button>
-            </div>
-          </>
+
+            {/* Right panel — controls */}
+            {is3D && (
+              <div style={{
+                position: 'absolute', top: 12, right: 12,
+                padding: 10, background: 'rgba(20, 10, 40, 0.75)', borderRadius: 10,
+                border: '1px solid rgba(170, 100, 255, 0.2)',
+                color: '#8877aa', fontSize: 11, maxWidth: 150,
+              }}>
+                <div style={{ fontWeight: 600, marginBottom: 4, color: '#aa99cc' }}>Controls</div>
+                <div>🖱️ Drag to orbit</div>
+                <div>⚙️ Scroll to zoom</div>
+                {viewMode === 'cluster' && <div>⌨️ Type to activate</div>}
+                <div>💡 Click nodes</div>
+
+                {viewMode === 'cluster' && (
+                  <>
+                    <div style={{ marginTop: 8, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 8 }}>
+                      <div style={{ marginBottom: 4 }}>⚡ Pulse: {pulseSpeed.toFixed(1)}x</div>
+                      <input type="range" min="0.2" max="3" step="0.1" value={pulseSpeed}
+                        onChange={(e) => setPulseSpeed(parseFloat(e.target.value))}
+                        style={{ width: '100%', accentColor: '#aa66ff', cursor: 'pointer' }}
+                      />
+                    </div>
+                    <div style={{ marginTop: 8, borderTop: '1px solid rgba(170, 100, 255, 0.2)', paddingTop: 8 }}>
+                      <button
+                        onClick={() => setAnchored(prev => !prev)}
+                        title={anchored ? 'Showing fact-anchored only' : 'Showing all concepts'}
+                        style={{
+                          width: '100%', padding: '5px 8px', borderRadius: 6, fontSize: 10,
+                          background: anchored
+                            ? 'linear-gradient(135deg, rgba(68, 204, 136, 0.35), rgba(34, 102, 68, 0.35))'
+                            : 'linear-gradient(135deg, rgba(136, 68, 204, 0.25), rgba(68, 34, 102, 0.25))',
+                          border: anchored ? '1px solid rgba(100, 220, 150, 0.5)' : '1px solid rgba(170, 100, 255, 0.3)',
+                          color: anchored ? '#88ddaa' : '#9977bb',
+                          cursor: 'pointer', fontWeight: 500, textAlign: 'left',
+                        }}
+                      >
+                        {anchored ? '🔒 Anchored facts' : '🌐 All concepts'}
+                      </button>
+                    </div>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
         )}
       </div>
     </div>

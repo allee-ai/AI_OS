@@ -174,6 +174,7 @@ async def export_all_training_data():
         total_examples = 0
         
         with open(combined_path, 'w') as combined:
+            # Thread-exported training data
             for thread in threads:
                 thread_file = FINETUNE_DIR / f"{thread}_train.jsonl"
                 if thread_file.exists():
@@ -181,7 +182,18 @@ async def export_all_training_data():
                         for line in f:
                             combined.write(line)
                             total_examples += 1
-        
+
+            # User-approved responses (thumbs up)
+            approved_file = FINETUNE_DIR / "user_approved.jsonl"
+            approved_count = 0
+            if approved_file.exists():
+                with open(approved_file) as f:
+                    for line in f:
+                        combined.write(line)
+                        total_examples += 1
+                        approved_count += 1
+
+        results["user_approved"] = {"examples": approved_count}
         results["combined"] = {
             "path": str(combined_path),
             "total_examples": total_examples

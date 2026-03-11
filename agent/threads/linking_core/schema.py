@@ -1254,6 +1254,53 @@ def get_stats() -> Dict[str, Any]:
     }
 
 
+def get_cooccurrence_data(limit: int = 200, min_count: int = 2) -> Dict[str, Any]:
+    """Get co-occurrence data for visualization."""
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        init_cooccurrence_table(conn)
+
+        cur.execute("""
+            SELECT key_a, key_b, count, last_seen
+            FROM key_cooccurrence
+            WHERE count >= ?
+            ORDER BY count DESC
+            LIMIT ?
+        """, (min_count, limit))
+
+        pairs = []
+        concepts_seen: Dict[str, int] = {}
+        max_count = 1
+        for row in cur.fetchall():
+            c = row[2]
+            if c > max_count:
+                max_count = c
+            pairs.append({
+                "key_a": row[0],
+                "key_b": row[1],
+                "count": c,
+                "last_seen": row[3],
+            })
+            concepts_seen[row[0]] = concepts_seen.get(row[0], 0) + c
+            concepts_seen[row[1]] = concepts_seen.get(row[1], 0) + c
+
+        # Top concepts by total co-occurrence volume
+        top_concepts = sorted(concepts_seen.items(), key=lambda x: x[1], reverse=True)[:50]
+
+        cur.execute("SELECT COUNT(*) FROM key_cooccurrence")
+        total_pairs = cur.fetchone()[0] or 0
+
+    return {
+        "pairs": pairs,
+        "top_concepts": [{"concept": c, "total_count": n} for c, n in top_concepts],
+        "stats": {
+            "total_pairs": total_pairs,
+            "returned": len(pairs),
+            "max_count": max_count,
+        },
+    }
+
+
 # ============================================================================
 # Concept Extraction & Linking (from conversation)
 # ============================================================================

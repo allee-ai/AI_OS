@@ -13,7 +13,7 @@ from .schema import (
     create_link, delete_link, update_link_strength,
     get_graph_data, get_activation_path, get_stats,
     spread_activate, extract_concepts_from_text,
-    get_structural_graph,
+    get_structural_graph, get_cooccurrence_data,
 )
 from .adapter import LinkingCoreThreadAdapter
 
@@ -261,6 +261,19 @@ async def score_threads(feeds: str):
         "feeds": feeds,
         "thread_scores": scores
     }
+
+
+# ─────────────────────────────────────────────────────────────
+# Co-occurrence Endpoint
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/cooccurrence")
+async def get_cooccurrence(
+    limit: int = Query(200, ge=1, le=1000),
+    min_count: int = Query(2, ge=1),
+):
+    """Get co-occurrence pairs for visualization."""
+    return get_cooccurrence_data(limit=limit, min_count=min_count)
 
 
 # ─────────────────────────────────────────────────────────────
