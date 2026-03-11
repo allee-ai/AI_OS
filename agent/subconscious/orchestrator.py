@@ -216,14 +216,21 @@ class Subconscious:
             except Exception as e:
                 print(f"⚠️ {thread_name} introspect failed: {e}")
         
-        # Workspace context — FTS-scored file snippets
-        if query:
-            workspace_facts = self._get_workspace_context(query)
-            if workspace_facts:
-                lines.append("")
-                lines.append("[workspace] Relevant files and documents")
-                for fact in workspace_facts:
-                    lines.append(fact)
+        # Workspace context — always include top files + FTS matches
+        workspace_facts = self._get_workspace_context(query)
+        if workspace_facts:
+            lines.append("")
+            lines.append("[workspace] Files and documents I have access to")
+            for fact in workspace_facts:
+                lines.append(fact)
+        
+        # Tool traces — recent tool executions with weights
+        tool_facts = self._get_tool_context(query)
+        if tool_facts:
+            lines.append("")
+            lines.append("[tools] Recent tool executions")
+            for fact in tool_facts:
+                lines.append(fact)
         
         lines.append("")
         lines.append("== END STATE ==")
@@ -270,15 +277,11 @@ class Subconscious:
         
         return lines
 
-    def _get_workspace_context(self, query: str, max_results: int = 5) -> List[str]:
-        """Build workspace context at the appropriate level.
+    def _get_workspace_context(self, query: str = "", max_results: int = 5) -> List[str]:
+        """Build workspace context — always-on baseline + FTS boost.
         
-        L1 — file metadata only (path, size, modified)
-        L2 — metadata + stored LLM-generated summaries
-        L3 — summaries + FTS snippet matches for the query,
-              re-ranked by concept overlap via linking_core
-        
-        Level is determined by whether the query matches workspace content.
+        Always includes top files by recency so the model knows its workspace.
+        When a query is provided, FTS matches are ranked higher.
         """
         try:
             from workspace.schema import (
@@ -359,6 +362,41 @@ class Subconscious:
                         facts.append(f"  workspace.{dot_path}: {_fmt_size(size)} — {summary[:100]}")
                     else:
                         facts.append(f"  workspace.{dot_path}: {_fmt_size(size)}")
+            
+            return facts
+        except Exception:
+            return []
+
+    def _get_tool_context(self, query: str = "", max_results: int = 10) -> List[str]:
+        """Build tool traces context for STATE.
+        
+        Reads recent weighted tool execution traces so the model
+        can see what tools have been used and their outcomes.
+        """
+        try:
+            from data.db import get_connection
+            
+            conn = get_connection(readonly=True)
+            rows = conn.execute(
+                """SELECT tool, action, success, output, weight, created_at
+                   FROM tool_traces
+                   WHERE weight >= 0.2
+                   ORDER BY weight DESC, created_at DESC
+                   LIMIT ?""",
+                (max_results,)
+            ).fetchall()
+            
+            if not rows:
+                return []
+            
+            facts = []
+            for r in rows:
+                tool = r["tool"]
+                action = r["action"]
+                ok = "✓" if r["success"] else "✗"
+                weight = r["weight"]
+                output = (r["output"] or "")[:100]
+                facts.append(f"  tools.{tool}.{action}: {ok} (w={weight:.2f}) {output}")
             
             return facts
         except Exception:

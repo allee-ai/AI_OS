@@ -266,7 +266,7 @@ class Agent:
         details: str,
         duration_ms: int = 0
     ) -> None:
-        """Log tool call via existing log_event + record_action."""
+        """Log tool call via log_event + record_action + tool_traces."""
         # Unified event log
         try:
             from agent.threads.log.schema import log_event
@@ -298,6 +298,39 @@ class Agent:
                 )
         except Exception:
             pass
+        
+        # Tool traces — weighted rows for STATE visibility
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            import json as _json
+            
+            # Hebbian weight: check prior use of this tool+action
+            base_weight = 0.7 if success else 0.3
+            with closing(get_connection()) as conn:
+                row = conn.execute(
+                    "SELECT weight FROM tool_traces WHERE tool = ? AND action = ? "
+                    "ORDER BY created_at DESC LIMIT 1",
+                    (tool, action)
+                ).fetchone()
+                if row:
+                    prev = row[0]
+                    # Hebbian: new = old + (1 - old) * learning_rate
+                    weight = prev + (1.0 - prev) * 0.1 if success else max(0.1, prev - 0.1)
+                else:
+                    weight = base_weight
+                
+                conn.execute(
+                    """INSERT INTO tool_traces
+                       (tool, action, success, output, weight, duration_ms, metadata_json)
+                       VALUES (?, ?, ?, ?, ?, ?, ?)""",
+                    (tool, action, 1 if success else 0, details[:500],
+                     round(weight, 3), duration_ms,
+                     _json.dumps({"duration_ms": duration_ms}))
+                )
+                conn.commit()
+        except Exception:
+            pass  # table may not exist yet
     
     def _get_tool_mode(self) -> str:
         """Return 'text' (:::execute::: blocks) or 'schema' (Ollama JSON protocol).

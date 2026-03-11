@@ -6,10 +6,11 @@ Start and configure MLX finetuning jobs on Mac.
 
 from fastapi import APIRouter, BackgroundTasks, HTTPException
 from pydantic import BaseModel
-from typing import Optional
+from typing import Optional, Dict, Any, List
 from pathlib import Path
 import subprocess
 import logging
+import json
 import re
 
 router = APIRouter(prefix="/api/finetune", tags=["finetune"])
@@ -223,5 +224,194 @@ async def export_thread_training_data(thread: str):
         module = __import__(f"agent.threads.{thread}.train", fromlist=["export_training_data"])
         result = module.export_training_data()
         return {"status": "exported", "thread": thread, "result": result}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────
+# Adapter Loading — Close the export → train → load loop
+# ─────────────────────────────────────────────────────────────
+
+class AdapterLoadRequest(BaseModel):
+    adapter_path: Optional[str] = None  # default: finetune/adapters/
+    base_model: Optional[str] = None    # default: from env AIOS_MODEL_NAME
+    model_name: Optional[str] = None    # name for the fused model, default: aios-finetuned
+
+
+@router.post("/load")
+async def load_adapter(request: AdapterLoadRequest):
+    """
+    Load trained LoRA adapters into Ollama for inference.
+    
+    Creates a new Ollama model that combines base + adapters.
+    After loading, set AIOS_MODEL_NAME to the new model name.
+    """
+    import os
+    adapter_dir = Path(request.adapter_path) if request.adapter_path else FINETUNE_DIR / "adapters"
+    
+    if not adapter_dir.exists():
+        raise HTTPException(status_code=404, detail=f"Adapter directory not found: {adapter_dir}")
+    
+    # Check for adapter files
+    adapter_files = list(adapter_dir.glob("*.safetensors")) + list(adapter_dir.glob("*.npz"))
+    if not adapter_files:
+        raise HTTPException(status_code=404, detail=f"No adapter files found in {adapter_dir}")
+    
+    base_model = request.base_model or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+    model_name = request.model_name or "aios-finetuned"
+    
+    # Create Modelfile for Ollama
+    modelfile_path = FINETUNE_DIR / "Modelfile"
+    modelfile_content = f"FROM {base_model}\nADAPTER {adapter_dir}\n"
+    modelfile_path.write_text(modelfile_content, encoding="utf-8")
+    
+    try:
+        import ollama
+        # Create the model with adapters
+        ollama.create(model=model_name, modelfile=modelfile_content)
+        
+        # Store the active finetuned model name in service_config
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection()) as conn:
+                conn.execute(
+                    """INSERT INTO service_config (service_id, settings_json, updated_at)
+                       VALUES ('finetune', ?, datetime('now'))
+                       ON CONFLICT(service_id) DO UPDATE SET
+                           settings_json = ?, updated_at = datetime('now')""",
+                    (json.dumps({"active_model": model_name, "base_model": base_model,
+                                 "adapter_path": str(adapter_dir)}),) * 2
+                )
+                conn.commit()
+        except Exception as e:
+            logger.warning(f"Could not persist finetune config: {e}")
+        
+        logger.info(f"Adapter loaded: {model_name} (base: {base_model}, adapters: {adapter_dir})")
+        return {
+            "status": "loaded",
+            "model_name": model_name,
+            "base_model": base_model,
+            "adapter_path": str(adapter_dir),
+            "adapter_files": [f.name for f in adapter_files],
+            "message": f"Model '{model_name}' created. Set AIOS_MODEL_NAME={model_name} to use it."
+        }
+    except ImportError:
+        raise HTTPException(status_code=500, detail="ollama package not installed")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create model: {e}")
+
+
+@router.get("/load/status")
+async def get_adapter_status():
+    """Get the currently loaded finetuned model info."""
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            row = conn.execute(
+                "SELECT settings_json FROM service_config WHERE service_id = 'finetune'"
+            ).fetchone()
+            if row and row[0]:
+                return {"status": "loaded", **json.loads(row[0])}
+    except Exception:
+        pass
+    return {"status": "none", "message": "No finetuned model loaded"}
+
+
+# ─────────────────────────────────────────────────────────────
+# Module Enable/Disable — Control what goes into training
+# ─────────────────────────────────────────────────────────────
+
+# All exportable modules (threads + chat + cli)
+ALL_MODULES = ["linking_core", "identity", "philosophy", "log", "reflex", "form", "chat", "cli"]
+
+
+def _get_module_config() -> Dict[str, bool]:
+    """Get enabled/disabled status for each finetune module."""
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            row = conn.execute(
+                "SELECT settings_json FROM service_config WHERE service_id = 'finetune_modules'"
+            ).fetchone()
+            if row and row[0]:
+                return json.loads(row[0])
+    except Exception:
+        pass
+    # Default: all enabled
+    return {m: True for m in ALL_MODULES}
+
+
+def _set_module_config(config: Dict[str, bool]) -> None:
+    """Persist module enable/disable config."""
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        conn.execute(
+            """INSERT INTO service_config (service_id, settings_json, updated_at)
+               VALUES ('finetune_modules', ?, datetime('now'))
+               ON CONFLICT(service_id) DO UPDATE SET
+                   settings_json = ?, updated_at = datetime('now')""",
+            (json.dumps(config),) * 2
+        )
+        conn.commit()
+
+
+@router.get("/modules")
+async def list_finetune_modules():
+    """List all finetune modules with enabled status and exportable counts."""
+    config = _get_module_config()
+    modules = []
+    for name in ALL_MODULES:
+        info: Dict[str, Any] = {"name": name, "enabled": config.get(name, True)}
+        try:
+            if name in ["chat", "cli"]:
+                mod = __import__(f"{name}.train", fromlist=["get_export_stats"])
+            else:
+                mod = __import__(f"agent.threads.{name}.train", fromlist=["get_export_stats"])
+            info["stats"] = mod.get_export_stats()
+        except Exception as e:
+            info["stats"] = {"error": str(e)}
+        modules.append(info)
+    return {"modules": modules}
+
+
+@router.put("/modules/{name}/enabled")
+async def toggle_finetune_module(name: str, enabled: bool = True):
+    """Enable or disable a module for finetune export."""
+    if name not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Unknown module: {name}. Valid: {ALL_MODULES}")
+    config = _get_module_config()
+    config[name] = enabled
+    _set_module_config(config)
+    return {"module": name, "enabled": enabled}
+
+
+@router.get("/modules/{name}/preview")
+async def preview_module_data(name: str, limit: int = 5):
+    """Preview sample training examples from a module."""
+    if name not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
+    try:
+        if name in ["chat", "cli"]:
+            mod = __import__(f"{name}.train", fromlist=["export_training_data"])
+        else:
+            mod = __import__(f"agent.threads.{name}.train", fromlist=["export_training_data"])
+        # Export to temp to read samples
+        result = mod.export_training_data()
+        path = Path(result.get("path", ""))
+        samples = []
+        if path.exists():
+            with open(path) as f:
+                for i, line in enumerate(f):
+                    if i >= limit:
+                        break
+                    try:
+                        samples.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+        return {"module": name, "samples": samples, "total": result.get("examples", 0)}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

@@ -200,6 +200,68 @@ async def list_categories():
     return get_categories()
 
 
+# ─────────────────────────────────────────────────────────────
+# Tool Traces — Weighted execution history visible in STATE
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/traces")
+async def list_tool_traces(limit: int = 50, min_weight: float = 0.0):
+    """Get recent tool execution traces, ordered by weight."""
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection(readonly=True)) as conn:
+        rows = conn.execute(
+            """SELECT id, tool, action, success, output, weight,
+                      duration_ms, session_id, metadata_json, created_at
+               FROM tool_traces
+               WHERE weight >= ?
+               ORDER BY created_at DESC LIMIT ?""",
+            (min_weight, limit)
+        ).fetchall()
+        return [{"id": r["id"], "tool": r["tool"], "action": r["action"],
+                 "success": bool(r["success"]), "output": r["output"],
+                 "weight": r["weight"], "duration_ms": r["duration_ms"],
+                 "session_id": r["session_id"], "created_at": r["created_at"]}
+                for r in rows]
+
+
+@router.get("/traces/{trace_id}")
+async def get_tool_trace(trace_id: int):
+    """Get a single tool trace by ID."""
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection(readonly=True)) as conn:
+        row = conn.execute(
+            "SELECT * FROM tool_traces WHERE id = ?", (trace_id,)
+        ).fetchone()
+        if not row:
+            raise HTTPException(status_code=404, detail=f"Trace not found: {trace_id}")
+        return dict(row)
+
+
+@router.get("/traces/stats")
+async def get_trace_stats():
+    """Get aggregate stats for tool traces."""
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection(readonly=True)) as conn:
+        total = conn.execute("SELECT COUNT(*) FROM tool_traces").fetchone()[0]
+        avg_weight = conn.execute("SELECT AVG(weight) FROM tool_traces").fetchone()[0] or 0
+        by_tool = conn.execute(
+            """SELECT tool, COUNT(*) as count, AVG(weight) as avg_weight,
+                      SUM(CASE WHEN success THEN 1 ELSE 0 END) as successes
+               FROM tool_traces GROUP BY tool ORDER BY count DESC"""
+        ).fetchall()
+        return {
+            "total": total,
+            "avg_weight": round(avg_weight, 3),
+            "by_tool": [{"tool": r["tool"], "count": r["count"],
+                         "avg_weight": round(r["avg_weight"], 3),
+                         "success_rate": round(r["successes"] / r["count"], 2) if r["count"] else 0}
+                        for r in by_tool]
+        }
+
+
 @router.post("/tools/{name}/test")
 async def test_tool(name: str, action: str = "get_identity", params: Dict[str, Any] = None):
     """Test a tool execution (legacy endpoint, use /execute instead)."""

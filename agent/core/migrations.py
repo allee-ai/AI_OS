@@ -86,6 +86,9 @@ def ensure_schema() -> None:
     # -- Reflex triggers ---------------------------------------------------
     _try("reflex", _init_reflex)
 
+    # -- Tool traces -------------------------------------------------------
+    _try("tool_traces", _init_tool_traces)
+
     # -- Tables without exported init functions (inlined) ------------------
     _try("memory_loop_state", _init_memory_loop_state)
     _try("custom_loops", _init_custom_loops)
@@ -213,5 +216,34 @@ def _init_service_config():
                 settings_json TEXT DEFAULT '{}',
                 updated_at TEXT DEFAULT CURRENT_TIMESTAMP
             )
+        """)
+        conn.commit()
+
+
+def _init_tool_traces():
+    """Tool execution traces with weights for STATE visibility."""
+    from data.db import get_connection
+    with closing(get_connection()) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS tool_traces (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                tool TEXT NOT NULL,
+                action TEXT NOT NULL,
+                success INTEGER NOT NULL DEFAULT 0,
+                output TEXT,
+                weight REAL NOT NULL DEFAULT 0.5,
+                duration_ms INTEGER DEFAULT 0,
+                session_id TEXT,
+                metadata_json TEXT DEFAULT '{}',
+                created_at TEXT NOT NULL DEFAULT (datetime('now'))
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tool_traces_weight
+            ON tool_traces(weight DESC)
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_tool_traces_created
+            ON tool_traces(created_at DESC)
         """)
         conn.commit()
