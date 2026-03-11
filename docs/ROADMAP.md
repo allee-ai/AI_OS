@@ -15,46 +15,44 @@ AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source 
 
 **What AI OS provides:** One system with all the OS extension pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
 
-**The methodology:** Retrieval-augmented prompting. Clear, structured context produces better model outputs — this is established prompt engineering. AI OS makes that structure *visible and controllable*: you see what context is being retrieved, how it's organized, and why. Everything visible, everything manageable, in a single place.
+**The methodology:** Make cognition visible. Every step the OS takes — scoring threads, assembling STATE, running tools, extracting facts, consolidating memory — is structured, inspectable, and addressable. The LLM is a replaceable text function. The OS is the intelligence. If you pulled the model out, the memory graph still holds, the tools still execute, the loops still schedule, the identity is still stored. The test for "ready": could a new model be dropped in and learn everything through STATE alone?
 
 ### Current State
 
 | Layer | Status | What's Working |
 |-------|--------|----------------|
-| **Core** | [WIP] | Threads, HEA, SQLite backend, stateless agent, text-native tool calling |
+| **Core** | ✅ | Threads (6), HEA, SQLite backend, stateless agent, text-native + schema tool calling |
+| **CLI** | ✅ | Full feature parity — ~60 commands across all modules, headless/SSH support |
 | **UI** | [WIP] | React app, chat, tool call/result rendering, thread visualization |
+| **Finetune** | [WIP] | Export pipeline works (all 6 threads → JSONL). Training script exists. Adapter loading missing. |
+| **Workspace** | [WIP] | Virtual filesystem, FTS, summaries. In STATE via FTS but passive — not deeply wired. |
 | **Integrations** | [~] | Feeds system built, contacts import, needs OAuth + polling daemon |
-| **Advanced** | [--] | Philosophy thread exists. Reflex has API/schema. Visual builder planned. |
 
-### Future: The Ecosystem
+### The Goal
 
-**Plugin Marketplace** — A modular ecosystem for extending AI OS:
-- Predefined personalities (e.g., assistant, tutor, coach)
-- Predefined knowledgebases (e.g., medical, legal, creative)
-- Calendar as a feed
-- Domain-specific plugins for specialized tasks
+The base program needs to be complete enough that a model deeply finetuned on the architecture can grow *with* the architecture. Once the program could almost live entirely without an LLM — memory organized, identity stored, loops scheduling, tools executing, training data exporting — it's ready. The structure guides its own improvement.
 
-**Enterprise Edition:**
-- Multi-user with role-based access
-- Compliance and audit logging
-- On-prem deployment packages
-
-**Long-Term Use Studies:**
-- How identity coherence evolves over weeks/months of use
-- Memory consolidation effectiveness over time
-- User experience patterns with persistent AI
+**What "ready" means:**
+- [ ] Export all threads → JSONL → train → load adapters → verify STATE adherence
+- [ ] Workspace files visible in STATE during every interaction (not just FTS hits)
+- [ ] Tool execution results visible in STATE (model sees what happened)
+- [ ] One full self-training cycle completed end-to-end
+- [ ] New model dropped in can learn everything from STATE alone
 
 ### Big Milestones
 
 | Phase | Goal | Status |
 |-------|------|--------|
-| **1. Memory** | Facts get promoted based on importance | 95% |
-| **1b. Tool Calling** | Agent executes tools via text-native protocol | Done (core) |
-| **2. Philosophy** | Moral compass, value-guided behavior | Foundation done |
-| **3. Reflex** | Visual automation, 10x pattern learning | Planned |
-| **4. Dream** | Personality through synthetic experience | Planned |
-| **5. Multi-Model** | Right model for right task | Planned |
-| **6. Beyond Chat** | Background presence via Feeds | Foundation done |
+| **1. Memory** | Facts extracted, promoted, consolidated in background loops | ✅ Done |
+| **2. Tool Calling** | Agent executes tools, results logged, safety-gated | ✅ Done |
+| **3. Identity/Philosophy** | Persistent self-model, values, ethics stored as facts | ✅ Done (schema + introspection) |
+| **4. CLI Parity** | Every feature works without a browser | ✅ Done |
+| **5. Finetune Pipeline** | Export → train → load finetuned model | 🔧 Export + train done, load missing |
+| **6. Workspace → Cognition** | Agent reads/reasons about workspace in STATE | 🔧 FTS in STATE, not deeply wired |
+| **7. Tool → STATE** | Tool results feed back into visible context | ❌ Not connected |
+| **8. Self-Training Loop** | OS exports its own training data, trains, loads result | 🔧 Pieces exist, end-to-end untested |
+| **9. Reflex** | Pattern auto-promotion, visual trigger builder | Foundation (schema + API) |
+| **10. Beyond Chat** | Background presence via Feeds polling | Foundation (adapters exist) |
 
 ---
 
@@ -321,15 +319,21 @@ _Source: [workspace/README.md](workspace/README.md)_
 <!-- INCLUDE:finetune:ROADMAP -->
 _Source: [finetune/README.md](finetune/README.md)_
 
-### Ready for contributors
-- [ ] **Synthetic data generator** — Auto-generate training examples
-- [ ] **Validation suite** — Test state adherence vs base models
-- [ ] **Multi-model support** — Train Llama, Mistral, Phi
-- [ ] **Cloud training** — Support for remote training
+### What works
+- [x] **Export pipeline** — All 6 threads export to JSONL (identity, philosophy, log, form, reflex, linking_core)
+- [x] **Training script** — `train_mac.sh` with MLX LoRA on Apple Silicon (venv, split, train)
+- [x] **Config** — `mlx_config.yaml` (4-bit quantization, LoRA rank 8, Qwen2.5-1.5B)
+- [x] **API endpoints** — `/export`, `/export/stats`, `/export/{thread}`, `/start`, `/config`, `/data`
+
+### Remaining to close the loop
+- [ ] **Adapter loading** — Endpoint to load trained adapters into inference
+- [ ] **End-to-end test** — Run export → train → load → verify STATE adherence
+- [ ] **Validation suite** — Test finetuned model vs base on STATE obedience
+- [ ] **Synthetic data generator** — Auto-generate training examples from thread schemas
 
 ### Starter tasks
-- [ ] Add 10 state obedience examples
-- [ ] Document MLX training workflow
+- [ ] Run first full training cycle and document results
+- [ ] Add adapter inference endpoint
 <!-- /INCLUDE:finetune:ROADMAP -->
 
 ---

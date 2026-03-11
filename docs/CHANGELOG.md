@@ -5,6 +5,41 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-03-10 — Full CLI Parity, Headless Mode, Roadmap Overhaul
+
+### CLI Feature Parity (`cli.py`)
+- **10 new command groups**: `/tools`, `/identity`, `/philosophy`, `/log`, `/files`, `/convos`, `/feeds`, extended `/triggers`, extended `/loops` — ~60 total commands
+- **Grouped `/help`**: Commands organized by category with ANSI-colored headers
+- **Every API feature accessible from CLI**: No browser required for any operation
+
+### Headless/SSH Mode (`scripts/start.sh`)
+- **Auto-detection**: `detect_headless()` checks `$SSH_TTY`, `$SSH_CONNECTION`, `$DISPLAY`, `$WAYLAND_DISPLAY`
+- **`--headless` flag**: Explicit headless override for VM/server deployments
+- **`--help` flag**: Full CLI reference with all ~60 commands, grouped by category
+- **Frontend conditional**: npm install, port clearing, Vite startup all gated on `$HEADLESS != true`
+- **Node.js optional**: No longer a hard requirement in headless mode
+- **Fixed `$PROJECT_DIR`**: Replaced undefined variable with `$REPO_ROOT` throughout
+
+### Roadmap Overhaul (`docs/ROADMAP.md`)
+- **Milestones rewritten**: 10 concrete phases replacing aspirational 6-phase plan
+- **Honest status markers**: ✅ Done / 🔧 Partial / ❌ Missing — no percentages
+- **"Ready" definition**: OS can run without LLM, structure guides its own improvement
+- **Finetune section updated**: Export pipeline marked done, adapter loading marked missing
+- **Removed**: Enterprise/marketplace/study sections (aspirational → visible)
+
+### README (`README.md`)
+- **Full CLI reference section**: 10 markdown tables covering all ~60 commands
+- **Launch modes documented**: `--headless`, `--cli`, `--help` flags
+
+### Files Changed
+- `cli.py` — ~700 lines of new command handlers, updated `_COMMANDS` dict and `/help`
+- `scripts/start.sh` — `detect_headless()`, `show_help()`, conditional frontend, `$REPO_ROOT` fix
+- `README.md` — CLI reference section added (386 → 518 lines)
+- `docs/ROADMAP.md` — Milestones, current state, finetune section rewritten
+- `docs/CHANGELOG.md` — This entry
+
+---
+
 ## 2026-03-07 — Context-Aware Loops, Editable Prompts, Integrations Hub, Workspace Upgrades
 
 ### Context-Aware Loops (`agent/subconscious/loops/`)

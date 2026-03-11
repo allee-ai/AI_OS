@@ -109,6 +109,138 @@ Your browser will open to `http://localhost:5173` — start talking to your AI.
 
 ---
 
+## Command Line Interface
+
+AI OS is fully operable from the terminal — no browser needed. This is particularly useful on servers, VMs, or SSH sessions.
+
+### Launch Modes
+
+```bash
+bash scripts/start.sh                # Auto-detect: GUI or headless
+bash scripts/start.sh --headless     # Backend API only (no frontend)
+bash scripts/start.sh --cli          # Interactive CLI (no server)
+bash scripts/start.sh --help         # Show all options
+```
+
+On headless systems (SSH, no display), the script auto-detects and skips the frontend.
+
+### CLI REPL
+
+Once the backend is running, open a second terminal:
+
+```bash
+python cli.py                  # Start REPL (demo mode)
+python cli.py --mode live      # Use live DB
+python cli.py --show-state     # Print STATE block with each response
+```
+
+Just type to chat. Use slash commands for everything else:
+
+### Chat & Conversations
+
+| Command | Description |
+|---------|-------------|
+| *(just type)* | Send a message to the agent |
+| `/convos` | List recent conversations |
+| `/convos <id>` | Show conversation turns |
+| `/convos search <query>` | Search conversations |
+| `/convos new [name]` | Create new conversation |
+| `/clear` | Clear message history |
+
+### Memory & Knowledge
+
+| Command | Description |
+|---------|-------------|
+| `/memory` | List temp_memory facts |
+| `/memory approve <id>` | Approve a pending fact |
+| `/memory reject <id>` | Reject a pending fact |
+| `/graph <query>` | Spread-activate concept graph |
+| `/mindmap` | Structural shape of the agent's mind |
+| `/mindmap links` | Include cross-thread edges |
+
+### Identity & Philosophy
+
+| Command | Description |
+|---------|-------------|
+| `/identity` | List identity profiles |
+| `/identity <profile>` | Show facts for a profile |
+| `/identity new` | Create profile interactively |
+| `/identity fact <p> <k> <v>` | Add/update a fact |
+| `/philosophy` | List philosophy profiles |
+| `/philosophy <profile>` | Show stances |
+| `/philosophy new` | Create profile interactively |
+| `/philosophy fact <p> <k> <v>` | Add/update a stance |
+
+### Tools
+
+| Command | Description |
+|---------|-------------|
+| `/tools` | List all tools |
+| `/tools <name>` | Show tool details |
+| `/tools run <name> <action>` | Execute a tool (+ optional JSON params) |
+| `/tools new` | Create a tool interactively |
+| `/tools code <name>` | Show executable code |
+| `/tools toggle <name>` | Enable/disable |
+| `/tools categories` | List tool categories |
+
+### Background Loops
+
+| Command | Description |
+|---------|-------------|
+| `/loops` | Show all loop stats |
+| `/loops new` | Create a custom loop (interactive) |
+| `/loops custom` | List custom loops |
+| `/loops pause <name>` | Pause a loop |
+| `/loops resume <name>` | Resume a loop |
+| `/loops interval <name> <s>` | Change interval (seconds) |
+| `/loops run memory` | Run one extraction cycle |
+| `/loops extract <text>` | Dry-run fact extraction |
+| `/loops context <n> on\|off` | Toggle STATE injection |
+| `/loops prompts <name>` | View/edit loop prompts |
+| `/loops delete <name>` | Delete a custom loop |
+
+### Thoughts & Tasks
+
+| Command | Description |
+|---------|-------------|
+| `/thoughts` | Show recent proactive thoughts |
+| `/thoughts think` | Trigger one thought cycle |
+| `/tasks` | List tasks |
+| `/tasks new <goal>` | Create and execute a task now |
+| `/tasks queue <goal>` | Queue for background execution |
+| `/tasks cancel <id>` | Cancel a pending task |
+
+### Feeds & Reflexes
+
+| Command | Description |
+|---------|-------------|
+| `/feeds` | List feed sources |
+| `/feeds templates` | Available integrations |
+| `/feeds toggle <name>` | Enable/disable a feed |
+| `/triggers` | List reflex triggers |
+| `/triggers new` | Create trigger interactively |
+| `/triggers toggle <id>` | Toggle on/off |
+| `/protocols` | List protocol templates |
+| `/protocols install <name>` | Install a protocol bundle |
+
+### System
+
+| Command | Description |
+|---------|-------------|
+| `/status` | Subconscious stats, loops, queue depth |
+| `/config` | Show current configuration |
+| `/config set <key> <val>` | Set env var for session |
+| `/log` | Recent timeline |
+| `/log events [type]` | Raw events (filtered) |
+| `/log search <query>` | Search events |
+| `/files [path]` | List workspace directory |
+| `/files read <path>` | Show file content |
+| `/files search <query>` | Search workspace |
+| `/test` | Run test suite |
+| `/help` | Show all commands |
+
+---
+
 ## How Memory Works
 
 ```
