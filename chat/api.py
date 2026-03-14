@@ -112,6 +112,7 @@ class ConversationSummary(BaseModel):
     archived: bool = False
     weight: Optional[float] = None
     source: str = "aios"
+    summary: Optional[str] = None
 
 
 class ConversationDetail(BaseModel):
@@ -119,8 +120,10 @@ class ConversationDetail(BaseModel):
     name: str
     started: str
     turns: List[dict]
+    total_turns: Optional[int] = None
     state_snapshot: Optional[dict] = None
     weight: Optional[float] = None
+    summary: Optional[str] = None
 
 
 class RenameRequest(BaseModel):
@@ -323,7 +326,7 @@ async def auto_name_conversation(session_id: str):
 
 
 @convos_router.get("", response_model=List[ConversationSummary])
-async def list_conversations_endpoint(limit: int = 50, archived: bool = False, search: Optional[str] = None):
+async def list_conversations_endpoint(limit: int = 500, archived: bool = False, search: Optional[str] = None):
     """List all saved conversations, newest first. Optionally filter by search query."""
     if search:
         conversations = db_search_conversations(query=search, limit=limit, archived=archived)
@@ -341,15 +344,16 @@ async def list_conversations_endpoint(limit: int = 50, archived: bool = False, s
             archived=c["archived"],
             weight=c.get("weight"),
             source=c.get("source", "aios"),
+            summary=c.get("summary"),
         )
         for c in conversations
     ]
 
 
 @convos_router.get("/{session_id}", response_model=ConversationDetail)
-async def get_conversation_endpoint(session_id: str):
-    """Get full conversation by session ID."""
-    convo = get_conversation(session_id)
+async def get_conversation_endpoint(session_id: str, limit: Optional[int] = None, offset: Optional[int] = None):
+    """Get conversation by session ID, optionally paginated."""
+    convo = get_conversation(session_id, limit=limit, offset=offset)
     
     if not convo:
         raise HTTPException(status_code=404, detail="Conversation not found")
@@ -361,8 +365,10 @@ async def get_conversation_endpoint(session_id: str):
         name=convo["name"],
         started=convo["started"] or "",
         turns=convo["turns"],
+        total_turns=convo.get("total_turns"),
         state_snapshot=convo.get("state_snapshot"),
         weight=convo.get("weight"),
+        summary=convo.get("summary"),
     )
 
 
@@ -419,6 +425,42 @@ async def unarchive_conversation(session_id: str):
         raise HTTPException(status_code=404, detail="Conversation not found")
     
     return {"success": True, "archived": False}
+
+
+@convos_router.post("/{session_id}/summarize")
+async def summarize_conversation_endpoint(session_id: str):
+    """Summarize a conversation using the LLM."""
+    convo = get_conversation(session_id)
+    if not convo:
+        raise HTTPException(status_code=404, detail="Conversation not found")
+    
+    from workspace.summarizer import summarize_conversation
+    import asyncio
+    loop = asyncio.get_event_loop()
+    summary = await loop.run_in_executor(None, summarize_conversation, session_id)
+    
+    if not summary:
+        raise HTTPException(status_code=500, detail="Summarization failed")
+    
+    return {"success": True, "session_id": session_id, "summary": summary}
+
+
+@convos_router.get("/summary/prompt")
+async def get_convo_summary_prompt_endpoint():
+    """Get the current conversation summarizer prompt."""
+    from workspace.summarizer import get_convo_summary_prompt
+    return {"prompt": get_convo_summary_prompt()}
+
+
+@convos_router.put("/summary/prompt")
+async def set_convo_summary_prompt_endpoint(request: dict):
+    """Update the conversation summarizer prompt."""
+    from workspace.summarizer import set_convo_summary_prompt
+    prompt = request.get("prompt", "")
+    if not prompt:
+        raise HTTPException(status_code=400, detail="Prompt required")
+    success = set_convo_summary_prompt(prompt)
+    return {"success": success}
 
 
 @convos_router.post("/new")

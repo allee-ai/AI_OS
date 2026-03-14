@@ -12,7 +12,10 @@ import { WorkspacePage } from './modules/workspace/pages/WorkspacePage'
 import { DocsPage } from './modules/docs/pages/DocsPage'
 import { SettingsPage } from './modules/services/pages/SettingsPage'
 import { DevDashboard } from './modules/finetune/pages/DevDashboard'
+import { SectionDetailPage } from './modules/finetune/pages/SectionDetailPage'
 import { SubconsciousPage } from './modules/subconscious'
+import { LogDashboard } from './modules/log'
+import { EvalDashboard } from './modules/eval'
 import './App.css'
 
 // App mode hook - inlined for simplicity
@@ -75,7 +78,10 @@ function App() {
           <Route path="/workspace" element={<WorkspacePage />} />
           <Route path="/docs" element={<DocsPage />} />
           <Route path="/dev" element={<DevDashboard />} />
+          <Route path="/dev/:module/:section" element={<SectionDetailPage />} />
           <Route path="/subconscious" element={<SubconsciousPage />} />
+          <Route path="/logs" element={<LogDashboard />} />
+          <Route path="/eval" element={<EvalDashboard />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />

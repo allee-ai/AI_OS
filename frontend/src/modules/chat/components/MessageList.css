@@ -228,6 +228,30 @@
   width: 6px;
 }
 
+/* Load older messages */
+.load-more-container {
+  display: flex;
+  justify-content: center;
+  padding: 8px 0 4px;
+}
+
+.load-more-btn {
+  background: var(--bg-surface, #2a2a2a);
+  border: 1px solid var(--border, #444);
+  color: var(--text-muted, #aaa);
+  padding: 6px 16px;
+  border-radius: 16px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.load-more-btn:hover {
+  background: var(--bg-hover, #333);
+  color: var(--text, #eee);
+  border-color: var(--text-muted, #888);
+}
+
 .messages-container::-webkit-scrollbar-track {
   background: transparent;
 }

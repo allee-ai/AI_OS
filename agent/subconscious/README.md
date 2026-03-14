@@ -72,24 +72,25 @@ class ThreadInterface(Protocol):
 ## Roadmap
 
 <!-- ROADMAP:subconscious -->
-### Ready for contributors
-- [x] **Loop Editor Dashboard** — Visual editor for background loops:
-  - View running loops with status indicators
-  - Edit loop parameters (interval, enabled/disabled)
-  - Live logs per loop
-- [ ] **Implicit COT Loops** — Chain-of-thought background reasoning:
-  - Set max iterations per loop
-  - Configure max tokens per iteration
-  - Cutoff conditions (confidence threshold, diminishing returns)
-- [x] **Context compression** — Token budgeting per thread via _budget_fill()
-- [ ] **Priority queue** — Urgent facts surface first
-- [ ] **Dream mode** — Background processing during idle
-- [ ] **Attention visualization** — Show what's in context
+### Done
+- [x] **Loop Editor Dashboard** — Visual editor with status indicators, interval editing, live logs
+- [x] **Context compression** — Token budgeting per thread via `_budget_fill()`
+- [x] **Loop status indicators + configurable intervals**
+- [x] **CustomLoop multi-step COT** — Iterative LLM calls with previous output as context (up to 20 iterations)
+
+### Loop intelligence
+- [ ] **COT convergence detection** — CustomLoop runs N iterations blindly. Add quality signal between iterations: embedding similarity to target, structured output validation, or LLM-as-judge step. Stop when confident, not when counter expires
+- [ ] **Loop-to-loop communication** — ThoughtLoop insights should trigger MemoryLoop. Currently all loops run independently with no cross-loop data flow
+- [ ] **Thought actionability** — ThoughtLoop writes to `thought_log` but nothing reads it. High-priority thoughts should surface in STATE or trigger reflexes
+- [ ] **Context pressure testing** — What happens when all 6 threads are active, workspace has 100 files, and conversation is 40 messages deep? Budget overflow is the real failure mode
+
+### Research
+- [ ] **Self-evaluation within iterations** — Can a loop determine if iteration 3 was better than iteration 2? Requires an internal quality signal that doesn't exist yet
+- [ ] **Idle-time background reasoning** — Agent processes accumulated context during quiet periods ("dream mode"). Requires: idle detection, priority queue for what to process, and quality measurement of outputs
 
 ### Starter tasks
-- [x] Add loop status indicators in UI
-- [x] Configurable loop intervals
 - [ ] Loop execution history view
+- [ ] Attention visualization — show what's currently in STATE and why
 <!-- /ROADMAP:subconscious -->
 
 ---

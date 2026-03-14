@@ -23,6 +23,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
     agentStatus,
     isAgentTyping,
     loadConversation,
+    loadOlderMessages,
+    hasMoreMessages,
     sessionId
   } = useChat();
 
@@ -120,6 +122,8 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
         messages={messages} 
         isAgentTyping={isAgentTyping}
         conversationId={sessionId}
+        hasMore={hasMoreMessages}
+        onLoadMore={loadOlderMessages}
       />
       
       <MessageInput 
@@ -132,6 +136,7 @@ export const ChatContainer: React.FC<ChatContainerProps> = ({ onClearHistory }) 
         isCollapsed={rightSidebarCollapsed}
         onToggleCollapse={() => setRightSidebarCollapsed(!rightSidebarCollapsed)}
         lastQuery={messages.filter(m => m.role === 'user').slice(-1)[0]?.content}
+        sessionId={sessionId}
       />
     </div>
   );

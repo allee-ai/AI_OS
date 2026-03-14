@@ -54,6 +54,7 @@ def _load_commands() -> dict:
         "workspace.cli",
         "chat.cli",
         "Feeds.cli",
+        "eval.cli",
     ]
     for mod_name in modules:
         try:
@@ -278,6 +279,30 @@ def _cmd_help():
     {BOLD}/feeds toggle <name>{RESET}       Enable/disable a feed
     {BOLD}/feeds test <name>{RESET}         Test feed connection
 
+  {CYAN}Calendar{RESET}
+    {BOLD}/calendar{RESET}                  List calendar sources
+    {BOLD}/calendar add <name> <url>{RESET} Add iCal source
+    {BOLD}/calendar remove <name>{RESET}    Remove a calendar
+    {BOLD}/calendar poll{RESET}             Poll all calendars now
+
+  {CYAN}Goals{RESET}
+    {BOLD}/goals{RESET}                     List pending proposed goals
+    {BOLD}/goals approve <id>{RESET}        Approve a goal
+    {BOLD}/goals reject <id>{RESET}         Reject a goal
+    {BOLD}/goals dismiss <id>{RESET}        Dismiss a goal
+
+  {CYAN}Notifications{RESET}
+    {BOLD}/notifications{RESET}             List recent notifications
+    {BOLD}/notifications unread{RESET}      Show unread only
+    {BOLD}/notifications read <id>{RESET}   Mark as read
+    {BOLD}/notifications dismiss <id>{RESET} Dismiss a notification
+
+  {CYAN}Improvements{RESET}
+    {BOLD}/improvements{RESET}              List pending code improvements
+    {BOLD}/improvements approve <id>{RESET} Approve an improvement
+    {BOLD}/improvements reject <id>{RESET}  Reject an improvement
+    {BOLD}/improvements apply <id>{RESET}   Apply an approved improvement
+
   {CYAN}Reflexes{RESET}
     {BOLD}/triggers{RESET}                  List reflex triggers
     {BOLD}/triggers <id>{RESET}             Show trigger details
@@ -291,6 +316,13 @@ def _cmd_help():
     {BOLD}/test{RESET}                      Run full test suite
     {BOLD}/test flows{RESET}                Run flow tests only
     {BOLD}/test pure{RESET}                 Run pure-function tests only
+
+  {CYAN}Evals{RESET}
+    {BOLD}/eval list{RESET}                 List available evals + defaults
+    {BOLD}/eval run <name> [opts]{RESET}    Run a single eval (--save --model X --key=val)
+    {BOLD}/eval run all [opts]{RESET}       Run all evals
+    {BOLD}/eval results [--last N]{RESET}   Show saved runs
+    {BOLD}/eval judge <run_id>{RESET}       Human-judge a saved run
 
   {CYAN}Session{RESET}
     {BOLD}/clear{RESET}                     Clear message history

@@ -68,15 +68,14 @@ PENDING → PENDING_REVIEW → APPROVED → CONSOLIDATED
 ## Roadmap
 
 <!-- ROADMAP:temp_memory -->
-### Ready for contributors
-- [ ] **Batch review UI** — Approve/reject multiple facts
-- [ ] **Auto-categorization** — Suggest hier_key from text
-- [ ] **Duplicate detection** — Flag similar existing facts
-- [ ] **Confidence tuning** — Adjust thresholds per category
+### Extraction quality
+- [ ] **Duplicate detection** — Flag facts that are semantically similar to existing ones before promotion (embedding similarity check)
+- [ ] **Auto-categorization** — Suggest `hier_key` from text instead of requiring manual assignment
+- [ ] **Extraction accuracy eval** — What % of extracted facts are actually correct? What % of important facts get missed? No ground truth benchmark exists
+- [ ] **Batch review UI** — Approve/reject multiple pending facts at once
 
 ### Starter tasks
-- [ ] Show fact count by status in UI
-- [ ] Add fact preview on hover
+- [ ] Fact count by status in dashboard (pending/approved/promoted)
 <!-- /ROADMAP:temp_memory -->
 
 ---

@@ -37,8 +37,8 @@ workspace/
 |---------|--------|
 | File upload | ✅ |
 | Folder organization | ✅ |
-| Full-text search | 🔜 |
-| Agent reference integration | 🔜 |
+| Full-text search | ✅ |
+| Agent reference integration | 📡 |
 <!-- /ARCHITECTURE:workspace -->
 
 ---

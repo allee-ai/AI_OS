@@ -1,0 +1,33 @@
+{
+  "project": "AI-OS",
+  "version": "0.9.0",
+  "environment": {
+    "ollama_host": "http://localhost:11434",
+    "summary_model": "llama3.2",
+    "naming_model": "llama3.2:1b",
+    "default_model": "qwen2.5:7b"
+  },
+  "consolidation": {
+    "interval_seconds": 300,
+    "batch_size": 5,
+    "score_threshold": 0.3,
+    "max_facts_per_thread": 50
+  },
+  "summarization": {
+    "auto_triggers": [5, 15, 30],
+    "max_input_chars": 4096,
+    "temperature": 0.3,
+    "max_tokens": 200
+  },
+  "workspace": {
+    "root_path": "/data/workspace",
+    "max_upload_mb": 50,
+    "supported_previews": ["md", "txt", "csv", "json", "py", "js", "ts", "pdf", "docx", "png", "jpg"]
+  },
+  "features": {
+    "auto_summarize": true,
+    "auto_name": true,
+    "memory_decay": false,
+    "cross_thread_linking": false
+  }
+}

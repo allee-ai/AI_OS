@@ -1,0 +1,241 @@
+/* ── Log Dashboard Layout ── */
+.log-dashboard {
+    display: flex;
+    min-height: 100vh;
+    background: var(--bg, #0a0a0a);
+}
+
+.log-sidebar {
+    width: 250px;
+    background-color: var(--surface-1);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    flex-shrink: 0;
+}
+
+.log-sidebar-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1.5rem;
+    padding: 0 0.5rem;
+}
+
+.log-sidebar-header .logo { font-size: 1.5rem; }
+.log-sidebar-header h3 { margin: 0; font-size: 1.25rem; color: var(--text); }
+
+.log-sidebar-links {
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.log-sidebar-section {
+    padding: 0.4rem 0.75rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-muted);
+    margin-top: 0.5rem;
+}
+
+.log-table-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    text-align: left;
+    width: 100%;
+}
+
+.log-table-btn:hover {
+    background-color: var(--surface-2, rgba(255,255,255,0.06));
+    color: var(--text);
+}
+
+.log-table-btn.active {
+    background-color: var(--primary, #7c3aed);
+    color: #fff;
+}
+
+.log-table-btn .icon { font-size: 1rem; flex-shrink: 0; }
+.log-table-btn .name { flex: 1; }
+.log-table-btn .count {
+    font-size: 0.75rem;
+    background: var(--surface-2, rgba(255,255,255,0.08));
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+}
+.log-table-btn.active .count { background: rgba(255,255,255,0.2); }
+
+.log-sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.log-sidebar-footer a {
+    color: var(--text-muted);
+    text-decoration: none;
+    font-size: 0.85rem;
+}
+.log-sidebar-footer a:hover { color: var(--text); }
+
+/* ── Main Content ── */
+.log-main {
+    flex: 1;
+    padding: 2rem;
+    overflow-y: auto;
+}
+
+.log-main h2 {
+    margin: 0 0 0.25rem;
+    font-size: 1.5rem;
+    color: var(--text);
+}
+
+.log-main .subtitle {
+    color: var(--text-muted);
+    font-size: 0.85rem;
+    margin-bottom: 1.5rem;
+}
+
+/* ── Filters Bar ── */
+.log-filters {
+    display: flex;
+    gap: 0.75rem;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    align-items: center;
+}
+
+.log-filters input,
+.log-filters select {
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text);
+    font-size: 0.85rem;
+}
+
+.log-filters input { flex: 1; min-width: 200px; }
+
+.log-filters button {
+    padding: 0.5rem 1rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text);
+    cursor: pointer;
+    font-size: 0.85rem;
+}
+.log-filters button:hover { background: var(--surface-2); }
+
+/* ── Table ── */
+.log-table-wrapper {
+    overflow-x: auto;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+}
+
+.log-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.log-table th {
+    background: var(--surface-1);
+    padding: 0.75rem;
+    text-align: left;
+    color: var(--text-muted);
+    font-weight: 600;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    cursor: pointer;
+    user-select: none;
+}
+.log-table th:hover { color: var(--text); }
+
+.log-table td {
+    padding: 0.65rem 0.75rem;
+    border-bottom: 1px solid var(--border);
+    color: var(--text);
+    max-width: 400px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.log-table tr:hover td { background: var(--surface-1); }
+.log-table tr:last-child td { border-bottom: none; }
+
+/* ── Status badges ── */
+.badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 9999px;
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.badge-info { background: #1e40af; color: #93bbfd; }
+.badge-warn { background: #854d0e; color: #fde68a; }
+.badge-error { background: #991b1b; color: #fca5a5; }
+.badge-success { background: #166534; color: #86efac; }
+.badge-muted { background: var(--surface-2); color: var(--text-muted); }
+
+/* ── Pagination ── */
+.log-pagination {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    font-size: 0.85rem;
+    color: var(--text-muted);
+}
+
+.log-pagination button {
+    padding: 0.4rem 0.8rem;
+    border-radius: 0.4rem;
+    border: 1px solid var(--border);
+    background: var(--surface-1);
+    color: var(--text);
+    cursor: pointer;
+}
+.log-pagination button:disabled { opacity: 0.4; cursor: default; }
+.log-pagination button:not(:disabled):hover { background: var(--surface-2); }
+
+/* ── Empty state ── */
+.log-empty {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--text-muted);
+}
+.log-empty .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+/* ── Expandable row ── */
+.log-expanded {
+    background: var(--surface-1);
+    padding: 1rem;
+    font-size: 0.8rem;
+    white-space: pre-wrap;
+    word-break: break-all;
+    color: var(--text-muted);
+    max-height: 300px;
+    overflow-y: auto;
+}

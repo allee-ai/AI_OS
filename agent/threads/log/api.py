@@ -378,3 +378,81 @@ async def get_log_health():
     from .adapter import LogThreadAdapter
     adapter = LogThreadAdapter()
     return adapter.health().to_dict()
+
+
+# ─────────────────────────────────────────────────────────────
+# Function Call Tracing
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/functions")
+async def get_function_call_logs(
+    function_name: Optional[str] = None,
+    module: Optional[str] = None,
+    limit: int = 100,
+    since: Optional[str] = None,
+):
+    """Query function call trace logs."""
+    from .schema import get_function_calls
+    calls = get_function_calls(
+        function_name=function_name,
+        module=module,
+        limit=limit,
+        since=since,
+    )
+    return {"calls": calls, "count": len(calls)}
+
+
+@router.delete("/functions/cleanup")
+async def cleanup_function_logs(older_than_days: int = 30):
+    """Remove old function call logs."""
+    from .schema import cleanup_old_function_logs
+    deleted = cleanup_old_function_logs(older_than_days=older_than_days)
+    return {"deleted": deleted}
+
+
+# ─────────────────────────────────────────────────────────────
+# Log Tables Discovery
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/tables")
+async def list_log_tables():
+    """List all log tables with row counts for the log dashboard."""
+    from .schema import get_connection
+    from contextlib import closing
+
+    tables = []
+    # Core tables with known schemas
+    core_tables = {
+        "unified_events": {"icon": "📋", "label": "Events", "columns": ["id", "timestamp", "event_type", "source", "data", "session_id"]},
+        "log_system": {"icon": "🖥️", "label": "System / Daemon", "columns": ["id", "timestamp", "level", "source", "message"]},
+        "log_server": {"icon": "🌐", "label": "Server / HTTP", "columns": ["id", "timestamp", "method", "path", "status_code", "duration_ms"]},
+        "log_function_calls": {"icon": "🔍", "label": "Function Calls", "columns": ["id", "timestamp", "function_name", "module", "duration_ms", "success"]},
+    }
+
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        # Get all tables
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'log_%' ORDER BY name")
+        db_tables = [r[0] for r in cur.fetchall()]
+
+        # Also include unified_events
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='unified_events'")
+        if cur.fetchone():
+            db_tables = ["unified_events"] + db_tables
+
+        for tname in db_tables:
+            try:
+                cur.execute(f"SELECT COUNT(*) FROM [{tname}]")
+                count = cur.fetchone()[0]
+            except Exception:
+                count = 0
+
+            if tname in core_tables:
+                info = core_tables[tname]
+                tables.append({"name": tname, "count": count, "icon": info["icon"], "label": info["label"], "columns": info["columns"]})
+            else:
+                # Dynamic module tables (log_events, log_sessions, log_temporal, etc.)
+                label = tname.replace("log_", "").replace("_", " ").title()
+                tables.append({"name": tname, "count": count, "icon": "📦", "label": label, "columns": ["key", "created_at", "weight", "metadata_json", "data_json"]})
+
+    return {"tables": tables}

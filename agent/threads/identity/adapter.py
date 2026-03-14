@@ -155,7 +155,64 @@ class IdentityThreadAdapter(BaseThreadAdapter):
                     "fact_type": fact.get("fact_type", ""),
                     "key": fact.get("key", ""),
                 })
-        return out[:limit]
+        return self._clean_raw_facts(out)[:limit]
+
+    @staticmethod
+    def _clean_raw_facts(raw: List[Dict]) -> List[Dict]:
+        """Deduplicate and filter identity facts for cleaner STATE.
+
+        1. Drop facts with no meaningful value at any tier
+        2. Deduplicate by (profile_id, key) — keep highest weight
+        3. Cluster by key prefix (name, user_name, first_name → keep best)
+        """
+        # Filter empty values
+        cleaned = []
+        for f in raw:
+            l1 = (f.get("l1_value") or "").strip()
+            l2 = (f.get("l2_value") or "").strip()
+            l3 = (f.get("l3_value") or "").strip()
+            if l1 or l2 or l3:
+                cleaned.append(f)
+
+        # Deduplicate by (profile_id, key) — keep highest weight
+        seen: Dict[str, Dict] = {}
+        for f in cleaned:
+            dedup_key = f"{f.get('profile_id', '')}::{f.get('key', '')}"
+            existing = seen.get(dedup_key)
+            if existing is None or f.get("weight", 0) > existing.get("weight", 0):
+                seen[dedup_key] = f
+        cleaned = list(seen.values())
+
+        # Cluster semantically similar keys within same profile
+        # e.g. name, user_name, first_name, full_name → keep highest weight
+        _CLUSTERS = {
+            "name": {"name", "user_name", "first_name", "full_name", "display_name", "username"},
+            "email": {"email", "user_email", "email_address"},
+            "location": {"location", "city", "region", "country", "origin", "hometown"},
+        }
+        # Build reverse lookup: key_suffix → cluster_name
+        _KEY_TO_CLUSTER = {}
+        for cluster_name, keys in _CLUSTERS.items():
+            for k in keys:
+                _KEY_TO_CLUSTER[k] = cluster_name
+
+        # Group by (profile, cluster) — keep only highest-weight per cluster
+        profile_clusters: Dict[str, Dict] = {}  # "profile::cluster" → best fact
+        unclustered = []
+        for f in cleaned:
+            key = f.get("key", "")
+            cluster = _KEY_TO_CLUSTER.get(key)
+            if cluster:
+                cluster_key = f"{f.get('profile_id', '')}::{cluster}"
+                existing = profile_clusters.get(cluster_key)
+                if existing is None or f.get("weight", 0) > existing.get("weight", 0):
+                    profile_clusters[cluster_key] = f
+            else:
+                unclustered.append(f)
+
+        result = list(profile_clusters.values()) + unclustered
+        result.sort(key=lambda f: f.get("weight", 0), reverse=True)
+        return result
 
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """

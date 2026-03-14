@@ -92,15 +92,14 @@ log.events.0: discussed architecture [conversation]
 ## Roadmap
 
 <!-- ROADMAP:log -->
-### Ready for contributors
+### Event system
+- [ ] **Event search** — FTS5 across event history (log has the data, no search index yet)
+- [ ] **Session analytics** — Per-session metrics: duration, message count, tool calls, facts extracted
+- [ ] **Export** — JSON/CSV export of event history for external analysis
 - [ ] **Timeline visualization** — Interactive event timeline in UI
-- [ ] **Session analytics** — Duration, message count, topic clusters
-- [ ] **Event search** — Full-text search across event history
-- [ ] **Export/import** — JSON/CSV export of event history
 
 ### Starter tasks
-- [ ] Add event type icons in UI
-- [ ] Show session summary on conversation start
+- [ ] Session summary on conversation start ("last time we talked about...")
 <!-- /ROADMAP:log -->
 
 ---

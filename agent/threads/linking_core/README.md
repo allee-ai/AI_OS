@@ -66,25 +66,24 @@ new_strength = old_strength × decay_rate^days
 ## Roadmap
 
 <!-- ROADMAP:linking_core -->
-### Ready for contributors
-- [ ] **Universal linking** — `create_link(row, row)` for any database row:
-  - Link docs to profiles, facts to facts, convos to concepts
-  - Works like tags but with weighted relationships
-  - Implicit linking: agent auto-suggests links during conversation
-- [ ] **Graph density improvements** — Current visual is too dense:
-  - Smaller node size, dynamic scaling based on activation
-  - Hover for full info (dot notation, source, activation score)
-  - Cluster similar concepts, expand on click
-  - Zoom levels that hide/show detail appropriately
-- [ ] **Graph visualization** — Interactive concept map in UI
-- [ ] **Decay tuning** — Configurable decay rates per category
-- [ ] **Activation history** — Track what surfaced over time
-- [ ] **Concept merging** — Deduplicate similar concepts
+### Graph quality
+- [ ] **Concept merging** — Deduplicate similar concepts ("ml" ↔ "machine_learning"). Requires embedding similarity between concept names + merge semantics (union neighborhoods? average strengths?)
+- [ ] **Phrase extraction** — Current regex splits "ice cream" into two concepts. Needs n-gram detection or lightweight NLP for multi-word concepts
+- [ ] **Edge pruning** — O(n²) co-occurrence linking creates hairball graphs. Add community detection or modularity-based pruning to keep the graph meaningful
+- [ ] **Graph quality metrics** — Density, connectivity, component count, staleness distribution. Currently only SHORT vs LONG counts are exposed
+
+### Graph features
+- [ ] **Universal linking** — `create_link(row, row)` for any database row (docs↔profiles, facts↔concepts, convos↔concepts)
+- [ ] **Graph visualization improvements** — Dynamic node scaling by activation, cluster similar concepts, semantic zoom
+- [ ] **Decay tuning** — Configurable decay rates per category (currently global 0.95)
+
+### Research
+- [ ] **Retrieval precision/recall** — How often does `spread_activate()` surface the right concept? How much noise? No eval exists for retrieval quality
+- [ ] **Activation history** — Track what surfaced over time to measure whether the graph is actually helping the model reason better
 
 ### Starter tasks
-- [ ] Show top activated concepts in sidebar
-- [ ] Add concept search
-- [ ] Node info panel on hover/click
+- [ ] Top activated concepts in sidebar
+- [ ] Concept search endpoint + UI
 <!-- /ROADMAP:linking_core -->
 
 ---

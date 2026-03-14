@@ -304,6 +304,16 @@ TOOLS: List[ToolDefinition] = [
     
     # --- Internal Tools ---
     ToolDefinition(
+        name="code_edit",
+        description="Edit project source files (sandboxed, allowlisted extensions only)",
+        category=ToolCategory.FILES,
+        actions=["edit_file", "read_file", "search_code", "list_files"],
+        run_file="code_edit.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.6,
+    ),
+    ToolDefinition(
         name="ask_llm",
         description="Query the LLM for reasoning or generation",
         category=ToolCategory.INTERNAL,
@@ -395,12 +405,15 @@ SAFE_ACTIONS: Dict[str, List[str]] = {
     "introspect": ["get_context", "get_recent_thoughts", "get_active_threads"],
     "regex_search": ["search", "search_memory", "search_logs", "search_concepts"],
     "cli_command": ["run", "list_commands", "help"],
+    "notify": ["alert", "remind", "confirm", "list", "dismiss"],
+    "code_edit": ["read_file", "search_code", "list_files"],
 }
 
 # Actions that are blocked by default (require user to toggle allowed)
 BLOCKED_ACTIONS: Dict[str, List[str]] = {
     "terminal": ["run_command", "kill_process"],
     "file_write": ["write_file", "append_file"],
+    "code_edit": ["edit_file"],
 }
 
 
@@ -462,6 +475,25 @@ _ACTION_PARAM_SCHEMAS: Dict[str, Dict[str, str]] = {
     "cli_command__run":                {"command": "CLI command e.g. /identity, /tasks pending"},
     "cli_command__list_commands":      {},
     "cli_command__help":               {"command": "Command to get help for"},
+    # notify
+    "notify__alert":                   {"message": "Notification message",
+                                        "priority": "low|normal|high|urgent (default normal)"},
+    "notify__remind":                  {"message": "Reminder message",
+                                        "context": "Additional context for the reminder"},
+    "notify__confirm":                 {"question": "Question to ask the user",
+                                        "options": "Comma-separated options (default yes,no)"},
+    "notify__list":                    {"limit": "Max notifications (default 10)",
+                                        "unread_only": "Only show unread (default false)"},
+    "notify__dismiss":                 {"id": "Notification ID to dismiss"},
+    # code_edit
+    "code_edit__edit_file":             {"path": "File path relative to workspace",
+                                        "old": "Exact text to replace",
+                                        "new": "Replacement text"},
+    "code_edit__read_file":             {"path": "File path to read"},
+    "code_edit__search_code":           {"pattern": "Regex pattern to search for",
+                                        "directory": "Directory to search (default '.')",
+                                        "file_pattern": "Glob e.g. *.py (default *.py)"},
+    "code_edit__list_files":            {"path": "Directory to list (default '.')"},
 }
 
 

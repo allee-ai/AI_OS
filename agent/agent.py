@@ -139,6 +139,21 @@ class Agent:
                     max_rounds=5
                 )
         
+        # Track conversation event in log thread
+        try:
+            from agent.threads import get_thread
+            log = get_thread("log")
+            if log:
+                log.record_message()
+                log.log_event(
+                    event_type="convo",
+                    source="agent.generate",
+                    message=user_input[:80],
+                    weight=0.6,
+                )
+        except Exception:
+            pass
+        
         return response_text
     
     def _build_system_prompt(self, name: str, consciousness_context: str) -> str:
@@ -147,6 +162,26 @@ class Agent:
         if consciousness_context:
             preamble = f"== CURRENT AWARENESS ==\n{consciousness_context}\n\n"
         
+        # Check if tools are available — if so, instruct the model to use them
+        tool_block = ""
+        try:
+            from agent.threads.form.tools.registry import get_runnable_tools
+            if get_runnable_tools():
+                tool_block = (
+                    "\n\n== TOOL USE ==\n"
+                    "- You have tools listed in your [form] context above.\n"
+                    "- When the user asks you to read files, search, or perform actions, USE your tools.\n"
+                    "- To call a tool, write an execute block exactly like this:\n"
+                    ":::execute\n"
+                    "tool: <tool_name>\n"
+                    "action: <action_name>\n"
+                    "param_name: param_value\n"
+                    ":::\n"
+                    "- Do NOT say you cannot access files or tools. You CAN — use the execute block format above."
+                )
+        except Exception:
+            pass
+
         return f"""You are {name}, a personal AI assistant.
 
 {preamble}== INSTRUCTIONS ==
@@ -158,8 +193,8 @@ class Agent:
 == REALITY ANCHOR ==
 - The context above is your COMPLETE reality.
 - Never fabricate data you cannot see.
-- If asked about something not in your context, say "I don't have that information."
-- Your identity, your user, your facts - these are in your context. Everything else is unverifiable."""
+- If asked about something not in your context, use your tools to find it. Only say "I don't have that information" if no tool can help.
+- Your identity, your user, your facts - these are in your context. Everything else is unverifiable.{tool_block}"""
     
     def _process_tool_calls(
         self, 

@@ -35,12 +35,33 @@ import json
 # Thread list - linking_core included for UI visibility
 THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
 
+# Top-level modules — scored for relevance alongside threads.
+# Each module provides summarised context (conversations, files, etc.)
+# and goes through the same score → level → threshold pipeline.
+MODULES = ["chat", "workspace"]
+
 # Score thresholds for context levels
 # Score determines: (1) block order, (2) L1/L2/L3 level, (3) fact weight threshold
 SCORE_THRESHOLDS = {
     "L1": 3.5,   # 0 - 3.5: L1 (lean), only high-weight facts
     "L2": 7.0,   # 3.5 - 7: L2 (medium)
     "L3": 10.0,  # 7 - 10: L3 (full)
+}
+
+# Per-source token budget caps — prevents any single source from
+# dominating STATE.  Sources with large fact stores (identity) get
+# a tighter budget so smaller sources stay visible.
+SOURCE_BUDGETS = {
+    # Threads
+    "identity":     200,
+    "log":          120,
+    "form":         120,   # Now includes tool traces
+    "philosophy":    80,
+    "reflex":        60,
+    "linking_core":  60,
+    # Modules
+    "chat":         150,   # Past conversation summaries
+    "workspace":    150,   # Files, summaries, FTS matches
 }
 
 
@@ -88,7 +109,7 @@ class Subconscious:
     
     def score(self, query: str = "") -> Dict[str, float]:
         """
-        Score all threads for relevance to query.
+        Score all threads AND modules for relevance to query.
         
         Step 1 of the flow: score(query) → scores
         
@@ -96,10 +117,8 @@ class Subconscious:
             query: The input to score against (user message, file chunk, etc.)
         
         Returns:
-            Dict mapping thread_name → relevance_score (0-10)
-            
-            Example:
-                {"identity": 9.0, "log": 5.0, "form": 4.0, ...}
+            Dict mapping source_name → relevance_score (0-10)
+            Includes both threads (identity, log, ...) and modules (chat, workspace)
         """
         linking_core = self._get_linking_core()
         if linking_core and query:
@@ -113,53 +132,79 @@ class Subconscious:
             if thread not in scores:
                 scores[thread] = 5.0
         
+        # Score modules via keyword heuristics
+        if query:
+            scores.update(self._score_modules(query))
+        else:
+            for mod in MODULES:
+                scores[mod] = 4.0
+        
+        return scores
+    
+    def _score_modules(self, query: str) -> Dict[str, float]:
+        """Score top-level modules for relevance to query."""
+        q = query.lower()
+        scores: Dict[str, float] = {}
+        
+        # Chat — past conversations
+        if any(kw in q for kw in [
+            'conversation', 'talked', 'discussed', 'said', 'chat',
+            'last time', 'previously', 'remember when', 'we spoke',
+            'our last', 'earlier', 'before',
+        ]):
+            scores["chat"] = 8.5
+        elif any(kw in q for kw in ['history', 'past', 'recall']):
+            scores["chat"] = 7.0
+        else:
+            scores["chat"] = 4.0
+        
+        # Workspace — files and documents
+        if any(kw in q for kw in [
+            'file', 'workspace', 'code', 'project', 'read',
+            'document', 'folder', 'directory', 'source',
+        ]):
+            scores["workspace"] = 8.5
+        elif any(kw in q for kw in [
+            'work on', 'working', 'build', 'implement', 'edit',
+            'write', 'create', 'status', 'progress',
+        ]):
+            scores["workspace"] = 7.0
+        else:
+            scores["workspace"] = 3.0
+        
         return scores
     
     def build_state(self, scores: Dict[str, float], query: str = "") -> str:
         """
-        Build STATE block from thread scores.
+        Build STATE block from scored threads AND modules.
         
         Step 2 of the flow: build_state(scores) → STATE
         
+        All sources (threads like identity/log/form AND modules like
+        chat/workspace) are sorted by relevance score together.  Each
+        source goes through the same score → level → threshold pipeline
+        and is subject to its SOURCE_BUDGETS cap.
+        
         Args:
-            scores: Thread relevance scores from score()
-            query: Optional query for thread introspection filtering
+            scores: Source relevance scores from score()
+            query: Optional query for filtering
         
         Returns:
-            Formatted STATE block string with thread sections:
-            
-            == STATE ==
-            
-            [identity] Who I am, who you are, and who we know
-            machine:
-              name: Nola
-            primary_user:
-              name: Jamie
-            
-            [log] Temporal awareness and history
-            recent:
-              - discussed architecture
-            
-            == END STATE ==
+            Formatted STATE block string
         """
-        # Order by score (highest first)
-        ordered_threads: List[Tuple[str, float]] = sorted(
-            scores.items(), 
-            key=lambda x: x[1], 
-            reverse=True
+        # Order ALL sources (threads + modules) by score, highest first
+        ordered_sources: List[Tuple[str, float]] = sorted(
+            scores.items(),
+            key=lambda x: x[1],
+            reverse=True,
         )
         
-        # Build state blocks
         lines = ["== STATE =="]
         
         # Self-awareness header — injected once at top
         lines.extend(self._build_self_awareness_block())
         
-        for thread_name, score in ordered_threads:
-            adapter = self._get_adapter(thread_name)
-            if not adapter:
-                continue
-            
+        for source_name, score in ordered_sources:
             # Determine level from score
             if score < SCORE_THRESHOLDS["L1"]:
                 level = 1
@@ -168,78 +213,127 @@ class Subconscious:
             else:
                 level = 3
             
-            # Threshold is INVERTED: high score → low weight threshold (more facts)
-            # Score 10 → threshold 0 (everything), Score 0 → threshold 10 (nothing)
-            # This makes the system include MORE detail for relevant threads
+            # Threshold is INVERTED: high score → low weight threshold
             threshold = max(0.0, 10.0 - score)
             
-            try:
-                # Call introspect with threshold
-                result = adapter.introspect(
-                    context_level=level, 
-                    query=query,
-                    threshold=threshold
+            if source_name in THREADS:
+                # ---------- Thread source ----------
+                section = self._build_thread_section(
+                    source_name, level, threshold, query
                 )
-                result_dict = result.to_dict()
-                facts = result_dict.get("facts", [])
-                
-                if facts:
-                    # Thread header with description
-                    description = getattr(adapter, '_description', '')
-                    lines.append("")
-                    lines.append(f"[{thread_name}] {description}")
-                    lines.append(f"  context_level: {level}")
-                    lines.append(f"  fact_count: {len(facts)}")
-                    
-                    # Flat dot notation facts
-                    for fact in facts:
-                        lines.append(fact)
-                    
-            except TypeError:
-                # Adapter doesn't support threshold yet - fall back to old signature
-                try:
-                    result = adapter.introspect(context_level=level, query=query)
-                    result_dict = result.to_dict()
-                    facts = result_dict.get("facts", [])
-                    
-                    if facts:
-                        description = getattr(adapter, '_description', '')
-                        lines.append("")
-                        lines.append(f"[{thread_name}] {description}")
-                        lines.append(f"  context_level: {level}")
-                        lines.append(f"  fact_count: {len(facts)}")
-                        for fact in facts:
-                            lines.append(fact)
-                except Exception as e:
-                    print(f"⚠️ {thread_name} introspect failed: {e}")
-                    
-            except Exception as e:
-                print(f"⚠️ {thread_name} introspect failed: {e}")
-        
-        # Workspace context — always include top files + FTS matches
-        workspace_facts = self._get_workspace_context(query)
-        if workspace_facts:
-            lines.append("")
-            lines.append("[workspace] Files and documents I have access to")
-            for fact in workspace_facts:
-                lines.append(fact)
-        
-        # Tool traces — recent tool executions with weights
-        tool_facts = self._get_tool_context(query)
-        if tool_facts:
-            lines.append("")
-            lines.append("[tools] Recent tool executions")
-            for fact in tool_facts:
-                lines.append(fact)
+            elif source_name in MODULES:
+                # ---------- Module source ----------
+                section = self._build_module_section(
+                    source_name, level, threshold, query
+                )
+            else:
+                continue
+            
+            if section:
+                lines.append("")
+                lines.extend(section)
         
         lines.append("")
         lines.append("== END STATE ==")
         
-        # Track timing
         self._last_context_time = datetime.now(timezone.utc).isoformat()
         self._last_query = query
         
         return "\n".join(lines)
+    
+    # ------------------------------------------------------------------
+    # Section builders
+    # ------------------------------------------------------------------
+    
+    def _build_thread_section(
+        self, thread_name: str, level: int, threshold: float, query: str
+    ) -> List[str]:
+        """Build a STATE section for a scored thread via its adapter."""
+        adapter = self._get_adapter(thread_name)
+        if not adapter:
+            return []
+        
+        # Apply per-source token budget cap
+        cap = SOURCE_BUDGETS.get(thread_name)
+        if cap and hasattr(adapter, '_token_budgets'):
+            adapter._token_budgets = {
+                1: min(adapter._token_budgets.get(1, 150), cap),
+                2: min(adapter._token_budgets.get(2, 400), cap),
+                3: min(adapter._token_budgets.get(3, 800), cap),
+            }
+        
+        try:
+            result = adapter.introspect(
+                context_level=level, query=query, threshold=threshold
+            )
+            result_dict = result.to_dict()
+            facts = result_dict.get("facts", [])
+        except TypeError:
+            # Adapter doesn't support threshold yet
+            try:
+                result = adapter.introspect(context_level=level, query=query)
+                result_dict = result.to_dict()
+                facts = result_dict.get("facts", [])
+            except Exception as e:
+                print(f"⚠️ {thread_name} introspect failed: {e}")
+                return []
+        except Exception as e:
+            print(f"⚠️ {thread_name} introspect failed: {e}")
+            return []
+        
+        if not facts:
+            return []
+        
+        description = getattr(adapter, '_description', '')
+        section = [
+            f"[{thread_name}] {description}",
+            f"  context_level: {level}",
+            f"  fact_count: {len(facts)}",
+        ]
+        section.extend(facts)
+        return section
+    
+    def _build_module_section(
+        self, module_name: str, level: int, threshold: float, query: str
+    ) -> List[str]:
+        """Build a STATE section for a scored module (chat, workspace, …)."""
+        providers = {
+            "chat": self._get_chat_context,
+            "workspace": self._get_workspace_context,
+        }
+        provider = providers.get(module_name)
+        if not provider:
+            return []
+        
+        facts = provider(query=query, level=level, threshold=threshold)
+        if not facts:
+            return []
+        
+        # Enforce token budget
+        cap = SOURCE_BUDGETS.get(module_name, 200)
+        budget_facts: List[str] = []
+        tokens = 0
+        for f in facts:
+            t = len(f.split())
+            if tokens + t > cap:
+                break
+            budget_facts.append(f)
+            tokens += t
+        
+        if not budget_facts:
+            return []
+        
+        descriptions = {
+            "chat": "Past conversations and discussion history",
+            "workspace": "Files and documents I have access to",
+        }
+        section = [
+            f"[{module_name}] {descriptions.get(module_name, '')}",
+            f"  context_level: {level}",
+            f"  fact_count: {len(budget_facts)}",
+        ]
+        section.extend(budget_facts)
+        return section
     
     def _build_self_awareness_block(self) -> List[str]:
         """Build the self-awareness metadata for the top of STATE.
@@ -258,6 +352,9 @@ class Subconscious:
             "  | reflex | HOW | My learned patterns, my shortcuts |",
             "  | log | WHEN/WHERE | My event timeline, my session history |",
             "  | linking_core | WHICH | My concept graph, my relevance scoring |",
+            "  | Module | | |",
+            "  | chat | RECALL | Past conversations, discussion history |",
+            "  | workspace | CONTEXT | Files, documents, project state |",
         ]
         
         # Graph stats (cheap read from DB)
@@ -277,11 +374,16 @@ class Subconscious:
         
         return lines
 
-    def _get_workspace_context(self, query: str = "", max_results: int = 5) -> List[str]:
-        """Build workspace context — always-on baseline + FTS boost.
+    def _get_workspace_context(
+        self, query: str = "", level: int = 1, threshold: float = 5.0,
+        max_results: int = 5,
+    ) -> List[str]:
+        """Build workspace context — scored through the same pipeline as threads.
         
-        Always includes top files by recency so the model knows its workspace.
-        When a query is provided, FTS matches are ranked higher.
+        level/threshold control how much detail is returned:
+        - L1 (lean): file list with sizes
+        - L2 (medium): + summaries
+        - L3 (full): + FTS snippets, concept re-ranking
         """
         try:
             from workspace.schema import (
@@ -333,8 +435,11 @@ class Subconscious:
                     path = r.get("path", "")
                     dot_path = path.lstrip("/").replace("/", ".")
                     size = r.get("size", 0)
-                    snippet = r.get("snippet", "")
-                    snippet = snippet.replace("<mark>", "").replace("</mark>", "")
+                    snippet = r.get("snippet") or ""
+                    if isinstance(snippet, str):
+                        snippet = snippet.replace("<mark>", "").replace("</mark>", "")
+                    else:
+                        snippet = str(snippet)
                     
                     facts.append(f"  workspace.{dot_path}: {_fmt_size(size)}")
                     
@@ -367,36 +472,66 @@ class Subconscious:
         except Exception:
             return []
 
-    def _get_tool_context(self, query: str = "", max_results: int = 10) -> List[str]:
-        """Build tool traces context for STATE.
+    def _get_chat_context(
+        self, query: str = "", level: int = 1, threshold: float = 5.0,
+        max_results: int = 8,
+    ) -> List[str]:
+        """Build chat/conversation context for STATE.
         
-        Reads recent weighted tool execution traces so the model
-        can see what tools have been used and their outcomes.
+        Surfaces past conversation summaries so the agent has memory
+        of what was discussed.  Higher levels include search matches.
+        
+        level/threshold control detail:
+        - L1: recent convo names + turn counts
+        - L2: + summaries
+        - L3: + search-matched message snippets
         """
         try:
-            from data.db import get_connection
+            from chat.schema import (
+                list_conversations, search_conversations,
+            )
             
-            conn = get_connection(readonly=True)
-            rows = conn.execute(
-                """SELECT tool, action, success, output, weight, created_at
-                   FROM tool_traces
-                   WHERE weight >= 0.2
-                   ORDER BY weight DESC, created_at DESC
-                   LIMIT ?""",
-                (max_results,)
-            ).fetchall()
+            min_weight = threshold / 10.0
+            facts: List[str] = []
             
-            if not rows:
-                return []
+            # If query present AND level >= 2, search for relevant convos
+            search_results = []
+            if query and level >= 2:
+                try:
+                    search_results = search_conversations(query, limit=max_results)
+                except Exception:
+                    search_results = []
             
-            facts = []
-            for r in rows:
-                tool = r["tool"]
-                action = r["action"]
-                ok = "✓" if r["success"] else "✗"
-                weight = r["weight"]
-                output = (r["output"] or "")[:100]
-                facts.append(f"  tools.{tool}.{action}: {ok} (w={weight:.2f}) {output}")
+            if search_results:
+                for r in search_results:
+                    sid = r.get("session_id", "")[:12]
+                    name = r.get("name") or sid
+                    turns = r.get("turn_count", 0)
+                    summary = r.get("summary") or ""
+                    weight = r.get("weight", 0.5)
+                    if weight < min_weight:
+                        continue
+                    
+                    facts.append(f"  chat.{sid}: \"{name}\" ({turns} turns, w={weight:.1f})")
+                    if summary and level >= 2:
+                        facts.append(f"  chat.{sid}.summary: {summary[:150]}")
+                    
+                    # L3: include matched preview
+                    preview = r.get("preview", "")
+                    if preview and level >= 3:
+                        facts.append(f"  chat.{sid}.match: {preview[:200]}")
+            else:
+                # No search hits — show recent conversations
+                convos = list_conversations(
+                    limit=max_results,
+                    min_weight=min_weight if min_weight > 0.1 else None,
+                )
+                for c in convos:
+                    sid = c.get("session_id", "")[:12]
+                    name = c.get("name") or sid
+                    turns = c.get("turn_count", 0)
+                    weight = c.get("weight", 0.5)
+                    facts.append(f"  chat.{sid}: \"{name}\" ({turns} turns, w={weight:.1f})")
             
             return facts
         except Exception:

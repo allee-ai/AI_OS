@@ -83,8 +83,11 @@ temp/
 # OS files
 Thumbs.db
 
-# Conversation data (optional - uncomment to exclude from repo)
-Agent*/Feeds/conversations/*.json
+# Conversation data exports (generated at runtime)
+Feeds/conversations/
+
+# Auto-generated training data
+finetune/auto_generated/
 
 # Local evaluator checklist
 docs/checklist.md

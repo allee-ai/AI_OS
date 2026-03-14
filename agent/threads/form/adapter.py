@@ -341,6 +341,34 @@ class FormThreadAdapter(BaseThreadAdapter):
                     "weight": 0.4,
                 })
 
+        # Tool traces — recent weighted executions from tool_traces table
+        try:
+            from data.db import get_connection
+            conn = get_connection(readonly=True)
+            rows = conn.execute(
+                """SELECT tool, action, success, output, weight, created_at
+                   FROM tool_traces
+                   WHERE weight >= ?
+                   ORDER BY weight DESC, created_at DESC
+                   LIMIT 10""",
+                (min_weight,)
+            ).fetchall()
+            for r in rows:
+                tool = r["tool"]
+                action = r["action"]
+                ok = "✓" if r["success"] else "✗"
+                w = r["weight"]
+                output = (r["output"] or "")[:100]
+                raw.append({
+                    "path": f"form.traces.{tool}.{action}",
+                    "l1_value": f"{tool}.{action} {ok}",
+                    "l2_value": f"{tool}.{action} {ok} (w={w:.2f})",
+                    "l3_value": f"{tool}.{action} {ok} (w={w:.2f}) {output}".strip(),
+                    "weight": w,
+                })
+        except Exception:
+            pass
+
         return raw[:limit]
 
 

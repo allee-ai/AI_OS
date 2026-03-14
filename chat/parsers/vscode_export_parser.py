@@ -69,7 +69,7 @@ class VSCodeExportParser(ExportParserBase):
             data = json.load(f)
         
         # Extract metadata
-        session_id = file_path.stem
+        session_id = data.get('sessionId', file_path.stem)
         requester = data.get('requesterUsername', 'User')
         responder = data.get('responderUsername', 'GitHub Copilot')
         
@@ -77,15 +77,18 @@ class VSCodeExportParser(ExportParserBase):
         messages = []
         created_at = None
         updated_at = None
+        file_mtime = datetime.fromtimestamp(file_path.stat().st_mtime)
         
         for request in data.get('requests', []):
             # Parse user message
             message_data = request.get('message', {})
             user_text = message_data.get('text', '')
             
-            # Try to extract timestamp (may not be present)
-            # Use file modification time as fallback
-            timestamp = datetime.fromtimestamp(file_path.stat().st_mtime)
+            # Use per-request timestamp (epoch ms), fall back to file mtime
+            ts_ms = request.get('timestamp')
+            timestamp = datetime.fromtimestamp(ts_ms / 1000) if ts_ms else file_mtime
+            
+            model_id = request.get('modelId', '')
             
             if user_text:
                 messages.append(ParsedMessage(
@@ -94,6 +97,7 @@ class VSCodeExportParser(ExportParserBase):
                     timestamp=timestamp,
                     metadata={
                         'request_id': request.get('requestId'),
+                        'model': model_id,
                         'variables': request.get('variableData', {}).get('variables', [])
                     }
                 ))
@@ -101,31 +105,58 @@ class VSCodeExportParser(ExportParserBase):
             # Parse assistant response
             response = request.get('response', [])
             assistant_text_parts = []
+            thinking_parts = []
             
             for resp_item in response:
-                # Response can be string or object with value/string fields
-                if isinstance(resp_item, dict):
-                    if 'value' in resp_item:
-                        if isinstance(resp_item['value'], str):
-                            assistant_text_parts.append(resp_item['value'])
-                        elif isinstance(resp_item['value'], dict):
-                            text = resp_item['value'].get('value', '')
-                            assistant_text_parts.append(text)
-                    elif 'string' in resp_item:
-                        assistant_text_parts.append(resp_item['string'])
-                elif isinstance(resp_item, str):
+                if isinstance(resp_item, str):
                     assistant_text_parts.append(resp_item)
+                    continue
+                if not isinstance(resp_item, dict):
+                    continue
+                
+                kind = resp_item.get('kind')
+                
+                if kind == 'markdownContent':
+                    # kind: "markdownContent" → content.value
+                    content = resp_item.get('content', {})
+                    text = content.get('value', '') if isinstance(content, dict) else ''
+                    if text:
+                        assistant_text_parts.append(text)
+                
+                elif kind == 'thinking':
+                    # kind: "thinking" → value (reasoning trace)
+                    val = resp_item.get('value', '')
+                    if val:
+                        thinking_parts.append(val)
+                
+                elif kind is None and 'value' in resp_item:
+                    # No kind key — plain text part (value is a string)
+                    val = resp_item['value']
+                    if isinstance(val, str) and val.strip():
+                        assistant_text_parts.append(val)
+                    elif isinstance(val, dict):
+                        text = val.get('value', '')
+                        if text:
+                            assistant_text_parts.append(text)
+                
+                elif kind is None and 'string' in resp_item:
+                    assistant_text_parts.append(resp_item['string'])
+                
+                # Skip: toolInvocationSerialized, progressMessage,
+                # mcpServersStarting, command, prepareToolInvocation, etc.
             
-            assistant_text = '\n'.join(assistant_text_parts)
+            assistant_text = '\n'.join(p for p in assistant_text_parts if p)
+            thinking_text = '\n'.join(p for p in thinking_parts if p)
             
             if assistant_text:
+                meta = {'request_id': request.get('requestId'), 'model': model_id}
+                if thinking_text:
+                    meta['thinking'] = thinking_text
                 messages.append(ParsedMessage(
                     role='assistant',
                     content=assistant_text,
                     timestamp=timestamp,
-                    metadata={
-                        'request_id': request.get('requestId')
-                    }
+                    metadata=meta
                 ))
             
             # Track timestamps
@@ -139,11 +170,13 @@ class VSCodeExportParser(ExportParserBase):
         if not updated_at:
             updated_at = datetime.fromtimestamp(file_path.stat().st_mtime)
         
-        # Generate title from first user message or use session ID
-        title = session_id
-        if messages and messages[0].role == 'user':
+        # Use custom title if available, else first user message, else session ID
+        title = data.get('customTitle', '')
+        if not title and messages and messages[0].role == 'user':
             first_msg = messages[0].content[:100]
             title = first_msg if len(first_msg) < 100 else first_msg + '...'
+        if not title:
+            title = session_id
         
         return ParsedConversation(
             id=session_id,

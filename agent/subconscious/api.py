@@ -1060,3 +1060,180 @@ async def cancel_task_endpoint(task_id: int):
         raise HTTPException(status_code=400, detail="Cannot cancel — task not found or already completed/failed")
     
     return {"status": "cancelled", "task_id": task_id}
+
+
+# ─────────────────────────────────────────────────────────────
+# Goals
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/goals")
+async def list_goals(status: str = "pending", limit: int = 20):
+    """List proposed goals, default pending."""
+    from .loops.goals import get_proposed_goals
+    return get_proposed_goals(status=status, limit=limit)
+
+
+@router.post("/goals/{goal_id}/resolve")
+async def resolve_goal_endpoint(goal_id: int, action: str = "approved"):
+    """Approve, reject, or dismiss a proposed goal."""
+    from .loops.goals import resolve_goal
+    if action not in ("approved", "rejected", "dismissed"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="action must be approved, rejected, or dismissed")
+    ok = resolve_goal(goal_id, status=action)
+    if not ok:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Goal not found or already resolved")
+    return {"status": action, "goal_id": goal_id}
+
+
+# ─────────────────────────────────────────────────────────────
+# Notifications
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/notifications")
+async def list_notifications(limit: int = 20, unread_only: bool = False):
+    """List notifications for the user."""
+    from agent.threads.form.tools.executables.notify import _list_notifications
+    # _list_notifications returns a string, but we want structured data
+    from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+    _ensure_notifications_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        if unread_only:
+            cur.execute(
+                "SELECT id, type, message, priority, read, dismissed, response, created_at "
+                "FROM notifications WHERE read = 0 AND dismissed = 0 ORDER BY id DESC LIMIT ?",
+                (limit,)
+            )
+        else:
+            cur.execute(
+                "SELECT id, type, message, priority, read, dismissed, response, created_at "
+                "FROM notifications ORDER BY id DESC LIMIT ?",
+                (limit,)
+            )
+        return [
+            {"id": r[0], "type": r[1], "message": r[2], "priority": r[3],
+             "read": bool(r[4]), "dismissed": bool(r[5]), "response": r[6], "created_at": r[7]}
+            for r in cur.fetchall()
+        ]
+
+
+@router.post("/notifications/{notif_id}/read")
+async def mark_notification_read(notif_id: int):
+    """Mark a notification as read."""
+    from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+    _ensure_notifications_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE notifications SET read = 1 WHERE id = ?", (notif_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Notification not found")
+    return {"status": "read", "id": notif_id}
+
+
+@router.post("/notifications/{notif_id}/dismiss")
+async def dismiss_notification(notif_id: int):
+    """Dismiss a notification."""
+    from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+    _ensure_notifications_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("UPDATE notifications SET dismissed = 1 WHERE id = ?", (notif_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Notification not found")
+    return {"status": "dismissed", "id": notif_id}
+
+
+@router.post("/notifications/{notif_id}/respond")
+async def respond_to_notification(notif_id: int, body: Dict[str, Any]):
+    """Respond to a confirm-type notification."""
+    response = body.get("response", "")
+    from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+    _ensure_notifications_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute(
+            "UPDATE notifications SET response = ?, read = 1 WHERE id = ? AND type = 'confirm'",
+            (response, notif_id)
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            from fastapi import HTTPException
+            raise HTTPException(status_code=404, detail="Confirm notification not found")
+    return {"status": "responded", "id": notif_id, "response": response}
+
+
+# ─────────────────────────────────────────────────────────────
+# Self-Improvements
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/improvements")
+async def list_improvements(status: str = "pending", limit: int = 20):
+    """List proposed code improvements."""
+    from .loops.self_improve import get_proposed_improvements
+    return get_proposed_improvements(status=status, limit=limit)
+
+
+@router.post("/improvements/{imp_id}/resolve")
+async def resolve_improvement_endpoint(imp_id: int, action: str = "approved"):
+    """Approve or reject a proposed improvement."""
+    from .loops.self_improve import resolve_improvement
+    if action not in ("approved", "rejected"):
+        from fastapi import HTTPException
+        raise HTTPException(status_code=400, detail="action must be approved or rejected")
+    ok = resolve_improvement(imp_id, status=action)
+    if not ok:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail="Improvement not found or already resolved")
+    return {"status": action, "improvement_id": imp_id}
+
+
+@router.post("/improvements/{imp_id}/apply")
+async def apply_improvement_endpoint(imp_id: int):
+    """Apply an approved improvement (writes the file change)."""
+    from .loops.self_improve import apply_improvement, resolve_improvement
+    # Ensure it's approved first
+    resolve_improvement(imp_id, status="approved")
+    result = apply_improvement(imp_id)
+    return {"status": "applied", "improvement_id": imp_id, "result": result}
+
+
+# ─────────────────────────────────────────────────────────────
+# Backfill — conversation concept extraction
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/backfill")
+async def get_backfill_status_endpoint():
+    """Get conversation concept backfill progress."""
+    from .loops.convo_concepts import get_backfill_status
+    return get_backfill_status()
+
+
+@router.post("/backfill/run")
+async def run_backfill_batch():
+    """Process one batch of un-extracted conversations."""
+    from .loops.convo_concepts import ConvoConceptLoop, get_backfill_status
+    loop = ConvoConceptLoop(enabled=False)
+    loop._process_batch()
+    return {**loop.stats, **get_backfill_status()}
+
+
+@router.post("/backfill/reset")
+async def reset_backfill_endpoint():
+    """Reset backfill progress so all conversations are reprocessed."""
+    from .loops.convo_concepts import reset_backfill, get_backfill_status
+    reset_backfill()
+    return get_backfill_status()

@@ -95,14 +95,13 @@ creds = get_secret("gmail")
 ## Roadmap
 
 <!-- ROADMAP:core -->
-### Ready for contributors
-- [ ] **Config validation** — Validate required settings on startup
-- [ ] **Multi-environment support** — Dev/staging/prod config profiles
+### Infrastructure
+- [ ] **Config validation** — Validate required settings on startup, fail fast with clear errors
 - [ ] **Secret rotation** — Automatic key rotation for long-running instances
+- [ ] **Crypto requirement** — Remove base64 fallback in secrets.py — require cryptography package (security: base64 is not encryption)
 
 ### Starter tasks
-- [ ] Add config documentation generator
-- [ ] Add secret audit logging
+- [ ] Secret audit logging (who accessed what, when)
 <!-- /ROADMAP:core -->
 
 ---

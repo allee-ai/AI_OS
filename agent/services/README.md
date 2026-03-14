@@ -45,15 +45,15 @@ User Message → agent_service.py
 ## Roadmap
 
 <!-- ROADMAP:services -->
-### Ready for contributors
-- [ ] **Multi-agent support** — Multiple agent personas
-- [ ] **Streaming responses** — Token-by-token output
-- [ ] **Context window optimization** — Smart truncation
-- [ ] **Response caching** — Cache common responses
+### Runtime
+- [ ] **API authentication** — Optional bearer token auth for all endpoints (currently zero auth — security critical)
+- [ ] **Streaming responses** — Token-by-token output via SSE/WebSocket
+- [ ] **Context window monitoring** — Track actual token usage per request, alert on budget overflow
+- [ ] **Multi-session goal tracking** — Long-horizon tasks that span multiple conversations: decompose, checkpoint, resume
 
 ### Starter tasks
-- [ ] Add response time metrics
-- [ ] Show context token count in UI
+- [ ] Response time + token count metrics per request
+- [ ] Context budget usage display in UI
 <!-- /ROADMAP:services -->
 
 ---

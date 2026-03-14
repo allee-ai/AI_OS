@@ -194,7 +194,7 @@ def create_trigger(
         response_mode: 'tool' (execute tool), 'agent' (generate via bridge),
                        or 'notify' (surface in UI only).
     """
-    if response_mode not in ("tool", "agent", "notify"):
+    if response_mode not in ("tool", "agent", "notify", "protocol"):
         raise ValueError(f"Invalid response_mode: {response_mode}")
 
     with closing(get_connection()) as conn:

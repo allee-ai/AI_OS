@@ -134,6 +134,20 @@ async def list_training_data():
 
 
 # ─────────────────────────────────────────────────────────────
+# Module Import Helper
+# ─────────────────────────────────────────────────────────────
+
+def _import_train_module(name: str):
+    """Import the train module for a given module name."""
+    if name == "chat":
+        return __import__("chat.train", fromlist=["export_training_data", "get_export_stats", "get_sections"])
+    elif name == "docs":
+        return __import__("docs.train", fromlist=["export_training_data", "get_export_stats", "get_sections"])
+    else:
+        return __import__(f"agent.threads.{name}.train", fromlist=["export_training_data", "get_export_stats", "get_sections"])
+
+
+# ─────────────────────────────────────────────────────────────
 # Export Endpoints - Pull from all threads
 # ─────────────────────────────────────────────────────────────
 
@@ -157,16 +171,26 @@ async def export_all_training_data():
     except Exception as e:
         results["consolidation"] = {"error": str(e)}
     
-    # 2. Export from each thread
-    threads = ["linking_core", "identity", "philosophy", "log", "reflex", "form"]
-    
-    for thread in threads:
+    # 2. Export from each module
+    for name in ALL_MODULES:
         try:
-            module = __import__(f"agent.threads.{thread}.train", fromlist=["export_training_data"])
+            module = _import_train_module(name)
             export_result = module.export_training_data()
-            results[thread] = export_result
+            results[name] = export_result
         except Exception as e:
-            results[thread] = {"error": str(e)}
+            results[name] = {"error": str(e)}
+    
+    # 2b. Export reasoning (curated) examples
+    try:
+        from finetune.gold_examples import get_reasoning_examples
+        reasoning = get_reasoning_examples()
+        reasoning_path = FINETUNE_DIR / "reasoning_train.jsonl"
+        with open(reasoning_path, "w") as f:
+            for ex in reasoning:
+                f.write(json.dumps(ex) + "\n")
+        results["reasoning"] = {"examples": len(reasoning), "path": str(reasoning_path)}
+    except Exception as e:
+        results["reasoning"] = {"error": str(e)}
     
     # 3. Combine into unified dataset
     try:
@@ -174,11 +198,11 @@ async def export_all_training_data():
         total_examples = 0
         
         with open(combined_path, 'w') as combined:
-            # Thread-exported training data
-            for thread in threads:
-                thread_file = FINETUNE_DIR / f"{thread}_train.jsonl"
-                if thread_file.exists():
-                    with open(thread_file) as f:
+            # Module-exported training data
+            for name in ALL_MODULES:
+                module_file = FINETUNE_DIR / f"{name}_train.jsonl"
+                if module_file.exists():
+                    with open(module_file) as f:
                         for line in f:
                             combined.write(line)
                             total_examples += 1
@@ -193,7 +217,31 @@ async def export_all_training_data():
                         total_examples += 1
                         approved_count += 1
 
+            # Reasoning (curated) training examples
+            reasoning_file = FINETUNE_DIR / "reasoning_train.jsonl"
+            reasoning_count = 0
+            if reasoning_file.exists():
+                with open(reasoning_file) as f:
+                    for line in f:
+                        combined.write(line)
+                        total_examples += 1
+                        reasoning_count += 1
+
+            # Generated (synthetic) training examples
+            generated_count = 0
+            generated_dir = FINETUNE_DIR / "generated"
+            if generated_dir.exists():
+                for gen_file in generated_dir.glob("*.jsonl"):
+                    with open(gen_file) as gf:
+                        for line in gf:
+                            if line.strip():
+                                combined.write(line if line.endswith("\n") else line + "\n")
+                                total_examples += 1
+                                generated_count += 1
+
         results["user_approved"] = {"examples": approved_count}
+        results["reasoning_included"] = {"examples": reasoning_count}
+        results["generated_included"] = {"examples": generated_count}
         results["combined"] = {
             "path": str(combined_path),
             "total_examples": total_examples
@@ -209,31 +257,41 @@ async def export_all_training_data():
 
 @router.get("/export/stats")
 async def get_export_stats():
-    """Get stats about exportable data from all threads."""
+    """Get stats about exportable data from all modules."""
     stats = {}
     
-    threads = ["linking_core", "identity", "philosophy", "log", "reflex", "form"]
-    
-    for thread in threads:
+    for name in ALL_MODULES:
         try:
-            module = __import__(f"agent.threads.{thread}.train", fromlist=["get_export_stats"])
-            stats[thread] = module.get_export_stats()
+            mod = _import_train_module(name)
+            stats[name] = mod.get_export_stats()
         except Exception as e:
-            stats[thread] = {"error": str(e)}
+            stats[name] = {"error": str(e)}
+    
+    # Include reasoning example stats
+    try:
+        from finetune.gold_examples import get_reasoning_stats
+        stats["reasoning"] = get_reasoning_stats()
+    except Exception as e:
+        stats["reasoning"] = {"error": str(e)}
+    
+    # Include generated example stats
+    try:
+        from agent.subconscious.loops.training_gen import get_generated_stats
+        stats["generated"] = get_generated_stats()
+    except Exception as e:
+        stats["generated"] = {"error": str(e)}
     
     return {"stats": stats}
 
 
 @router.post("/export/{thread}")
 async def export_thread_training_data(thread: str):
-    """Export training data from a specific thread."""
-    valid_threads = ["linking_core", "identity", "philosophy", "log", "reflex", "form"]
-    
-    if thread not in valid_threads:
-        raise HTTPException(status_code=400, detail=f"Invalid thread. Must be one of: {valid_threads}")
+    """Export training data from a specific module."""
+    if thread not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Invalid module. Must be one of: {ALL_MODULES}")
     
     try:
-        module = __import__(f"agent.threads.{thread}.train", fromlist=["export_training_data"])
+        module = _import_train_module(thread)
         result = module.export_training_data()
         return {"status": "exported", "thread": thread, "result": result}
     except Exception as e:
@@ -336,7 +394,7 @@ async def get_adapter_status():
 # ─────────────────────────────────────────────────────────────
 
 # All exportable modules (threads + chat + cli)
-ALL_MODULES = ["linking_core", "identity", "philosophy", "log", "reflex", "form", "chat", "cli"]
+ALL_MODULES = ["linking_core", "identity", "philosophy", "log", "reflex", "form", "chat", "docs"]
 
 
 def _get_module_config() -> Dict[str, bool]:
@@ -374,18 +432,23 @@ def _set_module_config(config: Dict[str, bool]) -> None:
 @router.get("/modules")
 async def list_finetune_modules():
     """List all finetune modules with enabled status and exportable counts."""
+    from finetune.gold_examples import get_reasoning_count_for_module
     config = _get_module_config()
     modules = []
     for name in ALL_MODULES:
         info: Dict[str, Any] = {"name": name, "enabled": config.get(name, True)}
         try:
-            if name in ["chat", "cli"]:
-                mod = __import__(f"{name}.train", fromlist=["get_export_stats"])
-            else:
-                mod = __import__(f"agent.threads.{name}.train", fromlist=["get_export_stats"])
+            mod = _import_train_module(name)
             info["stats"] = mod.get_export_stats()
         except Exception as e:
             info["stats"] = {"error": str(e)}
+        info["reasoning_count"] = get_reasoning_count_for_module(name)
+        # Include generated example count
+        try:
+            from agent.subconscious.loops.training_gen import get_generated_count
+            info["generated_count"] = get_generated_count(name)
+        except Exception:
+            info["generated_count"] = 0
         modules.append(info)
     return {"modules": modules}
 
@@ -407,10 +470,7 @@ async def preview_module_data(name: str, limit: int = 5):
     if name not in ALL_MODULES:
         raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
     try:
-        if name in ["chat", "cli"]:
-            mod = __import__(f"{name}.train", fromlist=["export_training_data"])
-        else:
-            mod = __import__(f"agent.threads.{name}.train", fromlist=["export_training_data"])
+        mod = _import_train_module(name)
         # Export to temp to read samples
         result = mod.export_training_data()
         path = Path(result.get("path", ""))
@@ -425,5 +485,412 @@ async def preview_module_data(name: str, limit: int = 5):
                     except json.JSONDecodeError:
                         pass
         return {"module": name, "samples": samples, "total": result.get("examples", 0)}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/modules/{name}/sections")
+async def get_module_sections(name: str):
+    """Get available training sections for a module (data, api, cli, schema, reasoning)."""
+    if name not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
+    try:
+        mod = _import_train_module(name)
+        sections = mod.get_sections()
+        # Add reasoning section count
+        from finetune.gold_examples import get_reasoning_count_for_module
+        reasoning_count = get_reasoning_count_for_module(name)
+        if reasoning_count > 0:
+            sections["reasoning"] = {"description": "Curated, hand-crafted reasoning examples", "examples": reasoning_count}
+        # Add generated section count
+        try:
+            from agent.subconscious.loops.training_gen import get_generated_examples
+            gen_all = get_generated_examples(name)
+            # Docstring-typed examples enrich their respective sections
+            ds_by_section: Dict[str, int] = {}
+            non_docstring = 0
+            for ex in gen_all:
+                meta = ex.get("metadata", {})
+                if meta.get("type") == "docstring":
+                    sec = meta.get("section", "data")
+                    ds_by_section[sec] = ds_by_section.get(sec, 0) + 1
+                else:
+                    non_docstring += 1
+            # Bump existing section counts with docstring additions
+            for sec, count in ds_by_section.items():
+                if sec in sections:
+                    sections[sec]["examples"] = sections[sec].get("examples", 0) + count
+            if non_docstring > 0:
+                sections["generated"] = {"description": "LLM-generated synthetic examples", "examples": non_docstring}
+        except Exception:
+            pass
+        return {"module": name, "sections": sections}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────
+# Section Detail + Approval + Unified
+# ─────────────────────────────────────────────────────────────
+
+def _get_all_examples_for_module(name: str) -> List[Dict[str, Any]]:
+    """Collect ALL examples for a module across all section sources."""
+    examples = []
+
+    # 1. Module-exported data (data, api, cli, schema sections)
+    try:
+        mod = _import_train_module(name)
+        result = mod.export_training_data()
+        path = Path(result.get("path", ""))
+        if path.exists():
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            examples.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
+    except Exception:
+        pass
+
+    # 2. Reasoning examples
+    try:
+        from finetune.gold_examples import get_reasoning_for_module
+        examples.extend(get_reasoning_for_module(name))
+    except Exception:
+        pass
+
+    # 3. Generated examples
+    try:
+        from agent.subconscious.loops.training_gen import get_generated_examples
+        examples.extend(get_generated_examples(name))
+    except Exception:
+        pass
+
+    # 4. Approved examples
+    approved_path = FINETUNE_DIR / "approved" / f"{name}.jsonl"
+    if approved_path.exists():
+        with open(approved_path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        ex = json.loads(line)
+                        if not ex.get("metadata"):
+                            ex["metadata"] = {}
+                        ex["metadata"]["section"] = "approved"
+                        examples.append(ex)
+                    except json.JSONDecodeError:
+                        pass
+
+    return examples
+
+
+@router.get("/modules/{name}/sections/{section}")
+async def get_section_examples(name: str, section: str, page: int = 1, per_page: int = 50):
+    """Get all training examples for a module+section pair, paginated."""
+    if name not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
+
+    examples = []
+
+    if section == "reasoning":
+        from finetune.gold_examples import get_reasoning_for_module
+        examples = get_reasoning_for_module(name)
+    elif section == "generated":
+        try:
+            from agent.subconscious.loops.training_gen import get_generated_examples
+            examples = get_generated_examples(name)
+        except Exception:
+            examples = []
+    elif section == "approved":
+        approved_path = FINETUNE_DIR / "approved" / f"{name}.jsonl"
+        if approved_path.exists():
+            with open(approved_path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            examples.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
+    else:
+        # data, api, cli, schema — export then filter by metadata.section
+        try:
+            mod = _import_train_module(name)
+            result = mod.export_training_data(sections=[section])
+            path = Path(result.get("path", ""))
+            if path.exists():
+                with open(path) as f:
+                    for line in f:
+                        line = line.strip()
+                        if line:
+                            try:
+                                ex = json.loads(line)
+                                examples.append(ex)
+                            except json.JSONDecodeError:
+                                pass
+        except Exception as e:
+            raise HTTPException(status_code=500, detail=str(e))
+
+        # Also include docstring-sourced examples whose metadata.section matches
+        try:
+            from agent.subconscious.loops.training_gen import get_generated_examples
+            for ex in get_generated_examples(name):
+                meta = ex.get("metadata", {})
+                if meta.get("type") == "docstring" and meta.get("section") == section:
+                    examples.append(ex)
+        except Exception:
+            pass
+
+    # Add index IDs for tracking
+    for i, ex in enumerate(examples):
+        ex["_id"] = i
+
+    total = len(examples)
+    start = (page - 1) * per_page
+    end = start + per_page
+    page_examples = examples[start:end]
+
+    return {
+        "module": name,
+        "section": section,
+        "examples": page_examples,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": (total + per_page - 1) // per_page if per_page > 0 else 0,
+    }
+
+
+class ApprovalRequest(BaseModel):
+    example_ids: List[int]
+    action: str  # "approve" or "reject"
+
+
+@router.post("/modules/{name}/sections/generated/approve")
+async def approve_generated_examples(name: str, body: ApprovalRequest):
+    """Approve or reject generated examples. Approved → finetune/approved/{module}.jsonl."""
+    if name not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
+    if body.action not in ("approve", "reject"):
+        raise HTTPException(status_code=400, detail="action must be 'approve' or 'reject'")
+
+    # Load all generated examples
+    try:
+        from agent.subconscious.loops.training_gen import get_generated_examples
+        all_gen = get_generated_examples(name)
+    except Exception:
+        all_gen = []
+
+    if not all_gen:
+        raise HTTPException(status_code=404, detail="No generated examples found")
+
+    selected = [all_gen[i] for i in body.example_ids if 0 <= i < len(all_gen)]
+    if not selected:
+        raise HTTPException(status_code=400, detail="No valid example_ids")
+
+    approved_dir = FINETUNE_DIR / "approved"
+    approved_dir.mkdir(parents=True, exist_ok=True)
+    approved_path = approved_dir / f"{name}.jsonl"
+
+    if body.action == "approve":
+        with open(approved_path, "a") as f:
+            for ex in selected:
+                if not ex.get("metadata"):
+                    ex["metadata"] = {}
+                ex["metadata"]["approved"] = True
+                f.write(json.dumps(ex) + "\n")
+    else:
+        # Flag as rejected in generated file (rewrite without deleting)
+        gen_path = FINETUNE_DIR / "generated" / f"{name}.jsonl"
+        if gen_path.exists():
+            rejected_ids = set(body.example_ids)
+            lines = []
+            with open(gen_path) as f:
+                for i, line in enumerate(f):
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        ex = json.loads(line)
+                        if i in rejected_ids:
+                            if not ex.get("metadata"):
+                                ex["metadata"] = {}
+                            ex["metadata"]["rejected"] = True
+                        lines.append(json.dumps(ex))
+                    except json.JSONDecodeError:
+                        lines.append(line)
+            with open(gen_path, "w") as f:
+                for l in lines:
+                    f.write(l + "\n")
+
+    # Log to unified_events
+    try:
+        from agent.threads.log.schema import log_event
+        log_event(
+            event_type="finetune_approval",
+            source="finetune",
+            data=f"{body.action}d {len(selected)} generated examples for {name}",
+            metadata={"module": name, "action": body.action, "count": len(selected)},
+        )
+    except Exception:
+        pass
+
+    return {
+        "status": body.action + "d",
+        "module": name,
+        "count": len(selected),
+    }
+
+
+@router.get("/unified")
+async def get_unified_examples(
+    module: Optional[str] = None,
+    section: Optional[str] = None,
+    page: int = 1,
+    per_page: int = 50,
+):
+    """Get ALL training examples across all modules, filterable."""
+    all_examples = []
+
+    target_modules = [module] if module and module in ALL_MODULES else ALL_MODULES
+
+    for mod_name in target_modules:
+        mod_examples = _get_all_examples_for_module(mod_name)
+        # Tag each with module name for unified display
+        for ex in mod_examples:
+            if not ex.get("metadata"):
+                ex["metadata"] = {}
+            if "source" not in ex["metadata"]:
+                ex["metadata"]["source"] = mod_name
+        all_examples.extend(mod_examples)
+
+    # Filter by section if specified
+    if section:
+        all_examples = [
+            ex for ex in all_examples
+            if ex.get("metadata", {}).get("section") == section
+        ]
+
+    # Add IDs
+    for i, ex in enumerate(all_examples):
+        ex["_id"] = i
+
+    total = len(all_examples)
+    start = (page - 1) * per_page
+    end = start + per_page
+    page_examples = all_examples[start:end]
+
+    return {
+        "examples": page_examples,
+        "total": total,
+        "page": page,
+        "per_page": per_page,
+        "pages": (total + per_page - 1) // per_page if per_page > 0 else 0,
+        "filters": {"module": module, "section": section},
+    }
+
+
+# ── Docstring extraction ───────────────────────────────────────────────
+
+@router.get("/docstrings/stats")
+async def docstring_stats():
+    """Get count of extractable docstrings per module."""
+    from finetune.docstring_extractor import get_stats
+    return {"stats": get_stats(), "total": sum(get_stats().values())}
+
+
+@router.post("/docstrings/extract")
+async def extract_docstrings(module: Optional[str] = None, deduplicate: bool = True):
+    """
+    Extract docstrings from source code and save as training pairs.
+    Optionally filter to a single module.  Dedup is on by default.
+    """
+    from finetune.docstring_extractor import extract_and_save, extract_module
+    import json as _json
+
+    if module:
+        if module not in ALL_MODULES:
+            raise HTTPException(status_code=400, detail=f"Unknown module: {module}")
+        from finetune.docstring_extractor import extract_module as _ext, _content_hash, _load_dedup_index, _save_dedup_index
+        pairs = _ext(module)
+        seen = _load_dedup_index() if deduplicate else set()
+        unique = [p for p in pairs if _content_hash(p) not in seen]
+        if deduplicate:
+            for p in unique:
+                seen.add(_content_hash(p))
+            _save_dedup_index(seen)
+        if unique:
+            out_dir = FINETUNE_DIR / "generated"
+            out_dir.mkdir(parents=True, exist_ok=True)
+            with open(out_dir / f"{module}.jsonl", "a") as f:
+                for p in unique:
+                    f.write(_json.dumps(p) + "\n")
+        return {"module": module, "extracted": len(unique), "total_available": len(pairs)}
+
+    counts = extract_and_save(deduplicate=deduplicate)
+    return {"counts": counts, "total": sum(counts.values())}
+
+
+class ModuleExportRequest(BaseModel):
+    sections: Optional[List[str]] = None  # None = all sections
+
+
+@router.post("/modules/{name}/export")
+async def export_module_with_sections(name: str, body: ModuleExportRequest = ModuleExportRequest()):
+    """Export training data for a specific module with section selection."""
+    if name not in ALL_MODULES:
+        raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
+    try:
+        mod = _import_train_module(name)
+        
+        # Separate reasoning and generated from other sections for the module export
+        include_reasoning = False
+        include_generated = False
+        module_sections = body.sections
+        if module_sections is not None:
+            if "reasoning" in module_sections:
+                include_reasoning = True
+            if "generated" in module_sections:
+                include_generated = True
+            module_sections = [s for s in module_sections if s not in ("reasoning", "generated")]
+        else:
+            include_reasoning = True
+            include_generated = True
+
+        kwargs = {}
+        if module_sections is not None:
+            kwargs["sections"] = module_sections
+        result = mod.export_training_data(**kwargs)
+        output_path = result.get("path", "")
+
+        # Append reasoning examples to the module's output file
+        if include_reasoning and output_path:
+            from finetune.gold_examples import get_reasoning_for_module
+            reasoning = get_reasoning_for_module(name)
+            if reasoning:
+                with open(output_path, "a") as f:
+                    for ex in reasoning:
+                        f.write(json.dumps(ex) + "\n")
+                result["examples"] = result.get("examples", 0) + len(reasoning)
+                result["reasoning_examples"] = len(reasoning)
+
+        # Append generated examples to the module's output file
+        if include_generated and output_path:
+            try:
+                from agent.subconscious.loops.training_gen import get_generated_examples
+                gen = get_generated_examples(name)
+                if gen:
+                    with open(output_path, "a") as f:
+                        for ex in gen:
+                            f.write(json.dumps(ex) + "\n")
+                    result["examples"] = result.get("examples", 0) + len(gen)
+                    result["generated_examples"] = len(gen)
+            except Exception:
+                pass
+
+        return {"status": "exported", "module": name, "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))

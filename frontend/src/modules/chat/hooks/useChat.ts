@@ -9,8 +9,13 @@ export const useChat = () => {
   const [agentStatus, setAgentStatus] = useState<AgentStatus | null>(null);
   const [isAgentTyping, setIsAgentTyping] = useState(false);
   const [sessionId, setSessionId] = useState<string | undefined>();
+  const [totalTurns, setTotalTurns] = useState(0);
+  const [loadedTurnCount, setLoadedTurnCount] = useState(0);
   const streamingMessageRef = useRef<string>('');
   const streamingMessageIdRef = useRef<string>('');
+
+  const PAGE_SIZE = 50;
+  const hasMoreMessages = loadedTurnCount < totalTurns;
 
   const { isConnected, lastMessage, sendMessage: sendWS } = useWebSocket();
 
@@ -171,40 +176,63 @@ export const useChat = () => {
     }
   }, [clearHistory]);
 
+  const turnsToMessages = (turns: any[]): ChatMessage[] => {
+    const msgs: ChatMessage[] = [];
+    for (const turn of turns) {
+      if (turn.user) {
+        msgs.push({
+          id: `user_${turn.timestamp}`,
+          content: turn.user,
+          role: 'user',
+          timestamp: new Date(turn.timestamp)
+        });
+      }
+      if (turn.assistant) {
+        msgs.push({
+          id: `assistant_${turn.timestamp}`,
+          content: turn.assistant,
+          role: 'assistant',
+          timestamp: new Date(turn.timestamp)
+        });
+      }
+    }
+    return msgs;
+  };
+
   const loadConversation = useCallback(async (conversationSessionId: string) => {
     try {
       // Tell backend to use this session
       await apiService.setSession(conversationSessionId);
       
-      const conversation = await apiService.getConversation(conversationSessionId);
+      const conversation = await apiService.getConversation(conversationSessionId, PAGE_SIZE);
+      const total = conversation.total_turns ?? conversation.turns?.length ?? 0;
+      const turnCount = conversation.turns?.length ?? 0;
       
-      // Convert turns to messages
-      const loadedMessages: ChatMessage[] = [];
-      for (const turn of conversation.turns || []) {
-        if (turn.user) {
-          loadedMessages.push({
-            id: `user_${turn.timestamp}`,
-            content: turn.user,
-            role: 'user',
-            timestamp: new Date(turn.timestamp)
-          });
-        }
-        if (turn.assistant) {
-          loadedMessages.push({
-            id: `assistant_${turn.timestamp}`,
-            content: turn.assistant,
-            role: 'assistant',
-            timestamp: new Date(turn.timestamp)
-          });
-        }
-      }
-      
-      setMessages(loadedMessages);
+      setMessages(turnsToMessages(conversation.turns || []));
+      setTotalTurns(total);
+      setLoadedTurnCount(turnCount);
       setSessionId(conversationSessionId);
     } catch (error) {
       console.error('Failed to load conversation:', error);
     }
   }, []);
+
+  const loadOlderMessages = useCallback(async () => {
+    if (!sessionId || !hasMoreMessages) return;
+    try {
+      const olderOffset = totalTurns - loadedTurnCount - PAGE_SIZE;
+      const offset = Math.max(0, olderOffset);
+      const limit = olderOffset < 0 ? PAGE_SIZE + olderOffset : PAGE_SIZE;
+      
+      const conversation = await apiService.getConversation(sessionId, limit, offset);
+      const olderMessages = turnsToMessages(conversation.turns || []);
+      
+      setMessages(prev => [...olderMessages, ...prev]);
+      setLoadedTurnCount(prev => prev + (conversation.turns?.length ?? 0));
+    } catch (error) {
+      console.error('Failed to load older messages:', error);
+    }
+  }, [sessionId, hasMoreMessages, totalTurns, loadedTurnCount]);
 
   return {
     messages,
@@ -212,6 +240,8 @@ export const useChat = () => {
     clearHistory,
     startNewSession,
     loadConversation,
+    loadOlderMessages,
+    hasMoreMessages,
     isLoading,
     isConnected,
     agentStatus,

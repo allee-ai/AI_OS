@@ -50,6 +50,7 @@ from agent.threads.log import router as log_router
 # Project-level modules with routers
 from docs import router as docs_router
 from finetune import router as finetune_router
+from eval import router as eval_router
 
 
 # =============================================================================
@@ -150,6 +151,7 @@ app.include_router(subconscious_router)
 # Project-level routers
 app.include_router(docs_router)
 app.include_router(finetune_router)
+app.include_router(eval_router)
 
 
 # =============================================================================

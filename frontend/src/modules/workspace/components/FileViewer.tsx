@@ -75,6 +75,7 @@ export const FileViewer: React.FC<FileViewerProps> = ({
   const [editing, setEditing] = useState(false);
   const [editContent, setEditContent] = useState('');
   const [saving, setSaving] = useState(false);
+  const [summaryOpen, setSummaryOpen] = useState(true);
 
   // Load image URL if file is an image
   useEffect(() => {
@@ -179,6 +180,13 @@ export const FileViewer: React.FC<FileViewerProps> = ({
               ✎
             </button>
           )}
+          <button
+            className={`viewer-summary-toggle ${summaryOpen ? 'active' : ''}`}
+            onClick={() => setSummaryOpen(!summaryOpen)}
+            title={summaryOpen ? 'Hide summary' : 'Show summary'}
+          >
+            📝
+          </button>
           <button className="viewer-close" onClick={onClose} title="Close">×</button>
         </div>
       </div>
@@ -191,28 +199,10 @@ export const FileViewer: React.FC<FileViewerProps> = ({
         <span className="meta-item">{formatDate(file.modified_at)}</span>
       </div>
 
-      {/* Summary section */}
-      <div className="file-viewer-summary">
-        <div className="summary-header">
-          <span className="summary-label">Summary</span>
-          <button
-            className="summary-btn"
-            onClick={handleSummarize}
-            disabled={summarizing}
-            title="Generate / regenerate summary"
-          >
-            {summarizing ? '⏳ Summarizing...' : '✨ Summarize'}
-          </button>
-        </div>
-        {file.summary ? (
-          <p className="summary-text">{file.summary}</p>
-        ) : (
-          <p className="summary-empty">No summary yet</p>
-        )}
-      </div>
-
-      {/* Content */}
-      <div className="file-viewer-content">
+      {/* Split: Content + Summary sidebar */}
+      <div className="file-viewer-body">
+        {/* Content */}
+        <div className="file-viewer-content">
         {editing ? (
           <div className="edit-mode">
             <div className="edit-toolbar">
@@ -260,6 +250,39 @@ export const FileViewer: React.FC<FileViewerProps> = ({
             <p className="hint">{file.mime_type || 'Unknown type'}</p>
           </div>
         )}
+        </div>
+
+        {/* Summary sidebar */}
+        <div className={`file-summary-sidebar ${summaryOpen ? 'open' : ''}`}>
+          <div className="summary-sidebar-header">
+            <span className="summary-label">Summary</span>
+            <button
+              className="summary-btn"
+              onClick={handleSummarize}
+              disabled={summarizing}
+              title="Generate / regenerate summary"
+            >
+              {summarizing ? '⏳' : '✨'}
+            </button>
+          </div>
+          <div className="summary-sidebar-body">
+            {file.summary ? (
+              <p className="summary-text">{file.summary}</p>
+            ) : (
+              <div className="summary-sidebar-empty">
+                <span>📝</span>
+                <p>No summary yet</p>
+                <button
+                  className="summary-generate-btn"
+                  onClick={handleSummarize}
+                  disabled={summarizing}
+                >
+                  {summarizing ? 'Summarizing...' : '✨ Summarize'}
+                </button>
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

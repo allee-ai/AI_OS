@@ -41,6 +41,15 @@ def check_condition(condition: Optional[Dict[str, Any]], event_payload: Dict[str
             {"field": "payload.subject", "operator": "contains", "value": "urgent"}
         ]
     }
+    
+    Or a protocol chain:
+    {
+        "protocol": "name_of_protocol",
+        "steps": [
+            {"tool": "file_read", "action": "read_file", "params": {...}},
+            {"tool": "ask_llm", "action": "analyze", "params": {...}}
+        ]
+    }
     """
     if not condition:
         return True  # No condition = always match
@@ -232,6 +241,9 @@ async def execute_matching_triggers(
         elif response_mode == "notify":
             # Surface a notification only – no tool execution
             exec_result = _notify_only(trigger, event_payload, feed_name, event_type)
+        elif response_mode == "protocol":
+            # Execute a stored task chain via the task planner
+            exec_result = _execute_protocol(trigger, event_payload)
         else:
             # Default: execute tool action
             exec_result = await execute_tool_action(
@@ -354,6 +366,39 @@ def _notify_only(
     except Exception:
         pass
     return {"success": True, "mode": "notify"}
+
+
+def _execute_protocol(
+    trigger: Dict[str, Any],
+    event_payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Execute a stored task chain (protocol) via the task planner.
+
+    The trigger's tool_params_json should contain a ``goal`` string.
+    The task planner decomposes and executes it like any other task.
+    """
+    try:
+        from agent.subconscious.loops import create_task, TaskPlanner
+
+        goal = (trigger.get("tool_params") or {}).get("goal", "")
+        if not goal:
+            goal = f"Protocol: {trigger.get('name', 'unnamed')} — {trigger.get('description', '')}"
+
+        task = create_task(goal, source=f"protocol:{trigger.get('name', 'reflex')}")
+
+        planner = TaskPlanner(enabled=False)
+        result = planner.execute_task(task["id"])
+
+        return {
+            "success": result.get("status") == "completed",
+            "mode": "protocol",
+            "task_id": result.get("id"),
+            "status": result.get("status"),
+            "steps_completed": len([r for r in result.get("results", []) if r.get("success")]),
+        }
+    except Exception as e:
+        return {"success": False, "mode": "protocol", "error": str(e)}
 
 
 __all__ = [

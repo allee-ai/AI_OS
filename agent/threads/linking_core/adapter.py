@@ -127,6 +127,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         
         Uses threshold to gate detail: low threshold → skip entirely,
         medium → core stats, high → full activation details.
+        Also updates self-attention focus based on query concepts.
         """
         # Low score → linking_core adds no value to STATE
         if threshold < 2.0:
@@ -136,13 +137,14 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             )
         facts = self.get_context(context_level, query)
         
-        # If query provided, get relevant concepts
+        # If query provided, get relevant concepts and update focus
         relevant_concepts = []
         if query:
             try:
-                from .schema import extract_concepts_from_text, spread_activate
+                from .schema import extract_concepts_from_text, spread_activate, update_focus
                 query_concepts = extract_concepts_from_text(query)
                 if query_concepts:
+                    update_focus(query_concepts)
                     activated = spread_activate(query_concepts, activation_threshold=0.1, max_hops=1, limit=10)
                     relevant_concepts = [a.get('concept', '') for a in activated]
             except Exception:
@@ -176,6 +178,16 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
                 stats = get_stats()
                 facts.append(f"linking_core.concepts: {stats.get('concept_count', 0)}")
                 facts.append(f"linking_core.links: {stats.get('link_count', 0)}")
+            except Exception:
+                pass
+            
+            # Show current focus topics (self-attention)
+            try:
+                from .schema import get_focus
+                focus = get_focus(limit=8)
+                if focus:
+                    top_focus = [f"{t}({w})" for t, w in list(focus.items())[:5]]
+                    facts.append(f"linking_core.focus: {', '.join(top_focus)}")
             except Exception:
                 pass
             
@@ -449,9 +461,18 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         return scores
     
     def _keyword_score_threads(self, feeds: str) -> Dict[str, float]:
-        """Keyword-based thread scoring (fallback)."""
+        """Keyword-based thread scoring (fallback), with self-attention focus bias."""
         feed_lower = feeds.lower()
         scores = {}
+        
+        # Get focus bias from self-attention
+        focus_bias = 0.0
+        try:
+            from .schema import extract_concepts_from_text, get_focus_bias
+            query_concepts = extract_concepts_from_text(feeds)
+            focus_bias = get_focus_bias(query_concepts, max_bias=1.5)
+        except Exception:
+            pass
         
         # Date pattern detection for temporal queries
         import re
@@ -529,6 +550,12 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             
             else:
                 scores[thread_name] = 5.0
+        
+        # Apply self-attention focus bias — threads with ongoing focus get boosted
+        if focus_bias > 0:
+            for thread_name in scores:
+                if thread_name in ('identity', 'log', 'form'):
+                    scores[thread_name] = min(10.0, scores[thread_name] + focus_bias * 0.5)
         
         self._last_scores = scores
         return scores

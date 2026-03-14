@@ -1,0 +1,35 @@
+AI-OS Project Notes
+====================
+
+Architecture Decisions
+----------------------
+The system uses a subconscious loop pattern inspired by cognitive architectures.
+Memory is organized into threads (episodic) and modules (semantic/identity).
+Consolidation runs every 5 minutes, scoring and promoting temporary memories.
+
+Key Components:
+- Agent Service: Central orchestration for session lifecycle and message flow
+- Subconscious Orchestrator: Manages background loops (consolidation, scoring)
+- STATE Assembly: Builds the system prompt from threads + modules
+- Workspace: File management with summarization capabilities
+- Chat: Conversation persistence with auto-naming and summarization
+
+Design Principles:
+1. Memory should be scored and decay naturally over time
+2. Threads provide episodic context, modules provide semantic identity
+3. The STATE prompt is assembled fresh for each query using relevance scoring
+4. Summarization happens automatically at key thresholds
+5. All operations should be observable through the introspection API
+
+Performance Notes:
+- Ollama models run locally, typical inference 2-5 seconds
+- Consolidation loop is async, does not block chat responses
+- File summarization truncates to 4096 chars before sending to LLM
+- Conversation summaries use first 300 chars of each message
+
+Todo:
+- [ ] Implement memory decay with configurable half-life
+- [ ] Add cross-thread linking for related memories
+- [ ] Build evaluation dashboard in frontend
+- [x] Wire auto-summarization pipeline
+- [x] Fix conversation naming on session close

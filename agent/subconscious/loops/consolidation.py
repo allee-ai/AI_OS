@@ -49,6 +49,7 @@ class ConsolidationLoop(BackgroundLoop):
     def _consolidate(self) -> None:
         """Run consolidation - score facts and promote approved ones."""
         self._update_thread_summaries()
+        self._summarize_unsummarized_conversations()
         self._score_and_triage_pending()
         self._promote_approved_facts()
     
@@ -61,6 +62,18 @@ class ConsolidationLoop(BackgroundLoop):
             except Exception:
                 self._linking_core = None
         return self._linking_core
+
+    def _summarize_unsummarized_conversations(self) -> None:
+        """Batch-summarize conversations that lack a summary."""
+        try:
+            from workspace.summarizer import batch_summarize_conversations
+            count = batch_summarize_conversations(limit=5)
+            if count > 0:
+                import sys
+                print(f"[Consolidation] Summarized {count} conversations", file=sys.stderr)
+        except Exception as e:
+            import sys
+            print(f"[Consolidation] Convo summarization failed: {e}", file=sys.stderr)
 
     def _score_and_triage_pending(self) -> None:
         """Score pending facts using LinkingCore's scoring pipeline."""

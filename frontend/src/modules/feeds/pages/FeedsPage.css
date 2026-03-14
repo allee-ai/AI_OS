@@ -55,6 +55,59 @@
   overflow: hidden;
 }
 
+/* ── Category grouping ─────────────────────────────────────────── */
+.source-category {
+  display: flex;
+  flex-direction: column;
+}
+
+.category-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--bg);
+  border: none;
+  border-bottom: 1px solid var(--border);
+  cursor: pointer;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.85rem;
+  color: var(--text);
+  transition: background 0.15s ease;
+}
+
+.category-header:hover {
+  background: var(--surface);
+}
+
+.category-header.has-active {
+  color: var(--primary);
+}
+
+.category-icon {
+  font-size: 1.1rem;
+}
+
+.category-label {
+  flex: 1;
+}
+
+.category-count {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  font-weight: 400;
+}
+
+.category-arrow {
+  font-size: 0.65rem;
+  color: var(--text-muted);
+}
+
+.source-item.nested {
+  padding-left: 32px;
+}
+
 .source-item {
   display: flex;
   align-items: center;

@@ -942,3 +942,280 @@ def get_server_stats(since: str = None) -> Dict[str, Any]:
                 "by_status": {},
                 "top_paths": {}
             }
+
+
+# ============================================================================
+# Function Call Logging & @trace_function Decorator
+# ============================================================================
+
+import functools
+import time as _time
+import hashlib as _hashlib
+import traceback as _traceback
+
+
+def init_function_log_table(conn: sqlite3.Connection = None) -> None:
+    """Create table for function call traces."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS log_function_calls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            function_name TEXT NOT NULL,
+            module TEXT,
+            args_json TEXT,
+            result_summary TEXT,
+            duration_ms REAL,
+            success INTEGER DEFAULT 1,
+            error TEXT,
+            dedup_hash TEXT
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_fn_name ON log_function_calls(function_name)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_fn_ts ON log_function_calls(timestamp DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_fn_dedup ON log_function_calls(dedup_hash)")
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def log_function_call(
+    function_name: str,
+    module: str = None,
+    args_summary: Dict[str, Any] = None,
+    result_summary: str = None,
+    duration_ms: float = None,
+    success: bool = True,
+    error: str = None,
+    dedup_hours: float = 48.0,
+) -> Optional[int]:
+    """
+    Log a function call. Deduplicates identical calls within dedup_hours window.
+
+    Returns log ID or None if deduped away.
+    """
+    # Build dedup hash from function name + args
+    hash_input = function_name
+    if args_summary:
+        hash_input += json.dumps(args_summary, sort_keys=True, default=str)
+    dedup_hash = _hashlib.sha256(hash_input.encode()).hexdigest()[:16]
+
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_function_log_table(conn)
+
+        # Check for recent duplicate
+        if dedup_hours > 0:
+            cur.execute("""
+                SELECT id FROM log_function_calls
+                WHERE dedup_hash = ? AND timestamp > datetime('now', ?)
+                LIMIT 1
+            """, (dedup_hash, f"-{int(dedup_hours)} hours"))
+            if cur.fetchone():
+                return None  # Already logged recently
+
+        args_json = json.dumps(args_summary, default=str) if args_summary else None
+        cur.execute("""
+            INSERT INTO log_function_calls
+            (function_name, module, args_json, result_summary, duration_ms, success, error, dedup_hash)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (function_name, module, args_json, result_summary, duration_ms, 1 if success else 0, error, dedup_hash))
+        log_id = cur.lastrowid
+        conn.commit()
+    return log_id
+
+
+def get_function_calls(
+    function_name: str = None,
+    module: str = None,
+    limit: int = 100,
+    since: str = None,
+) -> List[Dict[str, Any]]:
+    """Query function call logs."""
+    # Ensure table exists (writable)
+    init_function_log_table()
+
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+
+        query = "SELECT * FROM log_function_calls WHERE 1=1"
+        params: list = []
+        if function_name:
+            query += " AND function_name = ?"
+            params.append(function_name)
+        if module:
+            query += " AND module = ?"
+            params.append(module)
+        if since:
+            query += " AND timestamp > ?"
+            params.append(since)
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+
+        try:
+            cur.execute(query, params)
+            results = []
+            for row in cur.fetchall():
+                r = dict(row)
+                if r.get("args_json"):
+                    try:
+                        r["args"] = json.loads(r["args_json"])
+                    except Exception:
+                        r["args"] = {}
+                else:
+                    r["args"] = {}
+                del r["args_json"]
+                results.append(r)
+            return results
+        except sqlite3.OperationalError:
+            return []
+
+
+def cleanup_old_function_logs(older_than_days: int = 30) -> int:
+    """Remove function call logs older than N days."""
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_function_log_table(conn)
+        cur.execute("""
+            DELETE FROM log_function_calls
+            WHERE timestamp < datetime('now', ?)
+        """, (f"-{older_than_days} days",))
+        deleted = cur.rowcount
+        conn.commit()
+    return deleted
+
+
+def trace_function(
+    module: str = None,
+    dedup_hours: float = 48.0,
+    log_args: bool = True,
+    log_result: bool = True,
+):
+    """
+    Decorator that logs function calls with timing, args, and result summary.
+    48-hour dedup by default — identical calls won't spam the log.
+
+    Usage:
+        @trace_function(module="linking_core")
+        def activate_concepts(text: str) -> dict:
+            ...
+
+        @trace_function(module="identity", dedup_hours=0)  # no dedup
+        def get_profile(name: str) -> dict:
+            ...
+    """
+    def decorator(fn):
+        @functools.wraps(fn)
+        def wrapper(*args, **kwargs):
+            fn_name = fn.__qualname__
+            mod = module or fn.__module__
+
+            # Capture args summary (limit size)
+            args_summary = None
+            if log_args:
+                try:
+                    sig_args = {}
+                    if args:
+                        sig_args["positional"] = [repr(a)[:100] for a in args[:5]]
+                    if kwargs:
+                        sig_args["keyword"] = {k: repr(v)[:100] for k, v in list(kwargs.items())[:5]}
+                    args_summary = sig_args if sig_args else None
+                except Exception:
+                    pass
+
+            start = _time.time()
+            try:
+                result = fn(*args, **kwargs)
+                elapsed = (_time.time() - start) * 1000
+
+                result_str = None
+                if log_result:
+                    try:
+                        result_str = repr(result)[:200]
+                    except Exception:
+                        result_str = "<unrepresentable>"
+
+                log_function_call(
+                    function_name=fn_name,
+                    module=mod,
+                    args_summary=args_summary,
+                    result_summary=result_str,
+                    duration_ms=elapsed,
+                    success=True,
+                    dedup_hours=dedup_hours,
+                )
+                return result
+            except Exception as exc:
+                elapsed = (_time.time() - start) * 1000
+                log_function_call(
+                    function_name=fn_name,
+                    module=mod,
+                    args_summary=args_summary,
+                    result_summary=None,
+                    duration_ms=elapsed,
+                    success=False,
+                    error=f"{type(exc).__name__}: {exc}",
+                    dedup_hours=dedup_hours,
+                )
+                raise
+
+        @functools.wraps(fn)
+        async def async_wrapper(*args, **kwargs):
+            fn_name = fn.__qualname__
+            mod = module or fn.__module__
+
+            args_summary = None
+            if log_args:
+                try:
+                    sig_args = {}
+                    if args:
+                        sig_args["positional"] = [repr(a)[:100] for a in args[:5]]
+                    if kwargs:
+                        sig_args["keyword"] = {k: repr(v)[:100] for k, v in list(kwargs.items())[:5]}
+                    args_summary = sig_args if sig_args else None
+                except Exception:
+                    pass
+
+            start = _time.time()
+            try:
+                result = await fn(*args, **kwargs)
+                elapsed = (_time.time() - start) * 1000
+
+                result_str = None
+                if log_result:
+                    try:
+                        result_str = repr(result)[:200]
+                    except Exception:
+                        result_str = "<unrepresentable>"
+
+                log_function_call(
+                    function_name=fn_name,
+                    module=mod,
+                    args_summary=args_summary,
+                    result_summary=result_str,
+                    duration_ms=elapsed,
+                    success=True,
+                    dedup_hours=dedup_hours,
+                )
+                return result
+            except Exception as exc:
+                elapsed = (_time.time() - start) * 1000
+                log_function_call(
+                    function_name=fn_name,
+                    module=mod,
+                    args_summary=args_summary,
+                    result_summary=None,
+                    duration_ms=elapsed,
+                    success=False,
+                    error=f"{type(exc).__name__}: {exc}",
+                    dedup_hours=dedup_hours,
+                )
+                raise
+
+        import asyncio
+        if asyncio.iscoroutinefunction(fn):
+            return async_wrapper
+        return wrapper
+    return decorator

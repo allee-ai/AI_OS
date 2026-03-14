@@ -191,12 +191,18 @@ def add_turn(
     return turn_index
 
 
-def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
+def get_conversation(session_id: str, limit: Optional[int] = None, offset: Optional[int] = None) -> Optional[Dict[str, Any]]:
     """
-    Get a conversation with all its turns.
+    Get a conversation with its turns (optionally paginated).
+    
+    Args:
+        session_id: The conversation session ID
+        limit: Max turns to return. None = all turns.
+        offset: Number of turns to skip from the start. None = no skip.
+              When limit is set without offset, returns the *last* `limit` turns.
     
     Returns:
-        Dict with session_id, name, started, turns, state_snapshot, etc.
+        Dict with session_id, name, started, turns, total_turns, state_snapshot, etc.
         None if not found
     """
     with closing(get_connection(readonly=True)) as conn:
@@ -216,15 +222,31 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
         state_snapshot = json.loads(row[9]) if row[9] else None
         summary = row[10]
         source = row[11] or "aios"
+        total_turns = row[8] or 0
         
-        # Get turns
-        cur.execute("""
-            SELECT turn_index, timestamp, user_message, assistant_message, feed_type, context_level, metadata_json
-            FROM convo_turns WHERE convo_id = ? ORDER BY turn_index
-        """, (convo_id,))
+        # Get turns — paginated or all
+        if limit is not None and offset is None:
+            # Return the last N turns (most recent)
+            cur.execute("""
+                SELECT turn_index, timestamp, user_message, assistant_message, feed_type, context_level, metadata_json
+                FROM convo_turns WHERE convo_id = ? ORDER BY turn_index DESC LIMIT ?
+            """, (convo_id, limit))
+            raw_rows = list(reversed(cur.fetchall()))
+        elif limit is not None and offset is not None:
+            cur.execute("""
+                SELECT turn_index, timestamp, user_message, assistant_message, feed_type, context_level, metadata_json
+                FROM convo_turns WHERE convo_id = ? ORDER BY turn_index LIMIT ? OFFSET ?
+            """, (convo_id, limit, offset))
+            raw_rows = cur.fetchall()
+        else:
+            cur.execute("""
+                SELECT turn_index, timestamp, user_message, assistant_message, feed_type, context_level, metadata_json
+                FROM convo_turns WHERE convo_id = ? ORDER BY turn_index
+            """, (convo_id,))
+            raw_rows = cur.fetchall()
         
         turns = []
-        for turn_row in cur.fetchall():
+        for turn_row in raw_rows:
             turn = {
                 "timestamp": turn_row[1],
                 "user": turn_row[2],
@@ -245,6 +267,7 @@ def get_conversation(session_id: str) -> Optional[Dict[str, Any]]:
             "archived": bool(row[6]),
             "weight": row[7],
             "turn_count": row[8],
+            "total_turns": total_turns,
             "turns": turns,
             "state_snapshot": state_snapshot,
             "summary": summary,
@@ -270,7 +293,7 @@ def list_conversations(
         cur = conn.cursor()
         
         query = """
-            SELECT session_id, name, started, last_updated, archived, weight, turn_count, source
+            SELECT session_id, name, started, last_updated, archived, weight, turn_count, source, summary
             FROM convos
             WHERE archived = ?
         """
@@ -316,6 +339,7 @@ def list_conversations(
                 "preview": preview,
                 "last_message": last_message,
                 "source": row[7] or "aios",
+                "summary": row[8],
             })
     return conversations
 

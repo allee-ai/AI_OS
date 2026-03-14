@@ -804,3 +804,51 @@ async def configure_integration(feed_name: str, body: Dict[str, Any]):
         pass
 
     return {"status": "ok", "polling": get_polling_status()}
+
+
+# ─────────────────────────────────────────────────────────────
+# Calendar
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/calendar/sources")
+async def list_calendars():
+    """List registered calendar sources."""
+    from .sources.calendar import get_calendars
+    return get_calendars()
+
+
+class CalendarCreateBody(BaseModel):
+    name: str
+    ical_url: str
+    lookahead_minutes: int = 30
+    poll_interval: int = 300
+
+
+@router.post("/calendar/sources")
+async def create_calendar(body: CalendarCreateBody):
+    """Register a new calendar source via iCal URL."""
+    from .sources.calendar import add_calendar
+    return add_calendar(
+        name=body.name,
+        ical_url=body.ical_url,
+        lookahead_minutes=body.lookahead_minutes,
+        poll_interval=body.poll_interval,
+    )
+
+
+@router.delete("/calendar/sources/{name}")
+async def delete_calendar(name: str):
+    """Remove a calendar source."""
+    from .sources.calendar import remove_calendar
+    ok = remove_calendar(name)
+    if not ok:
+        raise HTTPException(status_code=404, detail=f"Calendar '{name}' not found")
+    return {"status": "deleted", "name": name}
+
+
+@router.post("/calendar/poll")
+async def poll_calendars_now():
+    """Trigger an immediate poll of all enabled calendars."""
+    from .sources.calendar import poll_calendars
+    count = poll_calendars()
+    return {"status": "polled", "events_emitted": count}

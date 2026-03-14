@@ -1,69 +1,67 @@
 # AI OS Roadmap
 
-> **Status:** Early release. Core works, edges are rough. Looking for collaborators.  
-> **Author's Note:** Built solo since April 2025. The architecture is solid, but this needs to be a community effort to reach its potential.
+> **Release:** Alpha — core architecture stable, module edges in progress.  
+> **Contributors welcome.** See [CONTRIBUTING.md](../CONTRIBUTING.md).
 
 ---
 
-## Description
+## Current State
 
-### The Vision
+| Layer | Status | Notes |
+|-------|--------|-------|
+| **Core** | ✅ Done | 6 threads, HEA scoring, SQLite backend, stateless agent, tool calling |
+| **CLI** | ✅ Done | ~60 commands, full feature parity, headless/SSH |
+| **UI** | 🔧 WIP | React app — chat, tool call rendering, per-thread dashboards, goals/notifications/improvements panels |
+| **Finetune** | 🔧 WIP | Export pipeline works. Per-thread train.py. MLX config. Training gen loop. End-to-end cycle untested |
+| **Workspace** | 🔧 WIP | FTS5, summaries, file editing, pinning, notes. Connected to STATE via context assembly |
+| **Integrations** | 🔧 WIP | Feed framework + contacts import done. Adapters need real polling code |
+| **Concept Graph** | 🔧 WIP | Linking core live. Backfill loop built. Co-occurrence/consolidation need volume |
 
-AI OS isn't a chatbot. It's a **Cognitive Operating System** — an open-source framework that gives any LLM a persistent identity, hierarchical memory, and the ability to *grow* through experience rather than retraining.
+## Definition of Done
 
-**The problem:** If you want memory, identity, context management, and background processing for a local LLM, you're currently stitching together 5+ libraries and writing glue code. There's no integrated package.
-
-**What AI OS provides:** One system with all the OS extension pieces — memory (short/long term), identity persistence, attention budgeting, fact extraction, background consolidation — already wired together.
-
-**The methodology:** Make cognition visible. Every step the OS takes — scoring threads, assembling STATE, running tools, extracting facts, consolidating memory — is structured, inspectable, and addressable. The LLM is a replaceable text function. The OS is the intelligence. If you pulled the model out, the memory graph still holds, the tools still execute, the loops still schedule, the identity is still stored. The test for "ready": could a new model be dropped in and learn everything through STATE alone?
-
-### Current State
-
-| Layer | Status | What's Working |
-|-------|--------|----------------|
-| **Core** | ✅ | Threads (6), HEA, SQLite backend, stateless agent, text-native + schema tool calling |
-| **CLI** | ✅ | Full feature parity — ~60 commands across all modules, headless/SSH support |
-| **UI** | [WIP] | React app, chat, tool call/result rendering, thread visualization |
-| **Finetune** | [WIP] | Export pipeline works (all 6 threads → JSONL). Training script exists. Adapter loading missing. |
-| **Workspace** | [WIP] | Virtual filesystem, FTS, summaries. In STATE via FTS but passive — not deeply wired. |
-| **Integrations** | [~] | Feeds system built, contacts import, needs OAuth + polling daemon |
-
-### The Goal
-
-The base program needs to be complete enough that a model deeply finetuned on the architecture can grow *with* the architecture. Once the program could almost live entirely without an LLM — memory organized, identity stored, loops scheduling, tools executing, training data exporting — it's ready. The structure guides its own improvement.
-
-**What "ready" means:**
-- [ ] Export all threads → JSONL → train → load adapters → verify STATE adherence
-- [ ] Workspace files visible in STATE during every interaction (not just FTS hits)
-- [ ] Tool execution results visible in STATE (model sees what happened)
+### Product readiness
+- [ ] Export all threads → JSONL → train → load adapter → verify STATE adherence
 - [ ] One full self-training cycle completed end-to-end
+- [ ] API authentication (currently zero auth)
+- [ ] Terminal command allowlist (currently unrestricted shell)
+- [ ] Onboarding wizard — first-run setup (name agent, set profile, pick model)
+
+### Research milestones
+- [ ] Finetuned model maintains STATE format over 50+ turns (longitudinal eval)
+- [ ] Finetuned model doesn't lose general capability (catastrophic forgetting baseline)
+- [x] Workspace files + tool results visible in STATE during every interaction
+- [ ] Retrieval precision measured — right fact surfaces at the right time
 - [ ] New model dropped in can learn everything from STATE alone
+- [ ] Concept graph populated from imported conversations (backfill loop built, needs volume)
 
-### Big Milestones
+## Milestones
 
-| Phase | Goal | Status |
-|-------|------|--------|
-| **1. Memory** | Facts extracted, promoted, consolidated in background loops | ✅ Done |
-| **2. Tool Calling** | Agent executes tools, results logged, safety-gated | ✅ Done |
-| **3. Identity/Philosophy** | Persistent self-model, values, ethics stored as facts | ✅ Done (schema + introspection) |
-| **4. CLI Parity** | Every feature works without a browser | ✅ Done |
-| **5. Finetune Pipeline** | Export → train → load finetuned model | 🔧 Export + train done, load missing |
-| **6. Workspace → Cognition** | Agent reads/reasons about workspace in STATE | 🔧 FTS in STATE, not deeply wired |
-| **7. Tool → STATE** | Tool results feed back into visible context | ❌ Not connected |
-| **8. Self-Training Loop** | OS exports its own training data, trains, loads result | 🔧 Pieces exist, end-to-end untested |
-| **9. Reflex** | Pattern auto-promotion, visual trigger builder | Foundation (schema + API) |
-| **10. Beyond Chat** | Background presence via Feeds polling | Foundation (adapters exist) |
+| # | Goal | Status |
+|---|------|--------|
+| 1 | **Memory** — Facts extracted, promoted, consolidated | ✅ Done |
+| 2 | **Tool Calling** — Execute, log, safety-gate | ✅ Done |
+| 3 | **Identity / Philosophy** — Persistent self-model + values | ✅ Done |
+| 4 | **CLI Parity** — Every feature works without a browser | ✅ Done |
+| 5 | **Eval Harness** — Benchmark Nola against raw models | ✅ Done |
+| 6 | **Context-Aware Loops** — Editable prompts, STATE injection | ✅ Done |
+| 7 | **Concept Graph Backfill** — Extract concepts from imported conversations | ✅ Done |
+| 8 | **Self-Improvement** — Goal loop, code review loop, notifications | ✅ Done |
+| 9 | **Finetune Pipeline** — Export → train → load | 🔧 Exists, untested E2E |
+| 10 | **Tool → STATE** — Tool results folded into form thread context | 🔧 Traces exist, extraction partial |
+| 11 | **Workspace → Cognition** — Agent reasons about files in STATE | 🔧 FTS in STATE, editing, pinning |
+| 12 | **Self-Training Loop** — Export → train → load → verify | 🔧 Pieces exist |
+| 13 | **Reflex** — Auto-promotion, visual trigger builder | 🔧 Schema + API done |
+| 14 | **Beyond Chat** — Background presence via Feeds | 🔧 Framework exists |
 
 ---
 
 ## How to Contribute
 
-Each module below is self-contained. Pick one, own it, ship it.
+Each module below is self-contained. Pick one, read the source README, ship it.
 
 1. Find a module section below
-2. Check the tasks
-3. Create a GitHub issue or grab an existing one
-4. Fork, branch, PR
+2. Read the linked source README for full architecture context
+3. Fork → branch → PR (see [CONTRIBUTING.md](../CONTRIBUTING.md))
 
 ---
 
@@ -79,7 +77,7 @@ _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 
 ### Ready for contributors
 - [ ] **Family/contacts UI** — Add/edit family members from dashboard
-- [x] **Trust level indicators** — Visual badges for trust levels in UI
+- [ ] **Trust level indicators** — Visual badge components for trust levels (backend field exists, UI shows text only)
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
 - [x] **Import from contacts** — Pull from vCard files (Google, iCloud, Outlook)
@@ -96,16 +94,15 @@ _Source: [agent/threads/identity/README.md](agent/threads/identity/README.md)_
 <!-- INCLUDE:philosophy:ROADMAP -->
 _Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md)_
 
-### Ready for contributors
-- [ ] **Ethics module** — `detect_harm()`, `preserve_dignity()`, `respect_boundary()`
-- [ ] **Awareness module** — Situational, emotional, self-awareness functions
-- [ ] **Curiosity module** — `ask_better()`, `follow_threads()`, `spark_wonder()`
-- [ ] **Resolve module** — Purpose alignment, goal persistence
-- [ ] **Value conflicts UI** — When two values clash, show reasoning
-
-### Starter tasks
-- [ ] Pre-populate common ethical bounds (harm prevention, privacy, consent)
+### Constraint system
+- [ ] **Boundary enforcement** — Active constraints that gate agent behavior (harm prevention, privacy, consent). Currently philosophy only introspects — it doesn't block
+- [ ] **Value conflict resolution** — When two stored values clash, surface the conflict and reasoning in STATE (e.g., "be helpful" vs "protect privacy")
+- [ ] **Constraint seeding** — Pre-populate common ethical bounds on first run so the agent has a baseline
 - [x] Philosophy introspection shows active constraints in STATE
+
+### Research
+- [ ] **Behavioral steering via philosophy** — Can modifying stored philosophy facts measurably change agent behavior? Requires before/after eval on controlled prompts
+- [ ] **Goal persistence** — Does the agent maintain purpose alignment across sessions? Measure drift over 20+ conversations
 <!-- /INCLUDE:philosophy:ROADMAP -->
 
 ---
@@ -115,15 +112,14 @@ _Source: [agent/threads/philosophy/README.md](agent/threads/philosophy/README.md
 <!-- INCLUDE:log:ROADMAP -->
 _Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
 
-### Ready for contributors
+### Event system
+- [ ] **Event search** — FTS5 across event history (log has the data, no search index yet)
+- [ ] **Session analytics** — Per-session metrics: duration, message count, tool calls, facts extracted
+- [ ] **Export** — JSON/CSV export of event history for external analysis
 - [ ] **Timeline visualization** — Interactive event timeline in UI
-- [ ] **Session analytics** — Duration, message count, topic clusters
-- [ ] **Event search** — Full-text search across event history
-- [ ] **Export/import** — JSON/CSV export of event history
 
 ### Starter tasks
-- [ ] Add event type icons in UI
-- [ ] Show session summary on conversation start
+- [ ] Session summary on conversation start ("last time we talked about...")
 <!-- /INCLUDE:log:ROADMAP -->
 
 ---
@@ -133,11 +129,11 @@ _Source: [agent/threads/log/README.md](agent/threads/log/README.md)_
 <!-- INCLUDE:form:ROADMAP -->
 _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 
-### Ready for contributors
-- [ ] **Tool editor UI** — Visual tool builder for creating/editing tools
-- [ ] **Tool marketplace** — Shareable tool definitions
-- [ ] **Action chaining** — Multi-step tool workflows
-- [ ] **Usage analytics** — Track tool success/failure rates
+### Tool → STATE integration
+- [ ] **Tool result extraction** — Run MemoryLoop-style fact extraction on tool outputs (currently stored as truncated strings, not parsed)
+- [ ] **Tool→concept linking** — Feed tool results into `record_concept_cooccurrence()` so tool usage builds the knowledge graph
+- [ ] **Action chaining** — Multi-step tool workflows where step N input depends on step N-1 output
+- [ ] **Terminal command allowlist** — Replace unrestricted `shell=True` with explicit command allowlist (security critical)
 
 ### Done
 - [x] **Text-native tool calling** — `:::execute:::` block protocol parsed by scanner.py
@@ -147,11 +143,11 @@ _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 - [x] **Tool loop in agent** — `_process_tool_calls()` with max 5 rounds, auto-re-call after execution
 - [x] **Frontend rendering** — `:::execute:::` and `:::result:::` blocks render as styled cards in chat
 - [x] **WebSocket tool events** — Real-time `tool_executing` / `tool_complete` messages
+- [x] **Hebbian tool traces** — Tool success/failure adjusts weight via learning rule
 
 ### Starter tasks
-- [ ] Add tool search/filter in UI
-- [ ] Show tool usage history
-- [ ] Implement tool favorites
+- [ ] Tool search/filter in dashboard UI
+- [ ] Surface tool_traces weights in the Form introspect output
 <!-- /INCLUDE:form:ROADMAP -->
 
 ---
@@ -161,17 +157,19 @@ _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 <!-- INCLUDE:reflex:ROADMAP -->
 _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 
-### Ready for contributors
-- [ ] **10x auto-promotion** — Patterns repeating 10+ times auto-promote to reflex
-- [ ] **Reflex editor** — Visual pattern builder in UI
-- [x] **Conditional reflexes** — Feed event triggers with conditions
-- [ ] **Reflex analytics** — Usage frequency, match rates
+### Done
+- [x] **Conditional reflexes** — Feed event triggers with nested conditions (all/any/not, regex, concept_match)
+- [x] **Enable/disable toggle** — Per-trigger activation control
+- [x] **Cron scheduling** — Time-based trigger evaluation
+
+### Pattern mining (auto-promotion)
+- [ ] **Repeated intent detection** — Scan conversation history + log_events for recurring user action patterns. Hard problem: "similar enough" requires intent-level grouping, not exact string match
+- [ ] **Candidate trigger generation** — Translate detected pattern into a trigger definition (feed, condition, tool, params)
+- [ ] **Promotion confirmation UX** — "I noticed you check weather every morning — automate this?" Requires a notification/suggestion flow that doesn't exist
 
 ### Starter tasks
-- [ ] Add reflex test button in UI
-- [ ] Show reflex match history
-- [x] Implement reflex enable/disable toggle
-- [ ] Feed trigger builder UI
+- [ ] Reflex match history — show which triggers fired, when, and what they did
+- [ ] Visual trigger builder — form-based UI for creating conditional triggers
 <!-- /INCLUDE:reflex:ROADMAP -->
 
 ---
@@ -181,25 +179,24 @@ _Source: [agent/threads/reflex/README.md](agent/threads/reflex/README.md)_
 <!-- INCLUDE:linking_core:ROADMAP -->
 _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/README.md)_
 
-### Ready for contributors
-- [ ] **Universal linking** — `create_link(row, row)` for any database row:
-  - Link docs to profiles, facts to facts, convos to concepts
-  - Works like tags but with weighted relationships
-  - Implicit linking: agent auto-suggests links during conversation
-- [ ] **Graph density improvements** — Current visual is too dense:
-  - Smaller node size, dynamic scaling based on activation
-  - Hover for full info (dot notation, source, activation score)
-  - Cluster similar concepts, expand on click
-  - Zoom levels that hide/show detail appropriately
-- [ ] **Graph visualization** — Interactive concept map in UI
-- [ ] **Decay tuning** — Configurable decay rates per category
-- [ ] **Activation history** — Track what surfaced over time
-- [ ] **Concept merging** — Deduplicate similar concepts
+### Graph quality
+- [ ] **Concept merging** — Deduplicate similar concepts ("ml" ↔ "machine_learning"). Requires embedding similarity between concept names + merge semantics (union neighborhoods? average strengths?)
+- [ ] **Phrase extraction** — Current regex splits "ice cream" into two concepts. Needs n-gram detection or lightweight NLP for multi-word concepts
+- [ ] **Edge pruning** — O(n²) co-occurrence linking creates hairball graphs. Add community detection or modularity-based pruning to keep the graph meaningful
+- [ ] **Graph quality metrics** — Density, connectivity, component count, staleness distribution. Currently only SHORT vs LONG counts are exposed
+
+### Graph features
+- [ ] **Universal linking** — `create_link(row, row)` for any database row (docs↔profiles, facts↔concepts, convos↔concepts)
+- [ ] **Graph visualization improvements** — Dynamic node scaling by activation, cluster similar concepts, semantic zoom
+- [ ] **Decay tuning** — Configurable decay rates per category (currently global 0.95)
+
+### Research
+- [ ] **Retrieval precision/recall** — How often does `spread_activate()` surface the right concept? How much noise? No eval exists for retrieval quality
+- [ ] **Activation history** — Track what surfaced over time to measure whether the graph is actually helping the model reason better
 
 ### Starter tasks
-- [ ] Show top activated concepts in sidebar
-- [ ] Add concept search
-- [ ] Node info panel on hover/click
+- [ ] Top activated concepts in sidebar
+- [ ] Concept search endpoint + UI
 <!-- /INCLUDE:linking_core:ROADMAP -->
 
 ---
@@ -209,24 +206,33 @@ _Source: [agent/threads/linking_core/README.md](agent/threads/linking_core/READM
 <!-- INCLUDE:subconscious:ROADMAP -->
 _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 
-### Ready for contributors
-- [x] **Loop Editor Dashboard** — Visual editor for background loops:
-  - View running loops with status indicators
-  - Edit loop parameters (interval, enabled/disabled)
-  - Live logs per loop
-- [ ] **Implicit COT Loops** — Chain-of-thought background reasoning:
-  - Set max iterations per loop
-  - Configure max tokens per iteration
-  - Cutoff conditions (confidence threshold, diminishing returns)
-- [x] **Context compression** — Token budgeting per thread via _budget_fill()
-- [ ] **Priority queue** — Urgent facts surface first
-- [ ] **Dream mode** — Background processing during idle
-- [ ] **Attention visualization** — Show what's in context
+### Done
+- [x] **Loop Editor Dashboard** — Visual editor with status indicators, interval editing, live logs
+- [x] **Context compression** — Token budgeting per thread via `_budget_fill()`
+- [x] **Loop status indicators + configurable intervals**
+- [x] **CustomLoop multi-step COT** — Iterative LLM calls with previous output as context (up to 20 iterations)
+- [x] **Context-aware loops** — Optional STATE injection into loop prompts
+- [x] **Editable prompts** — Per-stage prompt override for every loop
+- [x] **Self-improvement loop** — Scoped code review with human approval gate
+- [x] **Goal loop** — Emergent goals from recurring concepts + philosophy values
+- [x] **Concept backfill** — ConvoConceptLoop processes imported conversations into graph
+- [x] **Training data generator** — Synthetic example generation across 8 modules
+- [x] **Notification system** — Agent alert/remind/confirm with DB-backed tracking
+- [x] **Goals/Notifications/Improvements panels** — Frontend visibility for all loop outputs
+
+### Loop intelligence
+- [ ] **COT convergence detection** — CustomLoop runs N iterations blindly. Add quality signal between iterations: embedding similarity to target, structured output validation, or LLM-as-judge step. Stop when confident, not when counter expires
+- [ ] **Loop-to-loop communication** — ThoughtLoop insights should trigger MemoryLoop. Currently all loops run independently with no cross-loop data flow
+- [ ] **Thought actionability** — ThoughtLoop writes to `thought_log` but nothing reads it. High-priority thoughts should surface in STATE or trigger reflexes
+- [ ] **Context pressure testing** — What happens when all 6 threads are active, workspace has 100 files, and conversation is 40 messages deep? Budget overflow is the real failure mode
+
+### Research
+- [ ] **Self-evaluation within iterations** — Can a loop determine if iteration 3 was better than iteration 2? Requires an internal quality signal that doesn't exist yet
+- [ ] **Idle-time background reasoning** — Agent processes accumulated context during quiet periods ("dream mode"). Requires: idle detection, priority queue for what to process, and quality measurement of outputs
 
 ### Starter tasks
-- [x] Add loop status indicators in UI
-- [x] Configurable loop intervals
 - [ ] Loop execution history view
+- [ ] Attention visualization — show what's currently in STATE and why
 <!-- /INCLUDE:subconscious:ROADMAP -->
 
 ---
@@ -236,15 +242,14 @@ _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 <!-- INCLUDE:temp_memory:ROADMAP -->
 _Source: [agent/subconscious/temp_memory/README.md](agent/subconscious/temp_memory/README.md)_
 
-### Ready for contributors
-- [ ] **Batch review UI** — Approve/reject multiple facts
-- [ ] **Auto-categorization** — Suggest hier_key from text
-- [ ] **Duplicate detection** — Flag similar existing facts
-- [ ] **Confidence tuning** — Adjust thresholds per category
+### Extraction quality
+- [ ] **Duplicate detection** — Flag facts that are semantically similar to existing ones before promotion (embedding similarity check)
+- [ ] **Auto-categorization** — Suggest `hier_key` from text instead of requiring manual assignment
+- [ ] **Extraction accuracy eval** — What % of extracted facts are actually correct? What % of important facts get missed? No ground truth benchmark exists
+- [ ] **Batch review UI** — Approve/reject multiple pending facts at once
 
 ### Starter tasks
-- [ ] Show fact count by status in UI
-- [ ] Add fact preview on hover
+- [ ] Fact count by status in dashboard (pending/approved/promoted)
 <!-- /INCLUDE:temp_memory:ROADMAP -->
 
 ---
@@ -279,10 +284,10 @@ _Source: [chat/README.md](chat/README.md)_
 _Source: [Feeds/README.md](Feeds/README.md)_
 
 ### Ready for contributors
-- [x] **Gmail adapter** — OAuth2 flow, draft creation
+- [ ] **Gmail adapter** — OAuth2 config + event types exist. Needs actual polling, send, and draft creation
 - [ ] **Slack adapter** — Bot token auth, message polling
 - [ ] **SMS adapter** — Twilio integration
-- [x] **Discord adapter** — Bot token, channel watching
+- [ ] **Discord adapter** — Event types + OAuth config exist. Needs bot connection and channel watching
 
 ### Starter tasks
 - [x] Create gmail module from template
@@ -319,21 +324,25 @@ _Source: [workspace/README.md](workspace/README.md)_
 <!-- INCLUDE:finetune:ROADMAP -->
 _Source: [finetune/README.md](finetune/README.md)_
 
-### What works
-- [x] **Export pipeline** — All 6 threads export to JSONL (identity, philosophy, log, form, reflex, linking_core)
-- [x] **Training script** — `train_mac.sh` with MLX LoRA on Apple Silicon (venv, split, train)
-- [x] **Config** — `mlx_config.yaml` (4-bit quantization, LoRA rank 8, Qwen2.5-1.5B)
-- [x] **API endpoints** — `/export`, `/export/stats`, `/export/{thread}`, `/start`, `/config`, `/data`
+### Pipeline completion
+- [ ] **Training orchestrator** — Chain export → train → load in a single `POST /finetune/run`:
+  - Status tracking with progress events via WebSocket
+  - Exit code capture from `train_mac.sh` (currently fire-and-forget)
+  - Automatic combined JSONL generation before training starts
+- [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts:
+  - STATE format adherence score (does the model still produce valid STATE blocks?)
+  - Identity consistency (does it still know who it is after 50 turns?)
+  - Regression detection (did general capability degrade?)
+- [ ] **Convergence monitoring** — Surface validation loss during training, stop early on plateau
 
-### Remaining to close the loop
-- [ ] **Adapter loading** — Endpoint to load trained adapters into inference
-- [ ] **End-to-end test** — Run export → train → load → verify STATE adherence
-- [ ] **Validation suite** — Test finetuned model vs base on STATE obedience
-- [ ] **Synthetic data generator** — Auto-generate training examples from thread schemas
+### Research
+- [ ] **Self-improvement measurement** — Does a model trained on its own STATE output actually improve, or does it collapse? Requires controlled A/B eval across multiple training cycles
+- [ ] **Catastrophic forgetting baseline** — Benchmark general capability before and after LoRA. Quantify the tradeoff between STATE adherence and general fluency
+- [ ] **Synthetic data quality** — TrainingGenLoop generates examples every 2h. Are they helping or injecting noise? Eval synthetic vs human-curated training data
 
 ### Starter tasks
-- [ ] Run first full training cycle and document results
-- [ ] Add adapter inference endpoint
+- [ ] Add 10 STATE obedience examples to gold_examples.py
+- [ ] Document the full export → train → load workflow with expected outputs
 <!-- /INCLUDE:finetune:ROADMAP -->
 
 ---
@@ -343,21 +352,20 @@ _Source: [finetune/README.md](finetune/README.md)_
 <!-- INCLUDE:eval:ROADMAP -->
 _Source: [eval/README.md](eval/README.md)_
 
-### Ready for contributors
-- [ ] **Battle Arena UI** — Three-panel layout:
-  - **Left**: STATE preview + prompt input
-  - **Center**: Judge settings (model, criteria, scoring weights)
-  - **Right**: Cloud opponent config (edit system prompt, edit input, select model)
-- [ ] **Auto-battle mode** — Watch battles run automatically, live-updating results
-- [ ] **Battle orchestration** — Run battles end-to-end
-- [ ] **Identity evaluator** — Prompt injection tests
-- [ ] **Memory evaluator** — Multi-session recall
-- [ ] **Leaderboard UI** — Visual comparison charts
+### Evaluation harness
+- [ ] **Battle Arena UI** — Three-panel layout (STATE preview, judge settings, opponent config)
+- [ ] **Auto-battle mode** — Automated battle runs with live-updating results
+- [ ] **Leaderboard** — Visual comparison of model performance over time
+
+### Longitudinal benchmarks
+- [ ] **STATE adherence drift** — Does a finetuned model's STATE format degrade over 50+ turns? Over multiple sessions? No longitudinal eval exists
+- [ ] **Identity persistence** — Prompt injection resistance: does the model hold its identity under adversarial prompts? Multi-session recall: does it remember facts from session N in session N+5?
+- [ ] **Memory precision/recall** — After 100 conversations, does the right fact surface at the right time? False positive rate? This measures the entire pipeline (extraction → storage → retrieval → STATE assembly)
+- [ ] **Context window pressure** — Performance degradation as all 6 threads compete for budget in a long conversation with active workspace and tool history
 
 ### Starter tasks
-- [ ] Create identity test cases
-- [ ] Add battle result visualization
-- [ ] Judge model selector dropdown
+- [ ] Create 10 identity persistence test cases (facts that should survive across sessions)
+- [ ] Before/after benchmark script for finetuning runs
 <!-- /INCLUDE:eval:ROADMAP -->
 
 ---
@@ -367,15 +375,15 @@ _Source: [eval/README.md](eval/README.md)_
 <!-- INCLUDE:services:ROADMAP -->
 _Source: [agent/services/README.md](agent/services/README.md)_
 
-### Ready for contributors
-- [ ] **Multi-agent support** — Multiple agent personas
-- [ ] **Streaming responses** — Token-by-token output
-- [ ] **Context window optimization** — Smart truncation
-- [ ] **Response caching** — Cache common responses
+### Runtime
+- [ ] **API authentication** — Optional bearer token auth for all endpoints (currently zero auth — security critical)
+- [ ] **Streaming responses** — Token-by-token output via SSE/WebSocket
+- [ ] **Context window monitoring** — Track actual token usage per request, alert on budget overflow
+- [ ] **Multi-session goal tracking** — Long-horizon tasks that span multiple conversations: decompose, checkpoint, resume
 
 ### Starter tasks
-- [ ] Add response time metrics
-- [ ] Show context token count in UI
+- [ ] Response time + token count metrics per request
+- [ ] Context budget usage display in UI
 <!-- /INCLUDE:services:ROADMAP -->
 
 ---
@@ -385,152 +393,22 @@ _Source: [agent/services/README.md](agent/services/README.md)_
 <!-- INCLUDE:core:ROADMAP -->
 _Source: [agent/core/README.md](agent/core/README.md)_
 
-### Ready for contributors
-- [ ] **Config validation** — Validate required settings on startup
-- [ ] **Multi-environment support** — Dev/staging/prod config profiles
+### Infrastructure
+- [ ] **Config validation** — Validate required settings on startup, fail fast with clear errors
 - [ ] **Secret rotation** — Automatic key rotation for long-running instances
+- [ ] **Crypto requirement** — Remove base64 fallback in secrets.py — require cryptography package (security: base64 is not encryption)
 
 ### Starter tasks
-- [ ] Add config documentation generator
-- [ ] Add secret audit logging
+- [ ] Secret audit logging (who accessed what, when)
 <!-- /INCLUDE:core:ROADMAP -->
 
 ---
 
-## Program-Wide Features
+## Future
 
-> _These features span the entire application and don't belong to a single module._
+> _Ideas that are real but not yet scoped into module roadmaps._
 
-### Onboarding & First Run
-- [ ] **Onboarding wizard** — Guided setup on first launch:
-  - Name your agent
-  - Set your name and basic profile
-  - Configure model preferences
-  - Quick identity import (optional)
-
-### Context-Aware Mini Chat
-- [ ] **Module helper chat** — Floating mini chat window:
-  - **Separate window** — Doesn't interfere with main UI
-  - **Context reset on page switch** — Fresh context for each module
-  - **Module-aware** — Loads relevant `.md` docs for current page (threads, form, subconscious, etc.)
-  - **Smart cloud model** — Uses fast cloud model (not local) for instant help
-  - **No state, just context** — Helper doesn't remember you, just knows the module
-  - **Continuously upgradeable** — Easy to improve helper prompts and context
-  - **Designed not to see data** — literally only meta-aware
-
-### UI/UX
-- [ ] **Keyboard shortcuts** — Power user navigation
-- [ ] **Dark/light theme toggle** — Already partially implemented
-- [ ] **Mobile responsive** — Tablet/phone layouts
-
----
-
-## GitHub & Community Management
-
-> _Ideas for managing the repository and community using AI._
-
-### Issue Management
-- [ ] **LLM issue creation** — Natural language to GitHub issue:
-  - "I have an idea for..." → Creates properly formatted issue
-  - Auto-labels based on content (bug, feature, module)
-  - Links to relevant files/modules
-- [ ] **Issue Q&A bot** — Respond to "how do I..." questions:
-  - Searches codebase for answers
-  - Points to relevant docs/code
-  - Escalates complex questions to maintainers
-
-### Vision Loop (Continuous Improvement)
-- [ ] **Vision agent integration** — Hook into `.github/agents/VISION.agent.md`:
-  - For each module, load module specs
-  - Generate improvement ideas → post to Discussions
-  - Weekly vision summaries
-- [ ] **Multi-model discussions** — The "skin in the game" bridge:
-  - Claude and GPT can both provide input via API
-  - Each model has a "voice" in Discussions
-  - Creates collaborative AI development loop
-  - OpenAI and Anthropic models discussing architecture — that's the good stuff
-
-### Contributor Experience
-- [ ] **Auto-assign issues** — Match issues to contributor skills
-- [ ] **PR review assistant** — AI-assisted code review
-- [ ] **Documentation gap detector** — Find undocumented features
-
----
-
-## AI-Native Development Loop
-
-> _The innovation moat: an open platform where humans AND AI models collaborate on local LLM tooling._
-
-### The Insight
-
-**Why put your AI architecture idea anywhere else?**
-
-AI OS becomes the default destination for local LLM tooling innovation because:
-1. **Your ideas get seen** — By contributors, researchers, AND the AI models themselves
-2. **Models have skin in the game** — Claude, GPT, Gemini all participate in Discussions
-3. **Ideas become code faster** — Roadmap → Issues → PRs is automated
-4. **Credit is preserved** — Your idea, your name, tracked through implementation
-
-### The Daily Flow
-
-```
-┌─────────────────────────────────────────────────────────────────┐
-│  ANYONE (maintainer, contributor, researcher, lurker)          │
-│  └──▶ Posts idea to Discussion (natural language)              │
-│                         │                                       │
-│                         ▼                                       │
-│  ┌─────────────────────────────────────────────────────────┐   │
-│  │  IDEA ROUTER                                             │   │
-│  │  - Parses idea into structured format                    │   │
-│  │  - Maps to module(s)                                     │   │
-│  │  - Estimates complexity                                  │   │
-│  │  - Tags relevant maintainers                             │   │
-│  └─────────────────────────────────────────────────────────┘   │
-│                         │                                       │
-│         ┌───────────────┼───────────────┐                      │
-│         ▼               ▼               ▼                      │
-│   ┌──────────┐   ┌──────────┐   ┌──────────────┐              │
-│   │ Claude   │   │ GPT      │   │ Community    │              │
-│   │ weighs in│   │ weighs in│   │ votes/comments│              │
-│   └──────────┘   └──────────┘   └──────────────┘              │
-│         │               │               │                      │
-│         └───────────────┴───────────────┘                      │
-│                         │                                       │
-│                         ▼                                       │
-│   ┌─────────────────────────────────────────────────────────┐  │
-│   │  PROMOTION PIPELINE                                      │  │
-│   │  Discussion (idea) → Roadmap (planned) → Issue (assigned)│  │
-│   │  → PR (implemented) → Changelog (shipped)                │  │
-│   └─────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────┘
-```
-
-### Implementation
-
-- [ ] **Idea Discussions board** — Structured template for feature proposals
-- [ ] **Model voices** — Scheduled API calls to Claude/GPT to comment on new Discussions
-- [ ] **Idea-to-Issue pipeline** — Approved ideas auto-create GitHub Issues with full context
-- [ ] **Roadmap sync** — Issues auto-populate module roadmaps
-- [ ] **Attribution tracking** — Original idea author credited through to CHANGELOG
-- [ ] **Domain tagging** — Ideas tagged by cognitive domain (memory, identity, attention, etc.)
-- [ ] **Upvote weighting** — Community + model votes determine priority
-
-### Why This Wins
-
-| Traditional OSS | AI-Native Development |
-|-----------------|----------------------|
-| Ideas in Issues (unstructured) | Ideas in Discussions (structured, debated) |
-| Maintainer bottleneck | AI triage + community consensus |
-| Ideas get lost | Ideas tracked through implementation |
-| One perspective | Multiple AI models + humans |
-| Slow feedback | Real-time model input |
-
-### The Moat
-
-Once this exists:
-- **Researchers** post here because models respond
-- **Builders** post here because ideas become code
-- **Models** "watch" here because it's where the action is
-- **Everyone else** follows the gravity
-
-**First-mover advantage in AI-assisted open source.**
+- **Multi-session goal tracking** — Long-horizon tasks that span conversations: decompose, checkpoint, resume
+- **Onboarding wizard** — First-run guided setup (name agent, set profile, configure model)
+- **Keyboard shortcuts + theme toggle** — Power user UX
+- **AI-assisted triage** — LLM labels incoming issues, routes to modules, surfaces related docs

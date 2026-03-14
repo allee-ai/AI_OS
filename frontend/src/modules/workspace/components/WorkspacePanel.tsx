@@ -168,6 +168,7 @@ export const WorkspacePanel: React.FC = () => {
                   <div key={i} className="ws-quick-item" onClick={() => openQuickFile(f)}>
                     <span className="ws-quick-name">{f.name}</span>
                     <span className="ws-quick-meta">{formatDate(f.modified_at)}</span>
+                    {f.summary && <span className="ws-quick-summary">{f.summary}</span>}
                   </div>
                 ))
               )}

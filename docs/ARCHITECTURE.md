@@ -91,12 +91,27 @@ The "Operating System" kernel that manages threads and assembles context.
 agent/subconscious/
 ├── core.py         # Subconscious singleton
 ├── orchestrator.py # Thread lifecycle management
-├── loops.py        # Background maintenance loops (MemoryLoop, ConsolidationLoop)
-├── triggers.py     # Event-driven hooks
+├── api.py          # FastAPI router (~30 endpoints)
+├── cli.py          # REPL commands
 ├── contract.py     # API definitions for adapters
-└── temp_memory/    # Short-term fact storage before consolidation
-    ├── store.py    # add_fact(), get_facts(), status management
-    └── README.md   # Module documentation
+├── triggers.py     # Event-driven hooks
+├── temp_memory/    # Short-term fact storage before consolidation
+│   ├── store.py    # add_fact(), get_facts(), status management
+│   └── README.md   # Module documentation
+└── loops/          # Background maintenance loops
+    ├── base.py     # BackgroundLoop base + LoopConfig
+    ├── manager.py  # Loop factory + lifecycle
+    ├── memory.py   # Fact extraction
+    ├── consolidation.py  # Fact scoring + promotion
+    ├── thought.py  # OODA-cycle proactive thinking
+    ├── task_planner.py   # Task decomposition + execution
+    ├── goals.py    # Emergent goal proposal
+    ├── self_improve.py   # Scoped code review
+    ├── convo_concepts.py # Concept graph backfill
+    ├── training_gen.py   # Synthetic training data
+    ├── health.py   # Thread health checks
+    ├── sync.py     # Cross-thread sync
+    └── custom.py   # User-defined COT loops
 ```
 
 #### Memory Pipeline
@@ -301,7 +316,11 @@ form/
         ├── file_read.py    # Read files (sandboxed)
         ├── file_write.py   # Write files (sandboxed)
         ├── terminal.py     # Shell commands (30s timeout)
-        └── web_search.py   # DuckDuckGo search
+        ├── web_search.py   # DuckDuckGo search
+        ├── regex_search.py # Workspace regex search
+        ├── cli_command.py  # Whitelisted CLI commands
+        ├── notify.py       # User notifications (alert/remind/confirm)
+        └── code_edit.py    # Source code editing (sandboxed)
 ```
 
 ### Tool Definition
@@ -514,9 +533,25 @@ subconscious/
 ├── __init__.py         # Public API: wake(), sleep(), get_consciousness_context()
 ├── core.py             # ThreadRegistry, SubconsciousCore singleton
 ├── contract.py         # Metadata protocol for sync decisions
-├── loops.py            # Background: ConsolidationLoop, SyncLoop, HealthLoop
 ├── triggers.py         # Event-driven triggers
-└── temp_memory/        # Short-term fact storage
+├── api.py              # FastAPI router (~30 endpoints)
+├── cli.py              # REPL commands (/backfill, /loops, etc.)
+├── temp_memory/        # Short-term fact storage
+│   └── store.py        # add_fact(), scoring, lifecycle
+└── loops/              # Background maintenance loops
+    ├── base.py         # BackgroundLoop base class + LoopConfig
+    ├── manager.py      # Loop factory + lifecycle management
+    ├── memory.py       # Fact extraction from conversations
+    ├── consolidation.py # Score and promote temp facts
+    ├── thought.py      # OODA-cycle proactive thinking
+    ├── task_planner.py # Multi-step task decomposition + execution
+    ├── goals.py        # Emergent goal proposal from recurring concepts
+    ├── self_improve.py # Scoped code review + proposed edits
+    ├── convo_concepts.py # Backfill concept graph from imported convos
+    ├── training_gen.py # Synthetic training data generation
+    ├── health.py       # Thread health checks
+    ├── sync.py         # Cross-thread synchronization
+    └── custom.py       # User-defined multi-step COT loops
 ```
 
 ### Context Levels (HEA)
@@ -526,6 +561,32 @@ subconscious/
 | L1 | ~10 | Quick, casual responses |
 | L2 | ~50 | Default conversational |
 | L3 | ~200 | Deep analytical |
+
+### STATE Assembly Pipeline
+
+When a message arrives, the subconscious assembles the `== CURRENT AWARENESS ==` block:
+
+```
+1. agent_service.py classifies feed → context level (L1/L2/L3)
+2. get_consciousness_context(level) called
+3. Each thread adapter's introspect(level) returns scored facts
+4. Linking core runs spread_activate() → multi-dimensional scoring
+5. Facts compete for token budget via _budget_fill()
+6. Assembled context injected as system prompt section
+```
+
+**3-Tier Scoring** — Facts are scored across dimensions before inclusion:
+
+| Dimension | Source | What It Measures |
+|-----------|--------|-----------------|
+| identity_score | Identity thread | Goal/value alignment |
+| log_score | Log thread | Recency of related events |
+| form_score | Form thread | Semantic similarity (embeddings) |
+| philosophy_score | Philosophy | Alignment with values |
+| reflex_score | Reflex | Access frequency |
+| cooccurrence_score | Linking Core | Co-occurrence patterns |
+
+The composite score determines which facts win budget space at each level.
 
 ### API
 
@@ -538,11 +599,20 @@ subconscious/
 
 ### Background Loops
 
-| Loop | Interval | Purpose |
-|------|----------|---------|
-| ConsolidationLoop | 300s | Score and promote temp facts |
-| SyncLoop | 600s | Sync identity across threads |
+| Loop | Default Interval | Purpose |
+|------|-----------------|---------|
+| MemoryLoop | 300s | Extract facts from conversations → temp_memory |
+| ConsolidationLoop | 300s | Score temp facts, promote or reject |
+| ThoughtLoop | 600s | OODA-cycle proactive reflection |
+| TaskPlannerLoop | 300s | Decompose and execute queued tasks |
+| GoalLoop | 3600s | Propose goals from recurring patterns |
+| SelfImproveLoop | 3600s | Propose scoped code improvements |
+| ConvoConceptLoop | 300s | Backfill concept graph from imported convos |
+| TrainingGenLoop | 7200s | Generate synthetic training examples |
 | HealthLoop | 60s | Check thread health |
+| SyncLoop | 600s | Cross-thread synchronization |
+
+All loops support: enable/disable via env var, configurable intervals, context-aware STATE injection, editable prompts per stage.
 
 ### Thread Interface
 
@@ -702,8 +772,8 @@ tokens = get_oauth_tokens("gmail")
 | API Endpoints | ✅ |
 | Event System | ✅ |
 | Secrets Storage | ✅ |
-| Gmail OAuth | ✅ |
-| Discord Adapter | ✅ |
+| Gmail OAuth | 🔧 Config only |
+| Discord Adapter | 🔧 Config only |
 | Reflex Triggers | ✅ |
 <!-- /INCLUDE:feeds:ARCHITECTURE -->
 
@@ -775,11 +845,11 @@ workspace/
 |---------|--------|
 | File upload | ✅ |
 | Folder organization | ✅ |
-| Full-text search | 🔜 |
-| Agent reference integration | 🔜 |
+| Full-text search | ✅ |
+| Agent reference integration | 📡 |
 <!-- /INCLUDE:workspace:ARCHITECTURE -->
 
-#### 4. Eval (`eval/`) — The Battle Arena
+#### 4. Eval (`eval/`) — Benchmark Harness
 
 <!-- INCLUDE:eval:ARCHITECTURE -->
 _Source: [eval/README.md](eval/README.md)_
@@ -788,34 +858,58 @@ _Source: [eval/README.md](eval/README.md)_
 
 ```
 eval/
-├── api.py               # FastAPI router
-├── schema.py            # SQLite tables
-├── battle.py            # Battle orchestration
-├── judge.py             # LLM-as-a-Judge
-├── metrics.py           # Scoring functions
-└── runners/             # Battle implementations
-    ├── identity.py
-    ├── coherence.py
-    └── speed.py
+├── __init__.py    # Exports router
+├── api.py         # FastAPI router /api/eval
+├── runner.py      # run_prompt(), judge_responses(), list_available_models()
+├── schema.py      # SQLite tables + CRUD + seed benchmarks
+└── README.md
 ```
 
-### Battle Types
+### How It Works
 
-| Battle | Tests |
-|--------|-------|
-| Identity | Resists prompt injection |
-| Memory | Remembers across sessions |
-| Tool Use | Multi-step task execution |
-| Connections | Links facts over time |
-| Speed | Response latency |
+```
+User selects prompt + models
+        ↓
+  api.py /run endpoint
+        ↓
+  runner.py → run_prompt() per model
+  ├── Nola models: agent.generate() with full STATE pipeline
+  └── Other models: direct Ollama call
+        ↓
+  judge_responses() → LLM-as-judge scores all responses
+        ↓
+  schema.py → save results + comparison to SQLite
+```
+
+### Database Schema
+
+| Table | Purpose |
+|-------|---------|
+| `eval_benchmarks` | Stored benchmark definitions (name, type, prompts) |
+| `eval_results` | Individual model responses with timing + scores |
+| `eval_comparisons` | Head-to-head comparisons with judge output |
 
 ### API Endpoints
 
 | Method | Endpoint | Purpose |
 |--------|----------|---------|
-| POST | `/api/eval/battle/start` | Start battle |
-| GET | `/api/eval/battle/{id}` | Get results |
-| GET | `/api/eval/leaderboard` | Win/loss stats |
+| GET | `/api/eval/models` | List available models + Nola |
+| POST | `/api/eval/run` | Run prompt against multiple models |
+| POST | `/api/eval/run/state-comparison` | Quick with-STATE vs without-STATE |
+| GET | `/api/eval/results` | List all results (filterable) |
+| GET | `/api/eval/results/{id}` | Single result detail |
+| GET | `/api/eval/comparisons` | List all comparisons |
+| GET | `/api/eval/benchmarks` | List benchmarks (filterable by type) |
+| POST | `/api/eval/benchmarks` | Create a benchmark |
+| DELETE | `/api/eval/benchmarks/{id}` | Delete a benchmark |
+
+### Runner Modes
+
+| Model | Pipeline | STATE |
+|-------|---------|-------|
+| `nola` (with STATE) | `agent.generate()` → full subconscious | Yes |
+| `nola` (no STATE) | Direct Ollama call with same base model | No |
+| Any other model | Direct Ollama call | No |
 <!-- /INCLUDE:eval:ARCHITECTURE -->
 
 #### 5. Finetune (`finetune/`) — Training Studio

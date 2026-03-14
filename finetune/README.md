@@ -1,6 +1,6 @@
 # Finetune Module
 
-> 🚧 **In Development** — Data generation is active; training pipeline is experimental.
+> 🚧 **In Development** — Pipeline is wired end-to-end. First full training cycle not yet completed.
 
 Teach smaller models to "obey state" — the structured awareness blocks from AI OS.
 
@@ -23,27 +23,88 @@ The Finetune module creates datasets and training scripts to teach smaller model
 
 ```
 finetune/
-├── api.py               # Endpoints to trigger training
-├── mlx_config.yaml      # Apple MLX configuration
-└── train_mac.sh         # Local fine-tuning script
+├── api.py                  # 7 FastAPI endpoints (export, train, load, config, data)
+├── sections.py             # Shared JSONL builders (API, CLI, schema examples)
+├── docstring_extractor.py  # AST-based docstring harvesting across all modules
+├── gold_examples.py        # Hand-curated reasoning examples (9 categories)
+├── mlx_config.yaml         # Apple MLX LoRA configuration
+├── train_mac.sh            # Local fine-tuning script
+├── generated/              # Background-generated training data (TrainingGenLoop)
+└── auto_generated/         # Docstring-extracted training data
 ```
 
-### Dataset Strategy
+### Data Sources
 
-| Dataset | Purpose |
-|---------|---------|
-| `aios_finetune_data.jsonl` | Core state obedience |
-| `aios_finetune_adversarial.jsonl` | Identity protection |
-| `aios_combined.jsonl` | All examples merged |
+| Source | Generator | Description |
+|--------|-----------|-------------|
+| Per-thread metadata | `sections.py` | API endpoints, CLI commands, schema tables → Q&A pairs |
+| Docstrings | `docstring_extractor.py` | AST-walks Python source, extracts function/class docs |
+| Gold examples | `gold_examples.py` | Hand-written reasoning pairs (architecture, linking, identity, philosophy, etc.) |
+| Live decisions | `train.py` per thread | High-confidence decisions logged during runtime (threshold 0.7) |
+| Synthetic | `TrainingGenLoop` | LLM generates examples every 2h using real STATE context |
+
+### Per-Thread Train Files
+
+Each cognitive thread has its own `train.py`:
+
+| Thread | What It Exports |
+|--------|----------------|
+| Identity | Profile facts, trust levels, contact management Q&A |
+| Philosophy | Values, constraints, ethical bounds Q&A |
+| Log | Event types, session tracking, timeline Q&A |
+| Reflex | Trigger patterns, cascade priority, automation Q&A |
+| Form | Tool definitions, safety rules, execution Q&A |
+| Linking Core | Concept links, spread activation, scoring Q&A |
+
+### API Endpoints
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/finetune/export` | Full export: consolidate links → run all thread exporters → merge to `aios_combined.jsonl` |
+| POST | `/api/finetune/export/{thread}` | Export single thread |
+| GET | `/api/finetune/export/stats` | Counts from all modules + reasoning + generated |
+| POST | `/api/finetune/start` | Configure hyperparams + launch `train_mac.sh` |
+| GET | `/api/finetune/config` | Current MLX config |
+| GET | `/api/finetune/data` | List all `.jsonl` files with line counts |
+| POST | `/api/finetune/load` | Fuse LoRA adapter into Ollama model |
+
+### Export Pipeline
+
+```
+POST /api/finetune/export
+    → consolidate_links()          # Promote reinforced concept links
+    → for each thread: export_training_data()
+    → docstring_extractor.extract_all()
+    → gold_examples.get_all_examples()
+    → merge → finetune/aios_combined.jsonl
+```
+
+### Training (Apple Silicon)
+
+```bash
+# Via API
+POST /api/finetune/start
+  { "rank": 8, "alpha": 16, "lr": 1e-4, "iters": 1000 }
+
+# Or directly
+cd finetune && bash train_mac.sh
+```
+
+Uses MLX LoRA on Apple Silicon. Config in `mlx_config.yaml`.
 
 ### Status
 
 | Feature | Status |
 |---------|--------|
-| Data format | ✅ |
+| Export pipeline | ✅ Wired |
+| Per-thread train.py | ✅ All 6 threads |
+| Docstring extraction | ✅ AST-based |
+| Gold examples | ✅ 9 categories |
 | MLX config | ✅ |
-| Data generation scripts | 🔜 |
-| Validation suite | 🔜 |
+| Training gen loop | ✅ Background generation |
+| First full export | ❌ Not yet run |
+| End-to-end cycle | ❌ Not yet tested |
+| Adapter loading | 🔧 Endpoint exists, untested |
 <!-- /ARCHITECTURE:finetune -->
 
 ---
@@ -51,15 +112,25 @@ finetune/
 ## Roadmap
 
 <!-- ROADMAP:finetune -->
-### Ready for contributors
-- [ ] **Synthetic data generator** — Auto-generate training examples
-- [ ] **Validation suite** — Test state adherence vs base models
-- [ ] **Multi-model support** — Train Llama, Mistral, Phi
-- [ ] **Cloud training** — Support for remote training
+### Pipeline completion
+- [ ] **Training orchestrator** — Chain export → train → load in a single `POST /finetune/run`:
+  - Status tracking with progress events via WebSocket
+  - Exit code capture from `train_mac.sh` (currently fire-and-forget)
+  - Automatic combined JSONL generation before training starts
+- [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts:
+  - STATE format adherence score (does the model still produce valid STATE blocks?)
+  - Identity consistency (does it still know who it is after 50 turns?)
+  - Regression detection (did general capability degrade?)
+- [ ] **Convergence monitoring** — Surface validation loss during training, stop early on plateau
+
+### Research
+- [ ] **Self-improvement measurement** — Does a model trained on its own STATE output actually improve, or does it collapse? Requires controlled A/B eval across multiple training cycles
+- [ ] **Catastrophic forgetting baseline** — Benchmark general capability before and after LoRA. Quantify the tradeoff between STATE adherence and general fluency
+- [ ] **Synthetic data quality** — TrainingGenLoop generates examples every 2h. Are they helping or injecting noise? Eval synthetic vs human-curated training data
 
 ### Starter tasks
-- [ ] Add 10 state obedience examples
-- [ ] Document MLX training workflow
+- [ ] Add 10 STATE obedience examples to gold_examples.py
+- [ ] Document the full export → train → load workflow with expected outputs
 <!-- /ROADMAP:finetune -->
 
 ---
@@ -67,6 +138,16 @@ finetune/
 ## Changelog
 
 <!-- CHANGELOG:finetune -->
+### 2026-03-14
+- TrainingGenLoop: Background synthetic example generation every 2h
+- ConvoConceptLoop: Backfill concept graph before export (richer co-occurrence data)
+
+### 2026-03-07
+- Docstring extractor: AST-based harvesting across 8 modules
+- Gold examples: 9 categories of curated reasoning pairs
+- Sections builder: Shared API/CLI/schema example generators
+- Frontend: Sections browser, unified training view, generated example approval
+
 ### 2026-01-31
 - Export pipeline: `/api/finetune/export` aggregates all threads
 - Per-thread `train.py` pattern (identity, philosophy, log, reflex, form, linking_core)

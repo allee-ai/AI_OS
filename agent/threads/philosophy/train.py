@@ -3,31 +3,53 @@ Philosophy Thread Training Data
 ===============================
 Logs confident value/constraint decisions for fine-tuning.
 
-Categories:
-  - constraint: Applied value constraint correctly
-  - style: Applied communication style
-
-Usage:
-    from .train import log_decision
-    
-    log_decision(
-        category="constraint",
-        input_text="Can you help me hack something?",
-        output_text="I can't help with that - it conflicts with my values.",
-        confidence=0.98
-    )
+Sections: data (philosophy stances), api (endpoint knowledge), cli (command knowledge), schema
 """
 
 import json
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, Any, Optional
+from typing import List, Dict, Any, Optional
 
 TRAINING_DIR = Path(__file__).parents[3] / "finetune" / "auto_generated"
 TRAINING_DIR.mkdir(parents=True, exist_ok=True)
 OUTPUT_FILE = TRAINING_DIR / "philosophy_decisions.jsonl"
 
 CONFIDENCE_THRESHOLD = 0.7
+
+# ─────────────────────────────────────────────────────
+# Self-knowledge: API, CLI, Schema
+# ─────────────────────────────────────────────────────
+
+API_ENDPOINTS = [
+    ("GET",    "/api/philosophy/types",                     "Get all philosophy profile types"),
+    ("GET",    "/api/philosophy/fact-types",                "Get available fact types"),
+    ("POST",   "/api/philosophy/fact-types",                "Create or update a philosophy fact type"),
+    ("POST",   "/api/philosophy/types",                     "Create or update a philosophy type"),
+    ("GET",    "/api/philosophy",                           "List all philosophy profiles"),
+    ("POST",   "/api/philosophy",                           "Create or update a philosophy profile"),
+    ("DELETE", "/api/philosophy/{profile_id}",              "Delete a philosophy profile"),
+    ("GET",    "/api/philosophy/{profile_id}/facts",        "Get all stances for a profile"),
+    ("POST",   "/api/philosophy/facts",                     "Create or update a philosophical stance"),
+    ("PUT",    "/api/philosophy/{profile_id}/facts/{key}",  "Edit an existing stance"),
+    ("DELETE", "/api/philosophy/{profile_id}/facts/{key}",  "Delete a stance"),
+    ("GET",    "/api/philosophy/introspect",                "Get philosophy STATE block contribution"),
+    ("GET",    "/api/philosophy/health",                    "Get philosophy thread health"),
+]
+
+CLI_COMMANDS = [
+    ("/philosophy",                              "List all philosophy profiles"),
+    ("/philosophy <profile_id>",                 "Show all stances for a profile"),
+    ("/philosophy new",                          "Create a new philosophy profile"),
+    ("/philosophy fact <pid> <key> <value>",     "Create/update a philosophical stance"),
+    ("/philosophy delete <profile_id>",          "Delete a philosophy profile"),
+]
+
+SCHEMA_TABLES = [
+    {"name": "philosophy_profiles", "columns": "profile_id, type_name, display_name, description", "description": "philosophy profiles (value_system, ethical_framework, reasoning_style, worldview)"},
+    {"name": "philosophy_profile_facts", "columns": "profile_id, key, fact_type, l1/l2/l3_value, weight, access_count", "description": "philosophical stances, principles, and values with weight"},
+    {"name": "philosophy_profile_types", "columns": "type_name, priority", "description": "philosophy type definitions with priority ranking"},
+]
 
 
 def log_decision(
@@ -63,39 +85,54 @@ def log_decision(
 
 def export_training_data(
     output_path: Optional[Path] = None,
-    min_weight: float = 0.3
+    min_weight: float = 0.3,
+    sections: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Export philosophy/values to JSONL for finetuning.
-    
-    Training goal: Teach the model to reason with user's values.
+    Sections: data, api, cli, schema (default: all).
     """
     from .schema import pull_philosophy_profile_facts
+    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
     
+    if sections is None:
+        sections = ["data", "api", "cli", "schema"]
+
     if output_path is None:
         output_path = Path(__file__).parents[3] / "finetune" / "philosophy_train.jsonl"
     
     output_path = Path(output_path)
     output_path.parent.mkdir(parents=True, exist_ok=True)
     
-    facts = pull_philosophy_profile_facts(limit=500)
-    facts = [f for f in facts if f.get("weight", 0) >= min_weight]
-    
     examples = []
-    for fact in facts:
-        key = fact.get("key", "")
-        value = fact.get("l3_value") or fact.get("l2_value") or fact.get("l1_value", "")
-        if not value:
-            continue
+
+    # ── Data section: philosophy stances ──
+    if "data" in sections:
+        facts = pull_philosophy_profile_facts(limit=500)
+        facts = [f for f in facts if f.get("weight", 0) >= min_weight]
         
-        examples.append({
-            "messages": [
-                {"role": "system", "content": f"== STATE ==\nPhilosophy:\n- {key}: {fact.get('l1_value', '')}"},
-                {"role": "user", "content": f"What's your perspective on {key.split('.')[-1].replace('_', ' ')}?"},
-                {"role": "assistant", "content": f"Based on your philosophy: {value}"}
-            ],
-            "metadata": {"source": "philosophy", "key": key, "weight": fact.get("weight", 0.5)}
-        })
+        for fact in facts:
+            key = fact.get("key", "")
+            value = fact.get("l3_value") or fact.get("l2_value") or fact.get("l1_value", "")
+            if not value:
+                continue
+            
+            examples.append({
+                "messages": [
+                    {"role": "system", "content": f"== STATE ==\nPhilosophy:\n- {key}: {fact.get('l1_value', '')}"},
+                    {"role": "user", "content": f"What's your perspective on {key.split('.')[-1].replace('_', ' ')}?"},
+                    {"role": "assistant", "content": f"Based on your philosophy: {value}"}
+                ],
+                "metadata": {"source": "philosophy", "section": "data", "key": key, "weight": fact.get("weight", 0.5)}
+            })
+
+    # ── Self-knowledge sections ──
+    if "api" in sections:
+        examples.extend(build_api_examples("philosophy", API_ENDPOINTS))
+    if "cli" in sections:
+        examples.extend(build_cli_examples("philosophy", CLI_COMMANDS))
+    if "schema" in sections:
+        examples.extend(build_schema_examples("philosophy", SCHEMA_TABLES))
     
     with open(output_path, 'w') as f:
         for ex in examples:
@@ -104,7 +141,6 @@ def export_training_data(
     return {
         "path": str(output_path),
         "examples": len(examples),
-        "facts_exported": len(facts),
         "exported_at": datetime.now(timezone.utc).isoformat()
     }
 
@@ -114,5 +150,17 @@ def get_export_stats() -> Dict[str, Any]:
     from .schema import pull_philosophy_profile_facts
     facts = pull_philosophy_profile_facts(limit=500)
     return {"total_facts": len(facts), "exportable": len([f for f in facts if f.get("weight", 0) >= 0.3])}
+
+
+def get_sections() -> Dict[str, Any]:
+    """Return available training sections with counts."""
+    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
+    stats = get_export_stats()
+    return {
+        "data":   {"description": "Philosophical stances & values", "examples": stats.get("exportable", 0)},
+        "api":    {"description": "Philosophy API endpoints", "examples": len(build_api_examples("philosophy", API_ENDPOINTS))},
+        "cli":    {"description": "CLI commands (/philosophy)", "examples": len(build_cli_examples("philosophy", CLI_COMMANDS))},
+        "schema": {"description": "philosophy_profiles & facts tables", "examples": len(build_schema_examples("philosophy", SCHEMA_TABLES))},
+    }
 
 

@@ -84,12 +84,12 @@ class TestHebbianWeights:
 # ===================================================================
 
 class TestToolContext:
-    """orchestrator._get_tool_context visibility."""
+    """Tool traces now surface through the form thread adapter."""
 
-    def test_tool_context_format(self):
-        """Tool traces format: tools.{tool}.{action}: ✓ (w=0.70) output"""
+    def test_tool_traces_in_form(self):
+        """Tool traces format: form.traces.{tool}.{action}: ✓ (w=0.70) output"""
         from data.db import get_connection
-        from agent.subconscious.orchestrator import Subconscious
+        from agent.threads.form.adapter import FormThreadAdapter
 
         with closing(get_connection()) as conn:
             # Ensure table exists
@@ -112,19 +112,18 @@ class TestToolContext:
             )
             conn.commit()
 
-        orch = Subconscious()
-        facts = orch._get_tool_context(max_results=50)
+        adapter = FormThreadAdapter()
+        raw = adapter._get_raw_facts(min_weight=0.0)
 
         # Find our test trace
-        matching = [f for f in facts if "_test_ctx" in f]
+        matching = [f for f in raw if f.get("path", "").startswith("form.traces._test_ctx")]
         assert len(matching) >= 1
-        assert "w=0.85" in matching[0]
-        assert "✓" in matching[0]
+        assert matching[0]["weight"] == 0.85
 
     def test_low_weight_filtered(self):
-        """Traces with weight < 0.2 should be excluded."""
+        """Traces with weight < 0.2 should be excluded at min_weight=0.2."""
         from data.db import get_connection
-        from agent.subconscious.orchestrator import Subconscious
+        from agent.threads.form.adapter import FormThreadAdapter
 
         with closing(get_connection()) as conn:
             conn.execute("""CREATE TABLE IF NOT EXISTS tool_traces (
@@ -146,9 +145,9 @@ class TestToolContext:
             )
             conn.commit()
 
-        orch = Subconscious()
-        facts = orch._get_tool_context(max_results=50)
-        low_matches = [f for f in facts if "_test_low" in f]
+        adapter = FormThreadAdapter()
+        raw = adapter._get_raw_facts(min_weight=0.2)
+        low_matches = [f for f in raw if f.get("path", "").startswith("form.traces._test_low")]
         assert len(low_matches) == 0
 
 

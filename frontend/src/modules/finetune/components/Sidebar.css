@@ -15,7 +15,7 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
     padding: 0 0.5rem;
 }
 
@@ -32,7 +32,71 @@
 .sidebar-links {
     display: flex;
     flex-direction: column;
+    gap: 0.25rem;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.module-btn {
+    display: flex;
+    align-items: center;
     gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    border-radius: 0.5rem;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 0.85rem;
+    text-align: left;
+    width: 100%;
+}
+
+.module-btn:hover {
+    background-color: var(--surface-2, rgba(255,255,255,0.06));
+    color: var(--text);
+}
+
+.module-btn.active {
+    background-color: var(--primary, #7c3aed);
+    color: #fff;
+}
+
+.module-btn.disabled {
+    opacity: 0.4;
+}
+
+.module-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+.module-name {
+    flex: 1;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.module-count {
+    font-size: 0.7rem;
+    font-weight: 600;
+    background: rgba(255,255,255,0.1);
+    padding: 0.15rem 0.4rem;
+    border-radius: 0.3rem;
+    flex-shrink: 0;
+}
+
+.module-btn.active .module-count {
+    background: rgba(255,255,255,0.2);
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
 }
 
 .nav-link {

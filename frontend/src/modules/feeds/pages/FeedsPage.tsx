@@ -63,6 +63,51 @@ const SOURCE_ICONS: Record<string, string> = {
   hubspot: '🧡',
 };
 
+// ── Category grouping ──────────────────────────────────────────────
+interface FeedCategory {
+  label: string;
+  icon: string;
+  members: string[]; // source names that belong here
+}
+
+const FEED_CATEGORIES: FeedCategory[] = [
+  { label: 'Email',      icon: '📧', members: ['gmail', 'outlook', 'proton', 'imap'] },
+  { label: 'Social',     icon: '💬', members: ['discord', 'slack', 'telegram', 'whatsapp', 'teams', 'twitter', 'intercom'] },
+  { label: 'Calendar',   icon: '📅', members: ['calendar', 'gcal'] },
+  { label: 'Dev Tools',  icon: '🛠️', members: ['github', 'linear', 'jira', 'notion', 'airtable'] },
+  { label: 'Commerce',   icon: '🛒', members: ['shopify', 'hubspot', 'zendesk'] },
+  { label: 'Other',      icon: '📡', members: [] }, // catch-all
+];
+
+/** Return the category label for a given source name (falls back to "Other"). */
+const getCategoryForSource = (name: string): string => {
+  for (const cat of FEED_CATEGORIES) {
+    if (cat.members.includes(name)) return cat.label;
+  }
+  return 'Other';
+};
+
+/** Group an array of sources by category, preserving category order. */
+const groupSourcesByCategory = (srcs: FeedsSource[]) => {
+  const groups: { cat: FeedCategory; sources: FeedsSource[] }[] = [];
+  const used = new Set<string>();
+
+  for (const cat of FEED_CATEGORIES) {
+    const matched = srcs.filter((s) => cat.members.includes(s.name));
+    if (matched.length > 0) {
+      groups.push({ cat, sources: matched });
+      matched.forEach((s) => used.add(s.name));
+    }
+  }
+  // Anything that didn't match goes into "Other"
+  const remaining = srcs.filter((s) => !used.has(s.name));
+  if (remaining.length > 0) {
+    const other = FEED_CATEGORIES.find((c) => c.label === 'Other')!;
+    groups.push({ cat: other, sources: remaining });
+  }
+  return groups;
+};
+
 export const FeedsPage = () => {
   const [sources, setSources] = useState<FeedsSource[]>([]);
   const [templates, setTemplates] = useState<SourceTemplate[]>([]);
@@ -86,6 +131,18 @@ export const FeedsPage = () => {
   const [triggers, setTriggers] = useState<EventTrigger[]>([]);
   const [showTriggers, setShowTriggers] = useState(false);
   const [newSourceDesc, setNewSourceDesc] = useState('');
+
+  // Category sidebar state
+  const [expandedCategories, setExpandedCategories] = useState<Set<string>>(new Set());
+
+  const toggleCategory = (label: string) => {
+    setExpandedCategories((prev) => {
+      const next = new Set(prev);
+      if (next.has(label)) next.delete(label);
+      else next.add(label);
+      return next;
+    });
+  };
 
   const fetchSources = useCallback(async () => {
     try {
@@ -142,6 +199,14 @@ export const FeedsPage = () => {
   useEffect(() => {
     if (activeSource) {
       fetchSourceConfig(activeSource);
+      // Auto-expand the category that contains this source
+      const cat = getCategoryForSource(activeSource);
+      setExpandedCategories((prev) => {
+        if (prev.has(cat)) return prev;
+        const next = new Set(prev);
+        next.add(cat);
+        return next;
+      });
     }
   }, [activeSource, fetchSourceConfig]);
 
@@ -295,20 +360,40 @@ export const FeedsPage = () => {
             </div>
           ) : (
             <div className="sources">
-              {sources.map((source) => (
-                <button
-                  key={source.name}
-                  className={`source-item ${activeSource === source.name ? 'active' : ''}`}
-                  onClick={() => setActiveSource(source.name)}
-                >
-                  <span className="source-icon">{getIcon(source)}</span>
-                  <div className="source-info">
-                    <span className="source-name">{source.name}</span>
-                    <span className="source-type">{source.type}</span>
+              {groupSourcesByCategory(sources).map(({ cat, sources: catSources }) => {
+                const isExpanded = expandedCategories.has(cat.label);
+                const enabledCount = catSources.filter((s) => s.enabled).length;
+                const hasActive = catSources.some((s) => s.name === activeSource);
+
+                return (
+                  <div key={cat.label} className="source-category">
+                    <button
+                      className={`category-header ${hasActive ? 'has-active' : ''}`}
+                      onClick={() => toggleCategory(cat.label)}
+                    >
+                      <span className="category-icon">{cat.icon}</span>
+                      <span className="category-label">{cat.label}</span>
+                      <span className="category-count">{enabledCount}/{catSources.length}</span>
+                      <span className="category-arrow">{isExpanded ? '▼' : '▶'}</span>
+                    </button>
+
+                    {isExpanded && catSources.map((source) => (
+                      <button
+                        key={source.name}
+                        className={`source-item nested ${activeSource === source.name ? 'active' : ''}`}
+                        onClick={() => setActiveSource(source.name)}
+                      >
+                        <span className="source-icon">{getIcon(source)}</span>
+                        <div className="source-info">
+                          <span className="source-name">{source.name}</span>
+                          <span className="source-type">{source.type}</span>
+                        </div>
+                        <div className={`status-indicator ${source.enabled ? 'enabled' : 'disabled'}`} />
+                      </button>
+                    ))}
                   </div>
-                  <div className={`status-indicator ${source.enabled ? 'enabled' : 'disabled'}`} />
-                </button>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

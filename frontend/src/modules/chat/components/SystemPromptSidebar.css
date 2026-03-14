@@ -207,3 +207,155 @@
 .prompt-text::-webkit-scrollbar-thumb:hover {
   background: var(--text-muted);
 }
+
+/* ─── Sidebar tabs ─── */
+
+.sidebar-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface);
+  flex-shrink: 0;
+}
+
+.sidebar-tab {
+  flex: 1;
+  padding: 8px 4px;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.sidebar-tab:hover {
+  color: var(--text);
+  background: var(--hover);
+}
+
+.sidebar-tab.active {
+  color: var(--text);
+  border-bottom-color: var(--primary, #7c5bf5);
+}
+
+/* ─── Summary display ─── */
+
+.summary-display {
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.summary-body {
+  font-size: 13px;
+  line-height: 1.6;
+  color: var(--text);
+  margin: 0;
+}
+
+.regenerate-btn,
+.generate-btn {
+  align-self: flex-start;
+  padding: 6px 14px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.regenerate-btn:hover:not(:disabled),
+.generate-btn:hover:not(:disabled) {
+  background: var(--border);
+  border-color: var(--primary);
+}
+
+.regenerate-btn:disabled,
+.generate-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.summary-empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 16px;
+  gap: 8px;
+  color: var(--text-muted);
+}
+
+.summary-empty-state .empty-icon {
+  font-size: 32px;
+  opacity: 0.5;
+}
+
+.summary-empty-state p {
+  font-size: 13px;
+  margin: 0;
+  text-align: center;
+}
+
+/* ─── Prompts editor ─── */
+
+.prompts-editor {
+  padding: 16px;
+  overflow-y: auto;
+}
+
+.prompt-field {
+  margin-bottom: 16px;
+}
+
+.prompt-field-label {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 6px;
+}
+
+.prompt-textarea {
+  width: 100%;
+  padding: 8px 10px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 12px;
+  font-family: inherit;
+  line-height: 1.5;
+  resize: vertical;
+  box-sizing: border-box;
+}
+
+.prompt-textarea:focus {
+  outline: none;
+  border-color: var(--primary);
+}
+
+.save-prompt-btn {
+  margin-top: 6px;
+  padding: 5px 14px;
+  background: var(--primary, #7c5bf5);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: filter 0.15s;
+}
+
+.save-prompt-btn:hover {
+  filter: brightness(1.1);
+}

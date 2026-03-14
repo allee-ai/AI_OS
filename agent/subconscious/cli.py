@@ -562,10 +562,309 @@ def _cmd_tasks(args: str):
         print(f"  {RED}error: {e}{RESET}")
 
 
+# ─────────────────────────────────────────────────────────────
+# /goals — list, approve, reject, dismiss
+# ─────────────────────────────────────────────────────────────
+
+def _cmd_goals(args: str):
+    tokens = args.strip().split()
+    verb = tokens[0] if tokens else ""
+    rest = tokens[1] if len(tokens) > 1 else ""
+
+    if verb in ("approve", "reject", "dismiss") and rest.isdigit():
+        try:
+            from agent.subconscious.loops.goals import resolve_goal
+            status_map = {"approve": "approved", "reject": "rejected", "dismiss": "dismissed"}
+            ok = resolve_goal(int(rest), status=status_map[verb])
+            color = GREEN if verb == "approve" else RED if verb == "reject" else YELLOW
+            print(f"  {color}{status_map[verb]}{RESET} goal #{rest}" if ok else f"  {RED}not found{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # Default: list goals
+    status_filter = verb if verb in ("pending", "approved", "rejected", "dismissed") else "pending"
+    try:
+        from agent.subconscious.loops.goals import get_proposed_goals
+        goals = get_proposed_goals(status=status_filter, limit=20)
+        if not goals:
+            print(f"  {DIM}no {status_filter} goals{RESET}")
+            return
+        print(f"  {BOLD}Proposed goals ({status_filter}):{RESET}")
+        for g in goals:
+            pcolor = {"high": RED, "medium": YELLOW, "low": DIM}.get(g["priority"], "")
+            print(f"  {DIM}#{g['id']}{RESET} {pcolor}[{g['priority']}]{RESET} {g['goal'][:70]}")
+            if g.get("rationale"):
+                print(f"    {DIM}{g['rationale'][:80]}{RESET}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
+# ─────────────────────────────────────────────────────────────
+# /notifications — list, read, dismiss
+# ─────────────────────────────────────────────────────────────
+
+def _cmd_notifications(args: str):
+    tokens = args.strip().split()
+    verb = tokens[0] if tokens else ""
+    rest = tokens[1] if len(tokens) > 1 else ""
+
+    if verb == "dismiss" and rest.isdigit():
+        try:
+            from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+            _ensure_notifications_table()
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection()) as conn:
+                conn.execute("UPDATE notifications SET dismissed = 1 WHERE id = ?", (int(rest),))
+                conn.commit()
+            print(f"  {GREEN}dismissed{RESET} notification #{rest}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    if verb == "read" and rest.isdigit():
+        try:
+            from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+            _ensure_notifications_table()
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection()) as conn:
+                conn.execute("UPDATE notifications SET read = 1 WHERE id = ?", (int(rest),))
+                conn.commit()
+            print(f"  {GREEN}marked read{RESET} notification #{rest}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # Default: list
+    unread = verb == "unread"
+    try:
+        from agent.threads.form.tools.executables.notify import _ensure_notifications_table
+        _ensure_notifications_table()
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            cur = conn.cursor()
+            if unread:
+                cur.execute(
+                    "SELECT id, type, message, priority, read, created_at FROM notifications "
+                    "WHERE read = 0 AND dismissed = 0 ORDER BY id DESC LIMIT 20"
+                )
+            else:
+                cur.execute(
+                    "SELECT id, type, message, priority, read, created_at FROM notifications "
+                    "WHERE dismissed = 0 ORDER BY id DESC LIMIT 20"
+                )
+            rows = cur.fetchall()
+
+        if not rows:
+            label = "unread " if unread else ""
+            print(f"  {DIM}no {label}notifications{RESET}")
+            return
+        print(f"  {BOLD}Notifications:{RESET}")
+        for r in rows:
+            nid, ntype, msg, priority, is_read, ts = r
+            pcolor = RED if priority == "urgent" else YELLOW if priority == "high" else ""
+            read_mark = DIM if is_read else BOLD
+            icon = {"alert": "🔔", "reminder": "⏰", "confirm": "❓"}.get(ntype, "📌")
+            print(f"  {read_mark}{DIM}#{nid}{RESET} {icon} {pcolor}{msg[:70]}{RESET} {DIM}{ts}{RESET}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
+# ─────────────────────────────────────────────────────────────
+# /improvements — list, approve, reject, apply
+# ─────────────────────────────────────────────────────────────
+
+def _cmd_improvements(args: str):
+    tokens = args.strip().split()
+    verb = tokens[0] if tokens else ""
+    rest = tokens[1] if len(tokens) > 1 else ""
+
+    if verb in ("approve", "reject") and rest.isdigit():
+        try:
+            from agent.subconscious.loops.self_improve import resolve_improvement
+            status = "approved" if verb == "approve" else "rejected"
+            ok = resolve_improvement(int(rest), status=status)
+            color = GREEN if verb == "approve" else RED
+            print(f"  {color}{status}{RESET} improvement #{rest}" if ok else f"  {RED}not found{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    if verb == "apply" and rest.isdigit():
+        try:
+            from agent.subconscious.loops.self_improve import apply_improvement, resolve_improvement
+            resolve_improvement(int(rest), status="approved")
+            result = apply_improvement(int(rest))
+            print(f"  {GREEN}applied{RESET}: {result}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # Default: list
+    status_filter = verb if verb in ("pending", "approved", "rejected", "applied") else "pending"
+    try:
+        from agent.subconscious.loops.self_improve import get_proposed_improvements
+        imps = get_proposed_improvements(status=status_filter, limit=20)
+        if not imps:
+            print(f"  {DIM}no {status_filter} improvements{RESET}")
+            return
+        print(f"  {BOLD}Proposed improvements ({status_filter}):{RESET}")
+        for imp in imps:
+            print(f"  {DIM}#{imp['id']}{RESET} {CYAN}{imp['file_path']}{RESET}")
+            print(f"    {imp['description'][:80]}")
+            if imp.get("rationale"):
+                print(f"    {DIM}{imp['rationale'][:80]}{RESET}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
+# ─────────────────────────────────────────────────────────────
+# /calendar — list, add, remove, poll
+# ─────────────────────────────────────────────────────────────
+
+def _cmd_calendar(args: str):
+    tokens = args.strip().split(maxsplit=1)
+    verb = tokens[0] if tokens else ""
+    rest = tokens[1] if len(tokens) > 1 else ""
+
+    if verb == "add":
+        parts = rest.strip().split(maxsplit=1)
+        if len(parts) < 2:
+            print("  usage: /calendar add <name> <ical_url>")
+            return
+        name, url = parts[0], parts[1]
+        try:
+            from Feeds.sources.calendar import add_calendar
+            result = add_calendar(name, url)
+            print(f"  {GREEN}added{RESET} calendar '{result['name']}' → {result['ical_url'][:60]}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    if verb == "remove":
+        name = rest.strip()
+        if not name:
+            print("  usage: /calendar remove <name>")
+            return
+        try:
+            from Feeds.sources.calendar import remove_calendar
+            ok = remove_calendar(name)
+            print(f"  {GREEN}removed{RESET} '{name}'" if ok else f"  {RED}not found: {name}{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    if verb == "poll":
+        try:
+            from Feeds.sources.calendar import poll_calendars
+            count = poll_calendars()
+            print(f"  {GREEN}polled calendars{RESET}: {count} events emitted")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # Default: list calendars
+    try:
+        from Feeds.sources.calendar import get_calendars
+        cals = get_calendars()
+        if not cals:
+            print(f"  {DIM}no calendars configured — use /calendar add <name> <ical_url>{RESET}")
+            return
+        print(f"  {BOLD}Calendar sources:{RESET}")
+        for cal in cals:
+            status = GREEN + "enabled" + RESET if cal["enabled"] else DIM + "disabled" + RESET
+            print(f"  📅 {cal['name']} {status} (poll: {cal['poll_interval']}s, lookahead: {cal['lookahead_minutes']}m)")
+            print(f"    {DIM}{cal['ical_url'][:70]}{RESET}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
+# ─────────────────────────────────────────────────────────────
+# /backfill — conversation concept extraction
+# ─────────────────────────────────────────────────────────────
+
+def _cmd_backfill(args: str):
+    """Manage conversation concept backfill."""
+    tokens = args.strip().split()
+    verb = tokens[0] if tokens else ""
+
+    if verb == "run":
+        print(f"  {DIM}running backfill batch...{RESET}")
+        try:
+            from agent.subconscious.loops.convo_concepts import ConvoConceptLoop
+            loop = ConvoConceptLoop(enabled=False)
+            loop._process_batch()
+            stats = loop.stats
+            print(f"  {GREEN}batch complete{RESET}")
+            print(f"    processed:  {stats['total_processed']} conversations")
+            print(f"    concepts:   {stats['total_concepts']}")
+            print(f"    links:      {stats['total_links']}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    if verb == "all":
+        print(f"  {DIM}processing all unextracted conversations...{RESET}")
+        try:
+            from agent.subconscious.loops.convo_concepts import ConvoConceptLoop, get_backfill_status
+            loop = ConvoConceptLoop(enabled=False, batch_size=50)
+            status = get_backfill_status()
+            remaining = status["remaining"]
+            print(f"  {remaining} conversations to process")
+            batch = 0
+            while True:
+                loop._process_batch()
+                batch += 1
+                new_status = get_backfill_status()
+                if new_status["remaining"] == 0:
+                    break
+                print(f"  {DIM}  batch {batch}: {new_status['processed']}/{new_status['total_conversations']}{RESET}")
+            stats = loop.stats
+            print(f"  {GREEN}backfill complete{RESET}")
+            print(f"    processed:  {stats['total_processed']} conversations")
+            print(f"    concepts:   {stats['total_concepts']}")
+            print(f"    links:      {stats['total_links']}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    if verb == "reset":
+        try:
+            from agent.subconscious.loops.convo_concepts import reset_backfill
+            reset_backfill()
+            print(f"  {GREEN}backfill progress reset — all conversations will be reprocessed{RESET}")
+        except Exception as e:
+            print(f"  {RED}error: {e}{RESET}")
+        return
+
+    # Default: show status
+    try:
+        from agent.subconscious.loops.convo_concepts import get_backfill_status
+        status = get_backfill_status()
+        print(f"  {BOLD}Concept Backfill Status:{RESET}")
+        print(f"    total conversations:  {status['total_conversations']}")
+        print(f"    processed:            {status['processed']}")
+        print(f"    remaining:            {status['remaining']}")
+        if status['remaining'] > 0:
+            print(f"  {DIM}run /backfill run (one batch) or /backfill all (everything){RESET}")
+        else:
+            print(f"  {GREEN}all conversations processed{RESET}")
+    except Exception as e:
+        print(f"  {RED}error: {e}{RESET}")
+
+
 COMMANDS = {
     "/status": lambda a: _cmd_status(),
     "/memory": _cmd_memory,
     "/loops": _cmd_loops_ext,
     "/thoughts": _cmd_thoughts,
     "/tasks": _cmd_tasks,
+    "/goals": _cmd_goals,
+    "/notifications": _cmd_notifications,
+    "/improvements": _cmd_improvements,
+    "/calendar": _cmd_calendar,
+    "/backfill": _cmd_backfill,
 }

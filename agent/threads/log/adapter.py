@@ -61,6 +61,12 @@ class LogThreadAdapter(BaseThreadAdapter):
         super().__init__()
         self._session_start: Optional[datetime] = None
         self._message_count: int = 0
+        self._session_id: Optional[str] = None
+
+    def _ensure_session(self) -> None:
+        """Auto-start a session if one isn't active."""
+        if self._session_start is None:
+            self.start_session()
     
     def get_data(self, level: int = 2, limit: int = None) -> List[Dict]:
         """
@@ -88,6 +94,7 @@ class LogThreadAdapter(BaseThreadAdapter):
         self._session_start = datetime.now(timezone.utc)
         self._message_count = 0
         session_id = self._session_start.strftime("%Y%m%d_%H%M%S")
+        self._session_id = session_id
         
         self.push(
             module="sessions",
@@ -160,6 +167,7 @@ class LogThreadAdapter(BaseThreadAdapter):
 
         Returns dicts with: path, l1_value, l2_value, l3_value, weight.
         """
+        self._ensure_session()
         raw: List[Dict] = []
 
         # Session metadata — always high weight (temporal context)

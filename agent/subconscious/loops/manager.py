@@ -13,8 +13,12 @@ from .consolidation import ConsolidationLoop
 from .sync import SyncLoop
 from .health import HealthLoop
 from .thought import ThoughtLoop
+from .training_gen import TrainingGenLoop
 from .custom import CustomLoop, get_custom_loop_configs
 from .task_planner import TaskPlanner
+from .goals import GoalLoop
+from .self_improve import SelfImprovementLoop
+from .convo_concepts import ConvoConceptLoop
 
 
 class LoopManager:
@@ -115,6 +119,38 @@ def create_default_loops() -> LoopManager:
     manager.add(TaskPlanner(
         interval=task_interval,
         enabled=task_enabled,
+    ))
+    
+    # Goal generation — proposes goals from recurring concepts + values
+    goal_enabled = os.getenv("AIOS_GOAL_LOOP", "1") == "1"
+    goal_interval = float(os.getenv("AIOS_GOAL_INTERVAL", "600"))
+    manager.add(GoalLoop(
+        interval=goal_interval,
+        enabled=goal_enabled,
+    ))
+
+    # Self-improvement — proposes small code fixes for human approval
+    improve_enabled = os.getenv("AIOS_SELF_IMPROVE", "1") == "1"
+    improve_interval = float(os.getenv("AIOS_SELF_IMPROVE_INTERVAL", "3600"))
+    manager.add(SelfImprovementLoop(
+        interval=improve_interval,
+        enabled=improve_enabled,
+    ))
+
+    # Training data generator — LLM generates synthetic training examples
+    training_gen_enabled = os.getenv("AIOS_TRAINING_GEN", "1") == "1"
+    training_gen_interval = float(os.getenv("AIOS_TRAINING_GEN_INTERVAL", "7200"))
+    manager.add(TrainingGenLoop(
+        interval=training_gen_interval,
+        enabled=training_gen_enabled,
+    ))
+
+    # Conversation concept extraction — backfill imported conversations into graph
+    convo_concepts_enabled = os.getenv("AIOS_CONVO_CONCEPTS", "1") == "1"
+    convo_concepts_interval = float(os.getenv("AIOS_CONVO_CONCEPTS_INTERVAL", "300"))
+    manager.add(ConvoConceptLoop(
+        interval=convo_concepts_interval,
+        enabled=convo_concepts_enabled,
     ))
     
     # Load user-defined custom loops from DB

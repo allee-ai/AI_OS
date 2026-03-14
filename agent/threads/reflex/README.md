@@ -98,17 +98,19 @@ If no match → proceed to full context assembly.
 ## Roadmap
 
 <!-- ROADMAP:reflex -->
-### Ready for contributors
-- [ ] **10x auto-promotion** — Patterns repeating 10+ times auto-promote to reflex
-- [ ] **Reflex editor** — Visual pattern builder in UI
-- [x] **Conditional reflexes** — Feed event triggers with conditions
-- [ ] **Reflex analytics** — Usage frequency, match rates
+### Done
+- [x] **Conditional reflexes** — Feed event triggers with nested conditions (all/any/not, regex, concept_match)
+- [x] **Enable/disable toggle** — Per-trigger activation control
+- [x] **Cron scheduling** — Time-based trigger evaluation
+
+### Pattern mining (auto-promotion)
+- [ ] **Repeated intent detection** — Scan conversation history + log_events for recurring user action patterns. Hard problem: "similar enough" requires intent-level grouping, not exact string match
+- [ ] **Candidate trigger generation** — Translate detected pattern into a trigger definition (feed, condition, tool, params)
+- [ ] **Promotion confirmation UX** — "I noticed you check weather every morning — automate this?" Requires a notification/suggestion flow that doesn't exist
 
 ### Starter tasks
-- [ ] Add reflex test button in UI
-- [ ] Show reflex match history
-- [x] Implement reflex enable/disable toggle
-- [ ] Feed trigger builder UI
+- [ ] Reflex match history — show which triggers fired, when, and what they did
+- [ ] Visual trigger builder — form-based UI for creating conditional triggers
 <!-- /ROADMAP:reflex -->
 
 ---

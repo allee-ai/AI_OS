@@ -290,6 +290,9 @@ class ChatGPTExportParser(ExportParserBase):
 
         return ParsedMessage(role=role, content=text.strip(), timestamp=timestamp)
 
+    # Matches ChatGPT citation markers like 【13†source】, 【36:2†file.pdf†L1-L10】
+    _CITATION_RE = re.compile(r'【(\d+(?::\d+)?)(?:†[^】]*)?】')
+
     def _extract_content_text(self, content: Dict) -> str:
         """Extract plain text from a content object with parts[]."""
         parts = content.get("parts", [])
@@ -301,7 +304,10 @@ class ChatGPTExportParser(ExportParserBase):
                 t = part.get("text") or part.get("content")
                 if t:
                     text_parts.append(str(t))
-        return "\n".join(text_parts)
+        text = "\n".join(text_parts)
+        # Convert ChatGPT citation markers to markdown-friendly [n] format
+        text = self._CITATION_RE.sub(r'[\1]', text)
+        return text
 
     # ------------------------------------------------------------------
     # Helpers

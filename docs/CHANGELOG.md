@@ -5,6 +5,133 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-03-14 — Self-Improvement Loop, Goal Loop, Concept Backfill, New Tools, Frontend Visibility
+
+### Self-Improvement Loop (`agent/subconscious/loops/self_improve.py`)
+- **Scoped code review**: Reads insights from thought loop, proposes small edits to allowlisted files only (`*/api.py`, `*/schema.py`, `*/registry.py`, `*/events.py`)
+- **Never auto-applies**: Stored in `proposed_improvements` table with `pending` status — human approval required
+- **API**: `GET /api/subconscious/improvements`, `POST .../improvements/{id}/resolve`, `POST .../improvements/{id}/apply`
+- **CLI**: Accessible via subconscious dashboard
+- **Functions**: `propose_improvement()`, `get_proposed_improvements()`, `resolve_improvement()`, `apply_improvement()`
+
+### Goal Loop (`agent/subconscious/loops/goals.py`)
+- **Emergent goals**: Reads recurring concepts from linking_core, values from philosophy, recent activity from log → proposes candidate goals
+- **Stored in**: `proposed_goals` table with priority levels and source tracking
+- **Human gate**: Approval required before promotion to active tasks
+- **API**: `GET /api/subconscious/goals`, `POST .../goals/{id}/resolve`
+- **Functions**: `propose_goal()`, `get_proposed_goals()`, `resolve_goal()`
+
+### Conversation Concept Backfill (`agent/subconscious/loops/convo_concepts.py`)
+- **ConvoConceptLoop**: Background loop (300s interval) that backfills the concept graph from imported/historical conversations that were never concept-extracted
+- **Batch processing**: 20 conversations per tick, tracks progress via `memory_loop_state` table
+- **After catching up**: Runs `consolidate_links()` to promote reinforced SHORT links → LONG
+- **API**: `GET /api/subconscious/backfill` (status), `POST .../backfill/run` (trigger batch), `POST .../backfill/reset` (reprocess all)
+- **CLI**: `/backfill` (status), `/backfill run` (one batch), `/backfill all` (process everything), `/backfill reset`
+- **Helpers**: `get_backfill_status()`, `reset_backfill()`
+
+### New Tool Executables
+- **`notify.py`** — Agent can send notifications: `alert(message, priority)`, `remind(message, context)`, `confirm(question, options)`. Backed by `notifications` DB table with read/dismissed/response tracking
+- **`code_edit.py`** — Agent can edit project source files from chat: `edit_file(path, old, new)`, `read_file(path)`, `search_code(pattern, dir)`, `list_files(path)`. Sandboxed: blocked paths (`.env`, DB files), allowed extensions whitelist, 100KB read limit
+
+### Notification System
+- **API**: `GET /api/subconscious/notifications`, `POST .../notifications/{id}/read`, `POST .../notifications/{id}/dismiss`, `POST .../notifications/{id}/respond`
+- **Frontend**: Notification panel in SubconsciousDashboard with dismiss/respond actions
+
+### Frontend Updates (~2000 lines added)
+- **SubconsciousDashboard**: New panels for Goals (approve/reject), Notifications (read/dismiss/respond), and Improvements (approve/reject/apply)
+- **Feeds sidebar**: Category grouping (Email, Social, Calendar, Dev Tools, Commerce, Other) with icons + calendar source management
+- **FinetunePanel**: Major expansion — sections browser, docstring extraction UI, unified training view, generated example approval
+- **New pages**: `UnifiedView.tsx`, `SectionDetailPage.tsx`
+
+### Training Data Generator (`agent/subconscious/loops/training_gen.py`)
+- Background loop generating synthetic training examples every 2h using LLM with STATE context
+- Writes to `finetune/generated/{module}.jsonl` for 8 modules
+
+### Files Changed
+- `agent/subconscious/loops/self_improve.py` — New
+- `agent/subconscious/loops/goals.py` — New
+- `agent/subconscious/loops/convo_concepts.py` — New
+- `agent/subconscious/loops/training_gen.py` — New
+- `agent/subconscious/loops/__init__.py` — New exports
+- `agent/subconscious/loops/manager.py` — New loop registrations
+- `agent/subconscious/api.py` — 12 new endpoints (goals, notifications, improvements, backfill)
+- `agent/subconscious/cli.py` — `/backfill` command with run/all/reset subcommands
+- `agent/threads/form/tools/executables/notify.py` — New
+- `agent/threads/form/tools/executables/code_edit.py` — New
+- `frontend/src/modules/subconscious/components/SubconsciousDashboard.tsx` — Goals/Notifications/Improvements panels
+- `frontend/src/modules/services/components/FeedsSidebar.tsx` — Category grouping
+- `frontend/src/modules/finetune/` — Sections browser, unified view, generated approval
+- `docs/CHANGELOG.md` — This entry
+
+### Conversation Imports & Data Pipeline
+- **VS Code Copilot import** (`scripts/import_vscode_sessions.py`): Imports scattered VS Code Copilot chat sessions — 135 conversations, 4,104 turns imported with 0 failures
+- **ChatGPT import** (`scripts/import_chatgpt_convos.py`): Imports official ChatGPT data exports (ZIP or folder) — 126 conversations, 3,915 turns imported with 0 failures
+- **VS Code parser fixes** (`chat/parsers/vscode_export_parser.py`): Fixed response text extraction, per-request timestamps, model ID capture
+- **ChatGPT citation cleanup** (`chat/parsers/chatgpt_export_parser.py`): Converts `【13†source】` citation markers to displayable `[13]` format via regex in `_extract_content_text()`
+- **DB totals**: 284 conversations (23 aios + 135 copilot + 126 chatgpt), 8,100 turns
+
+### Concept Graph Redesign
+- **Entity-based extraction** (`agent/threads/linking_core/schema.py`): Rewrote `extract_concepts_from_text()` — entity registry matching instead of noisy word-based extraction
+- **Graph cleanup + re-backfill**: 5,994 links between 415 named entities (was junk before)
+- **LLM extraction path** (`convo_concepts.py`): Dual mode — entity matching (default) + LLM extraction (`--llm` flag)
+
+### Conversation Pagination
+- **Backend** (`chat/schema.py`, `chat/api.py`): `get_conversation()` now accepts `limit`/`offset` params. Default returns last N turns. Response includes `total_turns` for frontend paging.
+- **Frontend** (`useChat.ts`, `MessageList.tsx`, `chatApi.ts`, `ChatContainer.tsx`): PAGE_SIZE=50, "Load older messages" button at top, smart auto-scroll (doesn't jump on prepend)
+
+### Sidebar Reorganization
+- **Nested dropdowns** (`ConversationSidebar.tsx`): Replaced flat list + "Imported from X" dividers with nested accordion — `▸ AI_OS (n)`, `▸ Imports` → `▸ ChatGPT (n)` / `▸ Copilot (n)`, `▸ Media` (placeholder scaffold)
+- **No divider text**: Removed `--- Imported from ChatGPT ---` section dividers entirely
+- **CSS** (`ConversationSidebar.css`): New `.source-section`, `.nested`, `.media-placeholder` styles
+
+### Misc
+- **Summarizer model**: Default changed from `llama3.2` to `kimi-k2:1t-cloud`
+- **Conversation list limit**: Bumped from 50 → 500
+
+---
+
+## 2026-03-13 — Eval Harness, Agent Instruction System, Doc Sync
+
+### Eval Harness (`eval/`)
+- **`eval/api.py`** (new): Full FastAPI router — `POST /run` (multi-model eval), `POST /run/state-comparison` (with/without STATE), `GET /results`, `GET /results/{id}`, `GET /comparisons`, `GET /benchmarks`, `POST /benchmarks`, `DELETE /benchmarks/{id}`, `GET /models`
+- **`eval/runner.py`**: `run_prompt()` routes Nola through `agent.generate()` (full STATE) or direct Ollama; raw models go straight to Ollama. `judge_responses()` uses LLM-as-judge. `list_available_models()` queries Ollama API.
+- **`eval/schema.py`**: 3 tables (`eval_benchmarks`, `eval_results`, `eval_comparisons`). `seed_benchmarks()` auto-populates 25 prompts across 5 categories on first boot.
+- **`eval/__init__.py`**: Exports router
+- **`scripts/server.py`**: Eval router mounted
+- **Frontend**: `EvalDashboard.tsx` — sidebar benchmark categories, model selector chips, preset prompts, side-by-side comparison grid, judge output panel, benchmark editor, history table
+
+### Agent Instruction System (`.github/agents/`)
+- **Consolidated to 4 files** from 10: `agent.agent.md`, `plan.agent.md`, `ask.agent.md`, `task.agent.md`
+- **`agent.agent.md`**: File responsibilities, DB pattern, router pattern, adapter pattern, module registration checklists (thread + top-level), behavioral boundaries, step sizing for small models, anti-patterns, CLI/debug boundaries, fix protocol
+- **`plan.agent.md`**: Read-first doc list, planning sequence (classify → locate → boundary check → define → estimate → order), planning anti-patterns, frontend addendum, plan template
+- **`ask.agent.md`**: Rules (no emotion, theory vs verified), pre-build breakpoints (existence/boundary/regression/necessity), failure mode tables (schema/adapter/API/frontend/orchestrator), runtime verification, uncomfortable questions, post-build audit, test discipline rules
+- **`task.agent.md`**: Fill-in template (What/Why/Where/Shape/Contract/Blast Radius/Breakpoints/Verification/Dependencies), quick reference for common task shapes
+- **Removed**: MODEL_GUIDE.md, VISION.agent.md, changelog.agent.md, docs.agent.md, fix.agent.md, module.agent.md, refactor.agent.md, research.agent.md, sync.agent.md, test.agent.md — useful content absorbed into the 4 new files
+
+### Documentation Sync
+- **`eval/README.md`**: Rewritten from scratch — was referencing nonexistent files (`battle.py`, `judge.py`, `metrics.py`, `runners/`). Now matches actual implementation.
+- **`docs/ARCHITECTURE.md`**: Eval section updated — directory structure, data flow, schema, endpoints, runner modes all match reality
+- **`README.md`**: Roadmap section updated (eval listed as done), Learn More table includes eval link
+- **`docs/CHANGELOG.md`**: This entry
+
+### Files Changed
+- `eval/api.py` — New
+- `eval/__init__.py` — New
+- `eval/schema.py` — seed_benchmarks() added
+- `eval/runner.py` — Existing (no changes this session)
+- `eval/README.md` — Rewritten
+- `scripts/server.py` — Eval router import + mount
+- `.github/agents/agent.agent.md` — New
+- `.github/agents/plan.agent.md` — New
+- `.github/agents/ask.agent.md` — New
+- `.github/agents/task.agent.md` — New
+- `.github/agents/` — 10 old files removed
+- `docs/ARCHITECTURE.md` — Eval section rewritten
+- `README.md` — Roadmap + Learn More updated
+- `docs/CHANGELOG.md` — This entry
+
+---
+
 ## 2026-03-10 — Full CLI Parity, Headless Mode, Roadmap Overhaul
 
 ### CLI Feature Parity (`cli.py`)

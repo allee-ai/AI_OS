@@ -361,59 +361,126 @@ def spread_activate(
 # Concept Extraction
 # ─────────────────────────────────────────────────────────────
 
-# Stop words for concept extraction
-STOP_WORDS = {
-    'the', 'a', 'an', 'is', 'are', 'was', 'were', 'be', 'been', 'being',
-    'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could',
-    'should', 'may', 'might', 'must', 'can', 'this', 'that', 'these',
-    'those', 'what', 'which', 'who', 'whom', 'where', 'when', 'why', 'how',
-    'all', 'each', 'every', 'both', 'few', 'more', 'most', 'other', 'some',
-    'such', 'only', 'same', 'than', 'too', 'very', 'just', 'also', 'now',
-    'here', 'there', 'then', 'once', 'about', 'after', 'before', 'above',
-    'below', 'between', 'into', 'through', 'during', 'under', 'again',
-    'further', 'hey', 'hello', 'you', 'your', 'anything', 'something',
-    'nothing', 'everything', 'anyone', 'someone', 'know', 'think', 'want',
-    'need', 'like', 'tell', 'said', 'says', 'any', 'with', 'for', 'and',
-    'but', 'or', 'not', 'no', 'yes', 'user', 'agent', 'to', 'of', 'in', 'on',
-    'at', 'by', 'from', 'as', 'me', 'my', 'myself', 'we', 'our', 'ours',
-    'he', 'him', 'his', 'she', 'her', 'hers', 'it', 'its', 'they', 'them'
+# Cached registry of known entities.  Populated once per process from DB.
+_entity_registry: Optional[Dict[str, List[str]]] = None  # token → [entity_name, ...]
+_entity_names: Optional[set] = None                       # full canonical names
+
+
+def _build_entity_registry() -> Tuple[Dict[str, List[str]], set]:
+    """
+    Build a lookup from tokens → entity names.
+
+    Sources of truth (anything with a weighted row):
+      - profile_facts.key   (e.g. "deployment_status", "user.preferences.likes_coffee")
+      - profiles.profile_id (e.g. "primary_user", "family.mom")
+      - profiles.display_name (e.g. "Betsy", "John Doe")
+      - form_tools.name     (e.g. "search_web")
+
+    Each entity name is split on '.' and '_' into tokens.
+    The full name is also kept as its own token so exact matches work.
+    """
+    token_map: Dict[str, List[str]] = {}
+    names: set = set()
+
+    with closing(get_connection(readonly=True)) as conn:
+        # Fact keys
+        rows = conn.execute("SELECT DISTINCT key FROM profile_facts").fetchall()
+        for (key,) in rows:
+            names.add(key)
+
+        # Profiles
+        rows = conn.execute("SELECT profile_id, display_name FROM profiles").fetchall()
+        for pid, dname in rows:
+            names.add(pid)
+            if dname:
+                names.add(dname.lower())
+
+        # Tools
+        try:
+            rows = conn.execute("SELECT name FROM form_tools WHERE enabled = 1").fetchall()
+            for (tname,) in rows:
+                names.add(tname)
+        except Exception:
+            pass  # table may not exist yet
+
+    # Build token → entity_name mapping
+    for name in names:
+        # Tokenise: "user.preferences.likes_coffee" → ["user","preferences","likes","coffee"]
+        tokens = re.split(r'[._\s]+', name.lower())
+        tokens = [t for t in tokens if len(t) >= 2]
+
+        # Full name is also a token (for exact matching)
+        for token in tokens:
+            token_map.setdefault(token, [])
+            if name not in token_map[token]:
+                token_map[token].append(name)
+
+    return token_map, names
+
+
+def _get_entity_registry() -> Tuple[Dict[str, List[str]], set]:
+    """Return cached registry, building it on first call."""
+    global _entity_registry, _entity_names
+    if _entity_registry is None:
+        _entity_registry, _entity_names = _build_entity_registry()
+    return _entity_registry, _entity_names
+
+
+def invalidate_entity_registry() -> None:
+    """Force rebuild on next extraction (call after adding facts/tools/profiles)."""
+    global _entity_registry, _entity_names
+    _entity_registry = None
+    _entity_names = None
+
+
+# Tokens too generic to trigger entity matching on their own
+_NOISE_TOKENS = {
+    'user', 'general', 'preference', 'preferences', 'action', 'identity',
+    'process', 'system', 'assistant', 'information', 'query', 'goal',
+    'project', 'type', 'status', 'name', 'value', 'data', 'method',
+    'source', 'level', 'the', 'is', 'are', 'was', 'and', 'for',
+    'that', 'this', 'with', 'not', 'but', 'you', 'your',
 }
 
 
 def extract_concepts_from_text(text: str) -> List[str]:
     """
-    Extract concept keys from free text for spread activation queries.
-    
+    Match free text against known named entities (facts, profiles, tools).
+
+    Only returns entity names that actually exist in the system — not
+    arbitrary words pulled from text.
+
     Example:
-        "Hey, did Sarah mention anything about coffee?"
-        → ['sarah', 'coffee', 'mention']
+        text mentions "coffee" → returns ['user.preferences.likes_coffee']
+        text mentions "deployment" → returns ['deployment_status']
+        text mentions "Betsy" → returns ['betsy', 'family.mom']
     """
-    # Lowercase
+    token_map, entity_names = _get_entity_registry()
+    if not token_map:
+        return []
+
     text_lower = text.lower()
-    
-    # Find capitalized words (names)
-    names = re.findall(r'\b([A-Z][a-z]+)\b', text)
-    concepts = [n.lower() for n in names if n.lower() not in STOP_WORDS]
-    
-    # Find important words (> 2 chars, not stop words)
-    words = re.findall(r'\b([a-z]{3,})\b', text_lower)
-    for word in words:
-        if word not in STOP_WORDS and word not in concepts:
-            concepts.append(word)
-    
-    return concepts
+    text_words = set(re.findall(r'\b[a-z][a-z0-9]{1,}\b', text_lower))
+
+    matched: set = set()
+
+    for word in text_words:
+        if word in _NOISE_TOKENS:
+            continue
+        if word in token_map:
+            for entity_name in token_map[word]:
+                matched.add(entity_name)
+
+    return list(matched)
 
 
 def extract_concepts_from_value(value: str) -> List[str]:
     """
-    Extract concept tokens from a fact value.
-    
-    "Sarah works at Blue Bottle Coffee" → ["sarah", "blue", "bottle", "coffee"]
+    Extract matching entity names from a fact value.
+
+    "Sarah works at Blue Bottle Coffee" → entities matching sarah, blue, bottle, coffee
     """
-    text = value.lower()
-    words = re.findall(r'\b[a-z][a-z0-9_]{1,}\b', text)
-    concepts = [w for w in words if w not in STOP_WORDS]
-    return list(set(concepts))
+    return extract_concepts_from_text(value)
 
 
 # ─────────────────────────────────────────────────────────────
@@ -1375,3 +1442,99 @@ def process_conversation_turn(user_input: str, agent_response: str, learning_rat
         pass
     
     return result
+
+
+# ─────────────────────────────────────────────────────────────
+# Self-Attention / Focus Tracking
+# ─────────────────────────────────────────────────────────────
+
+def _ensure_focus_table(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Create focus_topics table for self-attention tracking."""
+    own_conn = conn is None
+    conn = conn or get_connection()
+    conn.execute("""
+        CREATE TABLE IF NOT EXISTS focus_topics (
+            topic TEXT PRIMARY KEY,
+            weight REAL NOT NULL DEFAULT 1.0,
+            hits INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            last_seen TEXT NOT NULL DEFAULT (datetime('now'))
+        )
+    """)
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def update_focus(concepts: List[str], boost: float = 0.15, decay: float = 0.95) -> Dict[str, float]:
+    """
+    Update focus topics from the latest turn's concepts.
+
+    1. Decay ALL existing topics by *decay*
+    2. Boost topics that appear in *concepts*
+    3. Insert new topics at *boost*
+    4. Prune topics below 0.05
+
+    Returns the current focus map {topic: weight}.
+    """
+    if not concepts:
+        return get_focus()
+
+    with closing(get_connection()) as conn:
+        _ensure_focus_table(conn)
+        cur = conn.cursor()
+
+        # Decay everything
+        cur.execute("UPDATE focus_topics SET weight = weight * ?", (decay,))
+
+        # Upsert each concept
+        for concept in concepts:
+            cur.execute("""
+                INSERT INTO focus_topics (topic, weight, hits, last_seen)
+                VALUES (?, ?, 1, datetime('now'))
+                ON CONFLICT(topic) DO UPDATE SET
+                    weight = MIN(focus_topics.weight + ?, 3.0),
+                    hits = focus_topics.hits + 1,
+                    last_seen = datetime('now')
+            """, (concept, boost, boost))
+
+        # Prune weak topics
+        cur.execute("DELETE FROM focus_topics WHERE weight < 0.05")
+        conn.commit()
+
+    return get_focus()
+
+
+def get_focus(limit: int = 20) -> Dict[str, float]:
+    """Return current focus topics sorted by weight descending."""
+    with closing(get_connection(readonly=True)) as conn:
+        _ensure_focus_table(conn)
+        cur = conn.cursor()
+        cur.execute(
+            "SELECT topic, weight FROM focus_topics ORDER BY weight DESC LIMIT ?",
+            (limit,),
+        )
+        return {row[0]: round(row[1], 3) for row in cur.fetchall()}
+
+
+def clear_focus() -> int:
+    """Clear all focus topics. Returns count deleted."""
+    with closing(get_connection()) as conn:
+        _ensure_focus_table(conn)
+        cur = conn.cursor()
+        cur.execute("DELETE FROM focus_topics")
+        count = cur.rowcount
+        conn.commit()
+    return count
+
+
+def get_focus_bias(concepts: List[str], max_bias: float = 2.0) -> float:
+    """
+    Return a scoring bias (0.0–max_bias) based on overlap
+    between *concepts* and current focus topics.
+    """
+    focus = get_focus()
+    if not focus or not concepts:
+        return 0.0
+    total = sum(focus.get(c, 0.0) for c in concepts)
+    return min(total, max_bias)

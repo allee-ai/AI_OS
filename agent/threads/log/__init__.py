@@ -46,6 +46,11 @@ from .schema import (
     get_log_stats,
     get_event_types,
     get_sources,
+    # Function call tracing
+    log_function_call,
+    get_function_calls,
+    cleanup_old_function_logs,
+    trace_function,
 )
 
 # Singleton instance for module-level functions

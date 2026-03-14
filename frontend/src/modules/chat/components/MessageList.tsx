@@ -138,6 +138,8 @@ interface MessageListProps {
   messages: ChatMessage[];
   isAgentTyping?: boolean;
   conversationId?: string;
+  hasMore?: boolean;
+  onLoadMore?: () => void;
 }
 
 // Track which messages have been rated
@@ -146,9 +148,12 @@ const ratedMessages = new Set<string>();
 export const MessageList: React.FC<MessageListProps> = ({ 
   messages, 
   isAgentTyping = false,
-  conversationId
+  conversationId,
+  hasMore = false,
+  onLoadMore
 }) => {
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const prevMessageCountRef = React.useRef(0);
   const [ratings, setRatings] = useState<Record<string, 'up' | 'down'>>({});
   const [ratingInProgress, setRatingInProgress] = useState<string | null>(null);
   const [feedbackOpen, setFeedbackOpen] = useState<string | null>(null);
@@ -160,8 +165,22 @@ export const MessageList: React.FC<MessageListProps> = ({
   };
 
   React.useEffect(() => {
-    scrollToBottom();
-  }, [messages, isAgentTyping]);
+    const prevCount = prevMessageCountRef.current;
+    const newCount = messages.length;
+    // Only auto-scroll if messages were appended (new message at end), not prepended (load older)
+    if (newCount > prevCount && prevCount > 0) {
+      // Check if the last message changed (new message was appended)
+      scrollToBottom();
+    } else if (prevCount === 0 && newCount > 0) {
+      // Initial load — scroll to bottom
+      scrollToBottom();
+    }
+    prevMessageCountRef.current = newCount;
+  }, [messages]);
+
+  React.useEffect(() => {
+    if (isAgentTyping) scrollToBottom();
+  }, [isAgentTyping]);
 
   const formatTime = (timestamp: Date) => {
     return new Intl.DateTimeFormat('en-US', {
@@ -241,6 +260,14 @@ export const MessageList: React.FC<MessageListProps> = ({
   return (
     <div className="message-list">
       <div className="messages-container">
+        {hasMore && onLoadMore && (
+          <div className="load-more-container">
+            <button className="load-more-btn" onClick={onLoadMore}>
+              Load older messages
+            </button>
+          </div>
+        )}
+
         {messages.length === 0 && !isAgentTyping && (
           <div className="empty-state">
             <div className="empty-icon">👋</div>

@@ -133,6 +133,13 @@ export default function SubconsciousDashboard() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
+  // Goals / Notifications / Improvements
+  type DetailView = 'loop' | 'goals' | 'notifications' | 'improvements';
+  const [detailView, setDetailView] = useState<DetailView>('loop');
+  const [goals, setGoals] = useState<any[]>([]);
+  const [notifications, setNotifications] = useState<any[]>([]);
+  const [improvements, setImprovements] = useState<any[]>([]);
+
   // ── Data fetching ────────────────────────────────────────
 
   const fetchData = useCallback(async () => {
@@ -169,6 +176,16 @@ export default function SubconsciousDashboard() {
           targets: data.available_targets || [],
         });
       }
+
+      // Fetch goals, notifications, improvements (best-effort)
+      const [goalsRes, notifsRes, impsRes] = await Promise.all([
+        fetch(`${API}/goals`).catch(() => null),
+        fetch(`${API}/notifications?limit=20`).catch(() => null),
+        fetch(`${API}/improvements`).catch(() => null),
+      ]);
+      if (goalsRes?.ok) setGoals(await goalsRes.json());
+      if (notifsRes?.ok) setNotifications(await notifsRes.json());
+      if (impsRes?.ok) setImprovements(await impsRes.json());
     } catch (err) {
       console.error('Failed to fetch subconscious data:', err);
     } finally {
@@ -387,6 +404,32 @@ export default function SubconsciousDashboard() {
     }
   };
 
+  // ── Goals / Notifications / Improvements actions ─────────
+  const resolveGoal = async (id: number, action: string) => {
+    await fetch(`${API}/goals/${id}/resolve?action=${action}`, { method: 'POST' });
+    fetchData();
+  };
+
+  const dismissNotification = async (id: number) => {
+    await fetch(`${API}/notifications/${id}/dismiss`, { method: 'POST' });
+    fetchData();
+  };
+
+  const markNotificationRead = async (id: number) => {
+    await fetch(`${API}/notifications/${id}/read`, { method: 'POST' });
+    fetchData();
+  };
+
+  const resolveImprovement = async (id: number, action: string) => {
+    await fetch(`${API}/improvements/${id}/resolve?action=${action}`, { method: 'POST' });
+    fetchData();
+  };
+
+  const applyImprovement = async (id: number) => {
+    await fetch(`${API}/improvements/${id}/apply`, { method: 'POST' });
+    fetchData();
+  };
+
   // ── Render ───────────────────────────────────────────────
 
   if (loading) {
@@ -419,6 +462,14 @@ export default function SubconsciousDashboard() {
         <div className="stat-card">
           <span className="stat-value">{longCount}</span>
           <span className="stat-label">LONG</span>
+        </div>
+        <div className={`stat-card ${goals.length > 0 ? 'highlight' : ''}`}>
+          <span className="stat-value">{goals.length}</span>
+          <span className="stat-label">Goals</span>
+        </div>
+        <div className={`stat-card ${notifications.filter(n => !n.read).length > 0 ? 'highlight' : ''}`}>
+          <span className="stat-value">{notifications.filter(n => !n.read).length}</span>
+          <span className="stat-label">Notifs</span>
         </div>
         <div className="stat-card actions-card">
           <button onClick={handleConsolidate} className="action-btn-sm consolidate">🧠 Consolidate</button>
@@ -521,7 +572,7 @@ export default function SubconsciousDashboard() {
             <div
               key={loop.name}
               className={`loop-list-item ${selectedLoop === loop.name ? 'active' : ''}`}
-              onClick={() => { setSelectedLoop(loop.name); setShowAddLoop(false); }}
+              onClick={() => { setSelectedLoop(loop.name); setShowAddLoop(false); setDetailView('loop'); }}
             >
               <span
                 className="loop-dot"
@@ -542,7 +593,7 @@ export default function SubconsciousDashboard() {
                 <div
                   key={loop.name}
                   className={`loop-list-item ${selectedLoop === loop.name ? 'active' : ''}`}
-                  onClick={() => { setSelectedLoop(loop.name); setShowAddLoop(false); }}
+                  onClick={() => { setSelectedLoop(loop.name); setShowAddLoop(false); setDetailView('loop'); }}
                 >
                   <span
                     className="loop-dot"
@@ -554,6 +605,35 @@ export default function SubconsciousDashboard() {
               ))}
             </>
           )}
+
+          {/* ── Review queues ── */}
+          <div className="loop-group-label">Review</div>
+          <div
+            className={`loop-list-item ${detailView === 'goals' ? 'active' : ''}`}
+            onClick={() => { setDetailView('goals'); setSelectedLoop(null); setShowAddLoop(false); }}
+          >
+            <span className="loop-dot" style={{ background: goals.length > 0 ? '#f59e0b' : '#6b7280' }} />
+            <span className="loop-list-name">Goals</span>
+            {goals.length > 0 && <span className="loop-list-meta">{goals.length} pending</span>}
+          </div>
+          <div
+            className={`loop-list-item ${detailView === 'notifications' ? 'active' : ''}`}
+            onClick={() => { setDetailView('notifications'); setSelectedLoop(null); setShowAddLoop(false); }}
+          >
+            <span className="loop-dot" style={{ background: notifications.filter(n => !n.read).length > 0 ? '#ef4444' : '#6b7280' }} />
+            <span className="loop-list-name">Notifications</span>
+            {notifications.filter(n => !n.read).length > 0 && (
+              <span className="loop-list-meta">{notifications.filter(n => !n.read).length} unread</span>
+            )}
+          </div>
+          <div
+            className={`loop-list-item ${detailView === 'improvements' ? 'active' : ''}`}
+            onClick={() => { setDetailView('improvements'); setSelectedLoop(null); setShowAddLoop(false); }}
+          >
+            <span className="loop-dot" style={{ background: improvements.length > 0 ? '#8b5cf6' : '#6b7280' }} />
+            <span className="loop-list-name">Improvements</span>
+            {improvements.length > 0 && <span className="loop-list-meta">{improvements.length} pending</span>}
+          </div>
 
           {/* Potentiation summary at bottom of sidebar */}
           <div className="sidebar-footer">
@@ -1119,6 +1199,90 @@ export default function SubconsciousDashboard() {
                 </div>
               )}
             </>
+          ) : detailView === 'goals' ? (
+            /* ── Goals Panel ── */
+            <div className="detail-section">
+              <h3>🎯 Proposed Goals</h3>
+              <p className="detail-hint">Goals generated by the goal loop for your review.</p>
+              {goals.length === 0 ? (
+                <div className="detail-empty-inline">No pending goals</div>
+              ) : (
+                <div className="review-list">
+                  {goals.map((g: any) => (
+                    <div key={g.id} className="review-card">
+                      <div className="review-card-header">
+                        <span className="review-id">#{g.id}</span>
+                        <span className={`review-priority ${g.priority}`}>{g.priority}</span>
+                      </div>
+                      <div className="review-card-body">{g.goal}</div>
+                      {g.rationale && <div className="review-card-rationale">{g.rationale}</div>}
+                      <div className="review-card-actions">
+                        <button className="btn-sm approve" onClick={() => resolveGoal(g.id, 'approved')}>✓ Approve</button>
+                        <button className="btn-sm reject" onClick={() => resolveGoal(g.id, 'rejected')}>✗ Reject</button>
+                        <button className="btn-sm dismiss" onClick={() => resolveGoal(g.id, 'dismissed')}>Dismiss</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : detailView === 'notifications' ? (
+            /* ── Notifications Panel ── */
+            <div className="detail-section">
+              <h3>🔔 Notifications</h3>
+              <p className="detail-hint">Alerts, reminders, and confirmations from the agent.</p>
+              {notifications.length === 0 ? (
+                <div className="detail-empty-inline">No notifications</div>
+              ) : (
+                <div className="review-list">
+                  {notifications.map((n: any) => (
+                    <div key={n.id} className={`review-card ${n.read ? 'read' : 'unread'}`}>
+                      <div className="review-card-header">
+                        <span className="review-id">#{n.id}</span>
+                        <span className="review-type">
+                          {n.type === 'alert' ? '🔔' : n.type === 'reminder' ? '⏰' : n.type === 'confirm' ? '❓' : '📌'} {n.type}
+                        </span>
+                        <span className={`review-priority ${n.priority}`}>{n.priority}</span>
+                      </div>
+                      <div className="review-card-body">{n.message}</div>
+                      <div className="review-card-meta">{n.created_at}</div>
+                      <div className="review-card-actions">
+                        {!n.read && <button className="btn-sm" onClick={() => markNotificationRead(n.id)}>Mark Read</button>}
+                        <button className="btn-sm dismiss" onClick={() => dismissNotification(n.id)}>Dismiss</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : detailView === 'improvements' ? (
+            /* ── Improvements Panel ── */
+            <div className="detail-section">
+              <h3>🔧 Proposed Improvements</h3>
+              <p className="detail-hint">Code changes proposed by the self-improvement loop. Review diffs before applying.</p>
+              {improvements.length === 0 ? (
+                <div className="detail-empty-inline">No pending improvements</div>
+              ) : (
+                <div className="review-list">
+                  {improvements.map((imp: any) => (
+                    <div key={imp.id} className="review-card">
+                      <div className="review-card-header">
+                        <span className="review-id">#{imp.id}</span>
+                        <code className="review-file">{imp.file_path}</code>
+                      </div>
+                      <div className="review-card-body">{imp.description}</div>
+                      {imp.rationale && <div className="review-card-rationale">{imp.rationale}</div>}
+                      <pre className="review-diff">{imp.diff}</pre>
+                      <div className="review-card-actions">
+                        <button className="btn-sm approve" onClick={() => resolveImprovement(imp.id, 'approved')}>✓ Approve</button>
+                        <button className="btn-sm" onClick={() => applyImprovement(imp.id)}>⚡ Apply</button>
+                        <button className="btn-sm reject" onClick={() => resolveImprovement(imp.id, 'rejected')}>✗ Reject</button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           ) : (
             /* ── Empty state ── */
             <div className="detail-empty">

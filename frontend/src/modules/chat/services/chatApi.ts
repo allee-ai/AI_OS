@@ -218,7 +218,7 @@ class APIService {
   }
 
   // Conversations API methods
-  async getConversations(limit: number = 50, search?: string): Promise<any[]> {
+  async getConversations(limit: number = 500, search?: string): Promise<any[]> {
     let url = `${this.baseUrl}/api/conversations?limit=${limit}&archived=false`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
@@ -232,7 +232,7 @@ class APIService {
     return response.json();
   }
 
-  async getArchivedConversations(limit: number = 50, search?: string): Promise<any[]> {
+  async getArchivedConversations(limit: number = 500, search?: string): Promise<any[]> {
     let url = `${this.baseUrl}/api/conversations?limit=${limit}&archived=true`;
     if (search) {
       url += `&search=${encodeURIComponent(search)}`;
@@ -246,8 +246,13 @@ class APIService {
     return response.json();
   }
 
-  async getConversation(sessionId: string): Promise<any> {
-    const response = await fetch(`${this.baseUrl}/api/conversations/${sessionId}`);
+  async getConversation(sessionId: string, limit?: number, offset?: number): Promise<any> {
+    const params = new URLSearchParams();
+    if (limit !== undefined) params.set('limit', String(limit));
+    if (offset !== undefined) params.set('offset', String(offset));
+    const qs = params.toString();
+    const url = `${this.baseUrl}/api/conversations/${sessionId}${qs ? '?' + qs : ''}`;
+    const response = await fetch(url);
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -358,6 +363,56 @@ class APIService {
     a.click();
     window.URL.revokeObjectURL(url);
     document.body.removeChild(a);
+  }
+
+  // Conversation summarization
+  async summarizeConversation(sessionId: string): Promise<{ summary: string }> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/${sessionId}/summarize`, {
+      method: 'POST',
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async getConvoSummaryPrompt(): Promise<{ prompt: string }> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/summary/prompt`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async setConvoSummaryPrompt(prompt: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/conversations/summary/prompt`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+  }
+
+  // File summarization prompt
+  async getFileSummaryPrompt(): Promise<{ prompt: string }> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/summary/prompt`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return response.json();
+  }
+
+  async setFileSummaryPrompt(prompt: string): Promise<void> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/summary/prompt`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ prompt }),
+    });
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
   }
 }
 

@@ -392,6 +392,12 @@ class AgentService:
             # Auto-name conversation after first turn (background task)
             if is_first_turn:
                 asyncio.create_task(self._auto_name_conversation(user_msg, assistant_msg))
+
+            # Auto-summarize at turn count thresholds (5, 15, 30)
+            if existing:
+                turn_count = len(existing.get("turns", [])) + 1
+                if turn_count in (5, 15, 30):
+                    asyncio.create_task(self._auto_summarize_conversation())
                 
         except Exception as e:
             print(f"Warning: Could not save conversation: {e}")
@@ -399,10 +405,36 @@ class AgentService:
     async def _auto_name_conversation(self, user_msg: str, assistant_msg: str):
         """Background task to name conversation using small LLM."""
         try:
-            from api.conversations import auto_name_conversation
+            from chat.api import auto_name_conversation
             await auto_name_conversation(self.session_id)
         except Exception as e:
             print(f"Auto-naming failed: {e}")
+
+    async def _auto_summarize_conversation(self):
+        """Background task to summarize conversation and rename after summary."""
+        try:
+            from workspace.summarizer import summarize_conversation
+            import asyncio
+            loop = asyncio.get_event_loop()
+            summary = await loop.run_in_executor(
+                None, summarize_conversation, self.session_id
+            )
+            if summary:
+                print(f"📝 Summarized {self.session_id}: {summary[:80]}...")
+                # Re-name the conversation based on the full summary
+                from chat.api import generate_conversation_name
+                from chat.schema import rename_conversation, get_conversation
+                convo = get_conversation(self.session_id)
+                if convo:
+                    turns = convo.get("turns", [])
+                    # Use first + last user messages for better naming context
+                    first_msg = turns[0].get("user", "") if turns else ""
+                    last_msg = turns[-1].get("user", "") if turns else ""
+                    name = await generate_conversation_name(first_msg, last_msg)
+                    rename_conversation(self.session_id, name)
+                    print(f"📝 Renamed {self.session_id}: {name}")
+        except Exception as e:
+            print(f"Auto-summarize failed: {e}")
 
     def _capture_state_snapshot(self, feed_type: str) -> dict:
         """Capture a minimal state snapshot scoped to current context level.
@@ -495,6 +527,11 @@ class AgentService:
         Before clearing, extracts concepts from the full conversation and
         records co-occurrences so the concept graph learns from every session.
         """
+        # Summarize + rename the ending conversation before clearing
+        old_session = self.session_id
+        if _HAS_CHAT_SCHEMA and len(self.message_history) >= 4:
+            asyncio.create_task(self._auto_summarize_conversation())
+
         # Extract concepts from the ending conversation before clearing
         if _HAS_CONCEPT_LEARNING and len(self.message_history) >= 2:
             await self._record_conversation_concepts()

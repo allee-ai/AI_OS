@@ -78,11 +78,11 @@ ToolDefinition(
 ## Roadmap
 
 <!-- ROADMAP:form -->
-### Ready for contributors
-- [ ] **Tool editor UI** — Visual tool builder for creating/editing tools
-- [ ] **Tool marketplace** — Shareable tool definitions
-- [ ] **Action chaining** — Multi-step tool workflows
-- [ ] **Usage analytics** — Track tool success/failure rates
+### Tool → STATE integration
+- [ ] **Tool result extraction** — Run MemoryLoop-style fact extraction on tool outputs (currently stored as truncated strings, not parsed)
+- [ ] **Tool→concept linking** — Feed tool results into `record_concept_cooccurrence()` so tool usage builds the knowledge graph
+- [ ] **Action chaining** — Multi-step tool workflows where step N input depends on step N-1 output
+- [ ] **Terminal command allowlist** — Replace unrestricted `shell=True` with explicit command allowlist (security critical)
 
 ### Done
 - [x] **Text-native tool calling** — `:::execute:::` block protocol parsed by scanner.py
@@ -92,11 +92,11 @@ ToolDefinition(
 - [x] **Tool loop in agent** — `_process_tool_calls()` with max 5 rounds, auto-re-call after execution
 - [x] **Frontend rendering** — `:::execute:::` and `:::result:::` blocks render as styled cards in chat
 - [x] **WebSocket tool events** — Real-time `tool_executing` / `tool_complete` messages
+- [x] **Hebbian tool traces** — Tool success/failure adjusts weight via learning rule
 
 ### Starter tasks
-- [ ] Add tool search/filter in UI
-- [ ] Show tool usage history
-- [ ] Implement tool favorites
+- [ ] Tool search/filter in dashboard UI
+- [ ] Surface tool_traces weights in the Form introspect output
 <!-- /ROADMAP:form -->
 
 ---

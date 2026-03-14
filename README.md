@@ -46,9 +46,11 @@ AI OS is an architecture layer that wraps your local LLM and handles what models
 
 - **Memory** — Persistent across sessions, organized by relevance 
 - **Identity** — Consistent personality stored structurally 
-- **Learning** — Extracts facts from conversations 
+- **Learning** — Extracts facts from conversations, builds concept graph 
 - **Control** — LLM handles language; OS handles state 
-- **Background Loops** — Predefined COT for specific workflows
+- **Background Loops** — Predefined COT for memory, goals, self-improvement, and custom workflows
+- **Tool Calling** — Text-native protocol: file ops, web search, notifications, code editing
+- **Eval Harness** — Benchmark your agent against raw models with LLM-as-judge
 
 **The pain point we solve:** These pieces exist separately — RAG libraries, prompt templates, memory plugins, identity frameworks — but nowhere in one integrated package for local LLMs. AI OS is that package.
 
@@ -154,9 +156,6 @@ Just type to chat. Use slash commands for everything else:
 | `/memory` | List temp_memory facts |
 | `/memory approve <id>` | Approve a pending fact |
 | `/memory reject <id>` | Reject a pending fact |
-| `/graph <query>` | Spread-activate concept graph |
-| `/mindmap` | Structural shape of the agent's mind |
-| `/mindmap links` | Include cross-thread edges |
 
 ### Identity & Philosophy
 
@@ -198,6 +197,18 @@ Just type to chat. Use slash commands for everything else:
 | `/loops context <n> on\|off` | Toggle STATE injection |
 | `/loops prompts <name>` | View/edit loop prompts |
 | `/loops delete <name>` | Delete a custom loop |
+
+### Concept Graph & Backfill
+
+| Command | Description |
+|---------|-------------|
+| `/graph <query>` | Spread-activate concept graph |
+| `/mindmap` | Structural shape of the agent's mind |
+| `/mindmap links` | Include cross-thread edges |
+| `/backfill` | Show concept backfill progress |
+| `/backfill run` | Process one batch of conversations |
+| `/backfill all` | Process all unextracted conversations |
+| `/backfill reset` | Reset progress, reprocess everything |
 
 ### Thoughts & Tasks
 
@@ -375,7 +386,8 @@ docker run --rm -v aios-data:/data -v $(pwd):/backup alpine tar cvf /backup/aios
 | **Continuity** | Every conversation starts fresh | Picks up where you left off, even weeks later |
 | **Consistency** | Personality drifts with prompting | Identity is structural, can't be manipulated |
 | **Action** | Locked in chat box | Reads files, searches web, runs commands via text-native tool calling |
-| **Learning** | Same quality forever | Extracts and stores facts from conversations |
+| **Learning** | Same quality forever | Extracts facts, builds concept graph, proposes goals |
+| **Background** | Does nothing when idle | Runs thought loops, generates training data, monitors health |
 
 ---
 
@@ -399,9 +411,9 @@ The LLM is stateless and dumb. The OS makes it smart.
 ### The Roadmap
 
 See **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:
-- **Now:** Subconscious, memory threads, HEA context levels
-- **Next:** Memory consolidation, philosophy constraints
-- **Future:** Reflex automation, dream states, multi-model routing, enterprise integration
+- **Done:** Subconscious, memory threads, HEA, CLI parity, tool calling, eval harness, context-aware loops, concept graph backfill, self-improvement loop, goal loop, notifications
+- **Now:** Graph population from imported conversations, finetune loop closure, training data quality
+- **Next:** Reflex automation, multi-model routing, feed integrations
 
 ---
 
@@ -426,6 +438,7 @@ Built solo since April 2025. The foundation works. Now it needs a community.
 | [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |
 | [**Architecture**](docs/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, state) |
 | [**Design Paper**](docs/RESEARCH_PAPER.md) | The theory behind the design |
+| [**Eval Harness**](eval/README.md) | Benchmark Nola against raw models |
 | [**Conversation Search Guide**](docs/CONVERSATION_SEARCH_GUIDE.md) | Find and recover lost conversations |
 | [**Contributing**](CONTRIBUTING.md) | How to help build it |
 

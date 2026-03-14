@@ -1,6 +1,6 @@
 # Feeds Module
 
-> ✅ **Core Complete** — Modular feeds, OAuth, events, and triggers ready.
+> 🔧 **Framework Complete** — Router, events, secrets, and OAuth plumbing ready. Feed adapters need real polling code.
 
 Universal inbox for external data streams — Email, Slack, SMS, and more.
 
@@ -83,8 +83,8 @@ tokens = get_oauth_tokens("gmail")
 | API Endpoints | ✅ |
 | Event System | ✅ |
 | Secrets Storage | ✅ |
-| Gmail OAuth | ✅ |
-| Discord Adapter | ✅ |
+| Gmail OAuth | 🔧 Config only |
+| Discord Adapter | 🔧 Config only |
 | Reflex Triggers | ✅ |
 <!-- /ARCHITECTURE:feeds -->
 
@@ -124,10 +124,10 @@ tokens = get_oauth_tokens("gmail")
 
 <!-- ROADMAP:feeds -->
 ### Ready for contributors
-- [x] **Gmail adapter** — OAuth2 flow, draft creation
+- [ ] **Gmail adapter** — OAuth2 config + event types exist. Needs actual polling, send, and draft creation
 - [ ] **Slack adapter** — Bot token auth, message polling
 - [ ] **SMS adapter** — Twilio integration
-- [x] **Discord adapter** — Bot token, channel watching
+- [ ] **Discord adapter** — Event types + OAuth config exist. Needs bot connection and channel watching
 
 ### Starter tasks
 - [x] Create gmail module from template

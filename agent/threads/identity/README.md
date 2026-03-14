@@ -106,7 +106,7 @@ New profiles are created with empty preset facts for common contact information:
 <!-- ROADMAP:identity -->
 ### Ready for contributors
 - [ ] **Family/contacts UI** — Add/edit family members from dashboard
-- [x] **Trust level indicators** — Visual badges for trust levels in UI
+- [ ] **Trust level indicators** — Visual badge components for trust levels (backend field exists, UI shows text only)
 - [ ] **Relationship graph** — D3 visualization of user's social network
 - [ ] **Profile photos** — Avatar upload and display
 - [x] **Import from contacts** — Pull from vCard files (Google, iCloud, Outlook)

@@ -1,0 +1,11 @@
+id,name,category,score,date,notes
+1,Widget Alpha,hardware,92.5,2024-01-15,High-performance sensor module with thermal compensation
+2,Widget Beta,software,87.3,2024-02-20,Real-time data pipeline with adaptive buffering
+3,Gamma Controller,hardware,95.1,2024-03-10,PID controller with auto-tuning capabilities
+4,Delta Analyzer,analytics,78.9,2024-04-05,Statistical analysis engine for time-series data
+5,Epsilon Router,networking,91.0,2024-05-12,Low-latency mesh routing protocol implementation
+6,Zeta Compiler,software,84.7,2024-06-18,Incremental compilation with dependency tracking
+7,Eta Processor,hardware,96.2,2024-07-22,FPGA-based signal processor with 48-channel input
+8,Theta Monitor,analytics,89.4,2024-08-30,Real-time anomaly detection using sliding window analysis
+9,Iota Bridge,networking,76.8,2024-09-14,Protocol bridge for legacy serial to modern TCP/IP
+10,Kappa Scheduler,software,93.6,2024-10-01,Priority-based task scheduler with deadline guarantees

@@ -53,6 +53,39 @@ from .task_planner import (
     cancel_task,
 )
 
+# Goal generation
+from .goals import (
+    GoalLoop,
+    propose_goal,
+    get_proposed_goals,
+    resolve_goal,
+)
+
+# Self-improvement
+from .self_improve import (
+    SelfImprovementLoop,
+    propose_improvement,
+    get_proposed_improvements,
+    resolve_improvement,
+    apply_improvement,
+)
+
+# Training data generator
+from .training_gen import (
+    TrainingGenLoop,
+    get_generated_examples,
+    get_generated_count,
+    get_generated_stats,
+    clear_generated,
+)
+
+# Conversation concept extraction (backfill imported conversations)
+from .convo_concepts import (
+    ConvoConceptLoop,
+    get_backfill_status,
+    reset_backfill,
+)
+
 # Manager + factory
 from .manager import (
     LoopManager,
@@ -97,4 +130,19 @@ __all__ = [
     "get_task",
     "update_task_status",
     "cancel_task",
+    # Goal generation
+    "GoalLoop",
+    "propose_goal",
+    "get_proposed_goals",
+    "resolve_goal",
+    # Self-improvement
+    "SelfImprovementLoop",
+    "propose_improvement",
+    "get_proposed_improvements",
+    "resolve_improvement",
+    "apply_improvement",
+    # Conversation concept extraction
+    "ConvoConceptLoop",
+    "get_backfill_status",
+    "reset_backfill",
 ]

@@ -68,16 +68,15 @@ philosophy.bound.harm_reduction: minimize harm
 ## Roadmap
 
 <!-- ROADMAP:philosophy -->
-### Ready for contributors
-- [ ] **Ethics module** — `detect_harm()`, `preserve_dignity()`, `respect_boundary()`
-- [ ] **Awareness module** — Situational, emotional, self-awareness functions
-- [ ] **Curiosity module** — `ask_better()`, `follow_threads()`, `spark_wonder()`
-- [ ] **Resolve module** — Purpose alignment, goal persistence
-- [ ] **Value conflicts UI** — When two values clash, show reasoning
-
-### Starter tasks
-- [ ] Pre-populate common ethical bounds (harm prevention, privacy, consent)
+### Constraint system
+- [ ] **Boundary enforcement** — Active constraints that gate agent behavior (harm prevention, privacy, consent). Currently philosophy only introspects — it doesn't block
+- [ ] **Value conflict resolution** — When two stored values clash, surface the conflict and reasoning in STATE (e.g., "be helpful" vs "protect privacy")
+- [ ] **Constraint seeding** — Pre-populate common ethical bounds on first run so the agent has a baseline
 - [x] Philosophy introspection shows active constraints in STATE
+
+### Research
+- [ ] **Behavioral steering via philosophy** — Can modifying stored philosophy facts measurably change agent behavior? Requires before/after eval on controlled prompts
+- [ ] **Goal persistence** — Does the agent maintain purpose alignment across sessions? Measure drift over 20+ conversations
 <!-- /ROADMAP:philosophy -->
 
 ---
