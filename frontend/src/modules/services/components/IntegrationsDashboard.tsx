@@ -6,9 +6,10 @@
  * status indicators, and one-click reflex protocol install.
  */
 import { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../../config/api';
 import './IntegrationsDashboard.css';
 
-const API = 'http://localhost:8000';
+const API = BASE_URL;
 
 // ── Types ─────────────────────────────────────────────────
 interface ConfigField {

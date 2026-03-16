@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
+import { BASE_URL } from '../../../config/api';
+import { ModelDropdown } from '../../../components/ModelDropdown';
 import { 
   MemoryDashboard, 
   ConsolidationDashboard, 
@@ -10,6 +12,8 @@ import {
 } from '../components';
 import './SettingsPage.css';
 
+/* ───────────────────────── Types ───────────────────────── */
+
 interface ServiceInfo {
   id: string;
   name: string;
@@ -17,21 +21,43 @@ interface ServiceInfo {
   icon: string;
   status: string;
   message?: string;
-  config?: {
-    enabled: boolean;
-    settings: Record<string, unknown>;
-  };
+  config?: { enabled: boolean; settings: Record<string, unknown> };
 }
 
-interface UnsavedChangesDialogProps {
-  isOpen: boolean;
-  onConfirm: () => void;
-  onCancel: () => void;
+interface SettingItem {
+  key: string;
+  default: string;
+  group: string;
+  label: string;
+  type: string;
+  hint?: string;
+  options?: string[];
+  value: string;
+  display: string;
 }
 
-const UnsavedChangesDialog = ({ isOpen, onConfirm, onCancel }: UnsavedChangesDialogProps) => {
+interface MCPServer {
+  name: string;
+  command: string;
+  args: string[];
+  env: Record<string, string>;
+  enabled: boolean;
+}
+
+interface MCPCatalogItem {
+  name: string;
+  description: string;
+  command: string;
+  args: string[];
+  env_required?: string[];
+  category: string;
+  installed: boolean;
+}
+
+/* ───────────────────── Unsaved Dialog ──────────────────── */
+
+const UnsavedChangesDialog = ({ isOpen, onConfirm, onCancel }: { isOpen: boolean; onConfirm: () => void; onCancel: () => void }) => {
   if (!isOpen) return null;
-  
   return (
     <div className="dialog-overlay">
       <div className="dialog">
@@ -46,10 +72,12 @@ const UnsavedChangesDialog = ({ isOpen, onConfirm, onCancel }: UnsavedChangesDia
   );
 };
 
+/* ───────────────────── Main Page ──────────────────────── */
+
 export const SettingsPage = () => {
   const { section } = useParams<{ section?: string }>();
   const navigate = useNavigate();
-  
+
   const [services, setServices] = useState<ServiceInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
@@ -57,26 +85,15 @@ export const SettingsPage = () => {
   const [pendingNavigation, setPendingNavigation] = useState<string | null>(null);
   const [restarting, setRestarting] = useState(false);
   const [restartMessage, setRestartMessage] = useState<string | null>(null);
-  
-  const activeSection = section || 'general';
 
-  // Fetch services once on mount
+  const activeSection = section || 'server';
+
   useEffect(() => {
-    const fetchServices = async () => {
-      try {
-        const res = await fetch('http://localhost:8000/api/services/');
-        if (res.ok) {
-          const data = await res.json();
-          setServices(data);
-        }
-      } catch (err) {
-        console.error('Failed to fetch services:', err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    
-    fetchServices();
+    fetch(`${BASE_URL}/api/services/`)
+      .then(r => r.ok ? r.json() : [])
+      .then(setServices)
+      .catch(() => {})
+      .finally(() => setLoading(false));
   }, []);
 
   const handleNavigation = useCallback((path: string) => {
@@ -91,271 +108,493 @@ export const SettingsPage = () => {
   const handleDialogConfirm = () => {
     setShowDialog(false);
     setHasUnsavedChanges(false);
-    if (pendingNavigation) {
-      navigate(pendingNavigation);
-      setPendingNavigation(null);
-    }
-  };
-
-  const handleDialogCancel = () => {
-    setShowDialog(false);
-    setPendingNavigation(null);
+    if (pendingNavigation) { navigate(pendingNavigation); setPendingNavigation(null); }
   };
 
   const handleRestart = async () => {
     setRestarting(true);
     setRestartMessage(null);
-    
     try {
-      const res = await fetch('http://localhost:8000/api/services/restart', {
-        method: 'POST'
-      });
-      
+      const res = await fetch(`${BASE_URL}/api/services/restart`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setRestartMessage(data.message);
         setHasUnsavedChanges(false);
-        
-        // Refresh services status
-        const servicesRes = await fetch('http://localhost:8000/api/services/');
-        if (servicesRes.ok) {
-          setServices(await servicesRes.json());
-        }
+        const sRes = await fetch(`${BASE_URL}/api/services/`);
+        if (sRes.ok) setServices(await sRes.json());
       } else {
-        const error = await res.json();
-        setRestartMessage(`Error: ${error.detail}`);
+        setRestartMessage(`Error: ${(await res.json()).detail}`);
       }
-    } catch (err) {
-      setRestartMessage('Failed to restart services');
-    } finally {
-      setRestarting(false);
-    }
+    } catch { setRestartMessage('Failed to restart services'); }
+    finally { setRestarting(false); }
   };
 
   const handleSaveServiceConfig = async (serviceId: string, config: { enabled: boolean; settings: Record<string, unknown> }) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/services/${serviceId}/config`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config)
+      const res = await fetch(`${BASE_URL}/api/services/${serviceId}/config`, {
+        method: 'PUT', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(config),
       });
       if (res.ok) {
         setHasUnsavedChanges(false);
-        // Refresh services list
-        const servicesRes = await fetch('http://localhost:8000/api/services/');
-        if (servicesRes.ok) {
-          setServices(await servicesRes.json());
-        }
+        const sRes = await fetch(`${BASE_URL}/api/services/`);
+        if (sRes.ok) setServices(await sRes.json());
       }
-    } catch (err) {
-      console.error('Failed to save config:', err);
-    }
+    } catch (err) { console.error('Failed to save config:', err); }
   };
 
   const renderContent = () => {
-    if (activeSection === 'general') {
-      return <GeneralSettings onChangesMade={() => setHasUnsavedChanges(true)} />;
+    // Config-driven sections
+    if (['server', 'provider', 'kernel'].includes(activeSection)) {
+      return <ConfigSection group={activeSection} onDirty={() => setHasUnsavedChanges(true)} onClean={() => setHasUnsavedChanges(false)} />;
     }
-
+    if (activeSection === 'mcp') {
+      return <MCPSection />;
+    }
     if (activeSection === 'integrations') {
       return <IntegrationsDashboard />;
     }
-    
-    // Find the service
+
+    // Dynamic service dashboards
     const service = services.find(s => s.id === activeSection);
-    if (!service) {
-      return <div className="settings-empty">Select a section from the sidebar</div>;
-    }
+    if (!service) return <div className="settings-empty">Select a section from the sidebar</div>;
 
     const dashboardProps = {
       config: service.config || null,
       status: service.status,
       message: service.message,
       onChangesMade: () => setHasUnsavedChanges(true),
-      onSave: (config: { enabled: boolean; settings: Record<string, unknown> }) => 
-        handleSaveServiceConfig(service.id, config)
+      onSave: (config: { enabled: boolean; settings: Record<string, unknown> }) =>
+        handleSaveServiceConfig(service.id, config),
     };
 
     switch (service.id) {
-      case 'memory':
-        return <MemoryDashboard {...dashboardProps} />;
-      case 'consolidation':
-        return <ConsolidationDashboard {...dashboardProps} />;
-      case 'fact-extractor':
-        return <FactExtractorDashboard {...dashboardProps} />;
-      case 'kernel':
-        return <KernelDashboard {...dashboardProps} />;
-      case 'agent':
-        return <AgentDashboard {...dashboardProps} />;
-      default:
-        return <GenericServiceDashboard service={service} onChangesMade={() => setHasUnsavedChanges(true)} />;
+      case 'memory': return <MemoryDashboard {...dashboardProps} />;
+      case 'consolidation': return <ConsolidationDashboard {...dashboardProps} />;
+      case 'fact-extractor': return <FactExtractorDashboard {...dashboardProps} />;
+      case 'kernel': return <KernelDashboard {...dashboardProps} />;
+      case 'agent': return <AgentDashboard {...dashboardProps} />;
+      default: return <GenericServiceDashboard service={service} onChangesMade={() => setHasUnsavedChanges(true)} />;
     }
   };
 
   return (
     <div className="settings-page">
-      <UnsavedChangesDialog
-        isOpen={showDialog}
-        onConfirm={handleDialogConfirm}
-        onCancel={handleDialogCancel}
-      />
-      
+      <UnsavedChangesDialog isOpen={showDialog} onConfirm={handleDialogConfirm} onCancel={() => { setShowDialog(false); setPendingNavigation(null); }} />
+
       <aside className="settings-sidebar">
         <div className="sidebar-header">
           <Link to="/" className="back-link">← Dashboard</Link>
           <h2>Settings</h2>
         </div>
-        
+
         <nav className="sidebar-nav">
-          <button
-            className={`sidebar-item ${activeSection === 'general' ? 'active' : ''}`}
-            onClick={() => handleNavigation('/settings/general')}
-          >
-            <span className="sidebar-icon">⚙️</span>
-            <span>General</span>
-          </button>
-          
-          <button
-            className={`sidebar-item ${activeSection === 'integrations' ? 'active' : ''}`}
-            onClick={() => handleNavigation('/settings/integrations')}
-          >
-            <span className="sidebar-icon">🔌</span>
-            <span>Integrations</span>
+          {/* ── Configuration ── */}
+          <div className="sidebar-section-header">Configuration</div>
+
+          <button className={`sidebar-item ${activeSection === 'server' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/server')}>
+            <span className="sidebar-icon">🖥️</span><span>Server</span>
           </button>
 
+          <button className={`sidebar-item ${activeSection === 'provider' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/provider')}>
+            <span className="sidebar-icon">🤖</span><span>Provider & Models</span>
+          </button>
+
+          <button className={`sidebar-item ${activeSection === 'kernel' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/kernel')}>
+            <span className="sidebar-icon">🌐</span><span>Kernel</span>
+          </button>
+
+          <button className={`sidebar-item ${activeSection === 'mcp' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/mcp')}>
+            <span className="sidebar-icon">🔌</span><span>MCP Servers</span>
+          </button>
+
+          {/* ── Tools ── */}
+          <div className="sidebar-section-header">Tools</div>
+
+          <Link to="/subconscious" className="sidebar-item"><span className="sidebar-icon">🧠</span><span>Subconscious</span></Link>
+          <Link to="/training" className="sidebar-item"><span className="sidebar-icon">🔥</span><span>Fine-tune</span></Link>
+          <Link to="/eval" className="sidebar-item"><span className="sidebar-icon">🎯</span><span>Eval</span></Link>
+
+          {/* ── Services ── */}
           <div className="sidebar-section-header">Services</div>
-          
-          {loading ? (
-            <div className="sidebar-loading">Loading...</div>
-          ) : (
-            services.map(service => (
-              <button
-                key={service.id}
-                className={`sidebar-item ${activeSection === service.id ? 'active' : ''}`}
-                onClick={() => handleNavigation(`/settings/${service.id}`)}
-              >
-                <span className="sidebar-icon">{service.icon}</span>
-                <span>{service.name}</span>
-                <span className={`status-dot ${service.status}`} />
-              </button>
-            ))
-          )}
+
+          <button className={`sidebar-item ${activeSection === 'integrations' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/integrations')}>
+            <span className="sidebar-icon">🔗</span><span>Integrations</span>
+          </button>
+
+          {loading ? <div className="sidebar-loading">Loading...</div> : services.map(svc => (
+            <button key={svc.id}
+              className={`sidebar-item ${activeSection === svc.id ? 'active' : ''}`}
+              onClick={() => handleNavigation(`/settings/${svc.id}`)}>
+              <span className="sidebar-icon">{svc.icon}</span>
+              <span>{svc.name}</span>
+              <span className={`status-dot ${svc.status}`} />
+            </button>
+          ))}
         </nav>
-        
+
         <div className="sidebar-footer">
-          {hasUnsavedChanges && (
-            <p className="unsaved-warning">⚠️ Unsaved changes</p>
-          )}
-          <button 
-            className="restart-btn"
-            onClick={handleRestart}
-            disabled={restarting}
-          >
+          {hasUnsavedChanges && <p className="unsaved-warning">⚠️ Unsaved changes</p>}
+          <button className="restart-btn" onClick={handleRestart} disabled={restarting}>
             {restarting ? 'Restarting...' : '🔄 Restart Services'}
           </button>
           {restartMessage && (
-            <p className={`restart-message ${restartMessage.includes('Error') ? 'error' : 'success'}`}>
-              {restartMessage}
-            </p>
+            <p className={`restart-message ${restartMessage.includes('Error') ? 'error' : 'success'}`}>{restartMessage}</p>
           )}
         </div>
       </aside>
-      
-      <main className="settings-content">
-        {renderContent()}
-      </main>
+
+      <main className="settings-content">{renderContent()}</main>
     </div>
   );
 };
 
-interface GeneralSettingsProps {
-  onChangesMade: () => void;
-}
+/* ───────── Config Section (server / provider / kernel) ───────── */
 
-const GeneralSettings = ({ onChangesMade }: GeneralSettingsProps) => {
-  return (
-    <div className="settings-panel">
-      <h1>General Settings</h1>
-      <p className="settings-description">Configure UI preferences and general options.</p>
-      
-      <section className="settings-section">
-        <h3>Appearance</h3>
-        <div className="setting-row">
-          <label>Theme</label>
-          <select onChange={onChangesMade}>
-            <option value="dark">Dark</option>
-            <option value="light">Light</option>
-            <option value="system">System</option>
-          </select>
-        </div>
-      </section>
-      
-      <section className="settings-section">
-        <h3>Model</h3>
-        <div className="setting-row">
-          <label>Default Model</label>
-          <select onChange={onChangesMade}>
-            <option value="llama3.2">llama3.2</option>
-            <option value="mistral">mistral</option>
-            <option value="qwen2.5">qwen2.5</option>
-          </select>
-        </div>
-      </section>
-      
-      <section className="settings-section">
-        <h3>Notifications</h3>
-        <div className="setting-row">
-          <label>Enable notifications</label>
-          <input type="checkbox" onChange={onChangesMade} />
-        </div>
-      </section>
-    </div>
-  );
+const GROUP_META: Record<string, { icon: string; title: string; desc: string }> = {
+  server: { icon: '🖥️', title: 'Server Configuration', desc: 'Host, port, CORS, and public URL settings.' },
+  provider: { icon: '🤖', title: 'Provider & Models', desc: 'LLM provider, model, API keys, and extraction overrides.' },
+  kernel: { icon: '🌐', title: 'Kernel Browser Automation', desc: 'API key, browser profile, stealth & headless settings.' },
 };
 
-interface GenericServiceDashboardProps {
-  service: ServiceInfo;
-  onChangesMade: () => void;
-}
+const ConfigSection = ({ group, onDirty, onClean }: { group: string; onDirty: () => void; onClean: () => void }) => {
+  const [items, setItems] = useState<SettingItem[]>([]);
+  const [edits, setEdits] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
 
-const GenericServiceDashboard = ({ service, onChangesMade }: GenericServiceDashboardProps) => {
+  useEffect(() => {
+    fetch(`${BASE_URL}/api/settings`)
+      .then(r => r.json())
+      .then(data => setItems(data.groups?.[group] || []))
+      .catch(() => {});
+  }, [group]);
+
+  const handleChange = (key: string, val: string) => {
+    setEdits(prev => ({ ...prev, [key]: val }));
+    onDirty();
+  };
+
+  const handleSave = async () => {
+    setSaving(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`${BASE_URL}/api/settings`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: edits }),
+      });
+      if (res.ok) {
+        setMessage('Saved! Restart services for changes to take effect.');
+        setEdits({});
+        onClean();
+        // Re-fetch to sync display values
+        const r2 = await fetch(`${BASE_URL}/api/settings`);
+        if (r2.ok) { const d = await r2.json(); setItems(d.groups?.[group] || []); }
+      } else {
+        const err = await res.json();
+        setMessage(`Error: ${err.detail}`);
+      }
+    } catch { setMessage('Save failed'); }
+    finally { setSaving(false); }
+  };
+
+  const meta = GROUP_META[group] || { icon: '⚙️', title: group, desc: '' };
+  const dirty = Object.keys(edits).length > 0;
+
   return (
     <div className="settings-panel">
       <div className="service-header">
-        <span className="service-icon">{service.icon}</span>
-        <div>
-          <h1>{service.name}</h1>
-          <p className="settings-description">{service.description}</p>
-        </div>
+        <span className="service-icon">{meta.icon}</span>
+        <div><h1>{meta.title}</h1><p className="settings-description">{meta.desc}</p></div>
       </div>
-      
+
       <section className="settings-section">
-        <h3>Status</h3>
-        <div className="status-card">
-          <div className={`status-indicator-large ${service.status}`}>
-            <span className="status-dot-large" />
-            <span className="status-text">{service.status}</span>
-          </div>
-          {service.message && (
-            <p className="status-message">{service.message}</p>
-          )}
-        </div>
+        {items.map(item => {
+          const val = edits[item.key] ?? item.value;
+          return (
+            <div key={item.key} className="setting-row-full">
+              <div className="setting-label-row">
+                <label>{item.label}</label>
+                <code className="setting-env-key">{item.key}</code>
+              </div>
+              {item.type === 'select' && item.options ? (
+                <select value={val} onChange={e => handleChange(item.key, e.target.value)} className="config-select">
+                  {item.options.map(o => <option key={o} value={o}>{o}</option>)}
+                </select>
+              ) : item.type === 'bool' ? (
+                <select value={val} onChange={e => handleChange(item.key, e.target.value)} className="config-select">
+                  <option value="true">Enabled</option>
+                  <option value="false">Disabled</option>
+                </select>
+              ) : item.type === 'password' ? (
+                <input type="password" value={val} onChange={e => handleChange(item.key, e.target.value)}
+                  placeholder={item.display !== val ? item.display : item.default || '(not set)'}
+                  className="config-input" />
+              ) : (
+                <input type={item.type === 'number' ? 'number' : 'text'}
+                  value={val} onChange={e => handleChange(item.key, e.target.value)}
+                  placeholder={item.default || ''} className="config-input" />
+              )}
+              {item.hint && <p className="setting-hint">{item.hint}</p>}
+            </div>
+          );
+        })}
       </section>
-      
-      <section className="settings-section">
-        <h3>Configuration</h3>
-        <div className="setting-row">
-          <label>Enabled</label>
-          <input 
-            type="checkbox" 
-            checked={service.config?.enabled ?? true}
-            onChange={onChangesMade}
-          />
-        </div>
-        <p className="setting-hint">
-          Custom dashboard for this service coming soon.
-        </p>
-      </section>
+
+      {message && <div className={`config-result ${message.startsWith('Error') ? 'error' : 'success'}`}>{message}</div>}
+
+      <div className="settings-actions">
+        <button className="btn-primary" onClick={handleSave} disabled={saving || !dirty}>
+          {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+      </div>
     </div>
   );
 };
+
+/* ──────────────────── MCP Section ─────────────────────── */
+
+interface MCPConnectionInfo {
+  name: string;
+  connected: boolean;
+  tools: { name: string; description: string }[];
+}
+
+const MCPSection = () => {
+  const [servers, setServers] = useState<MCPServer[]>([]);
+  const [catalog, setCatalog] = useState<MCPCatalogItem[]>([]);
+  const [connections, setConnections] = useState<Record<string, MCPConnectionInfo>>({});
+  const [connecting, setConnecting] = useState<string | null>(null);
+  const [showCatalog, setShowCatalog] = useState(false);
+  const [expandedServer, setExpandedServer] = useState<string | null>(null);
+  const [addingName, setAddingName] = useState('');
+  const [addingCmd, setAddingCmd] = useState('');
+  const [addingArgs, setAddingArgs] = useState('');
+  const [message, setMessage] = useState<string | null>(null);
+
+  const refresh = () => {
+    fetch(`${BASE_URL}/api/mcp/servers`).then(r => r.json()).then(d => setServers(d.servers || [])).catch(() => {});
+    fetch(`${BASE_URL}/api/mcp/catalog`).then(r => r.json()).then(d => setCatalog(d.servers || [])).catch(() => {});
+    fetch(`${BASE_URL}/api/mcp/connections`).then(r => r.json()).then(d => {
+      const map: Record<string, MCPConnectionInfo> = {};
+      for (const c of d.connections || []) {
+        map[c.name] = { name: c.name, connected: c.alive, tools: c.tools || [] };
+      }
+      setConnections(map);
+    }).catch(() => {});
+  };
+
+  useEffect(refresh, []);
+
+  const connectServer = async (name: string) => {
+    setConnecting(name);
+    setMessage(null);
+    try {
+      const res = await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}/connect`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`Connected ${name} — ${data.tools_discovered} tools discovered`);
+        refresh();
+      } else {
+        setMessage(`Error: ${data.detail}`);
+      }
+    } catch { setMessage(`Failed to connect ${name}`); }
+    setConnecting(null);
+  };
+
+  const disconnectServer = async (name: string) => {
+    setConnecting(name);
+    try {
+      const res = await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}/disconnect`, { method: 'POST' });
+      const data = await res.json();
+      if (res.ok) {
+        setMessage(`Disconnected ${name} — ${data.tools_removed} tools removed`);
+        refresh();
+      }
+    } catch { setMessage(`Failed to disconnect ${name}`); }
+    setConnecting(null);
+  };
+
+  const addServer = async () => {
+    if (!addingName || !addingCmd) return;
+    try {
+      const res = await fetch(`${BASE_URL}/api/mcp/servers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: addingName, command: addingCmd, args: addingArgs.split(' ').filter(Boolean) }),
+      });
+      if (res.ok) {
+        setAddingName(''); setAddingCmd(''); setAddingArgs('');
+        setMessage(`Added ${addingName}`);
+        refresh();
+      } else {
+        const err = await res.json();
+        setMessage(`Error: ${err.detail}`);
+      }
+    } catch { setMessage('Failed to add server'); }
+  };
+
+  const quickAdd = async (item: MCPCatalogItem) => {
+    try {
+      const res = await fetch(`${BASE_URL}/api/mcp/servers`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: item.name, command: item.command, args: item.args }),
+      });
+      if (res.ok) { setMessage(`Added ${item.name}`); refresh(); }
+    } catch { setMessage('Failed to add server'); }
+  };
+
+  const removeServer = async (name: string) => {
+    // Disconnect first if connected
+    if (connections[name]?.connected) await disconnectServer(name);
+    await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}`, { method: 'DELETE' });
+    refresh();
+  };
+
+  const toggleServer = async (name: string) => {
+    await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}/toggle`, { method: 'POST' });
+    refresh();
+  };
+
+  return (
+    <div className="settings-panel">
+      <div className="service-header">
+        <span className="service-icon">🔌</span>
+        <div><h1>MCP Servers</h1><p className="settings-description">Model Context Protocol servers give your agent access to external tools and data sources. Connect a server to discover its tools — they appear in Form thread automatically.</p></div>
+      </div>
+
+      {/* Installed servers */}
+      <section className="settings-section">
+        <h3>Configured Servers</h3>
+        {servers.length === 0 ? (
+          <p className="setting-hint">No MCP servers configured yet. Add one below or install from the catalog.</p>
+        ) : (
+          <div className="mcp-server-list">
+            {servers.map(s => {
+              const conn = connections[s.name];
+              const isConnected = conn?.connected ?? false;
+              const toolCount = conn?.tools?.length ?? 0;
+              const isLoading = connecting === s.name;
+              return (
+                <div key={s.name} className={`mcp-server-card ${s.enabled ? '' : 'disabled'} ${isConnected ? 'connected' : ''}`}>
+                  <div className="mcp-server-info">
+                    <div className="mcp-server-header">
+                      <span className={`mcp-status-dot ${isConnected ? 'active' : ''}`} />
+                      <span className="mcp-server-name">{s.name}</span>
+                      {isConnected && <span className="mcp-tool-count">{toolCount} tools</span>}
+                    </div>
+                    <code className="mcp-server-cmd">{s.command} {s.args.join(' ')}</code>
+                  </div>
+                  <div className="mcp-server-actions">
+                    {s.enabled && (
+                      isConnected ? (
+                        <button className="btn-sm btn-disconnect" onClick={() => disconnectServer(s.name)} disabled={isLoading}>
+                          {isLoading ? '...' : 'Disconnect'}
+                        </button>
+                      ) : (
+                        <button className="btn-sm btn-connect" onClick={() => connectServer(s.name)} disabled={isLoading}>
+                          {isLoading ? 'Connecting...' : 'Connect'}
+                        </button>
+                      )
+                    )}
+                    <button className="btn-sm" onClick={() => toggleServer(s.name)}>{s.enabled ? 'Disable' : 'Enable'}</button>
+                    <button className="btn-sm btn-danger" onClick={() => removeServer(s.name)}>Remove</button>
+                    {isConnected && toolCount > 0 && (
+                      <button className="btn-sm" onClick={() => setExpandedServer(expandedServer === s.name ? null : s.name)}>
+                        {expandedServer === s.name ? '▾ Hide tools' : '▸ Tools'}
+                      </button>
+                    )}
+                  </div>
+                  {expandedServer === s.name && conn?.tools && (
+                    <div className="mcp-tools-list">
+                      {conn.tools.map(t => (
+                        <div key={t.name} className="mcp-tool-item">
+                          <span className="mcp-tool-name">{t.name}</span>
+                          <span className="mcp-tool-desc">{t.description}</span>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+
+      {/* Manual add */}
+      <section className="settings-section">
+        <h3>Add Server</h3>
+        <div className="mcp-add-form">
+          <input type="text" placeholder="Name (e.g. filesystem)" value={addingName} onChange={e => setAddingName(e.target.value)} className="config-input" />
+          <input type="text" placeholder="Command (e.g. npx)" value={addingCmd} onChange={e => setAddingCmd(e.target.value)} className="config-input" />
+          <input type="text" placeholder="Args (space-separated)" value={addingArgs} onChange={e => setAddingArgs(e.target.value)} className="config-input" />
+          <button className="btn-primary" onClick={addServer} disabled={!addingName || !addingCmd}>Add</button>
+        </div>
+      </section>
+
+      {/* Catalog */}
+      <section className="settings-section">
+        <button className="library-toggle" onClick={() => setShowCatalog(!showCatalog)}>
+          {showCatalog ? '▾ Hide catalog' : '▸ Browse MCP catalog'}
+        </button>
+        {showCatalog && (
+          <div className="mcp-catalog">
+            {catalog.map(item => (
+              <div key={item.name} className={`library-item ${item.installed ? 'installed' : ''}`}>
+                <div className="library-item-info">
+                  <span className="library-item-name">{item.name}</span>
+                  <span className="library-item-meta">{item.category}{item.env_required ? ` · Requires: ${item.env_required.join(', ')}` : ''}</span>
+                  <span className="library-item-desc">{item.description}</span>
+                </div>
+                <div className="library-item-action">
+                  {item.installed ? (
+                    <span className="library-badge-installed">Added</span>
+                  ) : (
+                    <button className="btn-pull" onClick={() => quickAdd(item)}>Add</button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
+
+      {message && <div className="config-result success">{message}</div>}
+    </div>
+  );
+};
+
+/* ───────── Generic Service Dashboard (fallback) ─────── */
+
+const GenericServiceDashboard = ({ service, onChangesMade }: { service: ServiceInfo; onChangesMade: () => void }) => (
+  <div className="settings-panel">
+    <div className="service-header">
+      <span className="service-icon">{service.icon}</span>
+      <div><h1>{service.name}</h1><p className="settings-description">{service.description}</p></div>
+    </div>
+    <section className="settings-section">
+      <h3>Status</h3>
+      <div className="status-card">
+        <div className={`status-indicator-large ${service.status}`}>
+          <span className="status-dot-large" /><span className="status-text">{service.status}</span>
+        </div>
+        {service.message && <p className="status-message">{service.message}</p>}
+      </div>
+    </section>
+    <section className="settings-section">
+      <h3>Configuration</h3>
+      <div className="setting-row">
+        <label>Enabled</label>
+        <input type="checkbox" checked={service.config?.enabled ?? true} onChange={onChangesMade} />
+      </div>
+    </section>
+  </div>
+);

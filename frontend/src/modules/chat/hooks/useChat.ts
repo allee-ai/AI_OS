@@ -104,7 +104,7 @@ export const useChat = () => {
     }
   }, [lastMessage]);
 
-  const sendMessage = useCallback(async (content: string) => {
+  const sendMessage = useCallback(async (content: string, overrides?: { provider?: string; model?: string; endpoint?: string }) => {
     if (!content.trim()) return;
 
     setIsLoading(true);
@@ -124,7 +124,10 @@ export const useChat = () => {
         // Use WebSocket for real-time streaming
         const success = sendWS({
           type: 'chat_message',
-          content: content.trim()
+          content: content.trim(),
+          ...(overrides?.provider ? { provider: overrides.provider } : {}),
+          ...(overrides?.model ? { model: overrides.model } : {}),
+          ...(overrides?.endpoint ? { endpoint: overrides.endpoint } : {}),
         });
 
         if (!success) {

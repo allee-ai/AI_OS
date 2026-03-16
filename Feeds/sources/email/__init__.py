@@ -6,12 +6,15 @@ Multi-provider email integration supporting Gmail, Outlook, and Proton.
 Each provider has its own OAuth flow but shares common event types.
 """
 
+import os
 from typing import List, Dict, Any, Optional
 from Feeds.events import EventTypeDefinition, register_event_types, emit_event, EventPriority
 
 # ============================================================================
 # Supported Providers
 # ============================================================================
+
+_BASE_URL = os.environ.get("AIOS_BASE_URL", "http://localhost:8000")
 
 EMAIL_PROVIDERS = {
     "gmail": {
@@ -22,7 +25,7 @@ EMAIL_PROVIDERS = {
         "client_secret_env": "GOOGLE_CLIENT_SECRET",
         "auth_uri": "https://accounts.google.com/o/oauth2/v2/auth",
         "token_uri": "https://oauth2.googleapis.com/token",
-        "redirect_uri": "http://localhost:8000/api/feeds/email/oauth/callback?provider=gmail",
+        "redirect_uri": f"{_BASE_URL}/api/feeds/email/oauth/callback?provider=gmail",
         "scopes": [
             "https://www.googleapis.com/auth/gmail.readonly",
             "https://www.googleapis.com/auth/gmail.send",
@@ -38,7 +41,7 @@ EMAIL_PROVIDERS = {
         "client_secret_env": "MICROSOFT_CLIENT_SECRET",
         "auth_uri": "https://login.microsoftonline.com/common/oauth2/v2.0/authorize",
         "token_uri": "https://login.microsoftonline.com/common/oauth2/v2.0/token",
-        "redirect_uri": "http://localhost:8000/api/feeds/email/oauth/callback?provider=outlook",
+        "redirect_uri": f"{_BASE_URL}/api/feeds/email/oauth/callback?provider=outlook",
         "scopes": [
             "https://graph.microsoft.com/Mail.Read",
             "https://graph.microsoft.com/Mail.Send",
@@ -54,7 +57,7 @@ EMAIL_PROVIDERS = {
         "client_secret_env": "PROTON_CLIENT_SECRET",
         "auth_uri": "https://account.proton.me/authorize",
         "token_uri": "https://account.proton.me/api/auth/token",
-        "redirect_uri": "http://localhost:8000/api/feeds/email/oauth/callback?provider=proton",
+        "redirect_uri": f"{_BASE_URL}/api/feeds/email/oauth/callback?provider=proton",
         "scopes": ["mail.read", "mail.send"],
         "api_base": "https://mail.proton.me/api",
         "coming_soon": True,  # Proton's OAuth is limited, mark as coming soon

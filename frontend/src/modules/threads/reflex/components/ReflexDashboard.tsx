@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../../../config/api';
 import './ReflexDashboard.css';
 
 interface Reflex {
@@ -107,10 +108,10 @@ export default function ReflexDashboard() {
     try {
       setLoading(true);
       const [allRes, statsRes, trigRes, protoRes] = await Promise.all([
-        fetch('http://localhost:8000/api/reflex/all'),
-        fetch('http://localhost:8000/api/reflex/stats'),
-        fetch('http://localhost:8000/api/reflex/triggers'),
-        fetch('http://localhost:8000/api/reflex/protocols'),
+        fetch(`${BASE_URL}/api/reflex/all`),
+        fetch(`${BASE_URL}/api/reflex/stats`),
+        fetch(`${BASE_URL}/api/reflex/triggers`),
+        fetch(`${BASE_URL}/api/reflex/protocols`),
       ]);
       
       if (allRes.ok) {
@@ -147,7 +148,7 @@ export default function ReflexDashboard() {
     if (!confirm(`Delete reflex "${reflex.key}"?`)) return;
     
     try {
-      const res = await fetch(`http://localhost:8000/api/reflex/${reflex.module}/${reflex.key}`, {
+      const res = await fetch(`${BASE_URL}/api/reflex/${reflex.module}/${reflex.key}`, {
         method: 'DELETE'
       });
       
@@ -164,7 +165,7 @@ export default function ReflexDashboard() {
     if (!testInput.trim()) return;
     
     try {
-      const res = await fetch(`http://localhost:8000/api/reflex/test?text=${encodeURIComponent(testInput)}`, {
+      const res = await fetch(`${BASE_URL}/api/reflex/test?text=${encodeURIComponent(testInput)}`, {
         method: 'POST'
       });
       
@@ -211,7 +212,7 @@ export default function ReflexDashboard() {
         };
       }
       
-      const res = await fetch(`http://localhost:8000${endpoint}`, {
+      const res = await fetch(`${BASE_URL}${endpoint}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
@@ -240,7 +241,7 @@ export default function ReflexDashboard() {
 
   const toggleTrigger = async (id: number) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/reflex/triggers/${id}/toggle`, { method: 'POST' });
+      const res = await fetch(`${BASE_URL}/api/reflex/triggers/${id}/toggle`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setTriggers(prev => prev.map(t => t.id === id ? { ...t, enabled: data.enabled } : t));
@@ -252,7 +253,7 @@ export default function ReflexDashboard() {
   const deleteTrigger = async (id: number) => {
     if (!confirm('Delete this trigger?')) return;
     try {
-      const res = await fetch(`http://localhost:8000/api/reflex/triggers/${id}`, { method: 'DELETE' });
+      const res = await fetch(`${BASE_URL}/api/reflex/triggers/${id}`, { method: 'DELETE' });
       if (res.ok) {
         setSelectedTrigger(null);
         fetchReflexes();
@@ -262,7 +263,7 @@ export default function ReflexDashboard() {
 
   const installProtocol = async (name: string) => {
     try {
-      const res = await fetch(`http://localhost:8000/api/reflex/protocols/${name}/install`, { method: 'POST' });
+      const res = await fetch(`${BASE_URL}/api/reflex/protocols/${name}/install`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         setInstallResult(`✓ ${name}: ${data.triggers_created} trigger(s) installed`);

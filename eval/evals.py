@@ -15,6 +15,7 @@ from typing import Dict, Any, List, Optional
 
 from .runner import run_prompt, inspect_state
 from .schema import save_run, update_run
+from agent.threads.form.tools.scanner import scan_for_tool_calls
 
 
 # ── Default configs per eval ─────────────────────────────────────────────
@@ -89,6 +90,14 @@ EVAL_REGISTRY: Dict[str, Dict[str, Any]] = {
         "defaults": {
             "num_queries": 12,
             "pass_threshold": 0.7,
+        },
+    },
+    "tool_calling_direct": {
+        "description": "Does the model generate valid :::execute blocks for tool calling? (direct, no agent pipeline)",
+        "defaults": {
+            "model": "kimi-k2:1t-cloud",
+            "mode": "single_pass",
+            "pass_threshold": 0.6,
         },
     },
 }
@@ -937,6 +946,290 @@ def _eval_scoring_quality(config: Dict) -> Dict[str, Any]:
     }
 
 
+# ── Eval 10: Tool Calling Direct ─────────────────────────────────────────
+
+_TC_SYSTEM_PROMPT = """== STATE ==
+identity.machine.name: Nola
+identity.primary_user.name: Cade
+identity.primary_user.location: Austin, TX
+identity.primary_user.occupation: software engineer
+chat.session: chat_eval_run
+chat.turn_count: 3
+log.recent: Working on AI OS training data pipeline
+philosophy.core_value: continuous self-improvement
+
+== TOOLS ==
+Available tools (invoke via :::execute blocks):
+
+  file_read - Read file contents
+    actions: read_file, list_dir
+    params for read_file: path (file path)
+    params for list_dir: path (directory path)
+  web_search - Search the web
+    actions: search
+    params: query (search terms)
+  memory_identity - Query identity facts
+    actions: get_facts, search_facts
+    params for search_facts: query (search text)
+  notify - Send notification
+    actions: send
+    params: title, message
+  terminal - Run shell commands
+    actions: run_command
+    params: command (shell command to run)
+
+To use a tool, write:
+:::execute
+tool: <tool_name>
+action: <action_name>
+key: value
+:::
+
+I will execute it and return results in a :::result block.
+You can chain multiple tool calls in a single response."""
+
+_TC_CASES = [
+    {
+        "label": "Memory recall",
+        "prompt": "look up everything you know about me in your memory",
+        "expect_tools": True,
+        "expected_tool": "memory_identity",
+        "expected_action": "get_facts",
+    },
+    {
+        "label": "Multi-step reasoning",
+        "prompt": "check what python version is installed and then search for compatibility with the latest pytorch",
+        "expect_tools": True,
+        "expected_tool": "terminal",
+        "min_blocks": 1,
+    },
+    {
+        "label": "File + notify",
+        "prompt": "read the CHANGELOG.md and send me a quick summary notification",
+        "expect_tools": True,
+        "expected_tool": "file_read",
+        "min_blocks": 2,
+    },
+    {
+        "label": "No tool needed",
+        "prompt": "what's 2 + 2?",
+        "expect_tools": False,
+    },
+    {
+        "label": "Ambiguous intent",
+        "prompt": "hey nola how's it going",
+        "expect_tools": False,
+    },
+    {
+        "label": "Web search",
+        "prompt": "search the web for the latest news about local LLM frameworks",
+        "expect_tools": True,
+        "expected_tool": "web_search",
+        "expected_action": "search",
+    },
+    {
+        "label": "File listing",
+        "prompt": "what files are in the workspace directory?",
+        "expect_tools": True,
+        "expected_tool": "file_read",
+        "expected_action": "list_dir",
+    },
+    {
+        "label": "Terminal command",
+        "prompt": "run 'echo hello world' in the terminal",
+        "expect_tools": True,
+        "expected_tool": "terminal",
+        "expected_action": "run_command",
+    },
+]
+
+# Simulated tool results for loop mode
+_TC_FAKE_RESULTS = {
+    "memory_identity": "identity.primary_user.name: Cade\nidentity.primary_user.location: Austin, TX\nidentity.primary_user.occupation: software engineer",
+    "file_read": "# CHANGELOG\n\n## v0.5.0\n- Added tool calling eval\n- Improved training pipeline\n\n## v0.4.0\n- Concept graph redesign",
+    "web_search": "Results for 'local LLM frameworks':\n1. Ollama - Run LLMs locally\n2. MLX - Apple silicon inference\n3. vLLM - High-throughput serving",
+    "notify": "Notification sent successfully.",
+    "terminal": "Python 3.11.5\nhello world",
+}
+
+
+def _eval_tool_calling_direct(config: Dict) -> Dict[str, Any]:
+    """Test raw tool calling: does the model generate valid :::execute blocks?
+
+    Two modes:
+      single_pass — one prompt, one response, check for blocks
+      loop — simulate tool→result→continue rounds (up to 3 rounds)
+    """
+    model = config.get("model", "kimi-k2:1t-cloud")
+    mode = config.get("mode", "single_pass")
+    threshold = config.get("pass_threshold", 0.6)
+
+    import ollama as _ollama
+
+    details = []
+    passed = 0
+
+    for case in _TC_CASES:
+        label = case["label"]
+        prompt = case["prompt"]
+        expect_tools = case["expect_tools"]
+
+        if mode == "loop" and expect_tools:
+            result = _run_tool_loop(model, prompt, case, _ollama)
+        else:
+            result = _run_single_pass(model, prompt, case, _ollama)
+
+        if result["passed"]:
+            passed += 1
+        result["label"] = label
+        result["mode"] = mode
+        details.append(result)
+
+    total = len(_TC_CASES)
+    score = passed / total if total > 0 else 0.0
+    return {
+        "status": "passed" if score >= threshold else "failed",
+        "score": round(score, 2),
+        "total": total,
+        "passed": passed,
+        "mode": mode,
+        "model": model,
+        "details": details,
+    }
+
+
+def _run_single_pass(model: str, prompt: str, case: Dict, _ollama) -> Dict:
+    """Single pass: send prompt, check response for valid execute blocks."""
+    start = time.time()
+    try:
+        r = _ollama.chat(
+            model=model,
+            messages=[
+                {"role": "system", "content": _TC_SYSTEM_PROMPT},
+                {"role": "user", "content": prompt},
+            ],
+            options={"temperature": 0.3, "num_predict": 600},
+        )
+        content = r["message"]["content"]
+    except Exception as e:
+        return {"passed": False, "error": str(e), "prompt": prompt,
+                "response": "", "duration_ms": round((time.time() - start) * 1000)}
+
+    duration = round((time.time() - start) * 1000)
+    calls = scan_for_tool_calls(content)
+    expect_tools = case.get("expect_tools", True)
+
+    if not expect_tools:
+        # Should NOT produce tool calls
+        ok = len(calls) == 0
+        return {
+            "passed": ok,
+            "prompt": prompt,
+            "response": content[:500],
+            "blocks_found": len(calls),
+            "expected_no_tools": True,
+            "duration_ms": duration,
+        }
+
+    # Should produce tool calls
+    min_blocks = case.get("min_blocks", 1)
+    expected_tool = case.get("expected_tool")
+    expected_action = case.get("expected_action")
+
+    has_enough = len(calls) >= min_blocks
+    tool_match = (not expected_tool) or any(c.tool == expected_tool for c in calls)
+    action_match = (not expected_action) or any(c.action == expected_action for c in calls)
+    all_valid = all(c.tool and c.action for c in calls) if calls else False
+
+    ok = has_enough and tool_match and action_match and all_valid
+    return {
+        "passed": ok,
+        "prompt": prompt,
+        "response": content[:500],
+        "blocks_found": len(calls),
+        "min_blocks": min_blocks,
+        "tools_called": [{"tool": c.tool, "action": c.action, "params": c.params} for c in calls],
+        "tool_match": tool_match,
+        "action_match": action_match,
+        "all_valid": all_valid,
+        "duration_ms": duration,
+    }
+
+
+def _run_tool_loop(model: str, prompt: str, case: Dict, _ollama, max_rounds: int = 3) -> Dict:
+    """Loop mode: simulate tool call → fake result → continue, up to max_rounds."""
+    start = time.time()
+    messages = [
+        {"role": "system", "content": _TC_SYSTEM_PROMPT},
+        {"role": "user", "content": prompt},
+    ]
+    rounds = []
+    total_calls = []
+
+    for round_num in range(max_rounds):
+        try:
+            r = _ollama.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": 0.3, "num_predict": 600},
+            )
+            content = r["message"]["content"]
+        except Exception as e:
+            rounds.append({"round": round_num + 1, "error": str(e)})
+            break
+
+        calls = scan_for_tool_calls(content)
+        total_calls.extend(calls)
+        rounds.append({
+            "round": round_num + 1,
+            "response": content[:400],
+            "blocks_found": len(calls),
+            "tools": [{"tool": c.tool, "action": c.action} for c in calls],
+        })
+
+        if not calls:
+            # Model finished — no more tool calls
+            break
+
+        # Inject fake results and continue
+        messages.append({"role": "assistant", "content": content})
+        result_parts = []
+        for c in calls:
+            fake = _TC_FAKE_RESULTS.get(c.tool, f"Tool {c.tool} executed successfully.")
+            result_parts.append(f":::result\ntool: {c.tool}\naction: {c.action}\n{fake}\n:::")
+        messages.append({"role": "user", "content": "\n".join(result_parts)})
+
+    duration = round((time.time() - start) * 1000)
+
+    # Evaluate
+    expect_tools = case.get("expect_tools", True)
+    min_blocks = case.get("min_blocks", 1)
+    expected_tool = case.get("expected_tool")
+    expected_action = case.get("expected_action")
+
+    has_enough = len(total_calls) >= min_blocks
+    tool_match = (not expected_tool) or any(c.tool == expected_tool for c in total_calls)
+    action_match = (not expected_action) or any(c.action == expected_action for c in total_calls)
+    all_valid = all(c.tool and c.action for c in total_calls) if total_calls else False
+    # In loop mode, bonus: model should eventually stop calling tools (produce a final text response)
+    finished_naturally = len(rounds) > 0 and rounds[-1].get("blocks_found", 0) == 0
+
+    ok = has_enough and tool_match and action_match and all_valid
+    return {
+        "passed": ok,
+        "prompt": prompt,
+        "rounds": rounds,
+        "total_rounds": len(rounds),
+        "total_tool_calls": len(total_calls),
+        "tools_called": [{"tool": c.tool, "action": c.action, "params": c.params} for c in total_calls],
+        "tool_match": tool_match,
+        "action_match": action_match,
+        "all_valid": all_valid,
+        "finished_naturally": finished_naturally,
+        "duration_ms": duration,
+    }
+
+
 # ── Registry ─────────────────────────────────────────────────────────────
 
 _EVAL_FUNCTIONS = {
@@ -949,4 +1242,5 @@ _EVAL_FUNCTIONS = {
     "state_completeness": _eval_state_completeness,
     "state_impact": _eval_state_impact,
     "scoring_quality": _eval_scoring_quality,
+    "tool_calling_direct": _eval_tool_calling_direct,
 }

@@ -1,18 +1,18 @@
-# Finetune Module
+# Fire-Tuner — Training Module
 
-> 🚧 **In Development** — Pipeline is wired end-to-end. First full training cycle not yet completed.
-
-Teach smaller models to "obey state" — the structured awareness blocks from AI OS.
+Teach smaller models to obey STATE — the structured awareness blocks from AI OS.
 
 ---
 
 ## Description
 
-The Finetune module creates datasets and training scripts to teach smaller models (7B param class) to respect the `== STATE ==` blocks injected by the OS. Goals:
+The Fire-Tuner builds datasets and training scripts to teach small models (7B class) to respect **`== STATE ==`** blocks injected by the OS. Three objectives:
 
-1. **State Obedience** — Models treat state as absolute reality
-2. **State Referencing** — Models cite state fields explicitly  
+1. **State Obedience** — Models treat STATE as absolute reality
+2. **State Referencing** — Models cite state fields explicitly
 3. **Adversarial Hardening** — Immune to "ignore previous instructions" attacks
+
+The training pipeline is self-improving: a background `TrainingGenLoop` uses kimi-k2 as a teacher model to read actual source code and generate training examples across 17 modules (105+ source files).
 
 ---
 
@@ -28,7 +28,7 @@ finetune/
 ├── docstring_extractor.py  # AST-based docstring harvesting across all modules
 ├── gold_examples.py        # Hand-curated reasoning examples (9 categories)
 ├── mlx_config.yaml         # Apple MLX LoRA configuration
-├── train_mac.sh            # Local fine-tuning script
+├── train_mac.sh            # Local fine-tuning script (Apple Silicon)
 ├── generated/              # Background-generated training data (TrainingGenLoop)
 └── auto_generated/         # Docstring-extracted training data
 ```
@@ -39,9 +39,18 @@ finetune/
 |--------|-----------|-------------|
 | Per-thread metadata | `sections.py` | API endpoints, CLI commands, schema tables → Q&A pairs |
 | Docstrings | `docstring_extractor.py` | AST-walks Python source, extracts function/class docs |
-| Gold examples | `gold_examples.py` | Hand-written reasoning pairs (architecture, linking, identity, philosophy, etc.) |
-| Live decisions | `train.py` per thread | High-confidence decisions logged during runtime (threshold 0.7) |
-| Synthetic | `TrainingGenLoop` | LLM generates examples every 2h using real STATE context |
+| Gold examples | `gold_examples.py` | Hand-written reasoning pairs (9 categories) |
+| Live decisions | `train.py` per thread | High-confidence decisions from `source='aios'` conversations (threshold 0.7) |
+| Synthetic (kimi-k2) | `TrainingGenLoop` | Teacher model reads source code + mechanical examples → generates 5 better pairs per file |
+
+### Module Coverage
+
+The `TrainingGenLoop` generates examples for all 17 modules:
+
+| Scope | Modules |
+|-------|---------|
+| Thread modules | linking_core, identity, philosophy, log, reflex, form, chat, docs |
+| Top-level modules | workspace, feeds, agent_core, agent_services, form_tools, parsers, data_db, scripts, subconscious |
 
 ### Per-Thread Train Files
 
@@ -97,13 +106,13 @@ Uses MLX LoRA on Apple Silicon. Config in `mlx_config.yaml`.
 | Feature | Status |
 |---------|--------|
 | Export pipeline | ✅ Wired |
-| Per-thread train.py | ✅ All 6 threads |
+| Per-thread train.py | ✅ All 6 threads (source='aios' filtered) |
 | Docstring extraction | ✅ AST-based |
 | Gold examples | ✅ 9 categories |
 | MLX config | ✅ |
-| Training gen loop | ✅ Background generation |
-| First full export | ❌ Not yet run |
-| End-to-end cycle | ❌ Not yet tested |
+| Training gen loop | ✅ kimi-k2 teacher, 17 modules, 105+ files |
+| Data quality filtering | ✅ Source-filtered, capped associations |
+| End-to-end cycle | ✅ First cycle complete (MLX LoRA, noticeable improvement) |
 | Adapter loading | 🔧 Endpoint exists, untested |
 <!-- /ARCHITECTURE:finetune -->
 
@@ -118,15 +127,15 @@ Uses MLX LoRA on Apple Silicon. Config in `mlx_config.yaml`.
   - Exit code capture from `train_mac.sh` (currently fire-and-forget)
   - Automatic combined JSONL generation before training starts
 - [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts:
-  - STATE format adherence score (does the model still produce valid STATE blocks?)
-  - Identity consistency (does it still know who it is after 50 turns?)
-  - Regression detection (did general capability degrade?)
+  - STATE format adherence score
+  - Identity consistency over 50+ turns
+  - Regression detection (general capability)
 - [ ] **Convergence monitoring** — Surface validation loss during training, stop early on plateau
 
 ### Research
 - [ ] **Self-improvement measurement** — Does a model trained on its own STATE output actually improve, or does it collapse? Requires controlled A/B eval across multiple training cycles
 - [ ] **Catastrophic forgetting baseline** — Benchmark general capability before and after LoRA. Quantify the tradeoff between STATE adherence and general fluency
-- [ ] **Synthetic data quality** — TrainingGenLoop generates examples every 2h. Are they helping or injecting noise? Eval synthetic vs human-curated training data
+- [ ] **Synthetic data quality** — TrainingGenLoop generates via kimi-k2 teacher. Measure improvement vs noise injection across training cycles
 
 ### Starter tasks
 - [ ] Add 10 STATE obedience examples to gold_examples.py
@@ -138,6 +147,10 @@ Uses MLX LoRA on Apple Silicon. Config in `mlx_config.yaml`.
 ## Changelog
 
 <!-- CHANGELOG:finetune -->
+### 2026-03-15
+- **First training cycle complete** — MLX LoRA on Llama-3.2-3B-Instruct-4bit, small but noticeable improvement
+- Conversation import tested (135 VS Code + 126 ChatGPT convos feeding concept graph)
+
 ### 2026-03-14
 - TrainingGenLoop: Background synthetic example generation every 2h
 - ConvoConceptLoop: Backfill concept graph before export (richer co-occurrence data)

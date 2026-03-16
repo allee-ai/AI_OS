@@ -111,7 +111,7 @@ def export_training_data(
     
     examples = []
 
-    # ── Data section: conversation turns ──
+    # ── Data section: conversation turns (aios source only) ──
     if "data" in sections:
         with closing(get_connection(readonly=True)) as conn:
             cur = conn.cursor()
@@ -119,6 +119,7 @@ def export_training_data(
                 SELECT ct.user_message, ct.assistant_message, c.session_id
                 FROM convo_turns ct
                 JOIN convos c ON ct.convo_id = c.id
+                WHERE c.source = 'aios'
                 ORDER BY ct.timestamp DESC
                 LIMIT ?
             """, (limit,))
@@ -128,9 +129,16 @@ def export_training_data(
                 if not user_msg or not assistant_msg or len(assistant_msg) < 20:
                     continue
                 
+                # Build real STATE so the model learns to follow it
+                try:
+                    from agent.subconscious.orchestrator import build_state
+                    state_block = build_state(user_msg)
+                except Exception:
+                    state_block = "== STATE ==\nConversation with persistent memory.\n== END STATE =="
+                
                 examples.append({
                     "messages": [
-                        {"role": "system", "content": "== STATE ==\nConversation with persistent memory."},
+                        {"role": "system", "content": state_block},
                         {"role": "user", "content": user_msg},
                         {"role": "assistant", "content": assistant_msg}
                     ],

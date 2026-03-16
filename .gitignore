@@ -88,6 +88,13 @@ Feeds/conversations/
 
 # Auto-generated training data
 finetune/auto_generated/
+finetune/runs/
+finetune/*_train.jsonl
+finetune/aios_combined.jsonl
+finetune/train.jsonl
+finetune/valid.jsonl
+finetune/reasoning_train.jsonl
+finetune/venv-mlx/
 
 # Local evaluator checklist
 docs/checklist.md
@@ -109,3 +116,10 @@ stringify/_archive/
 
 # Local archive (not tracked)
 _archive/
+
+# Adapter weights (large binary files)
+finetune/adapters-*/
+finetune/runs/*/adapters/*.safetensors
+finetune/aios_base.jsonl
+
+# Keep generated training data in git (small JSONL)

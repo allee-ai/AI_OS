@@ -161,6 +161,7 @@ export const SectionDetailPage: React.FC = () => {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [expandedSystem, setExpandedSystem] = useState<Set<number>>(new Set());
   const [approving, setApproving] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   const isGenerated = section === 'generated';
 
@@ -232,6 +233,26 @@ export const SectionDetailPage: React.FC = () => {
     setApproving(false);
   };
 
+  /* ── On-demand generation ── */
+  const handleGenerate = async () => {
+    if (!module) return;
+    setGenerating(true);
+    try {
+      await fetch('/api/finetune/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ module }),
+      });
+      // Give the background task a moment, then refresh
+      setTimeout(() => {
+        fetchExamples(page);
+        setGenerating(false);
+      }, 5000);
+    } catch {
+      setGenerating(false);
+    }
+  };
+
   if (!module || !section) {
     return <div style={S.empty}>Missing module or section parameter.</div>;
   }
@@ -240,7 +261,7 @@ export const SectionDetailPage: React.FC = () => {
     <div style={S.page}>
       {/* Header */}
       <div style={S.header}>
-        <button style={S.backBtn} onClick={() => navigate('/dev')}>← Back</button>
+        <button style={S.backBtn} onClick={() => navigate('/training')}>← Back</button>
         <div style={S.title}>
           <span>{MODULE_ICONS[module] || '📦'}</span>
           <span>{module}</span>
@@ -249,6 +270,19 @@ export const SectionDetailPage: React.FC = () => {
           <span>{SECTION_LABELS[section] || section}</span>
         </div>
         <span style={S.badge}>{total.toLocaleString()} examples</span>
+        {isGenerated && (
+          <button
+            style={{
+              ...S.approveBtn,
+              opacity: generating ? 0.6 : 1,
+              cursor: generating ? 'wait' : 'pointer',
+            }}
+            disabled={generating}
+            onClick={handleGenerate}
+          >
+            {generating ? '⏳ Generating…' : '🤖 Generate'}
+          </button>
+        )}
       </div>
 
       {/* Body */}

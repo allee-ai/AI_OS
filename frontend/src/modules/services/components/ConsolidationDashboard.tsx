@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BASE_URL } from '../../../config/api';
 
 interface ServiceConfig {
   enabled: boolean;
@@ -52,7 +53,7 @@ export const ConsolidationDashboard = ({ config, status, message, onChangesMade,
 
   const fetchPendingFacts = async () => {
     try {
-      const res = await fetch('http://localhost:8000/api/services/consolidation/pending');
+      const res = await fetch(`${BASE_URL}/api/services/consolidation/pending`);
       if (res.ok) {
         const data = await res.json();
         setPendingFacts(data.facts || []);
@@ -80,7 +81,7 @@ export const ConsolidationDashboard = ({ config, status, message, onChangesMade,
     setRunning(true);
     setLastResult(null);
     try {
-      const res = await fetch('http://localhost:8000/api/services/consolidation/run', {
+      const res = await fetch(`${BASE_URL}/api/services/consolidation/run`, {
         method: 'POST'
       });
       const data = await res.json();

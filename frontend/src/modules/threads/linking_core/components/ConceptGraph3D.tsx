@@ -15,6 +15,7 @@ import { useRef, useState, useEffect, useMemo, useCallback } from 'react';
 import { Canvas, useFrame, useThree } from '@react-three/fiber';
 import { Text, Sphere, OrbitControls } from '@react-three/drei';
 import * as THREE from 'three';
+import { BASE_URL } from '../../../../config/api';
 
 // ============================================================================
 // Fly Controls - WASD + Mouse for spaceship-style navigation
@@ -2182,7 +2183,7 @@ function CooccurrenceView() {
 
   useEffect(() => {
     setLoading(true);
-    fetch(`http://localhost:8000/api/linking_core/cooccurrence?limit=200&min_count=${minCount}`)
+    fetch(`${BASE_URL}/api/linking_core/cooccurrence?limit=200&min_count=${minCount}`)
       .then(r => r.ok ? r.json() : Promise.reject('Failed'))
       .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
@@ -2310,7 +2311,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
         max_nodes: '200',
         anchored: anchored ? 'true' : 'false',
       });
-      const res = await fetch(`http://localhost:8000/api/linking_core/graph?${params}`);
+      const res = await fetch(`${BASE_URL}/api/linking_core/graph?${params}`);
       if (!res.ok) throw new Error('Failed to fetch');
       const data = await res.json();
       setGraphData(data);
@@ -2331,7 +2332,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
         min_cross_strength: '0.15',
         max_cross_links: '200',
       });
-      const res = await fetch(`http://localhost:8000/api/linking_core/graph/structural?${params}`);
+      const res = await fetch(`${BASE_URL}/api/linking_core/graph/structural?${params}`);
       if (!res.ok) throw new Error('Failed to fetch structural graph');
       const data = await res.json();
       setStructuralData(data);
@@ -2349,7 +2350,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     setReindexing(true);
     setReindexResult(null);
     try {
-      const res = await fetch('http://localhost:8000/api/linking_core/reindex', {
+      const res = await fetch(`${BASE_URL}/api/linking_core/reindex`, {
         method: 'POST'
       });
       if (!res.ok) throw new Error('Reindex failed');
@@ -2374,7 +2375,7 @@ export default function ConceptGraph3D({ mode = 'ambient', onNodeClick, activati
     }
     
     try {
-      const res = await fetch(`http://localhost:8000/api/linking_core/activate/${encodeURIComponent(query)}`);
+      const res = await fetch(`${BASE_URL}/api/linking_core/activate/${encodeURIComponent(query)}`);
       if (!res.ok) throw new Error('Activation failed');
       const data = await res.json();
       

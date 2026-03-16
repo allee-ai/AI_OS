@@ -1,6 +1,8 @@
+import { BASE_URL, WS_URL } from '../../../config/api';
+
 export const API_CONFIG = {
-  BASE_URL: 'http://localhost:8000',
-  WS_URL: 'ws://localhost:8000/ws',
+  BASE_URL,
+  WS_URL,
   ENDPOINTS: {
     CHAT_HISTORY: '/api/chat/history',
     SEND_MESSAGE: '/api/chat/message',

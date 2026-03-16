@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { apiService } from '../services/chatApi';
+import { BASE_URL } from '../../../config/api';
 import './SystemPromptSidebar.css';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = BASE_URL;
 
 interface StateData {
   state: string;

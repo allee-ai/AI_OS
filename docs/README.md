@@ -27,7 +27,7 @@ AI_OS/
 ├── chat/            # Conversation API and storage
 ├── Feeds/           # External data sources
 ├── workspace/       # User file management
-├── finetune/        # Model training
+├── finetune/        # Fire-Tuner — training studio
 ├── eval/            # Benchmarking
 ├── docs/            # This documentation
 ├── frontend/        # React UI (modules mirror backend)

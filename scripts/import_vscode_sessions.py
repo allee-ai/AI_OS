@@ -27,7 +27,20 @@ from chat.import_convos import ImportConvos
 from chat.parsers.vscode_export_parser import VSCodeExportParser
 
 
-VSCODE_STORAGE = Path.home() / "Library/Application Support/Code/User/workspaceStorage"
+import platform
+
+def _vscode_storage_dir() -> Path:
+    """Resolve the VS Code workspace storage directory per platform."""
+    system = platform.system()
+    if system == "Darwin":
+        return Path.home() / "Library/Application Support/Code/User/workspaceStorage"
+    elif system == "Linux":
+        return Path.home() / ".config/Code/User/workspaceStorage"
+    elif system == "Windows":
+        return Path(os.environ.get("APPDATA", "")) / "Code/User/workspaceStorage"
+    return Path.home() / ".config/Code/User/workspaceStorage"
+
+VSCODE_STORAGE = _vscode_storage_dir()
 SKIP_LARGE_MB = 400  # Skip files larger than this to avoid OOM
 
 

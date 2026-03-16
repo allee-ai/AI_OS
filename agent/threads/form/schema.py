@@ -90,8 +90,10 @@ def get_tool(name: str) -> Optional[Dict[str, Any]]:
 def _row_to_tool(row) -> Dict[str, Any]:
     """Convert database row to tool dict."""
     run_file = row["run_file"]
+    run_type = row["run_type"]
     exec_path = EXECUTABLES_DIR / run_file if run_file else None
-    exists = exec_path.exists() if exec_path else False
+    is_mcp = run_type == "mcp"
+    exists = True if is_mcp else (exec_path.exists() if exec_path else False)
     requires_env = json.loads(row["requires_env"]) if row["requires_env"] else []
     env_ok = all(os.environ.get(var) for var in requires_env)
     available = bool(row["enabled"]) and bool(row["allowed"]) and exists and env_ok
@@ -370,6 +372,34 @@ module.exports = {{ run, ACTIONS }};
 '''
 
 
+def _execute_mcp_tool(tool_name: str, action: str, params: Dict[str, Any]) -> Any:
+    """Route an MCP tool call through the MCP client runtime.
+    
+    Tool names follow the pattern: mcp_<server>_<toolname>
+    The action and params become the MCP tool call arguments.
+    """
+    from agent.core.mcp_client import call_tool, is_connected
+
+    # Parse server name from tool_name: mcp_<server>_<tool>
+    parts = tool_name.split("_", 2)  # ["mcp", server, tool]
+    if len(parts) < 3:
+        return {"error": f"Invalid MCP tool name format: {tool_name}"}
+
+    server_name = parts[1]
+    mcp_tool_name = parts[2]
+
+    if not is_connected(server_name):
+        return {"error": f"MCP server '{server_name}' is not connected"}
+
+    # Build arguments: merge action into params
+    arguments = {**params}
+    if action and action != "call":
+        arguments["action"] = action
+
+    result = call_tool(server_name, mcp_tool_name, arguments)
+    return result
+
+
 def execute_tool_action(
     tool_name: str,
     action: str,
@@ -434,8 +464,19 @@ def execute_tool_action(
     
     # Execute
     try:
-        exec_path = Path(tool["path"])
         run_type = tool.get("run_type", "python")
+
+        # MCP tools route through the MCP client
+        if run_type == "mcp":
+            output = _execute_mcp_tool(tool_name, action, params)
+            return {
+                "tool_name": tool_name, "action": action, "status": "success",
+                "output": output, "error": None,
+                "duration_ms": int((time.time() - start) * 1000),
+                "timestamp": now, "success": True
+            }
+
+        exec_path = Path(tool["path"])
         
         if run_type in ("shell", "bash"):
             import subprocess
@@ -475,6 +516,7 @@ def get_categories() -> List[Dict[str, str]]:
         {"value": "files", "label": "Files", "icon": "📁"},
         {"value": "automation", "label": "Automation", "icon": "⚙️"},
         {"value": "internal", "label": "Internal", "icon": "🔧"},
+        {"value": "mcp", "label": "MCP", "icon": "🔌"},
     ]
 
 

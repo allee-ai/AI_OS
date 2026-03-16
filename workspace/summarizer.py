@@ -64,7 +64,7 @@ def set_summary_prompt(prompt: str) -> bool:
 
 def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
     """
-    Call Ollama to summarize a text block.
+    Summarize a text block using the configured LLM provider.
     
     Returns the summary string or None on failure.
     """
@@ -72,28 +72,60 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
         return None
 
     prompt = prompt or get_summary_prompt()
+    provider = os.environ.get("AIOS_MODEL_PROVIDER", "ollama").lower()
     model = os.environ.get(
         "AIOS_SUMMARY_MODEL",
-        os.environ.get("OLLAMA_MODEL", os.environ.get("AIOS_MODEL", "kimi-k2:1t-cloud")),
+        os.environ.get("AIOS_MODEL_NAME", "qwen2.5:7b"),
     )
-    host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
 
     # Truncate to first 4KB to keep it cheap
     truncated = text[:4096]
+    messages = [
+        {"role": "system", "content": prompt},
+        {"role": "user", "content": truncated},
+    ]
 
     try:
-        import ollama
+        if provider == "openai":
+            import urllib.request, json
+            api_key = os.environ.get("OPENAI_API_KEY", "")
+            base_url = os.environ.get("AIOS_MODEL_ENDPOINT", "").rstrip("/") or "https://api.openai.com/v1"
+            payload = {"model": model, "messages": messages, "max_tokens": 200, "temperature": 0.3}
+            req = urllib.request.Request(
+                f"{base_url}/chat/completions",
+                data=json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                content = body.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
 
-        client = ollama.Client(host=host)
-        resp = client.chat(
-            model=model,
-            messages=[
-                {"role": "system", "content": prompt},
-                {"role": "user", "content": truncated},
-            ],
-            options={"temperature": 0.3, "num_predict": 200},
-        )
-        content = resp.get("message", {}).get("content", "").strip()
+        elif provider == "http":
+            import urllib.request, json
+            endpoint = os.environ.get("AIOS_MODEL_ENDPOINT", "")
+            req = urllib.request.Request(
+                endpoint,
+                data=json.dumps({"messages": messages}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=30) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                content = (body.get("message") or body.get("content") or "").strip()
+
+        else:
+            # ollama (default)
+            import ollama
+            host = os.environ.get("OLLAMA_HOST", "http://localhost:11434")
+            client = ollama.Client(host=host)
+            resp = client.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": 0.3, "num_predict": 200},
+            )
+            content = resp.get("message", {}).get("content", "").strip()
+
         return content if content else None
     except Exception as e:
         print(f"[Summarizer] Failed: {e}")

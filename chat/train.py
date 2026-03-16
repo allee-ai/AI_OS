@@ -60,6 +60,30 @@ SCHEMA_TABLES = [
 ]
 
 
+def _build_training_state(query: str) -> str:
+    """
+    Build a real STATE block for a training pair.
+
+    Uses the orchestrator to produce the same STATE the model would see
+    at inference time, so training teaches STATE-following behavior.
+    Falls back to a lightweight static STATE if orchestrator fails.
+    """
+    try:
+        from agent.subconscious.orchestrator import build_state
+        return build_state(query)
+    except Exception:
+        # Fallback: lightweight but realistic STATE structure
+        return (
+            "== STATE ==\n"
+            "[self] My internal structure\n"
+            "  Threads: identity, philosophy, log, reflex, form, linking_core\n"
+            "  Modules: chat, workspace\n"
+            "[identity] Who I am and who you are\n"
+            "  I am a personal AI companion. I run locally for privacy.\n"
+            "== END STATE =="
+        )
+
+
 def export_training_data(
     output_path: Optional[Path] = None,
     limit: int = 2000,
@@ -84,6 +108,8 @@ def export_training_data(
     examples = []
 
     # ── Data section: conversation turns ──
+    # Only export turns from the real agent (source='aios'), not imported
+    # ChatGPT/Copilot conversations which teach the wrong voice.
     if "data" in sections:
         with closing(get_connection(readonly=True)) as conn:
             cur = conn.cursor()
@@ -94,14 +120,18 @@ def export_training_data(
                 WHERE ct.user_message IS NOT NULL
                   AND ct.assistant_message IS NOT NULL
                   AND LENGTH(ct.assistant_message) >= 20
+                  AND c.source = 'aios'
                 ORDER BY ct.timestamp DESC
                 LIMIT ?
             """, (limit,))
 
             for user_msg, assistant_msg, channel, session_id in cur.fetchall():
+                # Build a real STATE block for this turn so the model
+                # learns to ground its answers in STATE context.
+                state_block = _build_training_state(user_msg)
                 examples.append({
                     "messages": [
-                        {"role": "system", "content": "== STATE ==\nConversation with persistent memory."},
+                        {"role": "system", "content": state_block},
                         {"role": "user", "content": user_msg},
                         {"role": "assistant", "content": assistant_msg},
                     ],

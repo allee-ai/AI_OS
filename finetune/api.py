@@ -12,6 +12,7 @@ import subprocess
 import logging
 import json
 import re
+import time
 
 router = APIRouter(prefix="/api/finetune", tags=["finetune"])
 
@@ -24,33 +25,101 @@ FINETUNE_DIR = Path(__file__).resolve().parent
 
 
 class FinetuneConfig(BaseModel):
+    base_model: Optional[str] = None       # MLX model ID, e.g. "mlx-community/Qwen2.5-7B-Instruct-4bit"
+    run_name: Optional[str] = None          # Human label, e.g. "1.5b-test"
     rank: Optional[int] = None
     alpha: Optional[int] = None
+    scale: Optional[float] = None           # LoRA scale (1.0 is standard, >2 risks collapse)
+    dropout: Optional[float] = None         # LoRA dropout (0.0-0.5)
     batch_size: Optional[int] = None
     grad_accumulation_steps: Optional[int] = None
     learning_rate: Optional[str] = None
     iters: Optional[int] = None
+    warmup: Optional[int] = None            # LR warmup steps
+    max_seq_length: Optional[int] = None    # Max context window for training
 
 
-def run_training_script(script_path: Path, cwd: Path):
-    """Run training script in background."""
+# ── Known MLX models (downloadable from HF) ─────────────────────────
+MLX_MODELS = [
+    {"id": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",  "label": "Qwen 2.5 1.5B (4-bit)",  "size_gb": 1.0, "ram_gb": 4},
+    {"id": "mlx-community/Qwen2.5-7B-Instruct-4bit",    "label": "Qwen 2.5 7B (4-bit)",    "size_gb": 4.5, "ram_gb": 8},
+    {"id": "mlx-community/Mistral-7B-Instruct-v0.3-4bit","label": "Mistral 7B v0.3 (4-bit)","size_gb": 4.1, "ram_gb": 8},
+    {"id": "mlx-community/Llama-3.2-3B-Instruct-4bit",  "label": "Llama 3.2 3B (4-bit)",   "size_gb": 1.8, "ram_gb": 4},
+    {"id": "mlx-community/Llama-3.2-1B-Instruct-4bit",  "label": "Llama 3.2 1B (4-bit)",   "size_gb": 0.7, "ram_gb": 3},
+]
+
+
+# ── Runs directory for named adapter sets ────────────────────────────
+RUNS_DIR = FINETUNE_DIR / "runs"
+RUNS_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def run_training_script(script_path: Path, cwd: Path, env_overrides: Optional[Dict[str, str]] = None):
+    """Run training script in background with optional env overrides."""
+    import os as _os
     try:
+        env = {**_os.environ, **(env_overrides or {})}
         logger.info(f"Starting training script: {script_path} in {cwd}")
         subprocess.Popen(
             ["/bin/bash", script_path.name],
             cwd=str(cwd),
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
+            stderr=subprocess.PIPE,
+            env=env,
         )
         logger.info("Training process spawned successfully.")
     except Exception as e:
         logger.error(f"Failed to start training subprocess: {e}")
 
 
+@router.get("/models")
+async def list_models():
+    """List available MLX base models for finetuning."""
+    # Check which are already cached locally
+    hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
+    result = []
+    for m in MLX_MODELS:
+        cached = False
+        # HF cache dir format: models--org--name
+        cache_name = "models--" + m["id"].replace("/", "--")
+        if (hf_cache / cache_name).exists():
+            cached = True
+        result.append({**m, "cached": cached})
+    return {"models": result}
+
+
+@router.get("/runs")
+async def list_runs():
+    """List previous finetune runs (named adapter sets)."""
+    runs = []
+    if RUNS_DIR.exists():
+        for d in sorted(RUNS_DIR.iterdir()):
+            if d.is_dir():
+                meta_path = d / "run_meta.json"
+                meta = {}
+                if meta_path.exists():
+                    try:
+                        meta = json.loads(meta_path.read_text())
+                    except Exception:
+                        pass
+                adapter_files = list(d.glob("adapters/*.safetensors")) + list(d.glob("adapters/*.npz"))
+                runs.append({
+                    "name": d.name,
+                    "path": str(d),
+                    "has_adapters": len(adapter_files) > 0,
+                    "adapter_count": len(adapter_files),
+                    **meta,
+                })
+    return {"runs": runs}
+
+
 @router.post("/start")
 async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTasks):
     """
     Updates mlx_config.yaml and launches training script in background.
+    
+    - config.base_model: MLX model to finetune (default: Qwen2.5-7B-Instruct-4bit)
+    - config.run_name: Label for this run (default: auto-generated timestamp)
     """
     try:
         config_path = FINETUNE_DIR / "mlx_config.yaml"
@@ -62,8 +131,26 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
         if not script_path.exists():
             raise HTTPException(status_code=404, detail=f"Training script not found at {script_path}")
 
+        # Resolve model
+        base_model = config.base_model or "mlx-community/Llama-3.2-3B-Instruct-4bit"
+
+        # Resolve run name
+        from datetime import datetime, timezone
+        run_name = config.run_name or f"run-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
+        # Sanitize: only alphanumeric, dash, underscore, dot
+        run_name = re.sub(r'[^a-zA-Z0-9._-]', '-', run_name)
+        run_dir = RUNS_DIR / run_name
+        run_dir.mkdir(parents=True, exist_ok=True)
+        adapter_dir = run_dir / "adapters"
+        adapter_dir.mkdir(parents=True, exist_ok=True)
+
         # Read config content
         content = config_path.read_text("utf-8")
+
+        # Update model in config
+        content = re.sub(r'(model:\s*")([^"]+)(")', f'\\g<1>{base_model}\\g<3>', content)
+        # Fallback for unquoted model line
+        content = re.sub(r'^(model:\s*)(.+)$', f'model: "{base_model}"', content, flags=re.MULTILINE)
 
         # Update values via regex to preserve comments
         if config.rank is not None:
@@ -78,20 +165,50 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
             content = re.sub(r"(learning_rate:\s*)([\d\.e-]+)", f"\\g<1>{config.learning_rate}", content)
         if config.iters is not None:
             content = re.sub(r"(iters:\s*)(\d+)", f"\\g<1>{config.iters}", content)
+        if config.scale is not None:
+            content = re.sub(r"(scale:\s*)[\d.]+", f"\\g<1>{config.scale}", content)
+        if config.dropout is not None:
+            content = re.sub(r"(dropout:\s*)[\d.]+", f"\\g<1>{config.dropout}", content)
+        if config.warmup is not None:
+            content = re.sub(r"(warmup:\s*)(\d+)", f"\\g<1>{config.warmup}", content)
+        if config.max_seq_length is not None:
+            content = re.sub(r"(max_seq_length:\s*)(\d+)", f"\\g<1>{config.max_seq_length}", content)
 
         # Write updated config
         config_path.write_text(content, encoding="utf-8")
-        logger.info(f"Action: Training started by user. Updated config provided.")
 
-        # Run script
-        background_tasks.add_task(run_training_script, script_path, FINETUNE_DIR)
+        # Save run metadata
+        run_meta = {
+            "base_model": base_model,
+            "run_name": run_name,
+            "config": config.model_dump(exclude_unset=True),
+            "started_at": datetime.now(timezone.utc).isoformat(),
+            "status": "training",
+        }
+        (run_dir / "run_meta.json").write_text(json.dumps(run_meta, indent=2))
+
+        logger.info(f"Training started: run={run_name}, model={base_model}")
+
+        # Pass model + adapter path to script via env vars
+        env_overrides = {
+            "AIOS_FT_MODEL": base_model,
+            "AIOS_FT_ADAPTER_DIR": str(adapter_dir),
+            "AIOS_FT_RUN_NAME": run_name,
+            "AIOS_FT_RUN_DIR": str(run_dir),
+        }
+        background_tasks.add_task(run_training_script, script_path, FINETUNE_DIR, env_overrides)
 
         return {
             "status": "success", 
-            "message": "Training initiated.", 
-            "config_update": config.model_dump(exclude_unset=True)
+            "message": f"Training initiated: {run_name}",
+            "run_name": run_name,
+            "base_model": base_model,
+            "adapter_dir": str(adapter_dir),
+            "config_update": config.model_dump(exclude_unset=True),
         }
 
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error starting finetune: {e}")
         raise HTTPException(status_code=500, detail=str(e))
@@ -252,6 +369,56 @@ async def export_all_training_data():
     return {
         "status": "exported",
         "results": results
+    }
+
+
+# Personal data sources — section="data" from these modules contains user-specific info
+PERSONAL_SOURCES = {"identity", "linking_core", "chat", "log", "philosophy", "reflex"}
+
+
+@router.post("/export/base")
+async def export_base_training_data():
+    """
+    Filter aios_combined.jsonl → aios_base.jsonl, keeping only system knowledge.
+
+    Strips section="data" from personal sources (identity, linking_core, chat,
+    log, philosophy, reflex) which contain profile facts, conversation turns,
+    and concept associations. Keeps: api, cli, schema, generated, reasoning,
+    and non-personal data sections.
+    """
+    combined_path = FINETUNE_DIR / "aios_combined.jsonl"
+    base_path = FINETUNE_DIR / "aios_base.jsonl"
+
+    if not combined_path.exists():
+        raise HTTPException(status_code=400, detail="Run POST /api/finetune/export first to create aios_combined.jsonl")
+
+    kept = 0
+    stripped = 0
+
+    with open(combined_path) as src, open(base_path, "w") as dst:
+        for line in src:
+            try:
+                obj = json.loads(line)
+                meta = obj.get("metadata", {})
+                source = meta.get("source", "")
+                section = meta.get("section", "")
+
+                # Strip personal data sections from known personal sources
+                if source in PERSONAL_SOURCES and section == "data":
+                    stripped += 1
+                    continue
+
+                dst.write(line)
+                kept += 1
+            except json.JSONDecodeError:
+                continue
+
+    return {
+        "status": "exported",
+        "path": str(base_path),
+        "kept": kept,
+        "stripped": stripped,
+        "total_source": kept + stripped,
     }
 
 
@@ -742,6 +909,112 @@ async def approve_generated_examples(name: str, body: ApprovalRequest):
         "status": body.action + "d",
         "module": name,
         "count": len(selected),
+    }
+
+
+class GenerateRequest(BaseModel):
+    module: Optional[str] = None   # None = all modules
+    file: Optional[str] = None     # Specific file path (relative to root)
+
+
+@router.post("/generate")
+async def trigger_generation(body: GenerateRequest, background_tasks: BackgroundTasks):
+    """On-demand trigger for kimi-k2 training data generation."""
+    from agent.subconscious.loops.training_gen import (
+        TrainingGenLoop, ALL_MODULES, get_generated_count,
+    )
+
+    loop = TrainingGenLoop(enabled=True)
+
+    # File-level generation
+    if body.file:
+        module = body.module or ""
+        before = get_generated_count(module) if module else 0
+
+        def _run_file():
+            loop.generate_for_file(body.file, module)
+
+        background_tasks.add_task(_run_file)
+        return {
+            "status": "started",
+            "mode": "file",
+            "file": body.file,
+            "module": module,
+        }
+
+    # Module-level generation
+    target_modules = ALL_MODULES
+    if body.module:
+        if body.module not in ALL_MODULES:
+            raise HTTPException(status_code=400, detail=f"Unknown module: {body.module}")
+        target_modules = [body.module]
+
+    before = {m: get_generated_count(m) for m in target_modules}
+
+    def _run():
+        for mod in target_modules:
+            loop._generate_for_module(mod)
+
+    background_tasks.add_task(_run)
+
+    return {
+        "status": "started",
+        "mode": "module",
+        "modules": target_modules,
+        "before_counts": before,
+    }
+
+
+@router.get("/generate/targets")
+async def list_generation_targets():
+    """List all module targets with files, generated counts, and labels."""
+    from agent.subconscious.loops.training_gen import get_all_targets, ALL_MODULES, MODULE_LABELS
+    targets = get_all_targets()
+    return {
+        "targets": targets,
+        "total_modules": len(ALL_MODULES),
+        "total_files": sum(t["file_count"] for t in targets),
+        "total_generated": sum(t["generated_total"] for t in targets),
+    }
+
+
+@router.post("/generate/all-files")
+async def trigger_all_files_generation(
+    background_tasks: BackgroundTasks,
+    module: Optional[str] = None,
+):
+    """Generate examples for every file across all modules (or one module). Runs in background."""
+    from agent.subconscious.loops.training_gen import (
+        TrainingGenLoop, ALL_MODULES, MODULE_DIRS,
+    )
+
+    target_modules = ALL_MODULES
+    if module:
+        if module not in ALL_MODULES:
+            raise HTTPException(status_code=400, detail=f"Unknown module: {module}")
+        target_modules = [module]
+
+    loop = TrainingGenLoop(enabled=True)
+    file_list = []
+    for mod in target_modules:
+        for f in loop.discover_files(mod):
+            file_list.append((mod, f))
+
+    def _run_all():
+        for mod, fpath in file_list:
+            try:
+                loop.generate_for_file(fpath, mod)
+                time.sleep(1)  # Throttle between files
+            except Exception as e:
+                print(f"[TrainingGen] Error on {fpath}: {e}")
+
+    background_tasks.add_task(_run_all)
+
+    return {
+        "status": "started",
+        "modules": target_modules,
+        "total_files": len(file_list),
+        "files": [f for _, f in file_list],
     }
 
 

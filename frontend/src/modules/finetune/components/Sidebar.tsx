@@ -43,6 +43,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ modules, selected, onSelect })
           <span className="module-name">Unified</span>
           <span className="module-count">all</span>
         </button>
+        <button
+          className={`module-btn ${selected === '__generator__' ? 'active' : ''}`}
+          onClick={() => onSelect('__generator__')}
+          style={{ borderBottom: '1px solid var(--border)', marginBottom: 4 }}
+        >
+          <span className="module-icon">🤖</span>
+          <span className="module-name">Generator</span>
+          <span className="module-count">kimi</span>
+        </button>
+        <button
+          className={`module-btn ${selected === '__tool_eval__' ? 'active' : ''}`}
+          onClick={() => onSelect('__tool_eval__')}
+          style={{ borderBottom: '1px solid var(--border)', marginBottom: 4 }}
+        >
+          <span className="module-icon">🔧</span>
+          <span className="module-name">Tool Eval</span>
+          <span className="module-count">eval</span>
+        </button>
         {modules.map(m => (
           <button
             key={m.name}

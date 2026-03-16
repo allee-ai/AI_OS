@@ -81,7 +81,7 @@ async function fetchTableData(table: LogTableInfo, _page: number, search: string
 }
 
 /* ── Main Component ── */
-export function LogDashboard() {
+export function LogDashboard({ embedded = false }: { embedded?: boolean } = {}) {
   const [tables, setTables] = useState<LogTableInfo[]>([]);
   const [selected, setSelected] = useState<LogTableInfo | null>(null);
   const [rows, setRows] = useState<LogRow[]>([]);
@@ -248,9 +248,11 @@ export function LogDashboard() {
             </button>
           ))}
         </div>
-        <div className="log-sidebar-footer">
-          <Link to="/">← Back to App</Link>
-        </div>
+        {!embedded && (
+          <div className="log-sidebar-footer">
+            <Link to="/">← Back to App</Link>
+          </div>
+        )}
       </nav>
 
       {/* ── Main Area ── */}

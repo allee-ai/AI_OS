@@ -6,14 +6,14 @@ The central nervous system — builds the agent's awareness before each response
 
 ## Description
 
-The subconscious is like the agent's "background thinking." Before she responds to you, it:
+The subconscious is the agent's background thinking layer. Before each response, it:
 
-1. **Gathers** what she knows about you (identity)
-2. **Recalls** recent facts from memory
-3. **Checks** what's been happening (events)
-4. **Assembles** all this into her current awareness
+1. **Scores** every thread and module against the user's query (via LinkingCore)
+2. **Ranks** sources into L1/L2/L3 detail levels based on relevance
+3. **Assembles** `== STATE ==` from all sources within per-source token budgets
+4. **Runs** 10+ background loops (memory, goals, self-improvement, training gen, etc.)
 
-The agent is stateless. Before each response, `agent_service` calls `get_consciousness_context()` to assemble context from all registered threads.
+The agent is stateless. Before each response, the orchestrator calls `build_state()` to assemble context from 6 threads + 2 modules, ordered by relevance score.
 
 ---
 
@@ -26,36 +26,78 @@ The agent is stateless. Before each response, `agent_service` calls `get_conscio
 subconscious/
 ├── __init__.py         # Public API: wake(), sleep(), get_consciousness_context()
 ├── core.py             # ThreadRegistry, SubconsciousCore singleton
+├── orchestrator.py     # Subconscious class — score(), build_state(), STATE assembly
+├── api.py              # FastAPI router — 51 endpoints (/loops, /goals, /tasks, etc.)
+├── cli.py              # CLI interface
 ├── contract.py         # Metadata protocol for sync decisions
-├── loops.py            # Background: ConsolidationLoop, SyncLoop, HealthLoop
-├── triggers.py         # Event-driven triggers
-└── temp_memory/        # Short-term fact storage
+├── triggers.py         # Event-driven triggers (time/event/threshold)
+├── loops/
+│   ├── base.py             # BackgroundLoop ABC, LoopConfig
+│   ├── manager.py          # LoopManager — unified lifecycle
+│   ├── memory.py           # MemoryLoop — periodic memory maintenance
+│   ├── consolidation.py    # ConsolidationLoop — promote SHORT→LONG links
+│   ├── sync.py             # SyncLoop — cross-thread state sync
+│   ├── health.py           # HealthLoop — periodic health checks
+│   ├── thought.py          # ThoughtLoop — LLM-driven introspection
+│   ├── custom.py           # CustomLoop — user-defined from config
+│   ├── task_planner.py     # TaskPlanner — plan and queue agent tasks
+│   ├── goals.py            # GoalLoop — propose high-level goals
+│   ├── self_improve.py     # SelfImprovementLoop — reads thoughts, proposes code edits
+│   ├── training_gen.py     # TrainingGenLoop — kimi-k2 teacher, 17 modules, 105+ files
+│   └── convo_concepts.py   # ConvoConceptLoop — backfill concept graph from convos
+└── temp_memory/        # Short-term fact storage pending consolidation
 ```
 
-### Context Levels (HEA)
+### Orchestrator (orchestrator.py)
 
-| Level | Tokens | Use Case |
-|-------|--------|----------|
-| L1 | ~10 | Quick, casual responses |
-| L2 | ~50 | Default conversational |
-| L3 | ~200 | Deep analytical |
+The brain of STATE assembly:
 
-### API
+| Step | Action |
+|------|--------|
+| 1 | `score(query)` — LinkingCore scores each thread/module 0–10 |
+| 2 | Score maps to L1 (0–3.5), L2 (3.5–7.0), L3 (7.0–10) |
+| 3 | Each adapter's `introspect()` runs at chosen level |
+| 4 | Facts concatenate into `== STATE ==` within per-source token budgets |
+| 5 | STATE injects into system prompt |
 
-| Function | Purpose |
-|----------|---------|
-| `wake(start_loops)` | Initialize subconscious, register adapters |
-| `sleep()` | Gracefully shut down loops |
-| `get_consciousness_context(level)` | Assemble context from all threads |
-| `get_status()` | Health status of threads and loops |
+Sources: `identity`, `log`, `form`, `philosophy`, `reflex`, `linking_core` (threads) + `chat`, `workspace` (modules).
 
-### Background Loops
+### Context Levels
+
+| Level | Score | Tokens | When |
+|-------|-------|--------|------|
+| L1 | 0–3.5 | ~150 | Low relevance |
+| L2 | 3.5–7.0 | ~400 | Default conversational |
+| L3 | 7.0–10 | ~800 | High relevance / deep queries |
+
+### Background Loops (14 total)
 
 | Loop | Interval | Purpose |
 |------|----------|---------|
-| ConsolidationLoop | 300s | Score and promote temp facts |
-| SyncLoop | 600s | Sync identity across threads |
-| HealthLoop | 60s | Check thread health |
+| MemoryLoop | varies | Periodic memory maintenance |
+| ConsolidationLoop | 300s | Promote SHORT→LONG links, compact temp facts |
+| SyncLoop | 600s | Cross-thread state synchronization |
+| HealthLoop | 60s | Health checks on all threads |
+| ThoughtLoop | varies | LLM-driven introspection cycles |
+| CustomLoop(s) | user-defined | User-created loops with multi-step COT |
+| TaskPlanner | varies | Plans and queues agent tasks |
+| GoalLoop | varies | Proposes high-level goals for human review |
+| SelfImprovementLoop | varies | Reads thoughts → proposes code edits (never auto-applied) |
+| TrainingGenLoop | 7200s | kimi-k2 generates training data across 17 modules |
+| ConvoConceptLoop | varies | Backfills concept graph from imported conversations |
+
+### API Endpoints (51 routes at `/api/subconscious/`)
+
+Key groups:
+- **State**: `build_state`, `state`, `context`, `preview`, `health`
+- **Loops**: CRUD, pause/resume, interval adjust, prompt editing, custom loops
+- **Facts**: temp facts CRUD, approve/reject (bulk + individual), consolidate
+- **Thoughts**: list, think-now, act on thought
+- **Tasks**: CRUD, execute, cancel
+- **Goals**: list, resolve
+- **Notifications**: list, read, dismiss, respond
+- **Improvements**: list, resolve, apply
+- **Backfill**: status, trigger run
 
 ### Thread Interface
 

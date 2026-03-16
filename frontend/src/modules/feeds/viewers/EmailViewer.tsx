@@ -1,5 +1,8 @@
 import { useState, useEffect } from 'react';
+import { BASE_URL } from '../../../config/api';
 import './FeedViewer.css';
+
+const API_BASE = BASE_URL;
 
 interface Email {
   id: string;
@@ -26,8 +29,6 @@ interface ProviderStatus {
   connected: boolean;
   email?: string;
 }
-
-const API_BASE = 'http://localhost:8000';
 
 const PROVIDERS: { id: Provider; name: string; icon: string; comingSoon?: boolean }[] = [
   { id: 'gmail', name: 'Gmail', icon: '📧' },

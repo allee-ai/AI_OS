@@ -203,7 +203,7 @@ export const UnifiedView: React.FC = () => {
             key={ex._id}
             style={{ ...S.card, cursor: 'pointer' }}
             onClick={() => {
-              if (source && section) navigate(`/dev/${source}/${section}`);
+              if (source && section) navigate(`/training/${source}/${section}`);
             }}
           >
             <div style={S.cardHeader}>

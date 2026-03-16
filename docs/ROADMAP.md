@@ -12,7 +12,8 @@
 | **Core** | ✅ Done | 6 threads, HEA scoring, SQLite backend, stateless agent, tool calling |
 | **CLI** | ✅ Done | ~60 commands, full feature parity, headless/SSH |
 | **UI** | 🔧 WIP | React app — chat, tool call rendering, per-thread dashboards, goals/notifications/improvements panels |
-| **Finetune** | 🔧 WIP | Export pipeline works. Per-thread train.py. MLX config. Training gen loop. End-to-end cycle untested |
+| **Fire-Tuner** | ✅ Done | First training cycle complete (MLX LoRA, noticeable improvement). kimi-k2 teacher loop, 17 modules |
+| **Eval** | ✅ Done | 10 structured evals + tool calling eval. LLM-as-judge. Battle arena. Benchmark categories |
 | **Workspace** | 🔧 WIP | FTS5, summaries, file editing, pinning, notes. Connected to STATE via context assembly |
 | **Integrations** | 🔧 WIP | Feed framework + contacts import done. Adapters need real polling code |
 | **Concept Graph** | 🔧 WIP | Linking core live. Backfill loop built. Co-occurrence/consolidation need volume |
@@ -20,15 +21,15 @@
 ## Definition of Done
 
 ### Product readiness
-- [ ] Export all threads → JSONL → train → load adapter → verify STATE adherence
-- [ ] One full self-training cycle completed end-to-end
+- [x] Export all threads → JSONL → train → load adapter → verify STATE adherence
+- [x] One full self-training cycle completed end-to-end
 - [ ] API authentication (currently zero auth)
 - [ ] Terminal command allowlist (currently unrestricted shell)
 - [ ] Onboarding wizard — first-run setup (name agent, set profile, pick model)
 
 ### Research milestones
-- [ ] Finetuned model maintains STATE format over 50+ turns (longitudinal eval)
-- [ ] Finetuned model doesn't lose general capability (catastrophic forgetting baseline)
+- [ ] Fire-tuned model maintains STATE format over 50+ turns (longitudinal eval)
+- [ ] Fire-tuned model doesn't lose general capability (catastrophic forgetting baseline)
 - [x] Workspace files + tool results visible in STATE during every interaction
 - [ ] Retrieval precision measured — right fact surfaces at the right time
 - [ ] New model dropped in can learn everything from STATE alone
@@ -42,16 +43,18 @@
 | 2 | **Tool Calling** — Execute, log, safety-gate | ✅ Done |
 | 3 | **Identity / Philosophy** — Persistent self-model + values | ✅ Done |
 | 4 | **CLI Parity** — Every feature works without a browser | ✅ Done |
-| 5 | **Eval Harness** — Benchmark Nola against raw models | ✅ Done |
+| 5 | **Eval Harness** — 10 structured evals + tool calling | ✅ Done |
 | 6 | **Context-Aware Loops** — Editable prompts, STATE injection | ✅ Done |
 | 7 | **Concept Graph Backfill** — Extract concepts from imported conversations | ✅ Done |
 | 8 | **Self-Improvement** — Goal loop, code review loop, notifications | ✅ Done |
-| 9 | **Finetune Pipeline** — Export → train → load | 🔧 Exists, untested E2E |
-| 10 | **Tool → STATE** — Tool results folded into form thread context | 🔧 Traces exist, extraction partial |
-| 11 | **Workspace → Cognition** — Agent reasons about files in STATE | 🔧 FTS in STATE, editing, pinning |
-| 12 | **Self-Training Loop** — Export → train → load → verify | 🔧 Pieces exist |
-| 13 | **Reflex** — Auto-promotion, visual trigger builder | 🔧 Schema + API done |
-| 14 | **Beyond Chat** — Background presence via Feeds | 🔧 Framework exists |
+| 9 | **Fire-Tuner Pipeline** — Export → train → load | ✅ Done (first cycle: noticeable improvement) |
+| 10 | **Conversation Import** — VS Code + ChatGPT → concept graph | ✅ Done (135 + 126 convos imported) |
+| 11 | **Tool → STATE** — Tool results folded into form thread context | 🔧 Traces exist, extraction partial |
+| 12 | **Workspace → Cognition** — Agent reasons about files in STATE | 🔧 FTS in STATE, editing, pinning |
+| 13 | **Self-Training Loop** — Export → train → load → verify | 🔧 Pieces exist |
+| 14 | **Reflex** — Auto-promotion, visual trigger builder | 🔧 Schema + API done |
+| 15 | **Beyond Chat** — Background presence via Feeds | 🔧 Framework exists |
+| 16 | **Marketplace** — Knowledge modules, trained models, feed adapters | 🔧 Architecture ready |
 
 ---
 
@@ -319,30 +322,24 @@ _Source: [workspace/README.md](workspace/README.md)_
 
 ---
 
-### Finetune
+### Fire-Tuner
 
 <!-- INCLUDE:finetune:ROADMAP -->
 _Source: [finetune/README.md](finetune/README.md)_
 
 ### Pipeline completion
-- [ ] **Training orchestrator** — Chain export → train → load in a single `POST /finetune/run`:
-  - Status tracking with progress events via WebSocket
-  - Exit code capture from `train_mac.sh` (currently fire-and-forget)
-  - Automatic combined JSONL generation before training starts
-- [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts:
-  - STATE format adherence score (does the model still produce valid STATE blocks?)
-  - Identity consistency (does it still know who it is after 50 turns?)
-  - Regression detection (did general capability degrade?)
+- [ ] **Training orchestrator** — Chain export → train → load in a single `POST /finetune/run`
+- [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts
 - [ ] **Convergence monitoring** — Surface validation loss during training, stop early on plateau
 
 ### Research
-- [ ] **Self-improvement measurement** — Does a model trained on its own STATE output actually improve, or does it collapse? Requires controlled A/B eval across multiple training cycles
-- [ ] **Catastrophic forgetting baseline** — Benchmark general capability before and after LoRA. Quantify the tradeoff between STATE adherence and general fluency
-- [ ] **Synthetic data quality** — TrainingGenLoop generates examples every 2h. Are they helping or injecting noise? Eval synthetic vs human-curated training data
+- [ ] **Self-improvement measurement** — Does training on own STATE output improve or collapse?
+- [ ] **Catastrophic forgetting baseline** — Benchmark general capability before/after LoRA
+- [ ] **Synthetic data quality** — kimi-k2 teacher generates training data. Measure improvement vs noise
 
 ### Starter tasks
 - [ ] Add 10 STATE obedience examples to gold_examples.py
-- [ ] Document the full export → train → load workflow with expected outputs
+- [ ] Document the full export → train → load workflow
 <!-- /INCLUDE:finetune:ROADMAP -->
 
 ---
@@ -358,14 +355,14 @@ _Source: [eval/README.md](eval/README.md)_
 - [ ] **Leaderboard** — Visual comparison of model performance over time
 
 ### Longitudinal benchmarks
-- [ ] **STATE adherence drift** — Does a finetuned model's STATE format degrade over 50+ turns? Over multiple sessions? No longitudinal eval exists
-- [ ] **Identity persistence** — Prompt injection resistance: does the model hold its identity under adversarial prompts? Multi-session recall: does it remember facts from session N in session N+5?
-- [ ] **Memory precision/recall** — After 100 conversations, does the right fact surface at the right time? False positive rate? This measures the entire pipeline (extraction → storage → retrieval → STATE assembly)
-- [ ] **Context window pressure** — Performance degradation as all 6 threads compete for budget in a long conversation with active workspace and tool history
+- [ ] **STATE adherence drift** — Does a fire-tuned model's STATE format degrade over 50+ turns?
+- [ ] **Identity persistence** — Prompt injection resistance, multi-session recall
+- [ ] **Memory precision/recall** — After 100 conversations, right fact at right time?
+- [ ] **Context window pressure** — Performance as all 6 threads compete for budget
 
 ### Starter tasks
-- [ ] Create 10 identity persistence test cases (facts that should survive across sessions)
-- [ ] Before/after benchmark script for finetuning runs
+- [ ] Create 10 identity persistence test cases
+- [ ] Before/after benchmark script for fire-tuning runs
 <!-- /INCLUDE:eval:ROADMAP -->
 
 ---
@@ -404,6 +401,54 @@ _Source: [agent/core/README.md](agent/core/README.md)_
 
 ---
 
+## Marketplace
+
+> _Open-source the OS, sell the knowledge._
+
+AI OS is open source. The marketplace sells **modules** — packaged knowledge, feeds, and pre-trained models that plug into any AI OS instance.
+
+### Business model
+
+| Offering | Description | Status |
+|----------|-------------|--------|
+| **Knowledge modules** | Packaged feed + adapter + training data for a domain (finance, health, legal, etc.) | 🔧 Architecture ready |
+| **Pre-trained identity models** | LoRA adapters fire-tuned for specific use cases | ✅ Pipeline proven |
+| **Feed adapters** | Plaid (bank statements), RSS, email, calendar — plug-and-play data sources | 🔧 Feed framework exists |
+| **Tech services** | Custom AI OS deployments, integration work, consulting | Ready |
+| **Hardware** | Dropship pre-configured machines with AI OS installed | Ready |
+
+### Module anatomy
+
+A marketplace module is a self-contained package:
+
+```
+modules/finance/
+├── manifest.json       # Name, version, dependencies, price
+├── feed/               # Plaid adapter, transaction parser
+├── schema.py           # Domain-specific tables
+├── adapter.py          # Thread adapter (optional)
+├── train.py            # Domain training data generator
+└── training_data/      # Pre-built JSONL for fire-tuning
+```
+
+Install: drop into AI OS, run `init_tables()`, register adapter/feed. The existing architecture handles the rest — scoring, STATE assembly, training gen, eval.
+
+### First modules roadmap
+
+1. **Finance** — Plaid integration, transaction categorization, spending patterns in STATE
+2. **Health** — Activity tracking, medication reminders, health facts in identity thread
+3. **Developer** — GitHub feed, PR summaries, code review context in STATE
+4. **News** — RSS aggregation, topic filtering, relevance scoring via concept graph
+
+### Why this works
+
+- Each module follows the existing thread/feed/adapter pattern — no new architecture needed
+- Fire-Tuner pipeline is proven — first training cycle showed measurable improvement
+- Module creation gets easier each time — same patterns, same tools
+- Open-source OS builds trust + demonstrates capability; marketplace monetizes domain expertise
+
+---
+
 ## Future
 
 > _Ideas that are real but not yet scoped into module roadmaps._
@@ -412,3 +457,5 @@ _Source: [agent/core/README.md](agent/core/README.md)_
 - **Onboarding wizard** — First-run guided setup (name agent, set profile, configure model)
 - **Keyboard shortcuts + theme toggle** — Power user UX
 - **AI-assisted triage** — LLM labels incoming issues, routes to modules, surfaces related docs
+- **Module installer CLI** — `aios install finance` — fetch, validate, register, init tables
+- **Module marketplace frontend** — Browse, preview, install modules from the UI

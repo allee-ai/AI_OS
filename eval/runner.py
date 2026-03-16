@@ -22,9 +22,15 @@ def run_prompt(
       'nola'                  — full agent pipeline, default LLM
       'nola+gpt-oss:20b-cloud' — full agent pipeline, override LLM model
       'gpt-oss:20b-cloud'    — direct Ollama call, no STATE
+      'mlx:model-id'         — MLX base model (no adapters)
+      'mlx:model-id+/path/to/adapters' — MLX model with LoRA adapters
     """
     start = time.time()
     model_lower = model.lower()
+
+    # mlx: prefix — run via MLX-LM (local inference, no Ollama)
+    if model_lower.startswith('mlx:'):
+        return _run_via_mlx(model[4:], prompt, system_prompt, start)
 
     # nola+<model> — agent pipeline with overridden LLM
     if model_lower.startswith('nola+') or model_lower.startswith('aios+') or model_lower.startswith('agent+'):
@@ -135,6 +141,96 @@ def _run_via_ollama(model: str, prompt: str, system_prompt: str, start: float) -
             'state_used': '',
             'error': str(e),
         }
+
+
+# ── MLX model cache (reuse loaded models across evals) ──
+_mlx_cache: Dict[str, Any] = {}
+
+
+def _run_via_mlx(model_spec: str, prompt: str, system_prompt: str, start: float) -> Dict[str, Any]:
+    """Run via MLX-LM for local Apple Silicon inference.
+
+    model_spec formats:
+      'model-id'                    — base model only
+      'model-id+/path/to/adapters' — base model + LoRA adapters
+    """
+    try:
+        from mlx_lm import load, generate
+
+        # Parse model spec
+        if '+' in model_spec:
+            model_id, adapter_path = model_spec.split('+', 1)
+        else:
+            model_id, adapter_path = model_spec, None
+
+        # Resolve short names to full HF IDs
+        if '/' not in model_id:
+            model_id = f'mlx-community/{model_id}'
+
+        # Cache key
+        cache_key = f'{model_id}:{adapter_path or "none"}'
+        if cache_key not in _mlx_cache:
+            kwargs = {'path_or_hf_repo': model_id}
+            if adapter_path:
+                kwargs['adapter_path'] = adapter_path
+            model, tokenizer = load(**kwargs)
+            _mlx_cache[cache_key] = (model, tokenizer)
+        model, tokenizer = _mlx_cache[cache_key]
+
+        # Build prompt using chat template if available
+        messages = []
+        if system_prompt:
+            messages.append({'role': 'system', 'content': system_prompt})
+        messages.append({'role': 'user', 'content': prompt})
+
+        if hasattr(tokenizer, 'apply_chat_template'):
+            formatted = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            formatted = (system_prompt + '\n' if system_prompt else '') + f'User: {prompt}\nAssistant:'
+
+        response = generate(
+            model, tokenizer,
+            prompt=formatted,
+            max_tokens=512,
+            verbose=False,
+        )
+
+        duration = (time.time() - start) * 1000
+        label = f'mlx:{model_id.split("/")[-1]}'
+        if adapter_path:
+            adapter_name = adapter_path.rstrip('/').split('/')[-1]
+            label += f'+{adapter_name}'
+
+        return {
+            'response': response.strip(),
+            'duration_ms': round(duration, 1),
+            'model': label,
+            'with_state': False,
+            'state_used': system_prompt or '',
+        }
+    except Exception as e:
+        return {
+            'response': f'Error: {e}',
+            'duration_ms': round((time.time() - start) * 1000, 1),
+            'model': f'mlx:{model_spec}',
+            'with_state': False,
+            'state_used': '',
+            'error': str(e),
+        }
+
+
+def clear_mlx_cache():
+    """Free MLX models from memory."""
+    _mlx_cache.clear()
+    try:
+        import gc
+        import mlx.core as mx
+        gc.collect()
+        mx.clear_cache()
+    except Exception:
+        pass
 
 
 def judge_responses(
@@ -259,17 +355,45 @@ def inspect_state(query: str) -> Dict[str, Any]:
 
 
 def list_available_models() -> List[str]:
-    """List models available in Ollama."""
+    """List models available in Ollama + MLX adapters."""
+    models = []
+
+    # Ollama models
     try:
         import ollama
-        models = ollama.list()
-        return [m.model for m in models.get('models', models) if hasattr(m, 'model')]
+        result = ollama.list()
+        if hasattr(result, 'models'):
+            models = [m.model for m in result.models]
+        else:
+            models = [m.model for m in result.get('models', result) if hasattr(m, 'model')]
     except Exception:
-        try:
-            import ollama
-            result = ollama.list()
-            if hasattr(result, 'models'):
-                return [m.model for m in result.models]
-            return []
-        except Exception:
-            return []
+        pass
+
+    # MLX adapter directories (finetune runs)
+    try:
+        from pathlib import Path
+        finetune_dir = Path(__file__).resolve().parent.parent / 'finetune'
+        # Check runs/ directory
+        runs_dir = finetune_dir / 'runs'
+        if runs_dir.exists():
+            for d in sorted(runs_dir.iterdir()):
+                adapter_dir = d / 'adapters'
+                if adapter_dir.exists() and list(adapter_dir.glob('*.safetensors')):
+                    # Read run_meta for model name
+                    meta_path = d / 'run_meta.json'
+                    base_model = 'Llama-3.2-3B-Instruct-4bit'
+                    if meta_path.exists():
+                        import json
+                        meta = json.loads(meta_path.read_text())
+                        bm = meta.get('base_model', '')
+                        if bm:
+                            base_model = bm.split('/')[-1]
+                    models.append(f'mlx:{base_model}+{adapter_dir}')
+        # Check top-level adapter dirs (e.g. adapters-llama3b-v2/)
+        for d in sorted(finetune_dir.iterdir()):
+            if d.is_dir() and d.name.startswith('adapters-') and list(d.glob('*.safetensors')):
+                models.append(f'mlx:Llama-3.2-3B-Instruct-4bit+{d}')
+    except Exception:
+        pass
+
+    return models

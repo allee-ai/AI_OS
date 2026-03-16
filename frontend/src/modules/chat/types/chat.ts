@@ -9,6 +9,8 @@ export interface SendMessageRequest {
   content: string;
   session_id?: string;
   model_id?: string;
+  provider?: string;
+  endpoint?: string;
 }
 
 export interface SendMessageResponse {
@@ -27,16 +29,20 @@ export interface WebSocketMessage {
   content?: string;
   message_id?: string;
   is_final?: boolean;
+  provider?: string;
+  model?: string;
+  endpoint?: string;
 }
 
 export interface ModelInfo {
   id: string;
   name: string;
-  provider: 'ollama' | 'cloud';
+  provider: string;
   description?: string;
 }
 
 export interface ModelsResponse {
   models: ModelInfo[];
   current: string;
+  provider?: string;
 }

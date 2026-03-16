@@ -1,4 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { FileExplorer } from './FileExplorer';
 import { FileViewer } from './FileViewer';
 import { useWorkspace } from '../hooks/useWorkspace';
@@ -14,12 +15,27 @@ interface QuickFile {
   pinned?: boolean;
 }
 
+interface WorkspaceStats {
+  files: number;
+  folders: number;
+  total_size_bytes: number;
+  chunks: number;
+  indexed_files: number;
+}
+
+function formatBytes(bytes: number): string {
+  if (!bytes) return '0 B';
+  const units = ['B', 'KB', 'MB', 'GB'];
+  let i = 0, size = bytes;
+  while (size >= 1024 && i < units.length - 1) { size /= 1024; i++; }
+  return `${size.toFixed(1)} ${units[i]}`;
+}
+
 export const WorkspacePanel: React.FC = () => {
   const workspace = useWorkspace();
   const [searchInput, setSearchInput] = useState('');
   const searchTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Sidebar tabs: explorer | recent | pinned | notes
   const [sidebarTab, setSidebarTab] = useState<'explorer' | 'recent' | 'pinned' | 'notes'>('explorer');
   const [recentFiles, setRecentFiles] = useState<QuickFile[]>([]);
   const [pinnedFiles, setPinnedFiles] = useState<QuickFile[]>([]);
@@ -27,6 +43,15 @@ export const WorkspacePanel: React.FC = () => {
   const [showNewNote, setShowNewNote] = useState(false);
   const [noteTitle, setNoteTitle] = useState('');
   const [noteContent, setNoteContent] = useState('');
+  const [stats, setStats] = useState<WorkspaceStats | null>(null);
+
+  // Load workspace stats
+  useEffect(() => {
+    fetch('/api/workspace/stats')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d && setStats(d))
+      .catch(() => {});
+  }, []);
 
   // Fetch sidebar data on tab switch
   useEffect(() => {
@@ -75,8 +100,21 @@ export const WorkspacePanel: React.FC = () => {
 
   return (
     <div className="workspace-panel-container">
-      <div className="workspace-header">
-        <h2>📂 Workspace</h2>
+      {/* ── Stats bar ── */}
+      <div className="workspace-stats-bar">
+        <div className="workspace-stats-left">
+          <Link to="/" className="workspace-home-link" title="Back to Home">←</Link>
+          <span className="workspace-title">📂 Workspace</span>
+          {stats && (
+            <div className="workspace-stat-chips">
+              <span className="ws-chip">{stats.files} files</span>
+              <span className="ws-chip">{stats.folders} folders</span>
+              <span className="ws-chip">{formatBytes(stats.total_size_bytes)}</span>
+              {stats.indexed_files > 0 && <span className="ws-chip ws-chip-good">{stats.indexed_files} indexed</span>}
+              {stats.chunks > 0 && <span className="ws-chip ws-chip-accent">{stats.chunks} chunks</span>}
+            </div>
+          )}
+        </div>
         <div className="workspace-search">
           <input
             type="text"

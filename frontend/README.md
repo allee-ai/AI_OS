@@ -26,7 +26,7 @@ src/
     ├── threads/         # Per-thread dashboards (identity, philosophy, form, log, reflex, linking_core)
     ├── workspace/       # File browser, editor, pinned files, notes
     ├── eval/            # Benchmark harness + comparison view
-    ├── finetune/        # Training data browser, export, generated examples
+      ├── finetune/        # Fire-Tuner: training data browser, export, generation
     ├── feeds/           # Feed sources + integrations hub
     ├── services/        # Settings, integrations dashboard
     ├── log/             # Event log viewer
@@ -40,7 +40,7 @@ src/
 - **Thread Panels**: Identity profile editor, philosophy stances, form tool registry, concept graph (3D via Three.js), reflex trigger builder
 - **Workspace**: File browser with edit mode, FTS5 search, pinned files, quick notes
 - **Eval**: Side-by-side model comparison, benchmark categories, LLM-as-judge scoring
-- **Finetune**: Sections browser, docstring extraction, unified training view, generated example approval
+- **Fire-Tuner**: Sections browser, docstring extraction, unified training view, generated example approval
 
 ## Tech Stack
 

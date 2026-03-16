@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { BASE_URL } from '../../../config/api';
 
 interface ServiceConfig {
   enabled: boolean;
@@ -37,7 +38,7 @@ export const KernelDashboard = ({ config, status, message, onChangesMade, onSave
     }
     
     // Check if API key is configured
-    fetch('http://localhost:8000/api/services/kernel/status')
+    fetch(`${BASE_URL}/api/services/kernel/status`)
       .then(res => res.ok ? res.json() : null)
       .then(data => data && setApiKeySet(data.api_key_set))
       .catch(() => {});

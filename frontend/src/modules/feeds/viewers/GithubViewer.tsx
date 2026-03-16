@@ -1,5 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
+import { BASE_URL } from '../../../config/api';
 import './FeedViewer.css';
+
+const API_BASE = BASE_URL;
 
 interface Notification {
   id: string;
@@ -41,8 +44,6 @@ interface DeviceFlowState {
 }
 
 type ViewMode = 'notifications' | 'issues' | 'prs';
-
-const API_BASE = 'http://localhost:8000';
 
 export default function GithubViewer() {
   const [viewMode, setViewMode] = useState<ViewMode>('notifications');

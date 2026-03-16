@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ModelDropdown } from '../../../components/ModelDropdown';
+import { BASE_URL } from '../../../config/api';
 
 interface ServiceConfig {
   enabled: boolean;
@@ -35,7 +37,7 @@ export const MemoryDashboard = ({ config, status, message, onChangesMade, onSave
     }
     
     // Fetch memory stats
-    fetch('http://localhost:8000/api/services/memory/stats')
+    fetch(`${BASE_URL}/api/services/memory/stats`)
       .then(res => res.ok ? res.json() : null)
       .then(data => data && setStats(data))
       .catch(() => {});
@@ -112,14 +114,10 @@ export const MemoryDashboard = ({ config, status, message, onChangesMade, onSave
 
         <div className="setting-row">
           <label>Extraction Model</label>
-          <select 
+          <ModelDropdown
             value={localConfig.settings.extraction_model as string}
-            onChange={(e) => handleChange('extraction_model', e.target.value)}
-          >
-            <option value="llama3.2:3b">llama3.2:3b (fast)</option>
-            <option value="qwen2.5:7b">qwen2.5:7b (balanced)</option>
-            <option value="llama3.2:latest">llama3.2 (quality)</option>
-          </select>
+            onChange={(v) => handleChange('extraction_model', v)}
+          />
         </div>
 
         <div className="setting-row">

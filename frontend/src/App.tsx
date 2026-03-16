@@ -14,28 +14,38 @@ import { SettingsPage } from './modules/services/pages/SettingsPage'
 import { DevDashboard } from './modules/finetune/pages/DevDashboard'
 import { SectionDetailPage } from './modules/finetune/pages/SectionDetailPage'
 import { SubconsciousPage } from './modules/subconscious'
-import { LogDashboard } from './modules/log'
 import { EvalDashboard } from './modules/eval'
+import { SetupWizard } from './components/SetupWizard'
 import './App.css'
 
 // App mode hook - inlined for simplicity
 const useAppMode = () => {
   const [modeInfo, setModeInfo] = useState({ mode: 'personal' as const, is_demo: false });
+  const [setupDone, setSetupDone] = useState<boolean | null>(null);
   const [loading, setLoading] = useState(true);
   
   useEffect(() => {
-    fetch('/api/db-mode/mode')
-      .then(res => res.ok ? res.json() : null)
-      .then(data => data && setModeInfo({ mode: data.mode, is_demo: data.mode === 'demo' }))
-      .catch(() => {})
-      .finally(() => setLoading(false));
+    Promise.all([
+      fetch('/api/db-mode/mode').then(res => res.ok ? res.json() : null).catch(() => null),
+      fetch('/api/models/setup/status').then(res => res.ok ? res.json() : null).catch(() => null),
+    ]).then(([modeData, setupData]) => {
+      if (modeData) setModeInfo({ mode: modeData.mode, is_demo: modeData.mode === 'demo' });
+      setSetupDone(setupData ? setupData.configured : true);
+    }).finally(() => setLoading(false));
   }, []);
+
+  const recheckSetup = () => {
+    fetch('/api/models/setup/status')
+      .then(res => res.ok ? res.json() : null)
+      .then(data => data && setSetupDone(data.configured))
+      .catch(() => setSetupDone(true));
+  };
   
-  return { ...modeInfo, loading };
+  return { ...modeInfo, loading, setupDone, recheckSetup };
 };
 
 function App() {
-  const { loading, is_demo } = useAppMode();
+  const { loading, is_demo, setupDone, recheckSetup } = useAppMode();
   
   if (loading) {
     return (
@@ -46,6 +56,10 @@ function App() {
         </div>
       </div>
     );
+  }
+
+  if (setupDone === false) {
+    return <SetupWizard onComplete={recheckSetup} />;
   }
 
   return (
@@ -77,17 +91,16 @@ function App() {
           <Route path="/philosophy" element={<PhilosophyProfilesPage />} />
           <Route path="/workspace" element={<WorkspacePage />} />
           <Route path="/docs" element={<DocsPage />} />
-          <Route path="/dev" element={<DevDashboard />} />
-          <Route path="/dev/:module/:section" element={<SectionDetailPage />} />
+          <Route path="/training" element={<DevDashboard />} />
+          <Route path="/training/:module/:section" element={<SectionDetailPage />} />
           <Route path="/subconscious" element={<SubconsciousPage />} />
-          <Route path="/logs" element={<LogDashboard />} />
           <Route path="/eval" element={<EvalDashboard />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />
         </Routes>
         <footer className="app-footer">
-          <p>Local-first • Your data stays on your machine • Powered by Ollama</p>
+          <p>Local-first • Your data stays on your machine</p>
           <DatabaseToggle />
         </footer>
       </div>

@@ -32,15 +32,22 @@ pip install mlx-lm pandas
 
 # 4. Prepare Data
 # MLX requires two separate files: 'train.jsonl' (to learn from) and 'valid.jsonl' (to test against).
-# You have 'state_obedience.jsonl', so we use this python snippet to split it 90/10.
-echo "✂️  Splitting data..."
+# Use aios_base.jsonl (system knowledge only, no personal data) if available, else fall back to combined.
+DATA_FILE="${AIOS_FT_DATA:-aios_base.jsonl}"
+if [ ! -f "$DATA_FILE" ]; then
+    DATA_FILE="aios_combined.jsonl"
+fi
+echo "✂️  Splitting $DATA_FILE..."
 python3 -c "
 import pandas as pd
 import numpy as np
+import sys
+
+data_file = '$DATA_FILE'
 
 # Load combined data
 try:
-    df = pd.read_json('aios_combined.jsonl', lines=True)
+    df = pd.read_json(data_file, lines=True)
     
     # Shuffle the data so we don't learn patterns based on order (e.g. all 'Greetings' first)
     df = df.sample(frac=1, random_state=42).reset_index(drop=True)
@@ -53,28 +60,57 @@ try:
     # Save the split files
     train_df.to_json('train.jsonl', orient='records', lines=True)
     valid_df.to_json('valid.jsonl', orient='records', lines=True)
-    print(f'🌀 Created train.jsonl ({len(train_df)} rows) and valid.jsonl ({len(valid_df)} rows)')
+    print(f'🌀 Created train.jsonl ({len(train_df)} rows) and valid.jsonl ({len(valid_df)} rows) from {data_file}')
 except Exception as e:
     print(f'❌ Error processing data: {e}')
     exit(1)
 "
 
-# 5. Run Training
-# This command starts the heavy lifting.
+# 5. Resolve model + adapter dir from env (set by API) or defaults
+MODEL="${AIOS_FT_MODEL:-mlx-community/Llama-3.2-3B-Instruct-4bit}"
+ADAPTER_DIR="${AIOS_FT_ADAPTER_DIR:-adapters}"
+RUN_NAME="${AIOS_FT_RUN_NAME:-manual}"
+RUN_DIR="${AIOS_FT_RUN_DIR:-}"
+
 echo "🔥 Starting Training (Expect Heat!)..."
+echo "   Model:    $MODEL"
+echo "   Adapter:  $ADAPTER_DIR"
+echo "   Run:      $RUN_NAME"
 echo "ℹ️  Monitor limits with 'sudo powermetrics --samplers smc | grep -i \"CPU die temperature\"'"
 
-# mlx_lm: The MLX LoRA training tool.
-# --model: The base brain we download/use.
-# --config: Your annotated yaml file.
-# --train: Tells it to start learning.
-# --data .: Tells it to look in the current folder (.) for train.jsonl.
-mlx_lm.lora \
-    --model mlx-community/Qwen2.5-1.5B-Instruct-4bit \
+# mlx_lm.lora: The MLX LoRA training tool.
+mlx_lm lora \
+    --model "$MODEL" \
     --config mlx_config.yaml \
     --train \
-    --data . 
+    --data . \
+    --adapter-path "$ADAPTER_DIR"
 
-echo "🌀 Training Complete. Adapters saved in 'adapters/'."
-echo "   To test your new brain:"
-echo "   mlx_lm.lora --model mlx-community/Qwen2.5-1.5B-Instruct-4bit --adapter-path adapters --prompt '== STATE == ...'"
+TRAIN_EXIT=$?
+
+# 6. Update run metadata with completion status
+if [ -n "$RUN_DIR" ] && [ -f "$RUN_DIR/run_meta.json" ]; then
+    if [ $TRAIN_EXIT -eq 0 ]; then
+        python3 -c "
+import json, datetime
+p = '$RUN_DIR/run_meta.json'
+m = json.loads(open(p).read())
+m['status'] = 'completed'
+m['completed_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+open(p, 'w').write(json.dumps(m, indent=2))
+"
+        echo "🌀 Training Complete. Adapters saved in '$ADAPTER_DIR'."
+    else
+        python3 -c "
+import json, datetime
+p = '$RUN_DIR/run_meta.json'
+m = json.loads(open(p).read())
+m['status'] = 'failed'
+m['failed_at'] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+open(p, 'w').write(json.dumps(m, indent=2))
+"
+        echo "❌ Training failed with exit code $TRAIN_EXIT"
+    fi
+fi
+
+echo "   To test: mlx_lm lora --model $MODEL --adapter-path $ADAPTER_DIR --prompt '== STATE == ...'"

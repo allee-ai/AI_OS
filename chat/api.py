@@ -268,24 +268,54 @@ NAMING_MODEL = os.getenv("AIOS_NAMING_MODEL", "llama3.2:1b")
 
 
 def _generate_name_sync(first_user_msg: str, first_assistant_msg: str) -> str:
-    """Synchronously generate a conversation name using LLM."""
-    try:
-        import ollama
-        
-        prompt = f"""Generate a short title (3-6 words) for this conversation. Reply with ONLY the title, nothing else.
+    """Synchronously generate a conversation name using the configured LLM provider."""
+    prompt_text = f"""Generate a short title (3-6 words) for this conversation. Reply with ONLY the title, nothing else.
 
 User: {first_user_msg[:200]}
 Assistant: {first_assistant_msg[:200]}
 
 Title:"""
-        
-        response = ollama.generate(model=NAMING_MODEL, prompt=prompt)
-        name = response.get('response', '').strip()
+    messages = [{"role": "user", "content": prompt_text}]
+    provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
+
+    try:
+        if provider == "openai":
+            import urllib.request, json as _json
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            base_url = os.getenv("AIOS_MODEL_ENDPOINT", "").rstrip("/") or "https://api.openai.com/v1"
+            model = os.getenv("AIOS_MODEL_NAME", "gpt-4o-mini")
+            payload = {"model": model, "messages": messages, "max_tokens": 30}
+            req = urllib.request.Request(
+                f"{base_url}/chat/completions",
+                data=_json.dumps(payload).encode("utf-8"),
+                headers={"Content-Type": "application/json", "Authorization": f"Bearer {api_key}"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                body = _json.loads(resp.read().decode("utf-8"))
+                name = body.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
+        elif provider == "http":
+            import urllib.request, json as _json
+            endpoint = os.getenv("AIOS_MODEL_ENDPOINT", "")
+            req = urllib.request.Request(
+                endpoint,
+                data=_json.dumps({"messages": messages}).encode("utf-8"),
+                headers={"Content-Type": "application/json"},
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                body = _json.loads(resp.read().decode("utf-8"))
+                name = (body.get("message") or body.get("content") or "").strip()
+        else:
+            # ollama (default)
+            import ollama
+            response = ollama.generate(model=NAMING_MODEL, prompt=prompt_text)
+            name = response.get('response', '').strip()
+
         name = name.strip('"\'')
         name = name[:50] if len(name) > 50 else name
-        
         return name if name else "New Conversation"
-        
+
     except Exception as e:
         print(f"Name generation failed: {e}")
         words = first_user_msg.split()[:4]
@@ -725,7 +755,10 @@ class WebSocketManager:
             from agent.services.agent_service import get_agent_service
             agent_service = get_agent_service()
             response_message = await agent_service.send_message(
-                content, on_tool_event=on_tool_event
+                content, on_tool_event=on_tool_event,
+                provider_override=data.get("provider"),
+                model_override=data.get("model"),
+                endpoint_override=data.get("endpoint"),
             )
             
             await self.stream_response(client_id, response_message.content, response_message.id)

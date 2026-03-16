@@ -153,7 +153,7 @@ class AgentService:
                 db_name = get_db_path().name
                 print(f"📁 Conversations stored in database ({db_name})")
         
-    async def send_message(self, user_message: str, session_id: Optional[str] = None, on_tool_event: Optional[Callable] = None) -> ChatMessage:
+    async def send_message(self, user_message: str, session_id: Optional[str] = None, on_tool_event: Optional[Callable] = None,\n                           provider_override: Optional[str] = None, model_override: Optional[str] = None,\n                           endpoint_override: Optional[str] = None) -> ChatMessage:
         """Send message to the agent and manage context automatically"""
         
         # Add user message to history
@@ -210,7 +210,10 @@ class AgentService:
                     convo=convo_context,
                     feed_type=feed_type,
                     consciousness_context=consciousness_context,
-                    on_tool_event=on_tool_event
+                    on_tool_event=on_tool_event,
+                    provider_override=provider_override,
+                    model_override=model_override,
+                    endpoint_override=endpoint_override,
                 )
                 
                 # Log interaction for context tracking and persistence

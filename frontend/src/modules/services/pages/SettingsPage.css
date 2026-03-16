@@ -685,3 +685,254 @@
   color: var(--text);
   margin-top: 4px;
 }
+
+/* ══════════════════════════════════════════════════════════
+   Config Section (server / provider / kernel)
+   ══════════════════════════════════════════════════════════ */
+
+.setting-row-full {
+  margin-bottom: 18px;
+}
+
+.setting-label-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.setting-label-row label {
+  font-weight: 500;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.setting-env-key {
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  background: var(--bg);
+  padding: 1px 6px;
+  border-radius: 3px;
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.config-select,
+.config-input {
+  width: 100%;
+  max-width: 480px;
+  padding: 8px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  color: var(--text);
+  font-size: 0.9rem;
+  transition: border-color 0.15s;
+}
+
+.config-select:focus,
+.config-input:focus {
+  border-color: var(--primary);
+  outline: none;
+}
+
+.config-result {
+  padding: 10px 14px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  margin: 12px 0;
+}
+
+.config-result.success {
+  background: color-mix(in srgb, var(--success) 12%, var(--surface));
+  border: 1px solid var(--success);
+  color: var(--success);
+}
+
+.config-result.error {
+  background: color-mix(in srgb, var(--danger) 12%, var(--surface));
+  border: 1px solid var(--danger);
+  color: var(--danger);
+}
+
+/* ══════════════════════════════════════════════════════════
+   MCP Section
+   ══════════════════════════════════════════════════════════ */
+
+.mcp-server-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mcp-server-card {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  padding: 12px 16px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.mcp-server-card.disabled {
+  opacity: 0.5;
+}
+
+.mcp-server-card.connected {
+  border-color: var(--success, #22c55e);
+}
+
+.mcp-server-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mcp-server-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.mcp-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  flex-shrink: 0;
+}
+
+.mcp-status-dot.active {
+  background: var(--success, #22c55e);
+  box-shadow: 0 0 6px color-mix(in srgb, var(--success, #22c55e) 50%, transparent);
+}
+
+.mcp-tool-count {
+  font-size: 0.72rem;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 1px 8px;
+}
+
+.mcp-server-name {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: var(--text);
+}
+
+.mcp-server-cmd {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+  font-family: 'SF Mono', 'Fira Code', monospace;
+}
+
+.mcp-server-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  align-items: center;
+}
+
+.btn-sm {
+  padding: 4px 10px;
+  font-size: 0.78rem;
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  background: var(--surface);
+  color: var(--text);
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.btn-sm:hover {
+  background: var(--bg);
+}
+
+.btn-sm.btn-danger {
+  color: var(--danger);
+  border-color: var(--danger);
+}
+
+.btn-sm.btn-danger:hover {
+  background: color-mix(in srgb, var(--danger) 10%, var(--surface));
+}
+
+.btn-sm.btn-connect {
+  color: var(--success, #22c55e);
+  border-color: var(--success, #22c55e);
+}
+
+.btn-sm.btn-connect:hover {
+  background: color-mix(in srgb, var(--success, #22c55e) 10%, var(--surface));
+}
+
+.btn-sm.btn-disconnect {
+  color: var(--warning, #f59e0b);
+  border-color: var(--warning, #f59e0b);
+}
+
+.btn-sm.btn-disconnect:hover {
+  background: color-mix(in srgb, var(--warning, #f59e0b) 10%, var(--surface));
+}
+
+.btn-sm:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.mcp-tools-list {
+  width: 100%;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mcp-tool-item {
+  display: flex;
+  gap: 10px;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: var(--surface);
+  font-size: 0.78rem;
+}
+
+.mcp-tool-name {
+  font-weight: 600;
+  color: var(--text);
+  white-space: nowrap;
+}
+
+.mcp-tool-desc {
+  color: var(--text-muted);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mcp-add-form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 480px;
+}
+
+.mcp-catalog {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* Sidebar link-style items (subconscious, finetune, eval) */
+a.sidebar-item {
+  text-decoration: none;
+  color: var(--text);
+}
+}

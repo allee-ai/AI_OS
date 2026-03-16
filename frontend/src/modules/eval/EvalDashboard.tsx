@@ -132,7 +132,7 @@ const CATEGORY_META: Record<string, { icon: string; label: string }> = {
   structured:         { icon: '📊', label: 'Structured Evals' },
   state_vs_no_state:  { icon: '🧠', label: 'State vs No State' },
   ai_vs_ai:           { icon: '⚔️',  label: 'AI vs AI' },
-  base_vs_finetuned:  { icon: '🔬', label: 'Base vs Finetuned' },
+  base_vs_finetuned:  { icon: '🔬', label: 'Base vs Fire-Tuned' },
   adversarial:        { icon: '🛡️',  label: 'Adversarial' },
   custom:             { icon: '✏️',  label: 'Custom' },
 };

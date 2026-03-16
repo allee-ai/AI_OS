@@ -912,7 +912,7 @@ User selects prompt + models
 | Any other model | Direct Ollama call | No |
 <!-- /INCLUDE:eval:ARCHITECTURE -->
 
-#### 5. Finetune (`finetune/`) — Training Studio
+#### 5. Fire-Tuner (`finetune/`) — Training Studio
 
 <!-- INCLUDE:finetune:ARCHITECTURE -->
 _Source: [finetune/README.md](finetune/README.md)_
@@ -921,27 +921,35 @@ _Source: [finetune/README.md](finetune/README.md)_
 
 ```
 finetune/
-├── api.py               # Endpoints to trigger training
-├── mlx_config.yaml      # Apple MLX configuration
-└── train_mac.sh         # Local fine-tuning script
+├── api.py                  # 7 FastAPI endpoints (export, train, load, config, data)
+├── sections.py             # Shared JSONL builders (API, CLI, schema examples)
+├── docstring_extractor.py  # AST-based docstring harvesting across all modules
+├── gold_examples.py        # Hand-curated reasoning examples (9 categories)
+├── mlx_config.yaml         # Apple MLX LoRA configuration
+├── train_mac.sh            # Local fine-tuning script (Apple Silicon)
+├── generated/              # Background-generated training data (TrainingGenLoop)
+└── auto_generated/         # Docstring-extracted training data
 ```
 
-### Dataset Strategy
+### Data Sources
 
-| Dataset | Purpose |
-|---------|---------|
-| `aios_finetune_data.jsonl` | Core state obedience |
-| `aios_finetune_adversarial.jsonl` | Identity protection |
-| `aios_combined.jsonl` | All examples merged |
+| Source | Generator | Description |
+|--------|-----------|-------------|
+| Per-thread metadata | `sections.py` | API, CLI, schema → Q&A pairs |
+| Docstrings | `docstring_extractor.py` | AST-based function/class doc harvesting |
+| Gold examples | `gold_examples.py` | 9 categories of curated reasoning pairs |
+| Live decisions | `train.py` per thread | Source-filtered high-confidence decisions |
+| Synthetic (kimi-k2) | `TrainingGenLoop` | Teacher model reads source code → generates training pairs, 17 modules |
 
 ### Status
 
 | Feature | Status |
 |---------|--------|
-| Data format | ✅ |
+| Export pipeline | ✅ All 6 threads |
+| Training gen loop | ✅ kimi-k2 teacher, 17 modules |
+| Data quality filtering | ✅ source='aios', capped associations |
 | MLX config | ✅ |
-| Data generation scripts | 🔜 |
-| Validation suite | 🔜 |
+| End-to-end cycle | 🔧 Untested |
 <!-- /INCLUDE:finetune:ARCHITECTURE -->
 
 #### 5. Documentation (`docs/`)

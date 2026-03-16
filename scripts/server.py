@@ -31,6 +31,8 @@ from data.db import is_demo_mode, set_demo_mode, get_db_path
 
 # Core settings
 from agent.core import settings, models_router
+from agent.core.settings_api import router as settings_router
+from agent.core.mcp_api import router as mcp_router
 
 # Self-contained the agent modules with routers
 from chat import router as chat_router, websocket_manager
@@ -138,6 +140,8 @@ app.include_router(workspace_router)
 app.include_router(services_router)
 app.include_router(feeds_router)
 app.include_router(models_router)
+app.include_router(settings_router)
+app.include_router(mcp_router)
 
 # Thread routers
 app.include_router(philosophy_router)

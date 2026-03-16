@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ModelDropdown } from '../../../components/ModelDropdown';
+import { BASE_URL } from '../../../config/api';
 
 interface ServiceConfig {
   enabled: boolean;
@@ -37,7 +39,7 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
     }
     
     // Fetch agent status
-    fetch('http://localhost:8000/api/chat/agent-status')
+    fetch(`${BASE_URL}/api/chat/agent-status`)
       .then(res => res.ok ? res.json() : null)
       .then(data => setAgentStatus(data))
       .catch(() => {});
@@ -93,15 +95,10 @@ export const AgentDashboard = ({ config, status, message, onChangesMade, onSave 
 
         <div className="setting-row">
           <label>Default Model</label>
-          <select 
+          <ModelDropdown
             value={localConfig.settings.default_model as string}
-            onChange={(e) => handleChange('default_model', e.target.value)}
-          >
-            <option value="llama3.2:latest">llama3.2 (default)</option>
-            <option value="qwen2.5:7b">qwen2.5:7b</option>
-            <option value="mistral:latest">mistral</option>
-            <option value="gemma2:9b">gemma2:9b</option>
-          </select>
+            onChange={(v) => handleChange('default_model', v)}
+          />
         </div>
         <p className="setting-hint">
           The model used for generating responses. Can also be set via AIOS_MODEL_NAME env var.

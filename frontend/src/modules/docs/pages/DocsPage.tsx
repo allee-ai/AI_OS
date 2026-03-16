@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { BASE_URL } from '../../../config/api';
 import './DocsPage.css';
 
 interface DocNode {
@@ -55,7 +56,7 @@ export const DocsPage = () => {
   }, [isResizing]);
 
   useEffect(() => {
-    fetch('http://localhost:8000/api/docs')
+    fetch(`${BASE_URL}/api/docs`)
       .then(res => res.json())
       .then(data => {
         setTree(data.tree || null);
@@ -76,7 +77,7 @@ export const DocsPage = () => {
   const loadDoc = (path: string) => {
     setSelectedDoc(path);
     setContentLoading(true);
-    fetch(`http://localhost:8000/api/docs/content?path=${encodeURIComponent(path)}`)
+    fetch(`${BASE_URL}/api/docs/content?path=${encodeURIComponent(path)}`)
       .then(res => res.json())
       .then(data => {
         setContent(data.content || '');

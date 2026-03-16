@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
+import { BASE_URL } from '../../../../config/api';
 import ThemedSelect from './ThemedSelect';
 import './ToolDashboard.css';
 
@@ -35,7 +36,7 @@ interface Category {
   icon: string;
 }
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = BASE_URL;
 
 const CATEGORY_ICONS: Record<string, string> = {
   communication: '📧',
@@ -313,7 +314,10 @@ export const ToolDashboard = () => {
         <div className="tool-list">
           <div className="tool-list-header">
             <span>Tools ({filteredTools.length})</span>
-            <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add</button>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <a href="/settings/mcp" className="mcp-btn" title="Manage MCP servers">🔌 MCP</a>
+              <button className="add-btn" onClick={() => setShowAddModal(true)}>+ Add</button>
+            </div>
           </div>
 
           <div className="tool-filters">

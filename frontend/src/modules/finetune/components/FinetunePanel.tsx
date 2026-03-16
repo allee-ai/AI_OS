@@ -368,6 +368,22 @@ const S = {
   } as React.CSSProperties,
 };
 
+interface MLXModel {
+  id: string;
+  label: string;
+  size_gb: number;
+  ram_gb: number;
+  cached: boolean;
+}
+
+interface FTRun {
+  name: string;
+  base_model?: string;
+  status?: string;
+  started_at?: string;
+  has_adapters: boolean;
+}
+
 /* ── Component ───────────────────────────────────────── */
 
 interface FinetunePanelProps {
@@ -391,12 +407,30 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
   const [samples, setSamples] = useState<Sample[]>([]);
   const [showPreview, setShowPreview] = useState(false);
   const [adapter, setAdapter] = useState<AdapterStatus>({ status: 'none' });
-  const [config, setConfig] = useState({ rank: 8, alpha: 16, iters: 600, learning_rate: 1e-5, batch_size: 1 });
+  const [config, setConfig] = useState({ rank: 8, alpha: 16, scale: 1.0, dropout: 0.05, iters: 200, learning_rate: 1e-5, batch_size: 1, grad_accumulation_steps: 4, warmup: 50, max_seq_length: 1024 });
   const [logs, setLogs] = useState<string[]>([]);
   const [exporting, setExporting] = useState(false);
   const [training, setTraining] = useState(false);
 
+  /* ── Model selection + run naming ──── */
+  const [models, setModels] = useState<MLXModel[]>([]);
+  const [selectedModel, setSelectedModel] = useState('mlx-community/Qwen2.5-7B-Instruct-4bit');
+  const [runName, setRunName] = useState('');
+  const [runs, setRuns] = useState<FTRun[]>([]);
+
   const mod = modules.find(m => m.name === selectedModule);
+
+  /* ── Fetch available models + runs on mount ──── */
+  useEffect(() => {
+    fetch('/api/finetune/models')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.models) setModels(d.models); })
+      .catch(() => {});
+    fetch('/api/finetune/runs')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d?.runs) setRuns(d.runs); })
+      .catch(() => {});
+  }, []);
 
   /* ── Fetch sections when module changes ──── */
   useEffect(() => {
@@ -480,15 +514,19 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
   /* ── Train ──── */
   const handleTrain = async () => {
     setTraining(true);
-    setLogs(prev => [...prev, '🚀 Starting training…']);
+    const label = runName.trim() || undefined;
+    setLogs(prev => [...prev, `🚀 Starting training: ${label || 'auto-named'} on ${selectedModel.split('/').pop()}…`]);
     try {
       const res = await fetch('/api/finetune/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(config),
+        body: JSON.stringify({ ...config, base_model: selectedModel, run_name: label }),
       });
       if (!res.ok) throw new Error('start failed');
-      setLogs(prev => [...prev, '🌀 Job started — check terminal for progress']);
+      const d = await res.json();
+      setLogs(prev => [...prev, `🌀 Run "${d.run_name}" started — check terminal for progress`]);
+      // Refresh runs list
+      fetch('/api/finetune/runs').then(r => r.ok ? r.json() : null).then(d => { if (d?.runs) setRuns(d.runs); }).catch(() => {});
     } catch {
       setLogs(prev => [...prev, '❌ Training start failed']);
     }
@@ -518,16 +556,45 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
     const totalExamples = modules.reduce((s, m) => s + statCount(m.stats), 0);
     return (
       <div style={S.panel}>
-        <div style={S.empty}>
-          <div style={S.emptyIcon}>🔥</div>
-          <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)' }}>Fine-Tuner</div>
-          <div style={S.emptyText}>
-            {modules.length} modules · {totalExamples.toLocaleString()} total examples
+        <div style={{ ...S.empty, height: 'auto', alignItems: 'stretch', padding: '32px 0' }}>
+          <div style={{ textAlign: 'center', marginBottom: 24 }}>
+            <div style={S.emptyIcon}>🔥</div>
+            <div style={{ fontSize: 18, fontWeight: 600, color: 'var(--text)' }}>Fire-Tuner</div>
+            <div style={S.emptyText}>
+              {modules.length} modules · {totalExamples.toLocaleString()} total examples
+            </div>
           </div>
-          <div style={S.emptyText}>Select a module from the sidebar</div>
+
+          {/* ── Model + Run Name ──── */}
+          <div style={{ ...S.section, marginBottom: 16 }}>
+            <div style={S.sectionTitle}>🧠 Base Model</div>
+            <select
+              style={{ ...S.input, width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: 13, marginBottom: 10 }}
+              value={selectedModel}
+              onChange={e => setSelectedModel(e.target.value)}
+            >
+              {models.map(m => (
+                <option key={m.id} value={m.id}>
+                  {m.label} — {m.size_gb}GB {m.cached ? '✓ cached' : '(will download)'}
+                </option>
+              ))}
+              {models.length === 0 && <option value={selectedModel}>{selectedModel.split('/').pop()}</option>}
+            </select>
+            <div style={S.sectionTitle}>🏷️ Run Name</div>
+            <input
+              style={{ ...S.input, width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: 13 }}
+              type="text"
+              placeholder="e.g. 1.5b-test, qwen7b-v1, experiment-3"
+              value={runName}
+              onChange={e => setRunName(e.target.value)}
+            />
+            <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+              Leave blank for auto-generated timestamp name
+            </div>
+          </div>
 
           {/* Global actions */}
-          <div style={{ marginTop: 24, display: 'flex', gap: 10 }}>
+          <div style={{ display: 'flex', gap: 10, justifyContent: 'center', flexWrap: 'wrap' }}>
             <button style={S.btn('secondary')} onClick={handleExportAll} disabled={exporting}>
               {exporting ? '⏳ Exporting…' : '📦 Export All'}
             </button>
@@ -537,17 +604,42 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
             <button style={S.btn('secondary')} onClick={handleLoad}>🔌 Load Adapter</button>
           </div>
 
-          <div style={S.adapterBadge(adapter.status === 'loaded')}>
-            {adapter.status === 'loaded' ? `✓ ${adapter.active_model}` : '— No adapter loaded'}
+          <div style={{ textAlign: 'center', marginTop: 12 }}>
+            <div style={S.adapterBadge(adapter.status === 'loaded')}>
+              {adapter.status === 'loaded' ? `✓ ${adapter.active_model}` : '— No adapter loaded'}
+            </div>
           </div>
 
+          {/* ── Previous Runs ──── */}
+          {runs.length > 0 && (
+            <div style={{ ...S.section, marginTop: 16 }}>
+              <div style={S.sectionTitle}>📁 Previous Runs</div>
+              {runs.map(r => (
+                <div key={r.name} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 0', borderBottom: '1px solid var(--border)', fontSize: 13 }}>
+                  <div>
+                    <span style={{ fontWeight: 600, color: 'var(--text)' }}>{r.name}</span>
+                    {r.base_model && <span style={{ fontSize: 11, color: 'var(--text-muted)', marginLeft: 8 }}>{r.base_model.split('/').pop()}</span>}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 11, color: r.status === 'completed' ? 'var(--success, #10b981)' : r.status === 'failed' ? 'var(--error, #ef4444)' : 'var(--text-muted)', fontWeight: 600 }}>
+                      {r.status || 'unknown'}
+                    </span>
+                    {r.has_adapters && <span style={{ fontSize: 10, background: 'rgba(16,185,129,.12)', color: 'var(--success, #10b981)', padding: '1px 6px', borderRadius: 3, fontWeight: 600 }}>adapters</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {logs.length > 0 && (
-            <div style={{ width: '100%', maxWidth: 500, marginTop: 16 }}>
+            <div style={{ marginTop: 16 }}>
               <div style={S.logsBox}>
                 {logs.map((l, i) => <div key={i}>{l}</div>)}
               </div>
             </div>
           )}
+
+          <div style={S.emptyText}>Select a module from the sidebar to inspect training data</div>
         </div>
       </div>
     );
@@ -585,7 +677,7 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
             <div
               key={key}
               style={S.sCard(on)}
-              onClick={() => navigate(`/dev/${encodeURIComponent(mod.name)}/${encodeURIComponent(key)}`)}
+              onClick={() => navigate(`/training/${encodeURIComponent(mod.name)}/${encodeURIComponent(key)}`)}
             >
               <div style={S.sCardTop}>
                 <div style={S.sCardLabel}>
@@ -653,12 +745,43 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
       {/* ── Config + Logs ──── */}
       <div style={S.configGrid}>
         <div style={S.section}>
+          <div style={S.sectionTitle}>🧠 Model & Run</div>
+          <div style={S.controlRow}>
+            <span style={S.controlLabel}>Base Model</span>
+          </div>
+          <select
+            style={{ ...S.input, width: '100%', textAlign: 'left', padding: '4px 8px', fontSize: 12, marginBottom: 8 }}
+            value={selectedModel}
+            onChange={e => setSelectedModel(e.target.value)}
+          >
+            {models.map(m => (
+              <option key={m.id} value={m.id}>
+                {m.label} {m.cached ? '✓' : ''}
+              </option>
+            ))}
+            {models.length === 0 && <option value={selectedModel}>{selectedModel.split('/').pop()}</option>}
+          </select>
+          <div style={S.controlRow}>
+            <span style={S.controlLabel}>Run Name</span>
+          </div>
+          <input
+            style={{ ...S.input, width: '100%', textAlign: 'left', padding: '4px 8px', fontSize: 12, marginBottom: 8 }}
+            type="text"
+            placeholder="e.g. 1.5b-test"
+            value={runName}
+            onChange={e => setRunName(e.target.value)}
+          />
           <div style={S.sectionTitle}>⚙️ LoRA Config</div>
           {([
             ['Rank', 'rank', 4, 64, 4],
             ['Alpha', 'alpha', 8, 128, 8],
+            ['Scale', 'scale', 0.1, 20, 0.1],
+            ['Dropout', 'dropout', 0, 0.5, 0.01],
             ['Iterations', 'iters', 50, 5000, 50],
+            ['Warmup Steps', 'warmup', 0, 500, 10],
             ['Batch Size', 'batch_size', 1, 8, 1],
+            ['Grad Accum', 'grad_accumulation_steps', 1, 16, 1],
+            ['Max Seq Len', 'max_seq_length', 256, 4096, 256],
           ] as const).map(([label, key, min, max, step]) => (
             <div key={key} style={S.controlRow}>
               <span style={S.controlLabel}>{label}</span>

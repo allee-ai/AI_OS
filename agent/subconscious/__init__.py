@@ -29,6 +29,24 @@ Threads (built-in adapters):
     - identity: Core identity and user preferences (agent.threads.identity)
     - temp_memory: Session facts pending consolidation (agent.subconscious.temp_memory)
     - log_thread: Event timeline (agent.log_thread)
+
+Loops vs Reflexes:
+    Both share the same memory bus — like a person's internal and external processes.
+    
+    Loops = internal cognitive operations
+        Consolidation, extraction, concept linking, self-improvement.
+        Run on timers / internal triggers. No direct external I/O.
+        Loops CAN own reflex protocols (e.g. consolidation loop may
+        trigger a reflex to notify user when done).
+    
+    Reflexes = external stimulus → external action
+        Greetings, shortcuts, system triggers, tool invocations.
+        Activated by outside input. Produce externally-visible results.
+        Reflexes CANNOT own loops — exception: thought_loop, which
+        bridges both (internal reasoning triggered by external input).
+    
+    Key rule: loops can own reflex protocols, but not vice versa
+    (except thought_loop which bridges internal/external).
 """
 
 import sys

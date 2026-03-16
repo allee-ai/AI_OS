@@ -77,7 +77,10 @@ class Agent:
         feed_type: str = "conversational",
         context_level: int = 2,
         consciousness_context: Optional[str] = None,
-        on_tool_event: Optional[Callable] = None
+        on_tool_event: Optional[Callable] = None,
+        provider_override: Optional[str] = None,
+        model_override: Optional[str] = None,
+        endpoint_override: Optional[str] = None,
     ) -> str:
         """Generate a response using the configured LLM.
         
@@ -88,6 +91,9 @@ class Agent:
             context_level: 1=minimal, 2=moderate, 3=full
             consciousness_context: Pre-assembled context (optional, else fetched)
             on_tool_event: Optional callback for tool execution events
+            provider_override: Override provider for this generation only
+            model_override: Override model name for this generation only
+            endpoint_override: Override endpoint URL for this generation only
         """
         self.bootstrap()
         
@@ -109,6 +115,13 @@ class Agent:
             messages.append({"role": "assistant", "content": f"[Previous context]\n{convo}"})
         messages.append({"role": "user", "content": user_input})
         
+        # Build per-generation overrides dict (None values = use defaults)
+        overrides = {
+            "provider": provider_override,
+            "model": model_override,
+            "endpoint": endpoint_override,
+        }
+        
         # Call LLM — branch on tool calling mode
         tool_mode = self._get_tool_mode()
 
@@ -116,22 +129,25 @@ class Agent:
             # Ollama JSON tool calling protocol
             try:
                 from agent.threads.form.tools.registry import to_ollama_tools, get_runnable_tools
-                provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
-                model_name = os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+                provider = (overrides.get("provider") or os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
+                model_name = overrides.get("model") or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+                api_key = os.getenv("OPENAI_API_KEY", "")
+                endpoint = overrides.get("endpoint") or os.getenv("AIOS_MODEL_ENDPOINT", "")
                 ollama_tools = to_ollama_tools(get_runnable_tools())
-                if provider == "ollama" and ollama_tools:
+                if ollama_tools and provider in ("ollama", "openai"):
                     response_text = self._process_schema_tool_calls(
                         model_name, messages, ollama_tools,
                         on_tool_event=on_tool_event,
+                        provider=provider, api_key=api_key, endpoint=endpoint,
                     )
                 else:
-                    # Fallback: schema mode requested but no tools/wrong provider
-                    response_text = self._call_llm(messages)
+                    # Fallback: no tools or http/mock provider
+                    response_text = self._call_llm(messages, overrides=overrides)
             except Exception:
-                response_text = self._call_llm(messages)
+                response_text = self._call_llm(messages, overrides=overrides)
         else:
             # Default: text-native :::execute::: block parsing
-            response_text = self._call_llm(messages)
+            response_text = self._call_llm(messages, overrides=overrides)
             if _HAS_SCANNER:
                 response_text = self._process_tool_calls(
                     response_text, messages,
@@ -394,13 +410,21 @@ class Agent:
 
         return "text"
 
-    def _call_ollama_with_tools(self, model: str, messages: list, tools: list) -> dict:
-        """Call Ollama with JSON tool calling schema.
+    def _call_llm_with_tools(self, model: str, messages: list, tools: list,
+                              provider: str = "ollama", api_key: str = "",
+                              endpoint: str = "") -> dict:
+        """Call LLM with JSON tool calling schema (provider-aware).
 
         Returns dict with keys:
             content    — text reply (may be empty when tool_calls present)
-            tool_calls — list of Ollama tool call objects (may be empty)
+            tool_calls — list of tool call objects (may be empty)
         """
+        provider = provider.lower()
+
+        if provider == "openai":
+            return self._call_openai_with_tools(model, messages, tools, api_key, endpoint)
+
+        # Default: ollama
         try:
             import ollama
         except ImportError:
@@ -416,6 +440,54 @@ class Agent:
         except Exception as e:
             return {"content": f"[Error: {e}]", "tool_calls": []}
 
+    def _call_openai_with_tools(self, model: str, messages: list, tools: list,
+                                api_key: str = "", base_url: str = "") -> dict:
+        """Call OpenAI-compatible API with tool calling."""
+        if not api_key:
+            return {"content": "[Error: OPENAI_API_KEY not set]", "tool_calls": []}
+
+        url = (base_url.rstrip("/") if base_url else "https://api.openai.com/v1") + "/chat/completions"
+
+        try:
+            import urllib.request
+            payload = {
+                "model": model,
+                "messages": messages,
+                "tools": tools,
+                "max_tokens": 2048,
+            }
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                choice = body.get("choices", [{}])[0].get("message", {})
+                content = choice.get("content", "") or ""
+                raw_calls = choice.get("tool_calls", []) or []
+                # Normalise OpenAI tool_calls to same shape as Ollama
+                tool_calls = []
+                for tc in raw_calls:
+                    fn = tc.get("function", {})
+                    args = fn.get("arguments", "{}")
+                    if isinstance(args, str):
+                        try:
+                            args = json.loads(args)
+                        except Exception:
+                            args = {}
+                    tool_calls.append({
+                        "function": {"name": fn.get("name", ""), "arguments": args},
+                        "id": tc.get("id", ""),
+                    })
+                return {"content": content, "tool_calls": tool_calls}
+        except Exception as e:
+            return {"content": f"[Error: {e}]", "tool_calls": []}
+
     def _process_schema_tool_calls(
         self,
         model: str,
@@ -423,18 +495,23 @@ class Agent:
         ollama_tools: list,
         on_tool_event: Optional[Callable] = None,
         max_rounds: int = 5,
+        provider: str = "ollama",
+        api_key: str = "",
+        endpoint: str = "",
     ) -> str:
-        """Process tool calls via Ollama JSON schema protocol.
+        """Process tool calls via JSON schema protocol (provider-aware).
 
         Uses the same executor, safety allowlist, and logging as the
         text-native path — only the calling mechanism differs.
 
-        Ollama tool call round-trip:
-          1. Call ollama.chat(tools=...) → get tool_calls list
+        Round-trip:
+          1. Call LLM with tools → get tool_calls list
           2. For each call: safety check → execute → append tool result message
           3. Re-call until no more tool_calls or max_rounds reached
         """
-        response = self._call_ollama_with_tools(model, messages, ollama_tools)
+        response = self._call_llm_with_tools(model, messages, ollama_tools,
+                                             provider=provider, api_key=api_key,
+                                             endpoint=endpoint)
 
         for round_num in range(max_rounds):
             tool_calls = response.get("tool_calls", [])
@@ -516,18 +593,30 @@ class Agent:
 
                 messages.append({"role": "tool", "content": output})
 
-            response = self._call_ollama_with_tools(model, messages, ollama_tools)
+            response = self._call_llm_with_tools(model, messages, ollama_tools,
+                                                 provider=provider, api_key=api_key,
+                                                 endpoint=endpoint)
 
         return response.get("content", "")
 
-    def _call_llm(self, messages: list) -> str:
-        """Call the configured LLM provider."""
-        provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
-        model_name = os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
-        endpoint = os.getenv("AIOS_MODEL_ENDPOINT", "")
+    def _call_llm(self, messages: list, overrides: Optional[dict] = None) -> str:
+        """Call the configured LLM provider.
+        
+        Args:
+            messages: Chat messages list
+            overrides: Optional dict with provider/model/endpoint overrides
+        """
+        ov = overrides or {}
+        provider = (ov.get("provider") or os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
+        model_name = ov.get("model") or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+        endpoint = ov.get("endpoint") or os.getenv("AIOS_MODEL_ENDPOINT", "")
         
         if provider == "mock":
             return "[Mock Agent] Placeholder response."
+        
+        if provider == "openai":
+            api_key = os.getenv("OPENAI_API_KEY", "")
+            return self._call_openai(model_name, messages, api_key, endpoint)
         
         if provider == "http":
             return self._call_http(endpoint, messages)
@@ -547,6 +636,38 @@ class Agent:
             return response['message']['content']
         except Exception as e:
             return f"[Error: {e}]"
+    
+    def _call_openai(self, model: str, messages: list, api_key: str = "", base_url: str = "") -> str:
+        """Call OpenAI-compatible API (works with OpenAI, Together, Groq, etc.)."""
+        if not api_key:
+            return "[Error: OPENAI_API_KEY not set. Configure it in Settings or .env]"
+        
+        url = (base_url.rstrip("/") if base_url else "https://api.openai.com/v1") + "/chat/completions"
+        
+        try:
+            import urllib.request
+            payload = {
+                "model": model,
+                "messages": messages,
+                "max_tokens": 2048,
+            }
+            req = urllib.request.Request(
+                url,
+                data=json.dumps(payload).encode("utf-8"),
+                headers={
+                    "Content-Type": "application/json",
+                    "Authorization": f"Bearer {api_key}",
+                },
+                method="POST",
+            )
+            with urllib.request.urlopen(req, timeout=120) as resp:
+                body = json.loads(resp.read().decode("utf-8"))
+                choices = body.get("choices", [])
+                if choices:
+                    return choices[0].get("message", {}).get("content", "")
+                return str(body)
+        except Exception as e:
+            return f"[Error calling OpenAI-compatible API: {e}]"
     
     def _call_http(self, endpoint: str, messages: list) -> str:
         """Call HTTP endpoint."""

@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
+import { BASE_URL } from '../../../config/api';
 import './Dashboard.css';
 
 // Spiral icon served from public folder
@@ -17,7 +18,7 @@ export const Dashboard = () => {
 
   useEffect(() => {
     // Fetch agent status
-    fetch('http://localhost:8000/api/chat/agent-status')
+    fetch(`${BASE_URL}/api/chat/agent-status`)
       .then(res => res.json())
       .then(data => setAgentStatus(data))
       .catch(() => setAgentStatus({ status: 'offline', name: 'Agent' }));
@@ -86,9 +87,9 @@ export const Dashboard = () => {
 
       <section className="dashboard-section">
         <Link to="/subconscious" className="dev-link">🧠 subconscious</Link>
-        <Link to="/dev" className="dev-link">⚙ dev</Link>
-        <Link to="/logs" className="dev-link">📋 logs</Link>
+        <Link to="/training" className="dev-link">🔥 training</Link>
         <Link to="/eval" className="dev-link">🎯 eval</Link>
+        <Link to="/settings" className="dev-link">⚙️ settings</Link>
       </section>
     </div>
   );

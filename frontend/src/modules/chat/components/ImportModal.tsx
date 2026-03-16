@@ -1,4 +1,5 @@
 import React, { useState, useRef } from 'react';
+import { BASE_URL } from '../../../config/api';
 import './ImportModal.css';
 
 interface ImportModalProps {
@@ -108,7 +109,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
       setUploadProgress(30);
 
-      const response = await fetch('http://localhost:8000/api/import/upload', {
+      const response = await fetch(`${BASE_URL}/api/import/upload`, {
         method: 'POST',
         body: formData
       });
@@ -126,7 +127,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
         parseFormData.append('platform', selectedPlatform);
       }
 
-      const parseResponse = await fetch('http://localhost:8000/api/import/parse', {
+      const parseResponse = await fetch(`${BASE_URL}/api/import/parse`, {
         method: 'POST',
         body: parseFormData
       });
@@ -169,7 +170,7 @@ export const ImportModal: React.FC<ImportModalProps> = ({
 
       setUploadProgress(50);
 
-      const response = await fetch('http://localhost:8000/api/import/commit', {
+      const response = await fetch(`${BASE_URL}/api/import/commit`, {
         method: 'POST',
         body: formData
       });

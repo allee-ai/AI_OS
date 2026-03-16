@@ -3,6 +3,8 @@ import { Sidebar } from '../components/Sidebar';
 import type { SidebarModule } from '../components/Sidebar';
 import { FinetunePanel } from '../components/FinetunePanel';
 import { UnifiedView } from '../components/UnifiedView';
+import { GenerationPanel } from '../components/GenerationPanel';
+import { ToolCallingPanel } from '../components/ToolCallingPanel';
 
 interface ModuleStats {
   examples?: number;
@@ -61,6 +63,10 @@ export const DevDashboard: React.FC = () => {
       <div className="main-content">
         {selected === '__unified__' ? (
           <UnifiedView />
+        ) : selected === '__generator__' ? (
+          <GenerationPanel />
+        ) : selected === '__tool_eval__' ? (
+          <ToolCallingPanel />
         ) : (
           <FinetunePanel
             selectedModule={selected}

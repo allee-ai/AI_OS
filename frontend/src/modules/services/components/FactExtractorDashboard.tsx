@@ -1,4 +1,6 @@
 import { useState, useEffect } from 'react';
+import { ModelDropdown } from '../../../components/ModelDropdown';
+import { BASE_URL } from '../../../config/api';
 
 interface ServiceConfig {
   enabled: boolean;
@@ -57,7 +59,7 @@ export const FactExtractorDashboard = ({ config, status, message, onChangesMade,
     setTesting(true);
     setTestResult(null);
     try {
-      const res = await fetch('http://localhost:8000/api/services/fact-extractor/test', {
+      const res = await fetch(`${BASE_URL}/api/services/fact-extractor/test`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ fact: testFact })
@@ -109,14 +111,10 @@ export const FactExtractorDashboard = ({ config, status, message, onChangesMade,
 
         <div className="setting-row">
           <label>Extraction Model</label>
-          <select 
+          <ModelDropdown
             value={localConfig.settings.model as string}
-            onChange={(e) => handleChange('model', e.target.value)}
-          >
-            <option value="llama3.2:3b">llama3.2:3b (fast, recommended)</option>
-            <option value="qwen2.5:7b">qwen2.5:7b (balanced)</option>
-            <option value="llama3.2:latest">llama3.2 (quality)</option>
-          </select>
+            onChange={(v) => handleChange('model', v)}
+          />
         </div>
 
         <div className="setting-row">

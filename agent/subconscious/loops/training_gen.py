@@ -26,23 +26,91 @@ GENERATED_DIR.mkdir(parents=True, exist_ok=True)
 # 2 hours default
 DEFAULT_INTERVAL = float(os.getenv("AIOS_TRAINING_GEN_INTERVAL", "7200"))
 
-# Modules to generate examples for
-MODULES = ["linking_core", "identity", "philosophy", "log", "reflex", "form", "chat", "docs"]
+# Modules to generate examples for (original thread modules)
+THREAD_MODULES = ["linking_core", "identity", "philosophy", "log", "reflex", "form", "chat", "docs"]
+
+# Expanded: every source directory in the codebase
+ALL_MODULES = THREAD_MODULES + [
+    "workspace", "feeds", "agent_core", "agent_services",
+    "form_tools", "parsers", "data_db", "scripts", "subconscious",
+]
+
+# Backwards compat
+MODULES = ALL_MODULES
 
 # System prompt for the generator
-GENERATOR_SYSTEM = """You are a training data generator for a Cognitive Operating System called AI OS (agent name: Nola).
-Your job is to create high-quality training examples (question/answer pairs) that teach the model about its own architecture.
+GENERATOR_SYSTEM = """You are a training data generator for a Cognitive Operating System called AI OS.
+Your job is to create high-quality training examples that teach a small language model
+how to answer questions about its own codebase, architecture, and capabilities.
+
+You will be given:
+1. ACTUAL SOURCE CODE from the module
+2. MECHANICAL EXAMPLES — low-quality auto-generated Q&A pairs that the system currently produces
+3. The current STATE block that the model sees at runtime
+
+Your task: Generate 5 BETTER training examples that replace the mechanical ones.
 
 Each example must be a valid JSON object with this exact structure:
-{"messages": [{"role": "system", "content": "== STATE ==\\n..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}], "metadata": {"source": "MODULE", "section": "generated", "type": "synthetic"}}
+{"messages": [{"role": "system", "content": "== STATE ==\\n..."}, {"role": "user", "content": "..."}, {"role": "assistant", "content": "..."}]}
 
-Rules:
-- The assistant response must demonstrate DEEP understanding, not just regurgitate facts
-- Include specific technical details: function names, table columns, formulas, data flows
-- Vary question types: "how", "why", "what happens when", "explain the difference", "walk me through"
-- The system content should be a realistic STATE block the model would actually see
-- Generate exactly 5 examples per batch
-- Output ONLY a JSON array of 5 objects, no explanation text before or after"""
+Quality rules:
+- The system content MUST be a realistic STATE block (copy/adapt from the one provided)
+- The user question should be NATURAL — how a real person would ask, not "What API endpoints does X have?"
+- The assistant response must show DEEP understanding derived from the source code
+- Include specific function names, table columns, formulas, variable names FROM the actual code
+- Responses should be concise but thorough — 100-300 words, not essays
+- Vary question types: "how does X work?", "what happens when Y?", "why is Z designed this way?"
+- DO NOT just list endpoints or table columns — explain behavior, data flow, design decisions
+- The model being trained is a personal AI assistant — responses should be first-person ("I have...", "My system...")
+
+Output ONLY a valid JSON array of 5 objects. No explanation text before or after."""
+
+# Module → source directory mapping
+MODULE_DIRS: Dict[str, str] = {
+    # Thread modules
+    "linking_core":    "agent/threads/linking_core",
+    "identity":        "agent/threads/identity",
+    "philosophy":      "agent/threads/philosophy",
+    "log":             "agent/threads/log",
+    "reflex":          "agent/threads/reflex",
+    "form":            "agent/threads/form",
+    # Top-level modules
+    "chat":            "chat",
+    "docs":            "docs",
+    "workspace":       "workspace",
+    "feeds":           "Feeds",
+    # Sub-packages
+    "agent_core":      "agent/core",
+    "agent_services":  "agent/services",
+    "form_tools":      "agent/threads/form/tools",
+    "parsers":         "chat/parsers",
+    "data_db":         "data/db",
+    "scripts":         "scripts",
+    "subconscious":    "agent/subconscious",
+}
+
+# Human-readable labels
+MODULE_LABELS: Dict[str, str] = {
+    "linking_core":    "Concept Graph (Hebbian linking)",
+    "identity":        "Identity & Profile Facts",
+    "philosophy":      "Worldview & Values",
+    "log":             "Event Log & Observations",
+    "reflex":          "Feed→Tool Automations",
+    "form":            "Tool Registry",
+    "chat":            "Chat Sessions",
+    "docs":            "Documentation",
+    "workspace":       "Workspace & Summarizer",
+    "feeds":           "Feed Sources & Polling",
+    "agent_core":      "Core Config & Secrets",
+    "agent_services":  "Agent Service Layer",
+    "form_tools":      "Tool Executables",
+    "parsers":         "Chat Import Parsers",
+    "data_db":         "Database Layer",
+    "scripts":         "CLI Scripts & Server",
+    "subconscious":    "Background Loops & Orchestrator",
+}
+
+ROOT = Path(__file__).resolve().parents[3]
 
 
 class TrainingGenLoop(BackgroundLoop):
@@ -76,7 +144,9 @@ class TrainingGenLoop(BackgroundLoop):
     
     @property
     def model(self) -> str:
-        return os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+        """Model for generation — defaults to kimi-k2 (biggest available)."""
+        return os.getenv("AIOS_TRAINING_GEN_MODEL",
+                         os.getenv("AIOS_MODEL_NAME", "kimi-k2:1t-cloud"))
     
     @property
     def stats(self) -> Dict[str, Any]:
@@ -94,7 +164,6 @@ class TrainingGenLoop(BackgroundLoop):
             reasoning = get_reasoning_for_module(module)
             if not reasoning:
                 return ""
-            # Take up to 3 examples as seeds
             seeds = reasoning[:3]
             return json.dumps(seeds, indent=2)
         except Exception:
@@ -112,6 +181,195 @@ class TrainingGenLoop(BackgroundLoop):
             return f"Module: {module}\nPurpose: {purpose}\nFeatures:\n" + "\n".join(f"  - {f}" for f in features)
         except Exception:
             return ""
+    
+    def _read_source_code(self, module: str, max_chars: int = 8000) -> str:
+        """Read actual source files for a module, truncated to budget."""
+        source_dir = MODULE_DIRS.get(module)
+        if not source_dir:
+            return ""
+        
+        full_dir = ROOT / source_dir
+        if not full_dir.exists():
+            return ""
+        
+        parts = []
+        total = 0
+        # Prioritize key files
+        priority_names = ["schema.py", "adapter.py", "api.py", "__init__.py"]
+        py_files = sorted(full_dir.glob("*.py"), key=lambda p: (
+            p.name not in priority_names,
+            priority_names.index(p.name) if p.name in priority_names else 99
+        ))
+        
+        for py_file in py_files:
+            if py_file.name.startswith("__pycache__"):
+                continue
+            try:
+                content = py_file.read_text(encoding="utf-8")
+                # Truncate individual files if needed
+                if len(content) > 3000:
+                    content = content[:3000] + "\n# ... (truncated)"
+                header = f"# === {source_dir}/{py_file.name} ===\n"
+                chunk = header + content + "\n"
+                if total + len(chunk) > max_chars:
+                    break
+                parts.append(chunk)
+                total += len(chunk)
+            except Exception:
+                continue
+        
+        return "\n".join(parts)
+    
+    def _get_mechanical_examples(self, module: str, max_examples: int = 10) -> str:
+        """Read the existing mechanical (crappy) training examples for a module."""
+        module_file = ROOT / "finetune" / f"{module}_train.jsonl"
+        if not module_file.exists():
+            return ""
+        
+        examples = []
+        try:
+            with open(module_file) as f:
+                for line in f:
+                    if len(examples) >= max_examples:
+                        break
+                    obj = json.loads(line.strip())
+                    msgs = obj.get("messages", [])
+                    meta = obj.get("metadata", {})
+                    section = meta.get("section", "")
+                    # Only grab the mechanical ones (api, cli, schema sections)
+                    if section in ("api", "cli", "schema"):
+                        user_msg = next((m["content"] for m in msgs if m["role"] == "user"), "")
+                        asst_msg = next((m["content"] for m in msgs if m["role"] == "assistant"), "")
+                        examples.append(f"Q: {user_msg}\nA: {asst_msg}")
+        except Exception:
+            pass
+        
+        if not examples:
+            return ""
+        return "MECHANICAL EXAMPLES TO IMPROVE:\n" + "\n---\n".join(examples)
+    
+    # ── File-level generation support ──────────────────────
+    
+    @staticmethod
+    def discover_files(module: str) -> List[str]:
+        """Return list of .py file paths (relative to ROOT) for a module.
+        Only includes direct children, not subdirectories covered by other modules."""
+        source_dir = MODULE_DIRS.get(module)
+        if not source_dir:
+            return []
+        full_dir = ROOT / source_dir
+        if not full_dir.exists():
+            return []
+
+        # Modules whose source_dir is a subdirectory of another module
+        # use rglob; others use only direct .py files to avoid overlap
+        sub_modules = {"form_tools", "parsers"}
+        glob_fn = full_dir.rglob if module in sub_modules else full_dir.glob
+
+        files = []
+        for py_file in sorted(glob_fn("*.py")):
+            if "__pycache__" in str(py_file):
+                continue
+            rel = str(py_file.relative_to(ROOT))
+            # Skip files belonging to a more-specific sub-module
+            if module not in sub_modules:
+                skip = False
+                for sub_mod, sub_dir in MODULE_DIRS.items():
+                    if sub_mod == module:
+                        continue
+                    if sub_dir.startswith(source_dir + "/") and rel.startswith(sub_dir):
+                        skip = True
+                        break
+                if skip:
+                    continue
+            files.append(rel)
+        return files
+    
+    @staticmethod
+    def _read_single_file(rel_path: str, max_chars: int = 12000) -> str:
+        """Read a single file's contents, truncated to budget."""
+        full = ROOT / rel_path
+        if not full.exists():
+            return ""
+        try:
+            content = full.read_text(encoding="utf-8")
+            if len(content) > max_chars:
+                content = content[:max_chars] + "\n# ... (truncated)"
+            return f"# === {rel_path} ===\n{content}"
+        except Exception:
+            return ""
+    
+    def generate_for_file(self, rel_path: str, module: str = "") -> int:
+        """Generate training examples for a single file. Returns count generated."""
+        # Determine module from path if not given
+        if not module:
+            for mod, src_dir in MODULE_DIRS.items():
+                if rel_path.startswith(src_dir):
+                    module = mod
+                    break
+            if not module:
+                module = Path(rel_path).stem
+        
+        self._last_module = f"{module}/{Path(rel_path).name}"
+        source_code = self._read_single_file(rel_path)
+        if not source_code:
+            return 0
+        
+        state_block = self._get_state(f"Training examples for {rel_path}")
+        seed_examples = self._get_seed_examples(module)
+        existing_questions = self._get_existing_questions(module)
+        
+        prompt_parts = [
+            f"Generate 5 high-quality training examples for the file '{rel_path}'.",
+            f"Module: {module}. These will train a small 3B model to understand this file.",
+            f"\nACTUAL SOURCE CODE:\n\"\"\"\n{source_code}\n\"\"\"",
+        ]
+        
+        if state_block:
+            prompt_parts.append(
+                f"\nCURRENT STATE BLOCK (use as system prompt in examples):\n"
+                f"\"\"\"\n{state_block[:2000]}\n\"\"\""
+            )
+        
+        if seed_examples:
+            prompt_parts.append(
+                f"\nGOOD examples to match in quality:\n"
+                f"\"\"\"\n{seed_examples[:2000]}\n\"\"\""
+            )
+        
+        if existing_questions:
+            prompt_parts.append(
+                f"\n{existing_questions}\n\n"
+                "^ Already covered. Generate examples about DIFFERENT aspects of this file."
+            )
+        
+        prompt_parts.append(
+            "\nGenerate 5 examples teaching SPECIFIC things from this file. "
+            "Use first person ('I have...', 'My system...'). Be concise but thorough. "
+            "Output ONLY a JSON array of 5 example objects."
+        )
+        
+        prompt = "\n".join(prompt_parts)
+        
+        try:
+            raw = self._call_model(prompt)
+            examples = self._parse_examples(raw, module)
+            
+            # Tag with file path for tracking
+            for ex in examples:
+                ex["metadata"]["file"] = rel_path
+            
+            if examples:
+                output_path = GENERATED_DIR / f"{module}.jsonl"
+                with open(output_path, "a") as f:
+                    for ex in examples:
+                        f.write(json.dumps(ex) + "\n")
+                self._total_generated += len(examples)
+                return len(examples)
+        except Exception as e:
+            print(f"[TrainingGen] Error generating for {rel_path}: {e}")
+        
+        return 0
     
     def _call_model(self, prompt: str) -> str:
         """Call the LLM to generate examples."""
@@ -209,30 +467,84 @@ class TrainingGenLoop(BackgroundLoop):
         
         return valid
     
+    def _get_existing_questions(self, module: str, max_questions: int = 30) -> str:
+        """Read questions already generated for this module to avoid duplicates."""
+        output_path = GENERATED_DIR / f"{module}.jsonl"
+        if not output_path.exists():
+            return ""
+        
+        questions = []
+        try:
+            with open(output_path) as f:
+                for line in f:
+                    obj = json.loads(line.strip())
+                    msgs = obj.get("messages", [])
+                    user_msg = next((m["content"] for m in msgs if m["role"] == "user"), "")
+                    if user_msg:
+                        questions.append(user_msg)
+        except Exception:
+            pass
+        
+        if not questions:
+            return ""
+        # Show most recent first (most likely to overlap), cap at max
+        recent = questions[-max_questions:]
+        return "ALREADY GENERATED (do NOT repeat these topics):\n" + "\n".join(f"- {q}" for q in recent)
+
     def _generate_for_module(self, module: str) -> int:
         """Generate training examples for one module. Returns count generated."""
         self._last_module = module
         
-        # Build context
+        # Build rich context from actual code and existing examples
         state_block = self._get_state(f"Generate training examples for {module}")
+        source_code = self._read_source_code(module)
+        mechanical = self._get_mechanical_examples(module)
         seed_examples = self._get_seed_examples(module)
         module_context = self._get_module_context(module)
+        existing_questions = self._get_existing_questions(module)
         
-        prompt_parts = [f"Generate 5 new training examples for the '{module}' module."]
+        prompt_parts = [
+            f"Generate 5 high-quality training examples for the '{module}' module.",
+            f"These will train a small 3B model to understand its own codebase.",
+        ]
+        
+        if source_code:
+            prompt_parts.append(f"\nACTUAL SOURCE CODE:\n\"\"\"\n{source_code}\n\"\"\"")
+        
+        if mechanical:
+            prompt_parts.append(
+                f"\n{mechanical}\n\n"
+                "^ These are the BAD examples the system currently generates. "
+                "They are too mechanical ('What API endpoints does X have?' → listing). "
+                "Generate BETTER ones that teach real understanding of the code above."
+            )
         
         if state_block:
-            prompt_parts.append(f"\nCurrent system STATE:\n\"\"\"\n{state_block}\n\"\"\"")
+            prompt_parts.append(
+                f"\nCURRENT STATE BLOCK (use this or adapt it for the system prompt in your examples):\n"
+                f"\"\"\"\n{state_block[:2000]}\n\"\"\""
+            )
         
         if module_context:
             prompt_parts.append(f"\nModule documentation:\n\"\"\"\n{module_context}\n\"\"\"")
         
         if seed_examples:
-            prompt_parts.append(f"\nExisting examples (generate DIFFERENT ones, don't repeat these):\n\"\"\"\n{seed_examples}\n\"\"\"")
+            prompt_parts.append(
+                f"\nGOOD examples to match in quality (don't repeat these):\n"
+                f"\"\"\"\n{seed_examples[:2000]}\n\"\"\""
+            )
+        
+        if existing_questions:
+            prompt_parts.append(
+                f"\n{existing_questions}\n\n"
+                "^ These questions have ALREADY been generated. "
+                "You MUST cover DIFFERENT topics, functions, or design aspects. "
+                "Explore parts of the source code not yet covered above."
+            )
         
         prompt_parts.append(
-            "\nGenerate 5 new examples that demonstrate deep reasoning about this module. "
-            "Vary the question types. Include technical details. "
-            "The assistant response should be thorough and show real understanding. "
+            "\nGenerate 5 examples. Each should teach something SPECIFIC from the source code. "
+            "Use first person ('I have...', 'My system...'). Be concise but thorough. "
             "Output ONLY a JSON array of 5 example objects."
         )
         
@@ -364,3 +676,52 @@ def clear_generated(module: Optional[str] = None) -> int:
                 count += sum(1 for line in f if line.strip())
             path.unlink()
     return count
+
+
+def get_all_targets() -> List[Dict[str, Any]]:
+    """Return all module targets with file lists, labels, and generated counts."""
+    gen_stats = get_generated_stats()
+    # Build per-file counts from generated examples
+    file_counts: Dict[str, Dict[str, int]] = {}
+    for path in GENERATED_DIR.glob("*.jsonl"):
+        module = path.stem
+        file_counts[module] = {}
+        try:
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    try:
+                        ex = json.loads(line)
+                        fpath = ex.get("metadata", {}).get("file", "")
+                        if fpath:
+                            file_counts[module][fpath] = file_counts[module].get(fpath, 0) + 1
+                    except json.JSONDecodeError:
+                        pass
+        except Exception:
+            pass
+
+    targets = []
+    for module in ALL_MODULES:
+        source_dir = MODULE_DIRS.get(module, "")
+        files = TrainingGenLoop.discover_files(module)
+        generated = gen_stats.get(module, 0)
+        fc = file_counts.get(module, {})
+        file_details = [
+            {
+                "path": f,
+                "name": Path(f).name,
+                "generated": fc.get(f, 0),
+            }
+            for f in files
+        ]
+        targets.append({
+            "module": module,
+            "label": MODULE_LABELS.get(module, module),
+            "source_dir": source_dir,
+            "files": file_details,
+            "file_count": len(files),
+            "generated_total": generated,
+        })
+    return targets

@@ -16,9 +16,11 @@
  */
 
 import { useState, useEffect, useCallback } from 'react';
+import { ModelDropdown } from '../../../components/ModelDropdown';
+import { BASE_URL } from '../../../config/api';
 import './SubconsciousDashboard.css';
 
-const API = 'http://localhost:8000/api/subconscious';
+const API = `${BASE_URL}/api/subconscious`;
 
 // ── Types ──────────────────────────────────────────────────
 
@@ -391,7 +393,7 @@ export default function SubconsciousDashboard() {
   const handleExport = async () => {
     setExporting(true);
     try {
-      const res = await fetch('http://localhost:8000/api/finetune/export', { method: 'POST' });
+      const res = await fetch(`${BASE_URL}/api/finetune/export`, { method: 'POST' });
       if (res.ok) {
         const data = await res.json();
         const total = data.results?.combined?.total_examples || 0;
@@ -714,12 +716,10 @@ export default function SubconsciousDashboard() {
 
                 <label className="form-label">
                   Model (optional)
-                  <input
-                    type="text"
+                  <ModelDropdown
                     value={newLoop.model}
-                    onChange={e => setNewLoop({ ...newLoop, model: e.target.value })}
-                    placeholder="e.g. qwen2.5:7b"
-                    className="form-input mono"
+                    onChange={v => setNewLoop({ ...newLoop, model: v })}
+                    className="form-input"
                   />
                 </label>
               </div>

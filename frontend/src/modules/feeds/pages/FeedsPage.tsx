@@ -1,7 +1,10 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { BASE_URL } from '../../../config/api';
 import './FeedsPage.css';
 import { FEED_VIEWERS, DefaultViewer } from '../viewers';
+
+const API_BASE = BASE_URL;
 
 interface FeedsSource {
   name: string;
@@ -36,8 +39,6 @@ interface EventTrigger {
   description: string;
   payload_schema: Record<string, string>;
 }
-
-const API_BASE = 'http://localhost:8000';
 
 const SOURCE_ICONS: Record<string, string> = {
   gmail: '📧',

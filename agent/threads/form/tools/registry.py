@@ -32,6 +32,7 @@ class ToolCategory(Enum):
     FILES = "files"
     AUTOMATION = "automation"
     INTERNAL = "internal"
+    MCP = "mcp"
 
 
 class RunType(Enum):

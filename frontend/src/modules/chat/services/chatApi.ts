@@ -48,13 +48,13 @@ class APIService {
     return response.json();
   }
 
-  async setModel(modelId: string): Promise<void> {
+  async setModel(modelId: string, provider?: string): Promise<void> {
     const response = await fetch(`${this.baseUrl}${API_CONFIG.ENDPOINTS.SET_MODEL}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ model_id: modelId }),
+      body: JSON.stringify({ model_id: modelId, ...(provider ? { provider } : {}) }),
     });
 
     if (!response.ok) {

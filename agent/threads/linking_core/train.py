@@ -93,12 +93,15 @@ def export_training_data(
     include_spread: bool = True,
     min_strength: float = 0.5,
     min_fire_count: int = 3,
+    max_associations: int = 100,
     sections: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
     """
     Export LONG-potentiated concept links to JSONL for finetuning.
     
     Training goal: Teach the model associative recall.
+    Capped at max_associations bidirectional pairs to avoid flooding
+    the dataset with mechanical "I associate X with Y" patterns.
     Sections: data, api, cli, schema (default: all).
     """
     from .schema import get_long_links, get_potentiation_stats, spread_activate
@@ -120,6 +123,9 @@ def export_training_data(
         links = get_long_links(limit=1000)
         links = [l for l in links 
                  if l["strength"] >= min_strength and l["fire_count"] >= min_fire_count]
+        # Sort by strength descending, keep only top associations
+        links.sort(key=lambda l: l["strength"], reverse=True)
+        links = links[:max_associations]
         
         for link in links:
             concept_a = link["concept_a"]

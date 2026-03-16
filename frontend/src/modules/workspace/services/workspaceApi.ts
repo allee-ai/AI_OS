@@ -69,7 +69,10 @@ class WorkspaceAPIService {
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(request),
+      body: JSON.stringify({
+        old_path: request.sourceId,
+        new_path: request.targetPath,
+      }),
     });
 
     if (!response.ok) {
@@ -88,10 +91,8 @@ class WorkspaceAPIService {
    * Delete a file or folder
    */
   async deleteFile(fileId: string, path?: string): Promise<void> {
-    // Use path-based delete if path provided
-    const url = path 
-      ? `${this.baseUrl}/api/workspace/delete?path=${encodeURIComponent(path)}`
-      : `${this.baseUrl}/api/workspace/files/${fileId}`;
+    const deletePath = path || fileId;
+    const url = `${this.baseUrl}/api/workspace/file?path=${encodeURIComponent(deletePath)}`;
     
     const response = await fetch(url, {
       method: 'DELETE',
@@ -127,11 +128,11 @@ class WorkspaceAPIService {
   }
 
   /**
-   * Download a file
+   * Download a file (returns raw content as blob)
    */
-  async downloadFile(fileId: string, path: string): Promise<Blob> {
+  async downloadFile(_fileId: string, path: string): Promise<Blob> {
     const response = await fetch(
-      `${this.baseUrl}/api/workspace/download/${fileId}?path=${encodeURIComponent(path)}`
+      `${this.baseUrl}/api/workspace/file?path=${encodeURIComponent(path)}`
     );
 
     if (!response.ok) {

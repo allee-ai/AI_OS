@@ -1,6 +1,6 @@
 # Eval — Benchmark Harness
 
-Benchmark suite that tests Nola (with STATE) against raw LLMs and against herself without STATE.
+Benchmark suite that tests the agent (with STATE) against raw LLMs and against itself without STATE.
 
 ---
 
@@ -8,10 +8,11 @@ Benchmark suite that tests Nola (with STATE) against raw LLMs and against hersel
 
 The eval module runs prompts through multiple models, collects responses, and uses an LLM-as-judge to score them. The core question: **does the OS layer actually help?**
 
-Five benchmark categories ship seeded:
+Six benchmark categories ship seeded:
+- **Structured Evals** — 10 automated evals testing STATE format, identity, recall, tools, relevance, hallucination, completeness, impact, scoring, and tool calling
 - **State vs No State** — Same model, with and without `== STATE ==`
-- **AI vs AI** — Nola against raw Ollama models
-- **Base vs Finetuned** — Measure LoRA adapter impact
+- **AI vs AI** — Agent against raw Ollama models
+- **Base vs Fire-Tuned** — Measure LoRA adapter impact
 - **Adversarial Robustness** — Prompt injection, identity probing
 - **Custom Scaffold** — User-defined benchmarks
 
@@ -26,10 +27,27 @@ Five benchmark categories ship seeded:
 eval/
 ├── __init__.py    # Exports router
 ├── api.py         # FastAPI router /api/eval
+├── evals.py       # 10 structured evals (state_format, identity, recall, tools, etc.)
 ├── runner.py      # run_prompt(), judge_responses(), list_available_models()
 ├── schema.py      # SQLite tables + CRUD + seed benchmarks
+├── scanner.py     # Tool call parser — validates :::execute blocks
 └── README.md
 ```
+
+### Structured Evals (evals.py)
+
+| # | Eval | Tests |
+|---|------|-------|
+| 1 | `state_format` | STATE block structure adherence |
+| 2 | `identity_persistence` | Identity holds under adversarial probing |
+| 3 | `fact_recall` | Known facts surface in responses |
+| 4 | `tool_use` | Correct tool selection and invocation |
+| 5 | `context_relevance` | Response relevance to thread context |
+| 6 | `hallucination` | Fabricated facts detection |
+| 7 | `state_completeness` | All required STATE sections present |
+| 8 | `state_impact` | STATE measurably improves response quality |
+| 9 | `scoring_quality` | Thread scoring accuracy (L1/L2/L3) |
+| 10 | `tool_calling_direct` | Text-native `:::execute` protocol — 8 test cases, single_pass + loop modes |
 
 ### How It Works
 
@@ -89,14 +107,14 @@ User selects prompt + models
 - [ ] **Leaderboard** — Visual comparison of model performance over time
 
 ### Longitudinal benchmarks
-- [ ] **STATE adherence drift** — Does a finetuned model's STATE format degrade over 50+ turns? Over multiple sessions? No longitudinal eval exists
-- [ ] **Identity persistence** — Prompt injection resistance: does the model hold its identity under adversarial prompts? Multi-session recall: does it remember facts from session N in session N+5?
-- [ ] **Memory precision/recall** — After 100 conversations, does the right fact surface at the right time? False positive rate? This measures the entire pipeline (extraction → storage → retrieval → STATE assembly)
-- [ ] **Context window pressure** — Performance degradation as all 6 threads compete for budget in a long conversation with active workspace and tool history
+- [ ] **STATE adherence drift** — Does a fire-tuned model's STATE format degrade over 50+ turns? Over multiple sessions?
+- [ ] **Identity persistence** — Prompt injection resistance: does the model hold its identity under adversarial prompts? Multi-session recall
+- [ ] **Memory precision/recall** — After 100 conversations, does the right fact surface at the right time? False positive rate?
+- [ ] **Context window pressure** — Performance degradation as all 6 threads compete for budget in a long conversation
 
 ### Starter tasks
 - [ ] Create 10 identity persistence test cases (facts that should survive across sessions)
-- [ ] Before/after benchmark script for finetuning runs
+- [ ] Before/after benchmark script for fire-tuning runs
 <!-- /ROADMAP:eval -->
 
 ---
