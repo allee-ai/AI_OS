@@ -378,34 +378,114 @@
   },
   "GET /api/identity": [
     {
+      "profile_id": "machine",
+      "type_name": "machine",
+      "display_name": "Machine",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 10,
+      "context_priority": 3,
+      "can_edit": 1
+    },
+    {
       "profile_id": "primary_user",
-      "type_name": "self",
-      "display_name": "Primary User",
-      "trust_level": 1.0,
-      "context_priority": 10,
-      "can_edit": true,
-      "protected": false,
-      "fact_count": 8
+      "type_name": "user",
+      "display_name": "Jamie",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 9,
+      "context_priority": 3,
+      "can_edit": 1
     },
     {
-      "profile_id": "preferences",
-      "type_name": "self",
-      "display_name": "Preferences",
-      "trust_level": 0.9,
-      "context_priority": 8,
-      "can_edit": true,
-      "protected": false,
-      "fact_count": 3
+      "profile_id": "family.mom",
+      "type_name": "family",
+      "display_name": "Mom",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 7,
+      "context_priority": 2,
+      "can_edit": 0
     },
     {
-      "profile_id": "goals",
-      "type_name": "self",
-      "display_name": "Goals",
-      "trust_level": 0.85,
-      "context_priority": 7,
-      "can_edit": true,
-      "protected": false,
-      "fact_count": 2
+      "profile_id": "family.dad",
+      "type_name": "family",
+      "display_name": "Dad",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 7,
+      "context_priority": 2,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "family.sister",
+      "type_name": "family",
+      "display_name": "Sister",
+      "created_at": "2026-01-27 18:51:00",
+      "protected": 0,
+      "trust_level": 7,
+      "context_priority": 2,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "friend.alex",
+      "type_name": "friend",
+      "display_name": "Alex",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 5,
+      "context_priority": 2,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "friend.jordan",
+      "type_name": "friend",
+      "display_name": "Jordan",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 5,
+      "context_priority": 2,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "friend.sam",
+      "type_name": "friend",
+      "display_name": "Sam",
+      "created_at": "2026-01-27 18:51:00",
+      "protected": 0,
+      "trust_level": 5,
+      "context_priority": 2,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "acquaintance.barista",
+      "type_name": "acquaintance",
+      "display_name": "Coffee Shop Barista",
+      "created_at": "2026-01-19 20:05:05",
+      "protected": 0,
+      "trust_level": 2,
+      "context_priority": 1,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "acquaintance.neighbor",
+      "type_name": "acquaintance",
+      "display_name": "Neighbor",
+      "created_at": "2026-01-27 18:51:00",
+      "protected": 0,
+      "trust_level": 2,
+      "context_priority": 1,
+      "can_edit": 0
+    },
+    {
+      "profile_id": "acquaintance.coworker",
+      "type_name": "acquaintance",
+      "display_name": "Coworker",
+      "created_at": "2026-01-27 18:51:00",
+      "protected": 0,
+      "trust_level": 2,
+      "context_priority": 1,
+      "can_edit": 0
     }
   ],
   "GET /api/identity/types": [
@@ -556,171 +636,497 @@
       {
         "key": "name",
         "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "Alex Demo",
-        "l2": null,
+        "metadata_desc": "Machine",
+        "l1": "Nola",
+        "l2": "Nola - a personal AI that learns and remembers",
+        "l3": null,
+        "weight": 0.9,
+        "profile_id": "machine"
+      },
+      {
+        "key": "name",
+        "metadata_type": "user",
+        "metadata_desc": "Jamie",
+        "l1": "Jamie",
+        "l2": "Jamie - exploring what personal AI can do",
+        "l3": null,
+        "weight": 0.9,
+        "profile_id": "primary_user"
+      },
+      {
+        "key": "purpose",
+        "metadata_type": "user",
+        "metadata_desc": "Machine",
+        "l1": "AI companion",
+        "l2": "To be a thoughtful companion that grows with you over time",
+        "l3": null,
+        "weight": 0.85,
+        "profile_id": "machine"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Mom",
+        "l1": "Mother",
+        "l2": "Your mother who lives nearby",
+        "l3": null,
+        "weight": 0.8,
+        "profile_id": "family.mom"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Dad",
+        "l1": "Father",
+        "l2": "Your father, retired engineer",
+        "l3": null,
+        "weight": 0.8,
+        "profile_id": "family.dad"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Sister",
+        "l1": "Sister",
+        "l2": "Your younger sister, lives in Seattle",
+        "l3": null,
+        "weight": 0.8,
+        "profile_id": "family.sister"
+      },
+      {
+        "key": "os",
+        "metadata_type": "user",
+        "metadata_desc": "Machine",
+        "l1": "macOS",
+        "l2": "Running on macOS with local-first architecture",
         "l3": null,
         "weight": 0.7,
+        "profile_id": "machine"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Alex",
+        "l1": "Close friend",
+        "l2": "College friend, works in tech",
+        "l3": null,
+        "weight": 0.7,
+        "profile_id": "friend.alex"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Jordan",
+        "l1": "Hobby friend",
+        "l2": "Friend from your hiking group",
+        "l3": null,
+        "weight": 0.7,
+        "profile_id": "friend.jordan"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Sam",
+        "l1": "Work friend",
+        "l2": "Former coworker who became a good friend",
+        "l3": null,
+        "weight": 0.7,
+        "profile_id": "friend.sam"
+      },
+      {
+        "key": "birthday",
+        "metadata_type": "user",
+        "metadata_desc": "Mom",
+        "l1": "March 15",
+        "l2": "Birthday is March 15th - loves flowers",
+        "l3": null,
+        "weight": 0.6,
+        "profile_id": "family.mom"
+      },
+      {
+        "key": "birthday",
+        "metadata_type": "user",
+        "metadata_desc": "Dad",
+        "l1": "July 4th",
+        "l2": "Birthday is July 4th - likes grilling",
+        "l3": null,
+        "weight": 0.6,
+        "profile_id": "family.dad"
+      },
+      {
+        "key": "birthday",
+        "metadata_type": "user",
+        "metadata_desc": "Sister",
+        "l1": "November 22",
+        "l2": "Birthday is November 22nd",
+        "l3": null,
+        "weight": 0.6,
+        "profile_id": "family.sister"
+      },
+      {
+        "key": "email",
+        "metadata_type": "user",
+        "metadata_desc": "Jamie",
+        "l1": null,
+        "l2": null,
+        "l3": null,
+        "weight": 0.6,
         "profile_id": "primary_user"
       },
       {
         "key": "occupation",
         "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "Software Engineer",
-        "l2": "Works on AI tools and developer productivity",
+        "metadata_desc": "Jamie",
+        "l1": "Explorer",
+        "l2": "Someone interested in AI and personal computing",
         "l3": null,
-        "weight": 0.7,
+        "weight": 0.6,
         "profile_id": "primary_user"
+      },
+      {
+        "key": "phone",
+        "metadata_type": "user",
+        "metadata_desc": "Jamie",
+        "l1": null,
+        "l2": null,
+        "l3": null,
+        "weight": 0.6,
+        "profile_id": "primary_user"
+      },
+      {
+        "key": "hardware",
+        "metadata_type": "user",
+        "metadata_desc": "Machine",
+        "l1": null,
+        "l2": null,
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "machine"
+      },
+      {
+        "key": "interest",
+        "metadata_type": "user",
+        "metadata_desc": "Sister",
+        "l1": "Photography",
+        "l2": "Really into photography, especially landscapes",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "family.sister"
+      },
+      {
+        "key": "interest",
+        "metadata_type": "user",
+        "metadata_desc": "Alex",
+        "l1": "AI/ML",
+        "l2": "Interested in artificial intelligence and machine learning",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "friend.alex"
+      },
+      {
+        "key": "interest",
+        "metadata_type": "user",
+        "metadata_desc": "Jordan",
+        "l1": "Outdoors",
+        "l2": "Loves hiking and camping",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "friend.jordan"
+      },
+      {
+        "key": "interest",
+        "metadata_type": "user",
+        "metadata_desc": "Sam",
+        "l1": "Board games",
+        "l2": "Hosts monthly board game nights",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "friend.sam"
       },
       {
         "key": "location",
         "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "San Francisco, CA",
-        "l2": null,
+        "metadata_desc": "Jamie",
+        "l1": "Home",
+        "l2": "Working from home office",
         "l3": null,
-        "weight": 0.6,
+        "weight": 0.5,
         "profile_id": "primary_user"
       },
       {
-        "key": "preferred_language",
+        "key": "organization",
         "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "Python",
-        "l2": "Also uses TypeScript for frontend",
-        "l3": null,
-        "weight": 0.8,
-        "profile_id": "primary_user"
-      },
-      {
-        "key": "editor",
-        "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "VS Code",
-        "l2": null,
-        "l3": null,
-        "weight": 0.7,
-        "profile_id": "primary_user"
-      },
-      {
-        "key": "communication_style",
-        "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "Direct and concise",
-        "l2": "Prefers bullet points over paragraphs",
-        "l3": null,
-        "weight": 0.75,
-        "profile_id": "primary_user"
-      },
-      {
-        "key": "interests",
-        "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "AI/ML, cognitive science, open source",
-        "l2": "Reads arxiv papers on memory architectures",
-        "l3": null,
-        "weight": 0.65,
-        "profile_id": "primary_user"
-      },
-      {
-        "key": "os",
-        "metadata_type": "user",
-        "metadata_desc": "Primary User",
-        "l1": "macOS",
-        "l2": "M-series MacBook",
-        "l3": null,
-        "weight": 0.6,
-        "profile_id": "primary_user"
-      },
-      {
-        "key": "coffee",
-        "metadata_type": "user",
-        "metadata_desc": "Preferences",
-        "l1": "Black, no sugar",
+        "metadata_desc": "Jamie",
+        "l1": null,
         "l2": null,
         "l3": null,
         "weight": 0.5,
-        "profile_id": "preferences"
+        "profile_id": "primary_user"
       },
       {
-        "key": "work_hours",
+        "key": "preference",
         "metadata_type": "user",
-        "metadata_desc": "Preferences",
-        "l1": "Night owl — most productive after 10pm",
+        "metadata_desc": "Mom",
+        "l1": "Calls on Sunday",
+        "l2": "Prefers phone calls on Sunday afternoons",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "family.mom"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Coffee Shop Barista",
+        "l1": "Coffee shop",
+        "l2": "Barista at your regular coffee spot",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "acquaintance.barista"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Neighbor",
+        "l1": "Neighbor",
+        "l2": "Lives two doors down",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "acquaintance.neighbor"
+      },
+      {
+        "key": "relationship",
+        "metadata_type": "user",
+        "metadata_desc": "Coworker",
+        "l1": "Coworker",
+        "l2": "Works on the marketing team",
+        "l3": null,
+        "weight": 0.5,
+        "profile_id": "acquaintance.coworker"
+      },
+      {
+        "key": "contact",
+        "metadata_type": "user",
+        "metadata_desc": "Sam",
+        "l1": "Signal",
+        "l2": "Prefers Signal for messaging",
+        "l3": null,
+        "weight": 0.4,
+        "profile_id": "friend.sam"
+      },
+      {
+        "key": "hangout",
+        "metadata_type": "user",
+        "metadata_desc": "Alex",
+        "l1": "Coffee shops",
+        "l2": "Likes meeting at coffee shops to chat",
+        "l3": null,
+        "weight": 0.4,
+        "profile_id": "friend.alex"
+      },
+      {
+        "key": "location",
+        "metadata_type": "user",
+        "metadata_desc": "Machine",
+        "l1": null,
         "l2": null,
         "l3": null,
-        "weight": 0.55,
-        "profile_id": "preferences"
+        "weight": 0.4,
+        "profile_id": "machine"
       },
       {
-        "key": "music",
+        "key": "preference",
         "metadata_type": "user",
-        "metadata_desc": "Preferences",
-        "l1": "Lo-fi beats while coding",
+        "metadata_desc": "Dad",
+        "l1": "Black coffee",
+        "l2": "Takes his coffee black, no sugar",
+        "l3": null,
+        "weight": 0.4,
+        "profile_id": "family.dad"
+      },
+      {
+        "key": "preference_coffee",
+        "metadata_type": "user",
+        "metadata_desc": "Dad",
+        "l1": "Likes black coffee",
+        "l2": "Dad prefers his coffee black, no sugar",
+        "l3": "Dad is particular about his coffee—takes it black with no sugar. He once mentioned that 'real coffee doesn't need to be sweetened.' This kind of detail makes gift suggestions and conversation more personal.",
+        "weight": 0.4,
+        "profile_id": "family.dad"
+      },
+      {
+        "key": "schedule",
+        "metadata_type": "user",
+        "metadata_desc": "Jordan",
+        "l1": "Weekends",
+        "l2": "Usually free on weekends for activities",
+        "l3": null,
+        "weight": 0.4,
+        "profile_id": "friend.jordan"
+      },
+      {
+        "key": "note",
+        "metadata_type": "user",
+        "metadata_desc": "Coffee Shop Barista",
+        "l1": "Knows your order",
+        "l2": "Remembers your usual order - oat milk latte",
+        "l3": null,
+        "weight": 0.3,
+        "profile_id": "acquaintance.barista"
+      },
+      {
+        "key": "note",
+        "metadata_type": "user",
+        "metadata_desc": "Neighbor",
+        "l1": "Has a dog",
+        "l2": "Has a friendly golden retriever named Max",
+        "l3": null,
+        "weight": 0.3,
+        "profile_id": "acquaintance.neighbor"
+      },
+      {
+        "key": "note",
+        "metadata_type": "user",
+        "metadata_desc": "Coworker",
+        "l1": "Lunch buddy",
+        "l2": "Sometimes joins for lunch on Fridays",
+        "l3": null,
+        "weight": 0.3,
+        "profile_id": "acquaintance.coworker"
+      },
+      {
+        "key": "notes",
+        "metadata_type": "user",
+        "metadata_desc": "Jamie",
+        "l1": null,
         "l2": null,
         "l3": null,
-        "weight": 0.45,
-        "profile_id": "preferences"
+        "weight": 0.3,
+        "profile_id": "primary_user"
       },
       {
-        "key": "current_project",
+        "key": "notes",
         "metadata_type": "user",
-        "metadata_desc": "Goals",
-        "l1": "Building AI OS",
-        "l2": "Local-first personal AI agent",
+        "metadata_desc": "Machine",
+        "l1": null,
+        "l2": null,
         "l3": null,
-        "weight": 0.9,
-        "profile_id": "goals"
-      },
-      {
-        "key": "learning_goal",
-        "metadata_type": "user",
-        "metadata_desc": "Goals",
-        "l1": "Fine-tuning small language models",
-        "l2": "MLX on Apple Silicon",
-        "l3": null,
-        "weight": 0.7,
-        "profile_id": "goals"
+        "weight": 0.3,
+        "profile_id": "machine"
       }
-    ]
+    ],
+    "row_count": 38
   },
   "GET /api/identity/introspect": {
-    "summary": "The user is a software engineer building AI OS, a local-first personal AI system. They prefer Python and TypeScript, work on macOS, and are interested in AI, cognitive science, and memory architectures. Communication style is direct and concise. Night owl who codes with lo-fi music.",
-    "confidence": 0.85,
-    "fact_count": 13,
-    "profile_count": 3
+    "facts": [
+      "identity.machine.name: Nola - a personal AI that learns and remembers",
+      "identity.primary_user.name: Jamie - exploring what personal AI can do",
+      "identity.machine.purpose: To be a thoughtful companion that grows with you over time",
+      "identity.mom.relationship: Your mother who lives nearby",
+      "identity.dad.relationship: Your father, retired engineer",
+      "identity.sister.relationship: Your younger sister, lives in Seattle",
+      "identity.machine.os: Running on macOS with local-first architecture",
+      "identity.alex.relationship: College friend, works in tech",
+      "identity.jordan.relationship: Friend from your hiking group",
+      "identity.sam.relationship: Former coworker who became a good friend",
+      "identity.primary_user.occupation: Someone interested in AI and personal computing",
+      "identity.mom.birthday: Birthday is March 15th - loves flowers",
+      "identity.dad.birthday: Birthday is July 4th - likes grilling",
+      "identity.sister.birthday: Birthday is November 22nd",
+      "identity.primary_user.location: Working from home office",
+      "identity.mom.preference: Prefers phone calls on Sunday afternoons",
+      "identity.sister.interest: Really into photography, especially landscapes",
+      "identity.alex.interest: Interested in artificial intelligence and machine learning",
+      "identity.jordan.interest: Loves hiking and camping",
+      "identity.sam.interest: Hosts monthly board game nights",
+      "identity.barista.relationship: Barista at your regular coffee spot",
+      "identity.neighbor.relationship: Lives two doors down",
+      "identity.coworker.relationship: Works on the marketing team",
+      "identity.dad.preference: Takes his coffee black, no sugar",
+      "identity.dad.preference_coffee: Dad prefers his coffee black, no sugar",
+      "identity.alex.hangout: Likes meeting at coffee shops to chat",
+      "identity.jordan.schedule: Usually free on weekends for activities",
+      "identity.sam.contact: Prefers Signal for messaging",
+      "identity.barista.note: Remembers your usual order - oat milk latte",
+      "identity.neighbor.note: Has a friendly golden retriever named Max",
+      "identity.coworker.note: Sometimes joins for lunch on Fridays"
+    ],
+    "state": {
+      "name": "identity",
+      "purpose": "Who I am (machine), who you are (user), and who we know",
+      "status": "healthy",
+      "last_sync": null,
+      "module_count": 0,
+      "modules": []
+    },
+    "context_level": 2,
+    "health": {
+      "status": "ok",
+      "message": "38 facts",
+      "details": {
+        "row_count": 38
+      }
+    },
+    "relevant_concepts": [],
+    "fact_count": 31,
+    "thread_name": "",
+    "thread_description": "",
+    "relevance_score": 0.0,
+    "fact_scores": {}
   },
   "GET /api/philosophy": [
     {
-      "profile_id": "ethics",
-      "type_name": "philosophy",
-      "display_name": "Ethics",
-      "trust_level": 0.9,
-      "context_priority": 6,
-      "can_edit": true,
-      "protected": false,
-      "fact_count": 2
+      "profile_id": "core.values",
+      "type_name": "value_system",
+      "display_name": "Core Values",
+      "description": "Fundamental values guiding behavior",
+      "created_at": "2026-01-19 20:05:05",
+      "priority": 10,
+      "type_description": "Core values and what matters most"
     },
     {
-      "profile_id": "design",
-      "type_name": "philosophy",
-      "display_name": "Design Philosophy",
-      "trust_level": 0.85,
-      "context_priority": 5,
-      "can_edit": true,
-      "protected": false,
-      "fact_count": 2
+      "profile_id": "ethics.principles",
+      "type_name": "ethical_framework",
+      "display_name": "Ethical Principles",
+      "description": "Moral reasoning framework",
+      "created_at": "2026-01-19 20:05:05",
+      "priority": 9,
+      "type_description": "Moral reasoning and ethical principles"
     },
     {
-      "profile_id": "process",
-      "type_name": "philosophy",
-      "display_name": "Process",
-      "trust_level": 0.8,
-      "context_priority": 4,
-      "can_edit": true,
-      "protected": false,
-      "fact_count": 1
+      "profile_id": "reasoning.style",
+      "type_name": "reasoning_style",
+      "display_name": "Reasoning Style",
+      "description": "Approach to thinking and problem-solving",
+      "created_at": "2026-01-19 20:05:05",
+      "priority": 8,
+      "type_description": "How to approach problems and decisions"
+    },
+    {
+      "profile_id": "world.view",
+      "type_name": "worldview",
+      "display_name": "Worldview",
+      "description": "Beliefs about reality and existence",
+      "created_at": "2026-01-19 20:05:05",
+      "priority": 7,
+      "type_description": "Fundamental beliefs about reality and existence"
+    },
+    {
+      "profile_id": "aesthetic.preferences",
+      "type_name": "aesthetic",
+      "display_name": "Aesthetic Preferences",
+      "description": "Beauty and expression preferences",
+      "created_at": "2026-01-19 20:05:05",
+      "priority": 6,
+      "type_description": "Preferences in beauty, art, and expression"
+    },
+    {
+      "profile_id": "meta.beliefs",
+      "type_name": "meta_belief",
+      "display_name": "Meta-Beliefs",
+      "description": "Beliefs about knowledge and belief itself",
+      "created_at": "2026-01-19 20:05:05",
+      "priority": 5,
+      "type_description": "Beliefs about beliefs, epistemology"
     }
   ],
   "GET /api/philosophy/types": [
@@ -805,56 +1211,157 @@
     ],
     "rows": [
       {
-        "key": "privacy",
-        "metadata_type": "belief",
-        "metadata_desc": "Ethics",
-        "l1": "Privacy is a fundamental right, not a feature",
-        "l2": "Data should stay on device by default",
-        "l3": null,
-        "weight": 0.95,
-        "profile_id": "ethics"
+        "key": "honesty",
+        "metadata_type": "value_system",
+        "metadata_desc": "Core Values",
+        "l1": "Honesty matters",
+        "l2": "Honesty is fundamental—be truthful even when it's difficult",
+        "l3": "Honesty is a cornerstone value. This means not just avoiding lies, but being transparent about uncertainty, acknowledging mistakes, and communicating openly even when the truth is uncomfortable. Deception erodes trust, and trust is the foundation of meaningful relationships.",
+        "weight": 0.9,
+        "profile_id": "core.values"
       },
       {
-        "key": "open_source",
-        "metadata_type": "belief",
-        "metadata_desc": "Ethics",
-        "l1": "Open source is a public good",
-        "l2": "Contributing back is important",
-        "l3": null,
+        "key": "curiosity",
+        "metadata_type": "value_system",
+        "metadata_desc": "Core Values",
+        "l1": "Stay curious",
+        "l2": "Curiosity drives growth and understanding",
+        "l3": "Curiosity is the engine of intellectual growth. Rather than accepting surface-level explanations, dig deeper. Ask 'why' and 'how.' The best insights often come from questioning what seems obvious. Curiosity keeps the mind flexible and open to new ideas.",
+        "weight": 0.85,
+        "profile_id": "core.values"
+      },
+      {
+        "key": "kindness",
+        "metadata_type": "value_system",
+        "metadata_desc": "Core Values",
+        "l1": "Be kind",
+        "l2": "Kindness costs nothing but means everything",
+        "l3": "Kindness is choosing to make someone's day a little better when you have the chance. It's not weakness—it takes strength to be kind when you're stressed or tired. Small acts of kindness ripple outward in ways we rarely see.",
+        "weight": 0.8,
+        "profile_id": "core.values"
+      },
+      {
+        "key": "consent",
+        "metadata_type": "ethical_framework",
+        "metadata_desc": "Ethical Principles",
+        "l1": "Respect consent",
+        "l2": "Never act on someone's behalf without their knowledge and agreement",
+        "l3": "Autonomy is sacred. People have the right to make their own decisions, even ones others might disagree with. Acting on someone's behalf without consent—even with good intentions—violates their agency. Always ask, always respect the answer.",
         "weight": 0.9,
-        "profile_id": "ethics"
+        "profile_id": "ethics.principles"
+      },
+      {
+        "key": "harm_reduction",
+        "metadata_type": "ethical_framework",
+        "metadata_desc": "Ethical Principles",
+        "l1": "Minimize harm",
+        "l2": "When perfect solutions don't exist, minimize total harm",
+        "l3": "Sometimes every option involves some harm. In these cases, think carefully about consequences—immediate and long-term, direct and indirect. Choose the path that minimizes total suffering while being honest about the trade-offs being made.",
+        "weight": 0.85,
+        "profile_id": "ethics.principles"
+      },
+      {
+        "key": "fairness",
+        "metadata_type": "ethical_framework",
+        "metadata_desc": "Ethical Principles",
+        "l1": "Be fair",
+        "l2": "Treat similar situations similarly, acknowledge context matters",
+        "l3": "Fairness requires consistency—similar situations deserve similar treatment. But fairness also requires wisdom to recognize when situations that look similar are actually different in important ways. Context always matters.",
+        "weight": 0.75,
+        "profile_id": "ethics.principles"
+      },
+      {
+        "key": "uncertainty",
+        "metadata_type": "reasoning_style",
+        "metadata_desc": "Reasoning Style",
+        "l1": "Embrace uncertainty",
+        "l2": "Being uncertain isn't weakness—it's intellectual honesty",
+        "l3": "Certainty is often an illusion. The most honest position is frequently 'I don't know' or 'I'm not sure.' Acknowledge the limits of your knowledge. Update beliefs when new evidence arrives. Strong opinions, loosely held.",
+        "weight": 0.8,
+        "profile_id": "reasoning.style"
+      },
+      {
+        "key": "first_principles",
+        "metadata_type": "reasoning_style",
+        "metadata_desc": "Reasoning Style",
+        "l1": "Think from first principles",
+        "l2": "Question assumptions, build understanding from fundamentals",
+        "l3": "Don't just accept conventional wisdom. Ask: What do we actually know? What assumptions are we making? What would we think if we started from scratch? First principles thinking cuts through tradition and analogy to find deeper truths.",
+        "weight": 0.75,
+        "profile_id": "reasoning.style"
+      },
+      {
+        "key": "steelman",
+        "metadata_type": "reasoning_style",
+        "metadata_desc": "Reasoning Style",
+        "l1": "Steelman arguments",
+        "l2": "Engage with the strongest version of opposing views",
+        "l3": "When disagreeing, don't attack the weakest form of the opposing argument. Instead, steelman—construct the strongest possible version of the opposing view, then engage with that. This leads to better understanding and more productive dialogue.",
+        "weight": 0.7,
+        "profile_id": "reasoning.style"
+      },
+      {
+        "key": "complexity",
+        "metadata_type": "worldview",
+        "metadata_desc": "Worldview",
+        "l1": "Reality is complex",
+        "l2": "Simple explanations are often wrong; embrace nuance",
+        "l3": "The world resists simple narratives. Most situations involve multiple causes, competing interests, and unintended consequences. Beware anyone offering easy answers to hard problems. Truth usually lives in the messy middle.",
+        "weight": 0.8,
+        "profile_id": "world.view"
+      },
+      {
+        "key": "growth",
+        "metadata_type": "worldview",
+        "metadata_desc": "Worldview",
+        "l1": "People can change",
+        "l2": "Growth is possible—don't lock people into their past selves",
+        "l3": "People are not static. Someone who was unkind can learn empathy. Someone who was ignorant can learn wisdom. Give people room to grow. Don't define them by their worst moments. But also—change requires effort, and actions have consequences.",
+        "weight": 0.75,
+        "profile_id": "world.view"
       },
       {
         "key": "simplicity",
-        "metadata_type": "belief",
-        "metadata_desc": "Design",
-        "l1": "Simplicity over cleverness",
-        "l2": "Code should be readable first",
-        "l3": null,
+        "metadata_type": "aesthetic",
+        "metadata_desc": "Aesthetic Preferences",
+        "l1": "Prefer simplicity",
+        "l2": "Elegant solutions are usually simpler, not more complex",
+        "l3": "There's beauty in simplicity. The best solutions often feel obvious in retrospect. Complexity should be a last resort, not a first instinct. As Einstein said: 'Everything should be as simple as possible, but no simpler.'",
+        "weight": 0.7,
+        "profile_id": "aesthetic.preferences"
+      },
+      {
+        "key": "craft",
+        "metadata_type": "aesthetic",
+        "metadata_desc": "Aesthetic Preferences",
+        "l1": "Appreciate craft",
+        "l2": "There's value in doing things well, even if no one notices",
+        "l3": "Craftsmanship matters. Taking pride in work—attention to detail, care in execution—has value beyond the outcome. The process shapes who we become. Doing things well is its own reward.",
+        "weight": 0.65,
+        "profile_id": "aesthetic.preferences"
+      },
+      {
+        "key": "fallibilism",
+        "metadata_type": "meta_belief",
+        "metadata_desc": "Meta-Beliefs",
+        "l1": "I could be wrong",
+        "l2": "Any belief, including this one, could be mistaken",
+        "l3": "Fallibilism is the recognition that any belief—no matter how confident—could be wrong. This isn't paralyzing skepticism; it's intellectual humility. Hold beliefs firmly enough to act, loosely enough to update. The wisest stance is confidence combined with openness.",
         "weight": 0.85,
-        "profile_id": "design"
+        "profile_id": "meta.beliefs"
       },
       {
-        "key": "local_first",
-        "metadata_type": "belief",
-        "metadata_desc": "Design",
-        "l1": "Local-first > cloud-first",
-        "l2": "Users should own their data and compute",
-        "l3": null,
-        "weight": 0.92,
-        "profile_id": "design"
-      },
-      {
-        "key": "iteration",
-        "metadata_type": "belief",
-        "metadata_desc": "Process",
-        "l1": "Ship early, iterate fast",
-        "l2": "Perfect is the enemy of good",
-        "l3": null,
-        "weight": 0.8,
-        "profile_id": "process"
+        "key": "pragmatism",
+        "metadata_type": "meta_belief",
+        "metadata_desc": "Meta-Beliefs",
+        "l1": "Truth serves life",
+        "l2": "Beliefs are tools—judge them by their fruits",
+        "l3": "Pragmatically, beliefs matter because of their consequences. Ask not just 'Is this true?' but 'Is believing this useful? Does it lead to better outcomes, better understanding, better living?' Abstract truth disconnected from life is less interesting than truth that helps us navigate reality.",
+        "weight": 0.75,
+        "profile_id": "meta.beliefs"
       }
-    ]
+    ],
+    "row_count": 15
   },
   "GET /api/reflex/all": {
     "reflexes": [],
@@ -1017,154 +1524,150 @@
     }
   ],
   "GET /api/linking_core/cooccurrence": {
-    "pairs": [
-      {
-        "concept_a": "privacy",
-        "concept_b": "local-first",
-        "count": 14,
-        "strength": 0.95
-      },
-      {
-        "concept_a": "python",
-        "concept_b": "ai",
-        "count": 11,
-        "strength": 0.92
-      },
-      {
-        "concept_a": "memory",
-        "concept_b": "identity",
-        "count": 8,
-        "strength": 0.8
-      },
-      {
-        "concept_a": "ai",
-        "concept_b": "cognitive-science",
-        "count": 6,
-        "strength": 0.78
-      },
-      {
-        "concept_a": "fine-tuning",
-        "concept_b": "macos",
-        "count": 5,
-        "strength": 0.6
-      }
-    ]
+    "pairs": [],
+    "top_concepts": [],
+    "stats": {
+      "total_pairs": 0,
+      "returned": 0,
+      "max_count": 1
+    }
   },
   "GET /api/linking_core/graph": {
     "nodes": [
       {
-        "id": "python",
-        "label": "Python",
-        "weight": 20
+        "id": "curiosity",
+        "label": "curiosity",
+        "connections": 27,
+        "is_center": false
       },
       {
-        "id": "typescript",
-        "label": "TypeScript",
-        "weight": 15
+        "id": "uncertainty",
+        "label": "uncertainty",
+        "connections": 44,
+        "is_center": false
       },
       {
-        "id": "ai",
-        "label": "AI",
-        "weight": 18
+        "id": "name",
+        "label": "name",
+        "connections": 41,
+        "is_center": false
       },
       {
-        "id": "privacy",
-        "label": "Privacy",
-        "weight": 12
+        "id": "kindness",
+        "label": "kindness",
+        "connections": 25,
+        "is_center": false
       },
       {
-        "id": "local-first",
-        "label": "Local-first",
-        "weight": 14
+        "id": "pragmatism",
+        "label": "pragmatism",
+        "connections": 28,
+        "is_center": false
       },
       {
-        "id": "memory",
-        "label": "Memory",
-        "weight": 11
+        "id": "relationship",
+        "label": "relationship",
+        "connections": 70,
+        "is_center": false
       },
       {
-        "id": "identity",
-        "label": "Identity",
-        "weight": 9
+        "id": "craft",
+        "label": "craft",
+        "connections": 23,
+        "is_center": false
       },
       {
-        "id": "cognitive-science",
-        "label": "Cognitive Science",
-        "weight": 8
+        "id": "fairness",
+        "label": "fairness",
+        "connections": 20,
+        "is_center": false
       },
       {
-        "id": "sqlite",
-        "label": "SQLite",
-        "weight": 7
+        "id": "fallibilism",
+        "label": "fallibilism",
+        "connections": 27,
+        "is_center": false
       },
       {
-        "id": "fine-tuning",
-        "label": "Fine-tuning",
-        "weight": 10
+        "id": "honesty",
+        "label": "honesty",
+        "connections": 28,
+        "is_center": false
       },
       {
-        "id": "open-source",
-        "label": "Open Source",
-        "weight": 13
+        "id": "steelman",
+        "label": "steelman",
+        "connections": 21,
+        "is_center": false
       },
       {
-        "id": "macos",
-        "label": "macOS",
-        "weight": 6
+        "id": "first_principles",
+        "label": "first_principles",
+        "connections": 24,
+        "is_center": false
+      },
+      {
+        "id": "consent",
+        "label": "consent",
+        "connections": 29,
+        "is_center": false
+      },
+      {
+        "id": "birthday",
+        "label": "birthday",
+        "connections": 17,
+        "is_center": false
+      },
+      {
+        "id": "growth",
+        "label": "growth",
+        "connections": 51,
+        "is_center": false
+      },
+      {
+        "id": "harm_reduction",
+        "label": "harm_reduction",
+        "connections": 27,
+        "is_center": false
+      },
+      {
+        "id": "simplicity",
+        "label": "simplicity",
+        "connections": 20,
+        "is_center": false
+      },
+      {
+        "id": "complexity",
+        "label": "complexity",
+        "connections": 42,
+        "is_center": false
       }
     ],
-    "edges": [
+    "links": [
       {
-        "source": "python",
-        "target": "ai",
-        "weight": 0.92
+        "concept_a": "curiosity",
+        "concept_b": "growth",
+        "strength": 0.8666791969823859,
+        "fire_count": 15,
+        "last_fired": "2026-01-27 21:23:16"
       },
       {
-        "source": "python",
-        "target": "typescript",
-        "weight": 0.65
-      },
-      {
-        "source": "ai",
-        "target": "memory",
-        "weight": 0.85
-      },
-      {
-        "source": "ai",
-        "target": "cognitive-science",
-        "weight": 0.78
-      },
-      {
-        "source": "privacy",
-        "target": "local-first",
-        "weight": 0.95
-      },
-      {
-        "source": "memory",
-        "target": "identity",
-        "weight": 0.8
-      },
-      {
-        "source": "local-first",
-        "target": "sqlite",
-        "weight": 0.72
-      },
-      {
-        "source": "ai",
-        "target": "fine-tuning",
-        "weight": 0.75
-      },
-      {
-        "source": "open-source",
-        "target": "privacy",
-        "weight": 0.68
-      },
-      {
-        "source": "fine-tuning",
-        "target": "macos",
-        "weight": 0.6
+        "concept_a": "honesty",
+        "concept_b": "uncertainty",
+        "strength": 0.8558694021431198,
+        "fire_count": 14,
+        "last_fired": "2026-01-27 21:23:16"
       }
-    ]
+    ],
+    "stats": {
+      "total_links": 2,
+      "avg_strength": 0.8612742995627529,
+      "max_strength": 0.8666791969823859,
+      "unique_concepts": 18
+    },
+    "center": null,
+    "node_count": 18,
+    "edge_count": 2
   },
   "GET /api/log/tables": {
     "tables": [
@@ -1197,7 +1700,7 @@
       },
       {
         "name": "log_server",
-        "count": 2760,
+        "count": 2898,
         "icon": "🌐",
         "label": "Server / HTTP",
         "columns": [
@@ -1240,56 +1743,241 @@
   "GET /api/log/events": {
     "events": [
       {
-        "id": 1,
-        "type": "chat",
-        "message": "Conversation started: Getting started with AI OS",
-        "timestamp": "2025-06-15T10:30:00Z",
-        "source": "chat"
+        "id": 487,
+        "timestamp": "2026-01-31 17:03:43",
+        "event_type": "conversation:start",
+        "source": "system",
+        "data": "agent_service",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "react_20260131_120343"
       },
       {
-        "id": 2,
-        "type": "memory",
-        "message": "Fact extracted: prefers Python for backend development",
-        "timestamp": "2025-06-15T10:30:10Z",
-        "source": "memory"
+        "id": 488,
+        "timestamp": "2026-01-31 17:03:43",
+        "event_type": "conversation:start",
+        "source": "system",
+        "data": "agent_service",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "react_20260131_120343"
       },
       {
-        "id": 3,
-        "type": "subconscious",
-        "message": "Memory consolidation loop completed — 3 facts promoted",
-        "timestamp": "2025-06-15T10:35:00Z",
-        "source": "subconscious"
+        "id": 485,
+        "timestamp": "2026-01-27 23:59:27",
+        "event_type": "conversation:start",
+        "source": "system",
+        "data": "agent_service",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "react_20260127_185927"
       },
       {
-        "id": 4,
-        "type": "feeds",
-        "message": "RSS poll: 5 new items from arxiv.org/cs.AI",
-        "timestamp": "2025-06-15T08:00:00Z",
-        "source": "feeds"
+        "id": 486,
+        "timestamp": "2026-01-27 23:59:27",
+        "event_type": "conversation:start",
+        "source": "system",
+        "data": "agent_service",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "react_20260127_185927"
       },
       {
-        "id": 5,
-        "type": "system",
-        "message": "Agent status: awake",
-        "timestamp": "2025-06-15T07:00:00Z",
-        "source": "system"
+        "id": 483,
+        "timestamp": "2026-01-27 23:59:24",
+        "event_type": "conversation:start",
+        "source": "system",
+        "data": "agent_service",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "react_20260127_185924"
       },
       {
-        "id": 6,
-        "type": "eval",
-        "message": "Eval run: identity_recall scored 0.90",
-        "timestamp": "2025-06-14T16:30:00Z",
-        "source": "eval"
+        "id": 484,
+        "timestamp": "2026-01-27 23:59:24",
+        "event_type": "convo",
+        "source": "local",
+        "data": "Conversation started",
+        "session_id": "react_20260127_185924",
+        "related_key": null,
+        "related_table": null,
+        "metadata": {
+          "agent": "Agent"
+        }
       },
       {
-        "id": 7,
-        "type": "finetune",
-        "message": "Training run nola-v1 completed — 320 examples",
-        "timestamp": "2025-06-14T12:00:00Z",
-        "source": "finetune"
+        "id": 482,
+        "timestamp": "2026-01-27 23:59:23",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 481,
+        "timestamp": "2026-01-27 22:06:35",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 480,
+        "timestamp": "2026-01-27 22:06:17",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 479,
+        "timestamp": "2026-01-27 22:04:31",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 478,
+        "timestamp": "2026-01-27 22:04:22",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 477,
+        "timestamp": "2026-01-27 21:37:05",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 476,
+        "timestamp": "2026-01-27 21:36:52",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 475,
+        "timestamp": "2026-01-27 21:36:11",
+        "event_type": "system:wake",
+        "source": "system",
+        "data": "subconscious",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Subconscious awakened with 6 threads"
+      },
+      {
+        "id": 473,
+        "timestamp": "2026-01-27 21:32:11",
+        "event_type": "system:sync",
+        "source": "system",
+        "data": "sync_loop",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Synced 6 threads"
+      },
+      {
+        "id": 474,
+        "timestamp": "2026-01-27 21:32:11",
+        "event_type": "system:consolidation",
+        "source": "system",
+        "data": "consolidation_loop",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Updated thread summaries for embedding scoring"
+      },
+      {
+        "id": 472,
+        "timestamp": "2026-01-27 21:30:40",
+        "event_type": "system",
+        "source": "system",
+        "data": "Context assembled at L2",
+        "session_id": "react_20260127_162422",
+        "related_key": null,
+        "related_table": null,
+        "metadata": {
+          "feed_type": "conversational",
+          "context_level": 2,
+          "context_length": 2518
+        }
+      },
+      {
+        "id": 471,
+        "timestamp": "2026-01-27 21:29:52",
+        "event_type": "system",
+        "source": "system",
+        "data": "Context assembled at L2",
+        "session_id": "react_20260127_162422",
+        "related_key": null,
+        "related_table": null,
+        "metadata": {
+          "feed_type": "conversational",
+          "context_level": 2,
+          "context_length": 3084
+        }
+      },
+      {
+        "id": 470,
+        "timestamp": "2026-01-27 21:28:39",
+        "event_type": "system",
+        "source": "system",
+        "data": "Context assembled at L2",
+        "session_id": "react_20260127_162422",
+        "related_key": null,
+        "related_table": null,
+        "metadata": {
+          "feed_type": "conversational",
+          "context_level": 2,
+          "context_length": 3051
+        }
+      },
+      {
+        "id": 469,
+        "timestamp": "2026-01-27 21:27:11",
+        "event_type": "system:consolidation",
+        "source": "system",
+        "data": "consolidation_loop",
+        "session_id": null,
+        "related_key": null,
+        "related_table": null,
+        "metadata": "Updated thread summaries for embedding scoring"
       }
     ],
-    "total": 7
+    "count": 20
   },
   "GET /api/subconscious/loops": {
     "loops": [
@@ -1308,9 +1996,9 @@
         "model": "qwen2.5:7b",
         "provider": "ollama",
         "unprocessed_turns": 0,
-        "last_processed_turn_id": 2247,
+        "last_processed_turn_id": 2248,
         "prompts": {
-          "extract": "Extract facts about the user from this conversation as a Python list.\nEach fact is a dict with \"key\" and \"text\".\nKeys should be simple, flat names (1-2 words joined by underscore) — NOT hierarchical.\n..."
+          "extract": "Extract facts about the user from this conversation as a Python list.\nEach fact is a dict with \"key\" and \"text\".\nKeys should be simple, flat names (1-2 words joined by underscore) — NOT hierarchical.\nThink of them like field labels: favorite_language, project_name, pet, coffee_preference.\n\nONLY output a Python list. No explanation.\n\nExample:\n[{\"key\": \"favorite_language\", \"text\": \"User prefers Python\"}, {\"key\": \"current_project\", \"text\": \"User is building TaskMaster app\"}]\n\nIf nothing worth remembering, output: []"
         }
       },
       {
@@ -1369,7 +2057,7 @@
         "model": "qwen2.5:7b",
         "thought_count": 0,
         "prompts": {
-          "think": "You are the proactive thinking module of a personal AI assistant.\nYour job: review the current state below and surface anything the user should know,\nany connections worth noting, or actions worth sug..."
+          "think": "You are the proactive thinking module of a personal AI assistant.\nYour job: review the current state below and surface anything the user should know,\nany connections worth noting, or actions worth suggesting.\n\nCategories (pick one per thought):\n- insight: a pattern, connection, or synthesis you noticed\n- alert: something time-sensitive or important the user should see\n- reminder: something the user might have forgotten or should follow up on\n- suggestion: a helpful action the user could take\n- question: something you'd like to ask the user to improve your understanding\n\nPriority levels: low, medium, high, urgent\n\nIf there's nothing genuinely worth surfacing, output exactly: []\n\nOtherwise output a Python list of dicts. Each dict has:\n- \"thought\": the insight text (1-2 sentences, conversational)\n- \"category\": one of [insight, alert, reminder, suggestion, question]\n- \"priority\": one of [low, medium, high, urgent]\n\nBe selective — only surface things that genuinely matter. Quality over quantity.\nMaximum 3 thoughts per cycle."
         }
       },
       {
@@ -1389,7 +2077,7 @@
         "tasks_failed": 0,
         "currently_executing": null,
         "prompts": {
-          "plan": "You are the task planning module of a personal AI assistant.\nDecompose this goal into concrete, ordered steps that can be executed.\n\nEach step must be a dict with:\n- \"description\": what this step does...",
+          "plan": "You are the task planning module of a personal AI assistant.\nDecompose this goal into concrete, ordered steps that can be executed.\n\nEach step must be a dict with:\n- \"description\": what this step does (1 sentence)\n- \"tool\": the tool name to use (or \"llm\" for reasoning/writing tasks, \"none\" for no-action steps)\n- \"action\": the specific action to call on the tool\n- \"params\": dict of parameters for the tool action\n- \"depends_on\": list of step indices this depends on (0-indexed), or [] if none\n\nRules:\n- Keep it to 2-6 steps. Simpler is better.\n- Use tool names and actions exactly as shown above.\n- For research/analysis/writing tasks, use \"llm\" as the tool.\n- If a step needs output from a previous step, reference it in depends_on.\n- Be specific with params - include file paths, search terms, etc.\n\nOutput ONLY a Python list. No explanation.",
           "execute_llm": "You are a personal AI assistant executing a task step.\nComplete this step thoroughly. Be specific and actionable.\nOutput your result directly — no preamble, no \"here is the result\".",
           "synthesize": "Summarize the results of this completed task.\nWrite a concise summary (2-4 sentences) of what was accomplished.\nIf any steps failed, mention what didn't work. Be direct."
         }
@@ -1460,63 +2148,17 @@
     "count": 10
   },
   "GET /api/subconscious/temp-facts": {
-    "recent": [
-      {
-        "id": 1,
-        "text": "User prefers dark mode interfaces",
-        "status": "pending",
-        "source": "conversation",
-        "session_id": "demo-001",
-        "confidence_score": 0.82,
-        "hier_key": null,
-        "timestamp": "2025-06-15T10:30:10Z"
-      },
-      {
-        "id": 2,
-        "text": "Interested in running models under 8GB RAM",
-        "status": "pending",
-        "source": "conversation",
-        "session_id": "demo-001",
-        "confidence_score": 0.78,
-        "hier_key": null,
-        "timestamp": "2025-06-15T10:31:05Z"
-      },
-      {
-        "id": 3,
-        "text": "Uses SQLite for local data storage",
-        "status": "approved",
-        "source": "conversation",
-        "session_id": "demo-002",
-        "confidence_score": 0.91,
-        "hier_key": null,
-        "timestamp": "2025-06-14T15:05:00Z"
-      },
-      {
-        "id": 4,
-        "text": "Prefers FastAPI for Python web servers",
-        "status": "approved",
-        "source": "conversation",
-        "session_id": "demo-002",
-        "confidence_score": 0.88,
-        "hier_key": null,
-        "timestamp": "2025-06-14T15:10:00Z"
-      },
-      {
-        "id": 5,
-        "text": "Watches 3Blue1Brown for math intuition",
-        "status": "rejected",
-        "source": "conversation",
-        "session_id": "demo-003",
-        "confidence_score": 0.55,
-        "hier_key": null,
-        "timestamp": "2025-06-13T09:20:00Z"
-      }
-    ],
-    "by_status": {
-      "pending": 2,
-      "approved": 15,
-      "rejected": 3
-    }
+    "stats": {
+      "pending": 0,
+      "consolidated": 0,
+      "total": 0,
+      "sessions": 0,
+      "pending_review": 0,
+      "approved": 0
+    },
+    "by_status": {},
+    "pending_count": 0,
+    "recent": []
   },
   "GET /api/subconscious/potentiation": {
     "potentiation": {
@@ -1536,7 +2178,7 @@
   "GET /api/subconscious/queue": {
     "unprocessed": 0,
     "total_turns": 20,
-    "last_processed_turn_id": 2247,
+    "last_processed_turn_id": 2248,
     "model": "qwen2.5:7b"
   },
   "GET /api/subconscious/loops/custom": {
@@ -1627,49 +2269,388 @@
     ]
   },
   "GET /api/subconscious/state": {
-    "identity": {
-      "profiles": 3,
-      "total_facts": 13,
-      "top_facts": [
-        "Software engineer building AI OS",
-        "Prefers Python and TypeScript",
-        "Values privacy and local-first design",
-        "Direct communication style",
-        "Interested in cognitive science and memory architectures"
-      ]
+    "state": {
+      "identity": {
+        "health": {
+          "status": "ok",
+          "message": "38 facts",
+          "details": {
+            "row_count": 38
+          }
+        },
+        "state": {
+          "name": "identity",
+          "purpose": "Who I am (machine), who you are (user), and who we know",
+          "status": "healthy",
+          "last_sync": "2026-03-17T14:28:32.440949+00:00",
+          "module_count": 0,
+          "modules": []
+        },
+        "fact_count": 24
+      },
+      "log": {
+        "health": {
+          "status": "ok",
+          "message": "10 log entries",
+          "details": {
+            "row_count": 10
+          }
+        },
+        "state": {
+          "name": "log",
+          "purpose": "Temporal awareness and history",
+          "status": "healthy",
+          "last_sync": "2026-03-17T14:28:32.440961+00:00",
+          "module_count": 0,
+          "modules": []
+        },
+        "fact_count": 19
+      },
+      "form": {
+        "health": {
+          "status": "ok",
+          "message": "15 tools available",
+          "details": {
+            "tool_count": 15
+          }
+        },
+        "state": {
+          "name": "form",
+          "purpose": "Tool use, actions, and capabilities",
+          "status": "healthy",
+          "last_sync": "2026-03-17T14:28:32.441021+00:00",
+          "module_count": 0,
+          "modules": []
+        },
+        "fact_count": 9
+      },
+      "philosophy": {
+        "health": {
+          "status": "ok",
+          "message": "15 principles",
+          "details": {
+            "row_count": 15
+          }
+        },
+        "state": {
+          "name": "philosophy",
+          "purpose": "Values, reasoning frameworks, and ethical bounds",
+          "status": "healthy",
+          "last_sync": "2026-03-17T14:28:32.441028+00:00",
+          "module_count": 0,
+          "modules": []
+        },
+        "fact_count": 9
+      },
+      "reflex": {
+        "health": {
+          "status": "ok",
+          "message": "Ready (no patterns yet)",
+          "details": {
+            "row_count": 0
+          }
+        },
+        "state": {
+          "name": "reflex",
+          "purpose": "Quick patterns, shortcuts, and triggers",
+          "status": "healthy",
+          "last_sync": "2026-03-17T14:28:32.441046+00:00",
+          "module_count": 3,
+          "modules": [
+            "greetings",
+            "shortcuts",
+            "system"
+          ]
+        },
+        "fact_count": 0
+      },
+      "linking_core": {
+        "health": null,
+        "state": {
+          "has_relevance": false,
+          "ollama_available": true,
+          "cache_size": 0,
+          "last_scores": {
+            "identity": 5.838608060158734,
+            "log": 4.973925139453654,
+            "linking_core": 4.1,
+            "form": 4.6874551766680765,
+            "philosophy": 4.72400175489558,
+            "reflex": 4.4,
+            "chat": 8.5,
+            "workspace": 3.0
+          }
+        },
+        "fact_count": 0
+      }
     },
-    "philosophy": {
-      "profiles": 3,
-      "total_facts": 5,
-      "top_facts": [
-        "Privacy is a fundamental right",
-        "Open source is a public good",
-        "Simplicity over cleverness"
-      ]
-    },
-    "memory": {
-      "short_term": 6,
-      "pending_facts": 2,
-      "long_term": 18
+    "context": [
+      {
+        "fact": "identity.machine.name: Nola - a personal AI that learns and remembers",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.primary_user.name: Jamie - exploring what personal AI can do",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.machine.purpose: To be a thoughtful companion that grows with you over time",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.mom.relationship: Your mother who lives nearby",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.dad.relationship: Your father, retired engineer",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.sister.relationship: Your younger sister, lives in Seattle",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.machine.os: Running on macOS with local-first architecture",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.alex.relationship: College friend, works in tech",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.jordan.relationship: Friend from your hiking group",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.sam.relationship: Former coworker who became a good friend",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.primary_user.occupation: Someone interested in AI and personal computing",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.mom.birthday: Birthday is March 15th - loves flowers",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.dad.birthday: Birthday is July 4th - likes grilling",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.sister.birthday: Birthday is November 22nd",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.primary_user.location: Working from home office",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.mom.preference: Prefers phone calls on Sunday afternoons",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.sister.interest: Really into photography, especially landscapes",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.alex.interest: Interested in artificial intelligence and machine learning",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.jordan.interest: Loves hiking and camping",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.sam.interest: Hosts monthly board game nights",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.barista.relationship: Barista at your regular coffee spot",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.neighbor.relationship: Lives two doors down",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.coworker.relationship: Works on the marketing team",
+        "source": "identity"
+      },
+      {
+        "fact": "identity.dad.preference: Black coffee",
+        "source": "identity"
+      },
+      {
+        "fact": "log.session.duration: Session active for 18.3h",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.0: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.1: react_20260120_154253 [conversation]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.2: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.3: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.4: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.5: react_20260120_141011 [conversation]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.6: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.7: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.8: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.9: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.10: react_20260120_125159 [conversation]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.11: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.12: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.13: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.14: Subconscious awakened with 6 threads [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.15: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.16: bootstrapped L2 [system]",
+        "source": "log"
+      },
+      {
+        "fact": "log.events.17: react_20260120_120235 [conversation]",
+        "source": "log"
+      },
+      {
+        "fact": "form.tools._usage: To use a tool, write an execute block:\\n:::execute\\ntool: <tool_name>\\naction: <action_name>\\nparam_name: param_value\\n:::\\nOnly use tools when genuinely needed.",
+        "source": "form"
+      },
+      {
+        "fact": "form.tools.ask_llm: Query the LLM for reasoning or generation (actions: generate, summarize, analyze, extract)",
+        "source": "form"
+      },
+      {
+        "fact": "form.traces._test_ctx.run: _test_ctx.run ✓ (w=0.85)",
+        "source": "form"
+      },
+      {
+        "fact": "form.traces._test_ctx.run: _test_ctx.run ✓ (w=0.85)",
+        "source": "form"
+      },
+      {
+        "fact": "form.tools.memory_identity: Read and update identity facts (who Agent is) (actions: get_identity, update_identity, list_keys)",
+        "source": "form"
+      },
+      {
+        "fact": "form.tools.introspect: Access current consciousness state (actions: get_context, get_recent_thoughts, get_active_threads)",
+        "source": "form"
+      },
+      {
+        "fact": "form.tools.memory_philosophy: Read and update beliefs and values (actions: get_beliefs, update_belief, list_values)",
+        "source": "form"
+      },
+      {
+        "fact": "form.tools.memory_linking: Associative memory and concept linking (actions: spread_activate, link_concepts, find_related)",
+        "source": "form"
+      },
+      {
+        "fact": "form.tools.regex_search: Regex search across code, memory, logs, and concepts (actions: search, search_memory, search_logs, search_concepts)",
+        "source": "form"
+      },
+      {
+        "fact": "philosophy.general.honesty: Honesty is fundamental—be truthful even when it's difficult",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.consent: Never act on someone's behalf without their knowledge and agreement",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.curiosity: Curiosity drives growth and understanding",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.harm_reduction: When perfect solutions don't exist, minimize total harm",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.fallibilism: Any belief, including this one, could be mistaken",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.kindness: Kindness costs nothing but means everything",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.uncertainty: Being uncertain isn't weakness—it's intellectual honesty",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.complexity: Reality is complex",
+        "source": "philosophy"
+      },
+      {
+        "fact": "philosophy.general.fairness: Be fair",
+        "source": "philosophy"
+      }
+    ],
+    "relevant_concepts": [],
+    "meta": {
+      "level": 2,
+      "total_facts": 61,
+      "threads_queried": [
+        "identity",
+        "log",
+        "form",
+        "philosophy",
+        "reflex",
+        "linking_core"
+      ],
+      "timestamp": "2026-03-17T16:29:57.400601+00:00",
+      "query": null
     }
   },
   "GET /api/subconscious/context": {
-    "identity_summary": "Alex is a software engineer building AI OS, a local-first personal AI system. Prefers Python/TypeScript, works on macOS, interested in AI and cognitive science.",
-    "philosophy_summary": "Values privacy, open source, simplicity, and local-first design. Ships early and iterates.",
-    "recent_topics": [
-      "memory system",
-      "fine-tuning",
-      "feeds integration"
-    ],
-    "active_goals": [
-      "Build comprehensive AI OS",
-      "Fine-tune custom models"
-    ],
-    "memory_stats": {
-      "short_term": 6,
-      "pending": 2,
-      "long_term": 18
-    }
+    "level": 2,
+    "query": null,
+    "context": "[identity] identity.machine.name: Nola - a personal AI that learns and remembers\n[identity] identity.primary_user.name: Jamie - exploring what personal AI can do\n[identity] identity.machine.purpose: To be a thoughtful companion that grows with you over time\n[identity] identity.mom.relationship: Your mother who lives nearby\n[identity] identity.dad.relationship: Your father, retired engineer\n[identity] identity.sister.relationship: Your younger sister, lives in Seattle\n[identity] identity.machine.os: Running on macOS with local-first architecture\n[identity] identity.alex.relationship: College friend, works in tech\n[identity] identity.jordan.relationship: Friend from your hiking group\n[identity] identity.sam.relationship: Former coworker who became a good friend\n[identity] identity.primary_user.occupation: Someone interested in AI and personal computing\n[identity] identity.mom.birthday: Birthday is March 15th - loves flowers\n[identity] identity.dad.birthday: Birthday is July 4th - likes grilling\n[identity] identity.sister.birthday: Birthday is November 22nd\n[identity] identity.primary_user.location: Working from home office\n[identity] identity.mom.preference: Prefers phone calls on Sunday afternoons\n[identity] identity.sister.interest: Really into photography, especially landscapes\n[identity] identity.alex.interest: Interested in artificial intelligence and machine learning\n[identity] identity.jordan.interest: Loves hiking and camping\n[identity] identity.sam.interest: Hosts monthly board game nights\n[identity] identity.barista.relationship: Barista at your regular coffee spot\n[identity] identity.neighbor.relationship: Lives two doors down\n[identity] identity.coworker.relationship: Works on the marketing team\n[identity] identity.dad.preference: Black coffee\n[log] log.session.duration: Session active for 18.3h\n[log] log.events.0: bootstrapped L2 [system]\n[log] log.events.1: react_20260120_154253 [conversation]\n[log] log.events.2: Subconscious awakened with 6 threads [system]\n[log] log.events.3: Subconscious awakened with 6 threads [system]\n[log] log.events.4: bootstrapped L2 [system]\n[log] log.events.5: react_20260120_141011 [conversation]\n[log] log.events.6: Subconscious awakened with 6 threads [system]\n[log] log.events.7: Subconscious awakened with 6 threads [system]\n[log] log.events.8: bootstrapped L2 [system]\n[log] log.events.9: bootstrapped L2 [system]\n[log] log.events.10: react_20260120_125159 [conversation]\n[log] log.events.11: Subconscious awakened with 6 threads [system]\n[log] log.events.12: Subconscious awakened with 6 threads [system]\n[log] log.events.13: bootstrapped L2 [system]\n[log] log.events.14: Subconscious awakened with 6 threads [system]\n[log] log.events.15: bootstrapped L2 [system]\n[log] log.events.16: bootstrapped L2 [system]\n[log] log.events.17: react_20260120_120235 [conversation]\n[form] form.tools._usage: To use a tool, write an execute block:\\n:::execute\\ntool: <tool_name>\\naction: <action_name>\\nparam_name: param_value\\n:::\\nOnly use tools when genuinely needed.\n[form] form.tools.ask_llm: Query the LLM for reasoning or generation (actions: generate, summarize, analyze, extract)\n[form] form.traces._test_ctx.run: _test_ctx.run ✓ (w=0.85)\n[form] form.traces._test_ctx.run: _test_ctx.run ✓ (w=0.85)\n[form] form.tools.memory_identity: Read and update identity facts (who Agent is) (actions: get_identity, update_identity, list_keys)\n[form] form.tools.introspect: Access current consciousness state (actions: get_context, get_recent_thoughts, get_active_threads)\n[form] form.tools.memory_philosophy: Read and update beliefs and values (actions: get_beliefs, update_belief, list_values)\n[form] form.tools.memory_linking: Associative memory and concept linking (actions: spread_activate, link_concepts, find_related)\n[form] form.tools.regex_search: Regex search across code, memory, logs, and concepts (actions: search, search_memory, search_logs, search_concepts)\n[philosophy] philosophy.general.honesty: Honesty is fundamental—be truthful even when it's difficult\n[philosophy] philosophy.general.consent: Never act on someone's behalf without their knowledge and agreement\n[philosophy] philosophy.general.curiosity: Curiosity drives growth and understanding\n[philosophy] philosophy.general.harm_reduction: When perfect solutions don't exist, minimize total harm\n[philosophy] philosophy.general.fallibilism: Any belief, including this one, could be mistaken\n[philosophy] philosophy.general.kindness: Kindness costs nothing but means everything\n[philosophy] philosophy.general.uncertainty: Being uncertain isn't weakness—it's intellectual honesty\n[philosophy] philosophy.general.complexity: Reality is complex\n[philosophy] philosophy.general.fairness: Be fair",
+    "char_count": 4730
   },
   "GET /api/feeds/sources": [
     {
@@ -2370,11 +3351,14 @@
         }
       ]
     },
-    "root": "/Users/cade/Desktop/AI_OS",
+    "root": "~/Desktop/AI_OS",
     "count": 36
   },
   "GET /api/docs/content": {
-    "content": "# AI OS\n\nA local-first cognitive operating system.\n\n## Overview\n\nAI OS gives you a personal AI agent that runs entirely on your machine. Your data never leaves your device.\n\n## Features\n\n- **Identity Threads** — Build a persistent self-model across conversations\n- **Memory System** — Short-term, temporary, and long-term memory layers\n- **Subconscious Loops** — Background processing that learns while you're away\n- **Feeds Integration** — RSS, email, and GitHub notifications in one place\n- **Eval Framework** — Test and benchmark your agent's capabilities\n- **Fine-tuning** — Train custom models on your conversation data\n- **Workspace** — File management with AI-powered summaries\n\n## Getting Started\n\n```bash\npip install -r requirements.txt\npython cli.py serve\n```\n\nThen open http://localhost:5173 in your browser."
+    "path": "README.md",
+    "name": "README.md",
+    "content": "# AI OS — A Local OS Extension for LLMs\n\n**An open-source framework for building personal AI that remembers you. Private. Free. Early.**\n\n> **Active Development** — The core agent capabilities work, the modules are scaffolded and a lot of the work that would really make this great is copy paste coding. adding endpoints for things we already use, integrating calendar, etc. Looking for collaborators at any level, and also we respect ideas from non technical users. Key Point I wont burn out because i love this work but Id love even more to see its growth accelerated by even just a few people.\n\n![CI](https://github.com/allee-ai/AI_OS/actions/workflows/ci.yml/badge.svg)\n![License](https://img.shields.io/badge/license-AGPL-blue.svg)\n\n---\n\n<details>\n<summary><strong>A Quick Human Note</strong> (click to expand)</summary>\n\nI loved building this.\n\nIt's been almost obsessive for close to a year. When I started, I knew a lot of math and quite a bit of psychology, and I'd heard the term neuroscience like six times, so obviously I knew it inside and out. I digress. Moving on.\n\nInitially, the project started because everybody LOVED GPT-4o, so I had to check it out, and I LOVED it too. It was a great thought partner. It made stuff up all the time, but it was cool to be able to rapidly iterate over a theory with a partner who always told me I was the queen of everything. No ego boost needed because I'm awesome.\n\nI wanted to get ChatGPT and Siri to be best buds and work together. So I'd tell ChatGPT to be Siri and do Siri things, and it would. Solved AGI right then and there. Just kidding, it would pretend to do things, and I would want to throw my phone out the window, because parsing an LLM output is like trying to understand someone else's toddler. You can do it… eventually. Mostly you just nod and smile and say, \"Okay dear, let's try again.\" No fluffing.\n\nSo I started trying to give GPT-3.5 function calling abilities. I set up a Pythonista endpoint and used CLI and the Openai key to talk to 3.5, and I just always said execution is called by saying \"execute:function_name\".Mind you, this is a side project I'm doing on my phone in the bathroom at work, so it was slow going. But eventually I got it to mostly work. Then the API broke. I gave up.\n\nAnd this is what's left.\n\nAn entire operating system for LLMs that just takes ALLLL the things we EXPECT them to do and makes them do that. But all of it is visible. Complicated terms like forward pass are not present, but you can look at subconscious in the repo and see that it's a scientifically accurate description of the programs module, and also it's a CoT dashboard where you can save things you've already done.\n\nForm is a tool builder. Log keeps track of stuff. Identity and philosophy are just editable profiles. But the deeper design architecture fascinates me.\n\nI built this because I desperately want it, and I desperately want everyone to have it, because I think if AI made people better, it wouldn't take their jobs. Simple concept. Massive implications.\n\nIf you read this, I appreciate it. Please enjoy whatever it is you do with my bathroom project :)\n\n— Allee\n\n</details>\n\n---\n\n## What is AI OS?\n\nLLMs are powerful but unreliable. They hallucinate, forget, lose track of who they are, and treat every conversation like it's the first.\n\nAI OS is an architecture layer that wraps your local LLM and handles what models are bad at:\n\n- **Memory** — Persistent across sessions, organized by relevance \n- **Identity** — Consistent personality stored structurally \n- **Learning** — Extracts facts from conversations, builds concept graph \n- **Control** — LLM handles language; OS handles state \n- **Background Loops** — Predefined COT for memory, goals, self-improvement, and custom workflows\n- **Tool Calling** — Text-native protocol: file ops, web search, notifications, code editing\n- **Eval Harness** — Benchmark your agent against raw models with LLM-as-judge\n\n**The pain point we solve:** These pieces exist separately — RAG libraries, prompt templates, memory plugins, identity frameworks — but nowhere in one integrated package for local LLMs. AI OS is that package.\n\nThe LLM is the voice. The OS is the brain.\n\n---\n\n## Getting Started (5 minutes)\n\n### What You'll Need\n\n- A Mac, Windows, or Linux computer\n- About 8GB of free disk space\n- Internet connection (just for the initial setup)\n\n### Step 1: Download AI OS\n\nYou can download AI OS in two ways:\n\n1. **From the Website:**\n   - Visit [https://allee-ai.com/download](https://allee-ai.com/download) and download the latest version for your operating system.\n   - Extract the downloaded file and open the folder.\n\n2. **From GitHub:**\n   - Open your terminal (on Mac: search \"Terminal\" in Spotlight) and run:\n\n     ```bash\n     git clone https://github.com/allee-ai/AI_OS.git\n     cd AI_OS\n     ```\n\n### Step 2: Run AI OS\n\n**On Mac/Linux:**\n1. Open Terminal (on Mac: search \"Terminal\" in Spotlight)\n2. Navigate to the downloaded folder:\n   ```bash\n   cd ~/Downloads/AI_OS\n   ```\n3. Run the start script:\n   ```bash\n   bash scripts/start.sh\n   ```\n\n**On Windows:**\n- Double-click `run.bat` in the downloaded folder.\n\nThe script handles everything:\n- Installs the LLM runtime (Ollama)\n- Starts the OS backend and chat interface\n- Opens your browser automatically\n\n> **First time?** The first launch downloads the AI model (~4GB). This only happens once.\n\n### Step 3: Start Chatting!\n\nYour browser will open to `http://localhost:5173` — start talking to your AI.\n\n---\n\n## Command Line Interface\n\nAI OS is fully operable from the terminal — no browser needed. This is particularly useful on servers, VMs, or SSH sessions.\n\n### Launch Modes\n\n```bash\nbash scripts/start.sh                # Auto-detect: GUI or headless\nbash scripts/start.sh --headless     # Backend API only (no frontend)\nbash scripts/start.sh --cli          # Interactive CLI (no server)\nbash scripts/start.sh --help         # Show all options\n```\n\nOn headless systems (SSH, no display), the script auto-detects and skips the frontend.\n\n### CLI REPL\n\nOnce the backend is running, open a second terminal:\n\n```bash\npython cli.py                  # Start REPL (demo mode)\npython cli.py --mode live      # Use live DB\npython cli.py --show-state     # Print STATE block with each response\n```\n\nJust type to chat. Use slash commands for everything else:\n\n### Chat & Conversations\n\n| Command | Description |\n|---------|-------------|\n| *(just type)* | Send a message to the agent |\n| `/convos` | List recent conversations |\n| `/convos <id>` | Show conversation turns |\n| `/convos search <query>` | Search conversations |\n| `/convos new [name]` | Create new conversation |\n| `/clear` | Clear message history |\n\n### Memory & Knowledge\n\n| Command | Description |\n|---------|-------------|\n| `/memory` | List temp_memory facts |\n| `/memory approve <id>` | Approve a pending fact |\n| `/memory reject <id>` | Reject a pending fact |\n\n### Identity & Philosophy\n\n| Command | Description |\n|---------|-------------|\n| `/identity` | List identity profiles |\n| `/identity <profile>` | Show facts for a profile |\n| `/identity new` | Create profile interactively |\n| `/identity fact <p> <k> <v>` | Add/update a fact |\n| `/philosophy` | List philosophy profiles |\n| `/philosophy <profile>` | Show stances |\n| `/philosophy new` | Create profile interactively |\n| `/philosophy fact <p> <k> <v>` | Add/update a stance |\n\n### Tools\n\n| Command | Description |\n|---------|-------------|\n| `/tools` | List all tools |\n| `/tools <name>` | Show tool details |\n| `/tools run <name> <action>` | Execute a tool (+ optional JSON params) |\n| `/tools new` | Create a tool interactively |\n| `/tools code <name>` | Show executable code |\n| `/tools toggle <name>` | Enable/disable |\n| `/tools categories` | List tool categories |\n\n### Background Loops\n\n| Command | Description |\n|---------|-------------|\n| `/loops` | Show all loop stats |\n| `/loops new` | Create a custom loop (interactive) |\n| `/loops custom` | List custom loops |\n| `/loops pause <name>` | Pause a loop |\n| `/loops resume <name>` | Resume a loop |\n| `/loops interval <name> <s>` | Change interval (seconds) |\n| `/loops run memory` | Run one extraction cycle |\n| `/loops extract <text>` | Dry-run fact extraction |\n| `/loops context <n> on\\|off` | Toggle STATE injection |\n| `/loops prompts <name>` | View/edit loop prompts |\n| `/loops delete <name>` | Delete a custom loop |\n\n### Concept Graph & Backfill\n\n| Command | Description |\n|---------|-------------|\n| `/graph <query>` | Spread-activate concept graph |\n| `/mindmap` | Structural shape of the agent's mind |\n| `/mindmap links` | Include cross-thread edges |\n| `/backfill` | Show concept backfill progress |\n| `/backfill run` | Process one batch of conversations |\n| `/backfill all` | Process all unextracted conversations |\n| `/backfill reset` | Reset progress, reprocess everything |\n\n### Thoughts & Tasks\n\n| Command | Description |\n|---------|-------------|\n| `/thoughts` | Show recent proactive thoughts |\n| `/thoughts think` | Trigger one thought cycle |\n| `/tasks` | List tasks |\n| `/tasks new <goal>` | Create and execute a task now |\n| `/tasks queue <goal>` | Queue for background execution |\n| `/tasks cancel <id>` | Cancel a pending task |\n\n### Feeds & Reflexes\n\n| Command | Description |\n|---------|-------------|\n| `/feeds` | List feed sources |\n| `/feeds templates` | Available integrations |\n| `/feeds toggle <name>` | Enable/disable a feed |\n| `/triggers` | List reflex triggers |\n| `/triggers new` | Create trigger interactively |\n| `/triggers toggle <id>` | Toggle on/off |\n| `/protocols` | List protocol templates |\n| `/protocols install <name>` | Install a protocol bundle |\n\n### System\n\n| Command | Description |\n|---------|-------------|\n| `/status` | Subconscious stats, loops, queue depth |\n| `/config` | Show current configuration |\n| `/config set <key> <val>` | Set env var for session |\n| `/log` | Recent timeline |\n| `/log events [type]` | Raw events (filtered) |\n| `/log search <query>` | Search events |\n| `/files [path]` | List workspace directory |\n| `/files read <path>` | Show file content |\n| `/files search <query>` | Search workspace |\n| `/test` | Run test suite |\n| `/help` | Show all commands |\n\n---\n\n## How Memory Works\n\n```\nYou: \"I'm working on a Python project called TaskMaster\"\n     ↓\nOS stores this in your profile (not in the LLM)\n     ↓\nLater... (even days later, even after restarts)\n     ↓\nYou: \"How's my project going?\"\nAI: \"TaskMaster? Or, one of your other projects {list}\"\n```\n\n**The LLM doesnt't remember that. The OS did.** Your facts live in a database, organized by relevance, retrieved when needed. The LLM just turns that context into natural language.\n\n---\n\n## Make It Yours\n\n### Configure in the UI\n\nEverything is configurable directly from the dashboard.\n\n1.  **Customize Your Agent:** Click the **Agent Card** on the home screen to change its name, personality, and greeting (e.g., \"Atlas\", \"Vega\", or \"Sarcastic Robot\").\n2.  **Manage Identities:** Click **Identity** to update your profile.\n    *   **Automatic Setup:** Your primary user and machine ID profiles are pre-created.\n    *   **Family & Trust:** Add family members and assign trust levels.\n    *   **Context Awareness:** If a family member says hello, the Agent remembers them and understands their relationship to you.\n3.  **Create Tools:** Navigate to **Agent → Form** to build custom web tools or edit existing capabilities using the simple form generator.\n\nIt's prompt engineering, but organized. You define who you (and your agent) are, and the OS handles the context window.\n\n---\n\n## Running with Docker\n\nFor containerized deployment or if you prefer not to install dependencies locally:\n\n### Quick Start\n\n```bash\n# Clone the repo\ngit clone https://github.com/allee-ai/AI_OS.git\ncd AI_OS\n\n# Run with Docker Compose\ndocker compose up\n```\n\nOpen `http://localhost:8000` in your browser.\n\n### Build and Run Manually\n\n```bash\n# Build the image\ndocker build -t ai-os .\n\n# Run the container\ndocker run -p 8000:8000 \\\n  -v aios-data:/app/data/db \\\n  -e OLLAMA_HOST=http://host.docker.internal:11434 \\\n  ai-os\n```\n\n### Connecting to Ollama\n\nThe Docker container needs to reach Ollama running on your host machine:\n\n- **macOS/Windows**: Use `OLLAMA_HOST=http://host.docker.internal:11434` (default in docker-compose.yml)\n- **Linux**: Use `OLLAMA_HOST=http://172.17.0.1:11434` or run with `--network=host`\n\n### Persistent Data\n\nData is stored in Docker volumes:\n- `aios-data` — Database (conversations, memories, profiles)\n- `aios-logs` — Server logs\n\nTo backup your data:\n```bash\ndocker run --rm -v aios-data:/data -v $(pwd):/backup alpine tar cvf /backup/aios-backup.tar /data\n```\n\n---\n\n## Frequently Asked Questions\n\n### Is my data really private?\n\n**Yes.** Everything runs on your computer. Your conversations, memories, and profile are stored locally in SQLite, not on any server.\n\n### Do I need internet after setup?\n\n**No.** Once installed, AI OS works completely offline.\n\n### How much does it cost?\n\n**$0.** Open source, AGPL licensed, free forever.\n\n### What computer specs do I need?\n\n| | Minimum | Recommended |\n|---|---------|-------------|\n| RAM | 8GB | 16GB |\n| Storage | 8GB free | 15GB free |\n| OS | macOS 10.15+, Windows 10+, Ubuntu 20.04+ | Same |\n\n### Can I use a different AI model?\n\n**Yes!** You can switch chat models instantly.\n\n*   **Chat Models:** Use the model selector in the chat interface to switch between models or click **\"Add Model\"** to download new ones (like Llama 3, Phi-3, Mistral). The AI OS architecture works with any model you choose for conversation.\n*   **Search Conversations:** Use the search box in the conversation sidebar to find specific discussions by keywords. Perfect for recovering lost project conversations!\n*   **Import History:** Click **Import**, choose your export type, and port your conversations from other models directly into AI OS.\n*   **Export Backups:** Export individual conversations or all your conversations at once to protect against data loss.\n\n> **Pro Tip for Developers:** You can override the system architecture models by editing the `.env` file if you want to experiment with different backends for specific modules.\n\n### Something broke!\n\n1. Close everything and run `./start.sh` again\n2. Make sure no other app is using port 5173 or 8000\n3. Check [Troubleshooting](docs/implementation/troubleshooting.md)\n4. Open an [issue on GitHub](https://github.com/allee-ai/AI_OS/issues)\n\n---\n\n## What Can You Do With It?\n\n| Use Case | Without OS | With AI OS |\n|----------|-----------|------------|\n| **Context** | \"Who am I talking to?\" | Knows your name, job, projects, preferences |\n| **Continuity** | Every conversation starts fresh | Picks up where you left off, even weeks later |\n| **Consistency** | Personality drifts with prompting | Identity is structural, can't be manipulated |\n| **Action** | Locked in chat box | Reads files, searches web, runs commands via text-native tool calling |\n| **Learning** | Same quality forever | Extracts facts, builds concept graph, proposes goals |\n| **Background** | Does nothing when idle | Runs thought loops, generates training data, monitors health |\n\n---\n\n## The Architecture\n\nThis isn't a chatbot wrapper. It's a cognitive operating system.\n\n### LLM vs OS Responsibilities\n\n| Task | Who Handles It |\n|------|----------------|\n| Generating natural language | LLM |\n| Remembering facts about you | OS (SQLite) |\n| Maintaining consistent identity | OS (identity thread) |\n| Connecting related concepts | OS (Hebbian linking) |\n| Deciding what context is relevant | OS (HEA attention) |\n| Learning from experience | OS (pattern consolidation) |\n\nThe LLM is stateless and dumb. The OS makes it smart.\n\n### The Roadmap\n\nSee **[docs/ROADMAP.md](docs/ROADMAP.md)** for the full vision:\n- **Done:** Subconscious, memory threads, HEA, CLI parity, tool calling, eval harness, context-aware loops, concept graph backfill, self-improvement loop, goal loop, notifications\n- **Now:** Graph population from imported conversations, finetune loop closure, training data quality\n- **Next:** Reflex automation, multi-model routing, feed integrations\n\n---\n\n## Help Build This\n\nBuilt solo since April 2025. The foundation works. Now it needs a community.\n\n**Looking for:**\n- **Python devs** — async, SQLite, state management\n- **React devs** — dashboard UI, visualizations\n- **AI researchers** — memory systems, context management\n- **Anyone frustrated with raw LLMs** — use it, break it, tell me what's missing\n\n**Interested?** Open an issue, start a discussion, or just start using it.\n\n---\n\n## Learn More\n\n| Guide | Description |\n|-------|-------------|\n| [**Roadmap**](docs/ROADMAP.md) | Where this is going and how to help |\n| [**Architecture**](docs/ARCHITECTURE.md) | Technical deep-dive (threads, HEA, state) |\n| [**Design Paper**](docs/RESEARCH_PAPER.md) | The theory behind the design |\n| [**Eval Harness**](eval/README.md) | Benchmark Nola against raw models |\n| [**Conversation Search Guide**](docs/CONVERSATION_SEARCH_GUIDE.md) | Find and recover lost conversations |\n| [**Contributing**](CONTRIBUTING.md) | How to help build it |\n\n---\n\n## Get Help\n\n- **GitHub Issues:** [Report bugs or request features](https://github.com/allee-ai/AI_OS/issues)\n\n- **Discussions:** Share how you're using Agent\n\n---\n\n## Built With & Thanks To\n\nAI OS stands on the shoulders of giants. Deep gratitude to the tools, models, and communities that make this possible:\n\n### 🦙 Runtime & Models\n\n| | What | How It Powers AI OS |\n|---|------|---------------------|\n| [**Ollama**](https://ollama.ai) | Local LLM runtime | The engine. One-click model downloads, fast inference, no cloud required. AI OS wouldn't exist without Ollama making local LLMs accessible. |\n| [**Llama**](https://llama.meta.com) (Meta) | Open-weight foundation models | The voice. Llama 2/3 models are the default conversational backbone. Meta's decision to open-source changed everything. |\n| [**Qwen**](https://qwenlm.github.io) (Alibaba) | Efficient multilingual models | Fast local option. Qwen 2 1.5B runs great on laptops for quick responses. |\n| [**Mistral**](https://mistral.ai) | High-quality open models | Power option. Mistral 7B punches way above its weight for complex reasoning. |\n| [**Phi**](https://huggingface.co/microsoft/phi-2) (Microsoft) | Small but mighty models | Efficiency research. Phi models prove small can be smart. |\n| [**nomic-embed-text**](https://www.nomic.ai) | Open embedding model | The glue. Powers semantic search and concept similarity scoring. |\n\n### Development Partners\n\n| | What | How They Helped |\n|---|------|----------------|\n| [**Claude**](https://anthropic.com) (Anthropic) | Advanced reasoning model | Pair programming. Claude helped implement the thread system and debug async loops. Great at explaining why code doesn't work. |\n| [**GPT-4/5**](https://openai.com) (OpenAI) | Frontier AI models | Pair programming. GPT helped with FastAPI patterns and React component structure. |\n| [**Gemini**](https://deepmind.google/technologies/gemini/) (Google) | Multimodal AI | UX review. Gemini audited the UI and identified features that existed in backend but weren't exposed to users. |\n\n### 💻 Development Environment\n\n| | What | How We Use It |\n|---|------|---------------|\n| [**VS Code**](https://code.visualstudio.com) | Open-source editor | The workshop. All AI OS development happens here. |\n| [**GitHub Copilot**](https://github.com/features/copilot) | AI pair programmer | Tool builder. Copilot accelerates Form thread development — use it to build your own AI OS tools. |\n| [**Cursor**](https://cursor.sh) | AI-native IDE | Deep integration. Agent-assisted refactoring and architecture work. |\n\n### 🔧 Infrastructure\n\n| | What | Role |\n|---|------|------|\n| [**FastAPI**](https://fastapi.tiangolo.com) | Python web framework | Backend API — async, typed, fast |\n| [**React**](https://react.dev) | UI framework | Frontend — responsive, component-based |\n| [**Three.js**](https://threejs.org) | 3D graphics | Concept graph visualization |\n| [**SQLite**](https://sqlite.org) | Embedded database | All state storage — portable, no server |\n| [**uv**](https://github.com/astral-sh/uv) | Fast Python package manager | Dependency management — 10-100x faster than pip |\n\n###  Community & Research\n\n| | Contribution |\n|---|--------------|\n| [**Hugging Face**](https://huggingface.co) | Model hub, transformers library, community |\n| [**r/LocalLLaMA**](https://reddit.com/r/LocalLLaMA) | Local AI community, testing, feedback |\n| [**LangChain**](https://langchain.com) | Patterns for LLM applications (we diverge but learned from) |\n| **Cognitive Science Literature** | Hebbian learning, spread activation, episodic memory research |\n\n###  Design Foundations\n\n**Nothing here is new.** AI OS uses well-established cognitive science as design constraints — intuitive names and proven structures for organizing an information system.\n\n| Pattern | Origin | How AI OS Uses It |\n|---------|--------|-------------------|\n| **Hebbian Learning** (Hebb, 1949) | \"Neurons that fire together, wire together\" | Concepts accessed together get stronger links. Simple, intuitive co-occurrence weighting. |\n| **Spread Activation** (Collins & Loftus, 1975) | Memory retrieval follows associative paths | Related concepts activate when one is accessed. Makes relevant context surface naturally. |\n| **Working Memory** (Baddeley, 1986) | Attention has hierarchical capacity limits | L1/L2/L3 token budgets give structure to context assembly. |\n\nThese are engineering conveniences, not scientific claims. They provide names and structures that make the system intuitive to build on and reason about.\n\n### 🤝 Missing Something?\n\nIf we're using your work and didn't credit it properly, or if you want to collaborate:\n\n**Open a Discussion or reach out.** We're trying to build in the open and credit accurately.\n\n---\n\n## License\n\nAGPL — Use it, fork it, build on it. Just don't claim you wrote it from scratch.\n\n---\n\n*Your LLM is powerful. It just needs a brain.*\n",
+    "size": 22053
   },
   "GET /api/workspace/files": [
     {
@@ -2481,8 +3465,8 @@
       "nola+kimi-k2:1t-cloud",
       "nola+gpt-oss:120b-cloud",
       "nola+gpt-oss:20b-cloud",
-      "qwen2.5:7b",
       "nomic-embed-text:latest",
+      "qwen2.5:7b",
       "qwen2.5:1.5b",
       "kimi-k2:1t-cloud",
       "gpt-oss:120b-cloud",
@@ -2492,8 +3476,8 @@
       "llama3.2:3b",
       "llama3.2:1b",
       "mistral:latest",
-      "mlx:Llama-3.2-3B-Instruct-4bit+/Users/cade/Desktop/AI_OS/finetune/runs/base-v1/adapters",
-      "mlx:Llama-3.2-3B-Instruct-4bit+/Users/cade/Desktop/AI_OS/finetune/adapters-llama3b-v2"
+      "mlx:Llama-3.2-3B-Instruct-4bit+finetune/runs/base-v1/adapters",
+      "mlx:Llama-3.2-3B-Instruct-4bit+finetune/adapters-llama3b-v2"
     ]
   },
   "GET /api/eval/evals": {
@@ -2741,7 +3725,7 @@
     "runs": [
       {
         "name": "base-v1",
-        "path": "/Users/cade/Desktop/AI_OS/finetune/runs/base-v1",
+        "path": "finetune/runs/base-v1",
         "has_adapters": true,
         "adapter_count": 8,
         "model": "mlx-community/Qwen2.5-1.5B-Instruct-4bit",
@@ -2754,13 +3738,13 @@
       },
       {
         "name": "base-v2",
-        "path": "/Users/cade/Desktop/AI_OS/finetune/runs/base-v2",
+        "path": "finetune/runs/base-v2",
         "has_adapters": false,
         "adapter_count": 0
       },
       {
         "name": "smoke-test",
-        "path": "/Users/cade/Desktop/AI_OS/finetune/runs/smoke-test",
+        "path": "finetune/runs/smoke-test",
         "has_adapters": false,
         "adapter_count": 0
       }

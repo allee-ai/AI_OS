@@ -2,22 +2,27 @@
  * Demo Mode Service Worker
  * Intercepts all /api/* requests and returns mock data from demo-data.json.
  * Registered only when VITE_DEMO_MODE=true at build time.
+ *
+ * v2 – per-profile fact keys, removed dead /api/database endpoints
  */
 
 let MOCK_DATA = {};
 
-// Load mock data on activation
+/** Fetch (or re-fetch) the mock payload, busting the HTTP cache. */
+function loadMockData() {
+  return fetch('./demo-data.json', { cache: 'no-cache' })
+    .then(res => res.json())
+    .then(data => { MOCK_DATA = data; });
+}
+
+// Load mock data on install and immediately take over
 self.addEventListener('install', (event) => {
-  event.waitUntil(
-    fetch('./demo-data.json')
-      .then(res => res.json())
-      .then(data => { MOCK_DATA = data; })
-      .then(() => self.skipWaiting())
-  );
+  event.waitUntil(loadMockData().then(() => self.skipWaiting()));
 });
 
+// Re-load on activate so an updated SW always has fresh data
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(loadMockData().then(() => self.clients.claim()));
 });
 
 /**
