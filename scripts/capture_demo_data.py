@@ -134,8 +134,10 @@ POST_ENDPOINTS = [
 ]
 
 
-def make_key(method: str, path: str) -> str:
-    """Build the service-worker lookup key. Strip query params for the key."""
+def make_key(method: str, path: str, keep_query: bool = False) -> str:
+    """Build the service-worker lookup key. Strip query params unless keep_query."""
+    if keep_query:
+        return f"{method} {path}"
     clean = path.split("?")[0]
     return f"{method} {clean}"
 
@@ -249,6 +251,33 @@ def capture():
                 print(f"  ✓ GET /api/{thread}/readme")
         except Exception:
             pass
+
+    # Docs — capture all individual doc pages with query-param keys
+    docs_tree = results.get("GET /api/docs")
+    if isinstance(docs_tree, dict) and docs_tree.get("tree"):
+        def collect_paths(node):
+            paths = []
+            if not node.get("is_folder"):
+                paths.append(node["path"])
+            for child in node.get("children", []):
+                paths.extend(collect_paths(child))
+            return paths
+
+        doc_paths = collect_paths(docs_tree["tree"])
+        print(f"\n  Capturing {len(doc_paths)} individual docs...")
+        for dp in doc_paths:
+            from urllib.parse import quote
+            url = f"{BASE}/api/docs/content?path={quote(dp)}"
+            qkey = f"GET /api/docs/content?path={quote(dp)}"
+            try:
+                resp = requests.get(url, timeout=10)
+                if resp.status_code == 200:
+                    data = resp.json()
+                    results[qkey] = data
+                    size = len(json.dumps(data))
+                    print(f"    ✓ {dp}  ({size:,} bytes)")
+            except Exception as e:
+                print(f"    ✗ {dp} → {e}")
 
     # Add static POST responses the demo needs
     results["POST /api/chat/message"] = {

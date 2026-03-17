@@ -55,11 +55,24 @@ self.addEventListener('fetch', (event) => {
   // Only intercept /api/* requests
   if (!url.pathname.startsWith('/api/')) return;
 
-  // Strip query string for matching
   const pathname = url.pathname;
   const method = event.request.method;
 
-  const mockResponse = findMockResponse(method, pathname);
+  // Try matching with sorted query params first (e.g. docs/content?path=X)
+  let mockResponse = null;
+  if (url.search) {
+    const params = new URLSearchParams(url.searchParams);
+    params.sort();
+    const keyWithQuery = `${method} ${pathname}?${params.toString()}`;
+    if (MOCK_DATA[keyWithQuery]) {
+      mockResponse = MOCK_DATA[keyWithQuery];
+    }
+  }
+
+  // Fall back to path-only matching
+  if (!mockResponse) {
+    mockResponse = findMockResponse(method, pathname);
+  }
 
   if (mockResponse) {
     event.respondWith(
