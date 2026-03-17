@@ -1237,3 +1237,91 @@ async def reset_backfill_endpoint():
     from .loops.convo_concepts import reset_backfill, get_backfill_status
     reset_backfill()
     return get_backfill_status()
+
+
+# ─────────────────────────────────────────────────────────────
+# Notes — simple user scratch notes
+# ─────────────────────────────────────────────────────────────
+
+def _ensure_notes_table():
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS user_notes (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                text TEXT NOT NULL,
+                created_at TEXT DEFAULT (datetime('now')),
+                updated_at TEXT DEFAULT (datetime('now'))
+            )
+        """)
+        conn.commit()
+
+
+class NoteCreate(BaseModel):
+    text: str
+
+class NoteUpdate(BaseModel):
+    text: str
+
+
+@router.get("/notes")
+async def list_notes():
+    """List all user notes, newest first."""
+    _ensure_notes_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection(readonly=True)) as conn:
+        rows = conn.execute(
+            "SELECT id, text, created_at, updated_at FROM user_notes ORDER BY updated_at DESC"
+        ).fetchall()
+        return [dict(r) for r in rows]
+
+
+@router.post("/notes")
+async def create_note(body: NoteCreate):
+    """Create a new note."""
+    if not body.text.strip():
+        raise HTTPException(status_code=400, detail="Note cannot be empty")
+    _ensure_notes_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        cur = conn.execute(
+            "INSERT INTO user_notes (text) VALUES (?)", (body.text.strip(),)
+        )
+        conn.commit()
+        return {"id": cur.lastrowid, "text": body.text.strip(), "status": "created"}
+
+
+@router.put("/notes/{note_id}")
+async def update_note(note_id: int, body: NoteUpdate):
+    """Update an existing note."""
+    if not body.text.strip():
+        raise HTTPException(status_code=400, detail="Note cannot be empty")
+    _ensure_notes_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        cur = conn.execute(
+            "UPDATE user_notes SET text = ?, updated_at = datetime('now') WHERE id = ?",
+            (body.text.strip(), note_id)
+        )
+        conn.commit()
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return {"id": note_id, "status": "updated"}
+
+
+@router.delete("/notes/{note_id}")
+async def delete_note(note_id: int):
+    """Delete a note."""
+    _ensure_notes_table()
+    from data.db import get_connection
+    from contextlib import closing
+    with closing(get_connection()) as conn:
+        cur = conn.execute("DELETE FROM user_notes WHERE id = ?", (note_id,))
+        conn.commit()
+        if cur.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Note not found")
+        return {"id": note_id, "status": "deleted"}

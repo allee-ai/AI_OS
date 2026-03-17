@@ -20,6 +20,7 @@ from .goals import GoalLoop
 from .self_improve import SelfImprovementLoop
 from .convo_concepts import ConvoConceptLoop
 from .demo_audit import DemoAuditLoop
+from .workspace_qa import WorkspaceQALoop
 
 
 class LoopManager:
@@ -173,6 +174,14 @@ def create_default_loops() -> LoopManager:
     manager.add(DemoAuditLoop(
         interval=demo_audit_interval,
         enabled=demo_audit_enabled,
+    ))
+
+    # Workspace Q&A — deterministic training pairs from DB (no LLM calls)
+    ws_qa_enabled = os.getenv("AIOS_WORKSPACE_QA", "1") == "1"
+    ws_qa_interval = float(os.getenv("AIOS_WORKSPACE_QA_INTERVAL", "1800"))
+    manager.add(WorkspaceQALoop(
+        interval=ws_qa_interval,
+        enabled=ws_qa_enabled,
     ))
     
     # Load user-defined custom loops from DB

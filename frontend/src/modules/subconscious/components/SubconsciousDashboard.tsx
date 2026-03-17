@@ -135,12 +135,16 @@ export default function SubconsciousDashboard() {
   const [previewLoading, setPreviewLoading] = useState(false);
   const [showPreview, setShowPreview] = useState(false);
 
-  // Goals / Notifications / Improvements
-  type DetailView = 'loop' | 'goals' | 'notifications' | 'improvements';
+  // Goals / Notifications / Improvements / Notes
+  type DetailView = 'loop' | 'goals' | 'notifications' | 'improvements' | 'notes';
   const [detailView, setDetailView] = useState<DetailView>('loop');
   const [goals, setGoals] = useState<any[]>([]);
   const [notifications, setNotifications] = useState<any[]>([]);
   const [improvements, setImprovements] = useState<any[]>([]);
+  const [notes, setNotes] = useState<any[]>([]);
+  const [newNoteText, setNewNoteText] = useState('');
+  const [editingNote, setEditingNote] = useState<number | null>(null);
+  const [editNoteText, setEditNoteText] = useState('');
 
   // ── Data fetching ────────────────────────────────────────
 
@@ -179,15 +183,17 @@ export default function SubconsciousDashboard() {
         });
       }
 
-      // Fetch goals, notifications, improvements (best-effort)
-      const [goalsRes, notifsRes, impsRes] = await Promise.all([
+      // Fetch goals, notifications, improvements, notes (best-effort)
+      const [goalsRes, notifsRes, impsRes, notesRes] = await Promise.all([
         fetch(`${API}/goals`).catch(() => null),
         fetch(`${API}/notifications?limit=20`).catch(() => null),
         fetch(`${API}/improvements`).catch(() => null),
+        fetch(`${API}/notes`).catch(() => null),
       ]);
       if (goalsRes?.ok) setGoals(await goalsRes.json());
       if (notifsRes?.ok) setNotifications(await notifsRes.json());
       if (impsRes?.ok) setImprovements(await impsRes.json());
+      if (notesRes?.ok) setNotes(await notesRes.json());
     } catch (err) {
       console.error('Failed to fetch subconscious data:', err);
     } finally {
@@ -432,6 +438,35 @@ export default function SubconsciousDashboard() {
     fetchData();
   };
 
+  // ── Notes actions ────────────────────────────────────────
+  const createNote = async () => {
+    if (!newNoteText.trim()) return;
+    await fetch(`${API}/notes`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: newNoteText }),
+    });
+    setNewNoteText('');
+    fetchData();
+  };
+
+  const updateNote = async (id: number) => {
+    if (!editNoteText.trim()) return;
+    await fetch(`${API}/notes/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text: editNoteText }),
+    });
+    setEditingNote(null);
+    setEditNoteText('');
+    fetchData();
+  };
+
+  const deleteNote = async (id: number) => {
+    await fetch(`${API}/notes/${id}`, { method: 'DELETE' });
+    fetchData();
+  };
+
   // ── Render ───────────────────────────────────────────────
 
   if (loading) {
@@ -635,6 +670,14 @@ export default function SubconsciousDashboard() {
             <span className="loop-dot" style={{ background: improvements.length > 0 ? '#8b5cf6' : '#6b7280' }} />
             <span className="loop-list-name">Improvements</span>
             {improvements.length > 0 && <span className="loop-list-meta">{improvements.length} pending</span>}
+          </div>
+          <div
+            className={`loop-list-item ${detailView === 'notes' ? 'active' : ''}`}
+            onClick={() => { setDetailView('notes'); setSelectedLoop(null); setShowAddLoop(false); }}
+          >
+            <span className="loop-dot" style={{ background: notes.length > 0 ? '#3b82f6' : '#6b7280' }} />
+            <span className="loop-list-name">Notes</span>
+            {notes.length > 0 && <span className="loop-list-meta">{notes.length}</span>}
           </div>
 
           {/* Potentiation summary at bottom of sidebar */}
@@ -1278,6 +1321,61 @@ export default function SubconsciousDashboard() {
                         <button className="btn-sm" onClick={() => applyImprovement(imp.id)}>⚡ Apply</button>
                         <button className="btn-sm reject" onClick={() => resolveImprovement(imp.id, 'rejected')}>✗ Reject</button>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ) : detailView === 'notes' ? (
+            /* ── Notes Panel ── */
+            <div className="detail-section">
+              <h3>📝 Notes</h3>
+              <p className="detail-hint">Quick notes — patterns, solutions, reminders.</p>
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <textarea
+                  value={newNoteText}
+                  onChange={e => setNewNoteText(e.target.value)}
+                  placeholder="Add a note..."
+                  className="form-textarea"
+                  rows={2}
+                  style={{ flex: 1 }}
+                  onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) createNote(); }}
+                />
+                <button onClick={createNote} className="btn-primary" disabled={!newNoteText.trim()} style={{ alignSelf: 'flex-end' }}>
+                  Save
+                </button>
+              </div>
+              {notes.length === 0 ? (
+                <div className="detail-empty-inline">No notes yet</div>
+              ) : (
+                <div className="review-list">
+                  {notes.map((n: any) => (
+                    <div key={n.id} className="review-card">
+                      {editingNote === n.id ? (
+                        <>
+                          <textarea
+                            value={editNoteText}
+                            onChange={e => setEditNoteText(e.target.value)}
+                            className="form-textarea"
+                            rows={3}
+                            autoFocus
+                            onKeyDown={e => { if (e.key === 'Enter' && e.metaKey) updateNote(n.id); }}
+                          />
+                          <div className="review-card-actions" style={{ marginTop: '6px' }}>
+                            <button className="btn-sm approve" onClick={() => updateNote(n.id)}>✓ Save</button>
+                            <button className="btn-sm" onClick={() => setEditingNote(null)}>Cancel</button>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="review-card-body" style={{ whiteSpace: 'pre-wrap' }}>{n.text}</div>
+                          <div className="review-card-meta">{n.updated_at}</div>
+                          <div className="review-card-actions">
+                            <button className="btn-sm" onClick={() => { setEditingNote(n.id); setEditNoteText(n.text); }}>✏️ Edit</button>
+                            <button className="btn-sm reject" onClick={() => deleteNote(n.id)}>🗑 Delete</button>
+                          </div>
+                        </>
+                      )}
                     </div>
                   ))}
                 </div>
