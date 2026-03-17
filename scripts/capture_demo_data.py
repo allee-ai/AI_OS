@@ -30,11 +30,6 @@ ENDPOINTS = [
     ("GET", "/api/models/providers"),
     ("GET", "/api/models/current"),
 
-    # Database / introspection
-    ("GET", "/api/database/tables"),
-    ("GET", "/api/database/threads-summary"),
-    ("GET", "/api/database/identity-hea"),
-
     # Threads page
     ("GET", "/api/subconscious/threads"),
 
@@ -172,31 +167,35 @@ def capture():
 
     # Also grab parameterized routes using real IDs from collected data
 
-    # Identity profiles → grab first profile's facts
+    # Identity profiles → grab ALL profiles' facts (each gets its own key)
     identity_profiles = results.get("GET /api/identity")
     if isinstance(identity_profiles, list) and identity_profiles:
-        pid = identity_profiles[0].get("profile_id") or identity_profiles[0].get("id")
-        if pid:
+        for profile in identity_profiles:
+            pid = profile.get("profile_id") or profile.get("id")
+            if not pid:
+                continue
             url = f"{BASE}/api/identity/{pid}/facts"
             try:
                 resp = requests.get(url, timeout=10)
                 if resp.status_code == 200:
-                    results["GET /api/identity/:id/facts"] = resp.json()
-                    print(f"  ✓ GET /api/identity/:id/facts  (sample: {pid})")
+                    results[f"GET /api/identity/{pid}/facts"] = resp.json()
+                    print(f"  ✓ GET /api/identity/{pid}/facts")
             except Exception:
                 pass
 
-    # Philosophy profiles → grab first profile's facts
+    # Philosophy profiles → grab ALL profiles' facts
     phil_profiles = results.get("GET /api/philosophy")
     if isinstance(phil_profiles, list) and phil_profiles:
-        pid = phil_profiles[0].get("profile_id") or phil_profiles[0].get("id")
-        if pid:
+        for profile in phil_profiles:
+            pid = profile.get("profile_id") or profile.get("id")
+            if not pid:
+                continue
             url = f"{BASE}/api/philosophy/{pid}/facts"
             try:
                 resp = requests.get(url, timeout=10)
                 if resp.status_code == 200:
-                    results["GET /api/philosophy/:id/facts"] = resp.json()
-                    print(f"  ✓ GET /api/philosophy/:id/facts  (sample: {pid})")
+                    results[f"GET /api/philosophy/{pid}/facts"] = resp.json()
+                    print(f"  ✓ GET /api/philosophy/{pid}/facts")
             except Exception:
                 pass
 

@@ -16,13 +16,6 @@ export const API_CONFIG = {
     INTROSPECTION_IDENTITY: '/api/identity/introspect',
     INTROSPECTION_THREADS: '/api/subconscious/health',
     INTROSPECTION_CONTEXT: '/api/subconscious/context',
-    INTROSPECTION_EVENTS: '/api/log/events',
-    // Database endpoints (new thread system)
-    DATABASE_TABLES: '/api/database/tables',
-    DATABASE_THREADS_SUMMARY: '/api/database/threads-summary',
-    DATABASE_THREAD: '/api/database/thread',  // + /{thread_name}
-    DATABASE_IDENTITY_HEA: '/api/database/identity-hea',
-    DATABASE_IDENTITY_MODULE: '/api/database/identity',  // + /{module_key}
-    DATABASE_IDENTITY_CHANGES: '/api/database/identity-changes'
+    INTROSPECTION_EVENTS: '/api/log/events'
   }
 } as const;

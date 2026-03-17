@@ -134,11 +134,13 @@ def _init_linking_core():
 def _init_log():
     from agent.threads.log.schema import (
         init_event_log_table, init_system_log_table,
-        init_server_log_table, init_log_module_table
+        init_server_log_table, init_log_module_table,
+        init_function_log_table
     )
     init_event_log_table()
     init_system_log_table()
     init_server_log_table()
+    init_function_log_table()
     init_log_module_table("events")
     init_log_module_table("sessions")
 

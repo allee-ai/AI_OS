@@ -126,3 +126,4 @@ finetune/aios_base.jsonl
 
 # Website has its own repo (allee-ai/allee-ai.github.io)
 workspace/allee-ai.github.io/
+workspace/aios-demo
