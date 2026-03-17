@@ -38,6 +38,7 @@ from agent.core.mcp_api import router as mcp_router
 from chat import router as chat_router, websocket_manager
 from workspace import router as workspace_router
 from agent.services import router as services_router
+from agent.services.mobile_api import router as mobile_router
 from Feeds import api_router as feeds_router
 from agent.subconscious import subconscious_router
 
@@ -151,6 +152,9 @@ app.include_router(form_router)
 app.include_router(linking_router)
 app.include_router(log_router)
 app.include_router(subconscious_router)
+
+# Mobile remote-control API
+app.include_router(mobile_router)
 
 # Project-level routers
 app.include_router(docs_router)

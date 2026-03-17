@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<title>AI OS Remote</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f1a;--card:#1a1a2e;--border:#2a2a44;--accent:#6c63ff;--green:#4caf50;--yellow:#ffc107;--red:#ef5350;--text:#e0e0e0;--dim:#888}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 80px}
+header{background:var(--card);border-bottom:1px solid var(--border);padding:14px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10}
+header h1{font-size:1.1em;font-weight:700}
+header .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+header .dot.ok{background:var(--green)}
+header .dot.err{background:var(--red)}
+
+/* Tabs */
+.tabs{display:flex;background:var(--card);border-bottom:1px solid var(--border);position:sticky;top:49px;z-index:9;overflow-x:auto}
+.tabs button{flex:1;min-width:0;background:none;border:none;border-bottom:3px solid transparent;color:var(--dim);font-size:.85em;font-weight:600;padding:10px 6px;cursor:pointer;white-space:nowrap}
+.tabs button.active{color:#fff;border-bottom-color:var(--accent)}
+
+/* Panels */
+.panel{display:none;padding:16px}
+.panel.active{display:block}
+
+/* Cards */
+.card{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;margin-bottom:12px}
+.card h3{font-size:.9em;color:var(--dim);margin-bottom:8px;text-transform:uppercase;letter-spacing:.04em}
+
+/* Loop pills */
+.loop-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.loop-row:last-child{border-bottom:none}
+.loop-name{font-size:.9em;font-weight:600}
+.loop-meta{font-size:.75em;color:var(--dim)}
+.loop-next{font-size:.75em;color:var(--accent);font-variant-numeric:tabular-nums}
+.pill{font-size:.7em;font-weight:700;padding:3px 8px;border-radius:10px;text-transform:uppercase}
+.pill.running{background:rgba(76,175,80,.15);color:var(--green)}
+.pill.waiting{background:rgba(108,99,255,.15);color:var(--accent)}
+.pill.paused{background:rgba(255,193,7,.15);color:var(--yellow)}
+.pill.stopped{background:rgba(239,83,80,.15);color:var(--red)}
+.loop-btn{background:none;border:1px solid var(--border);color:var(--text);font-size:.75em;padding:4px 10px;border-radius:8px;cursor:pointer}
+.loop-btn:active{background:var(--accent);border-color:var(--accent)}
+
+/* Tasks */
+.task-row{display:flex;align-items:center;gap:8px;padding:8px 0;border-bottom:1px solid var(--border)}
+.task-row:last-child{border-bottom:none}
+.task-goal{flex:1;font-size:.85em}
+.task-status{font-size:.7em;font-weight:600;padding:2px 8px;border-radius:8px}
+.task-status.completed{background:rgba(76,175,80,.15);color:var(--green)}
+.task-status.pending{background:rgba(108,99,255,.15);color:var(--accent)}
+.task-status.failed{background:rgba(239,83,80,.15);color:var(--red)}
+
+/* Inputs */
+.input-group{display:flex;gap:8px;margin-top:10px}
+.input-group input,.input-group textarea{flex:1;background:var(--bg);border:1px solid var(--border);border-radius:10px;color:var(--text);padding:10px 12px;font-size:.9em;font-family:inherit;resize:none}
+.input-group textarea{min-height:60px}
+.input-group input:focus,.input-group textarea:focus{outline:none;border-color:var(--accent)}
+.btn{background:var(--accent);color:#fff;border:none;border-radius:10px;padding:10px 18px;font-size:.85em;font-weight:600;cursor:pointer;white-space:nowrap}
+.btn:active{opacity:.8}
+.btn:disabled{opacity:.4;cursor:not-allowed}
+.btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
+
+/* Chat */
+.chat-messages{max-height:50vh;overflow-y:auto;margin-bottom:12px}
+.chat-bubble{max-width:85%;padding:10px 14px;border-radius:16px;margin-bottom:8px;font-size:.9em;line-height:1.4;word-wrap:break-word;white-space:pre-wrap}
+.chat-bubble.user{background:var(--accent);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
+.chat-bubble.assistant{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
+.chat-typing{color:var(--dim);font-size:.8em;font-style:italic;padding:4px 0}
+
+/* Toast */
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:12px;font-size:.85em;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
+.toast.show{opacity:1}
+
+/* Refresh */
+.refresh-btn{margin-left:auto;background:none;border:none;color:var(--dim);font-size:1.2em;cursor:pointer;padding:4px 8px}
+.refresh-btn:active{color:var(--accent)}
+
+/* Empty state */
+.empty{color:var(--dim);font-size:.85em;text-align:center;padding:20px 0}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="dot" id="statusDot"></div>
+  <h1>AI OS Remote</h1>
+  <button class="refresh-btn" onclick="loadAll()" title="Refresh">&#x21bb;</button>
+</header>
+
+<div class="tabs" id="tabs">
+  <button class="active" data-tab="status">Status</button>
+  <button data-tab="chat">Chat</button>
+  <button data-tab="loops">Loops</button>
+  <button data-tab="tasks">Tasks</button>
+  <button data-tab="notes">Notes</button>
+</div>
+
+<!-- ── Status Panel ── -->
+<div class="panel active" id="p-status">
+  <div class="card">
+    <h3>Agent</h3>
+    <div id="agentStatus" style="font-size:1.1em;font-weight:700">Loading…</div>
+  </div>
+  <div class="card">
+    <h3>Loops <span id="loopSummary" style="float:right;font-size:.8em;font-weight:400"></span></h3>
+    <div id="statusLoops"></div>
+  </div>
+  <div class="card">
+    <h3>Recent Tasks</h3>
+    <div id="statusTasks"></div>
+  </div>
+</div>
+
+<!-- ── Chat Panel ── -->
+<div class="panel" id="p-chat">
+  <div class="card" style="padding:12px">
+    <div class="chat-messages" id="chatMessages">
+      <div class="empty">Send a message to start chatting</div>
+    </div>
+    <div class="input-group">
+      <input type="text" id="chatInput" placeholder="Say something…" autocomplete="off"/>
+      <button class="btn" id="chatSend" onclick="sendChat()">Send</button>
+    </div>
+  </div>
+</div>
+
+<!-- ── Loops Panel ── -->
+<div class="panel" id="p-loops">
+  <div class="card">
+    <h3>Background Loops</h3>
+    <div id="loopsList"></div>
+  </div>
+</div>
+
+<!-- ── Tasks Panel ── -->
+<div class="panel" id="p-tasks">
+  <div class="card">
+    <h3>Add Task</h3>
+    <div class="input-group">
+      <input type="text" id="taskInput" placeholder="Task goal…"/>
+      <button class="btn" onclick="addTask()">Add</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Tasks</h3>
+    <div id="tasksList"></div>
+  </div>
+</div>
+
+<!-- ── Notes Panel ── -->
+<div class="panel" id="p-notes">
+  <div class="card">
+    <h3>Quick Note</h3>
+    <div class="input-group" style="flex-direction:column">
+      <textarea id="noteInput" placeholder="Write a note…" rows="3"></textarea>
+      <button class="btn" onclick="addNote()" style="align-self:flex-end">Save Note</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Notes</h3>
+    <div id="notesList"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const BASE = window.location.origin;
+const API = BASE + '/api/mobile';
+const SUB = BASE + '/api/subconscious';
+
+// ── Tabs ──
+document.getElementById('tabs').addEventListener('click', e => {
+  if (e.target.tagName !== 'BUTTON') return;
+  document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById('p-' + e.target.dataset.tab).classList.add('active');
+});
+
+// ── Toast ──
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2000);
+}
+
+// ── API helper ──
+async function api(path, opts) {
+  try {
+    const r = await fetch(path, opts);
+    if (!r.ok) {
+      const e = await r.json().catch(() => ({}));
+      throw new Error(e.detail || r.statusText);
+    }
+    return await r.json();
+  } catch (err) {
+    toast('Error: ' + err.message);
+    throw err;
+  }
+}
+
+// ── Status ──
+async function loadStatus() {
+  try {
+    const d = await api(API + '/status');
+    const dot = document.getElementById('statusDot');
+    dot.className = 'dot ' + (d.agent === 'ready' ? 'ok' : 'err');
+    document.getElementById('agentStatus').textContent =
+      d.agent === 'ready' ? '● Ready' : '○ ' + d.agent;
+
+    const active = d.loops.filter(l => l.status !== 'paused' && l.status !== 'stopped').length;
+    document.getElementById('loopSummary').textContent =
+      active + '/' + d.loops.length + ' active';
+
+    document.getElementById('statusLoops').innerHTML = d.loops.map(l => {
+      const ds = loopDisplay(l);
+      return '<div class="loop-row">' +
+        '<div><span class="loop-name">' + esc(l.name) + '</span>' +
+        ' <span class="pill ' + ds.cls + '">' + ds.label + '</span></div>' +
+        '<div style="text-align:right"><span class="loop-meta">' + l.runs + ' runs' +
+          (l.avg_duration != null ? ' · avg ' + fmtTime(l.avg_duration) : '') + '</span>' +
+        '<br><span class="loop-next" data-interval="' + (l.interval||0) + '" data-lastrun="' + (l.last_run||'') + '" data-status="' + l.status + '" data-delay="' + (l.initial_delay||0) + '" data-busy="' + (l.is_busy?1:0) + '"></span></div>' +
+      '</div>';
+    }).join('');
+    updateCountdowns();
+
+    document.getElementById('statusTasks').innerHTML = d.tasks.length
+      ? d.tasks.map(t =>
+          '<div class="task-row">' +
+            '<span class="task-goal">' + esc(t.goal) + '</span>' +
+            '<span class="task-status ' + t.status + '">' + t.status + '</span>' +
+          '</div>'
+        ).join('')
+      : '<div class="empty">No recent tasks</div>';
+  } catch(e) {
+    document.getElementById('statusDot').className = 'dot err';
+    document.getElementById('agentStatus').textContent = 'Offline';
+  }
+}
+
+// ── Loops ──
+async function loadLoops() {
+  const d = await api(API + '/loops');
+  document.getElementById('loopsList').innerHTML = d.loops.map(l => {
+    const ds = loopDisplay(l);
+    const isPaused = l.status === 'paused';
+    const durInfo = l.avg_duration != null
+      ? '<br><span class="loop-meta">last ' + fmtTime(l.last_duration) + ' · avg ' + fmtTime(l.avg_duration) + '</span>'
+      : '';
+    return '<div class="loop-row">' +
+      '<div>' +
+        '<span class="loop-name">' + esc(l.name) + '</span> ' +
+        '<span class="pill ' + ds.cls + '">' + ds.label + '</span>' +
+        '<br><span class="loop-meta">' + l.runs + ' runs · ' + l.errors + ' errors</span>' +
+        durInfo +
+        '<br><span class="loop-next" data-interval="' + (l.interval||0) + '" data-lastrun="' + (l.last_run||'') + '" data-status="' + l.status + '"></span>' +
+      '</div>' +
+      '<button class="loop-btn" onclick="toggleLoop(\'' + esc(l.name) + '\',\'' +
+        (isPaused ? 'resume' : 'pause') + '\')">' +
+        (isPaused ? '▶ Resume' : '⏸ Pause') +
+      '</button>' +
+    '</div>';
+  }).join('');
+  updateCountdowns();
+}
+
+async function toggleLoop(name, action) {
+  await api(API + '/loops/' + encodeURIComponent(name), {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action})
+  });
+  toast(name + ' ' + action + 'd');
+  loadLoops();
+  loadStatus();
+}
+
+// ── Chat ──
+const chatMsgs = [];
+
+function renderChat() {
+  const el = document.getElementById('chatMessages');
+  if (!chatMsgs.length) {
+    el.innerHTML = '<div class="empty">Send a message to start chatting</div>';
+    return;
+  }
+  el.innerHTML = chatMsgs.map(m =>
+    '<div class="chat-bubble ' + m.role + '">' + esc(m.text) + '</div>'
+  ).join('');
+  el.scrollTop = el.scrollHeight;
+}
+
+async function sendChat() {
+  const input = document.getElementById('chatInput');
+  const text = input.value.trim();
+  if (!text) return;
+  input.value = '';
+
+  chatMsgs.push({role: 'user', text});
+  renderChat();
+
+  const btn = document.getElementById('chatSend');
+  btn.disabled = true;
+  btn.textContent = '…';
+
+  const msgEl = document.getElementById('chatMessages');
+  msgEl.insertAdjacentHTML('beforeend', '<div class="chat-typing">Thinking…</div>');
+  msgEl.scrollTop = msgEl.scrollHeight;
+
+  try {
+    const d = await api(API + '/chat', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify({text})
+    });
+    chatMsgs.push({role: 'assistant', text: d.reply});
+  } catch(e) {
+    chatMsgs.push({role: 'assistant', text: '(Error: ' + e.message + ')'});
+  }
+  btn.disabled = false;
+  btn.textContent = 'Send';
+  renderChat();
+}
+
+document.getElementById('chatInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
+});
+
+// ── Tasks ──
+async function loadTasks() {
+  const d = await api(SUB + '/tasks?limit=20');
+  document.getElementById('tasksList').innerHTML = d.tasks.length
+    ? d.tasks.map(t =>
+        '<div class="task-row">' +
+          '<span class="task-goal">' + esc(t.goal) + '</span>' +
+          '<span class="task-status ' + t.status + '">' + t.status + '</span>' +
+        '</div>'
+      ).join('')
+    : '<div class="empty">No tasks yet</div>';
+}
+
+async function addTask() {
+  const input = document.getElementById('taskInput');
+  const goal = input.value.trim();
+  if (!goal) return;
+  await api(API + '/task', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({goal})
+  });
+  input.value = '';
+  toast('Task added');
+  loadTasks();
+}
+
+document.getElementById('taskInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addTask(); }
+});
+
+// ── Notes ──
+async function loadNotes() {
+  const notes = await api(SUB + '/notes');
+  document.getElementById('notesList').innerHTML = notes.length
+    ? notes.map(n =>
+        '<div style="padding:8px 0;border-bottom:1px solid var(--border)">' +
+          '<div style="font-size:.85em;white-space:pre-wrap">' + esc(n.text) + '</div>' +
+          '<div style="font-size:.7em;color:var(--dim);margin-top:4px">' + (n.updated_at || '') + '</div>' +
+        '</div>'
+      ).join('')
+    : '<div class="empty">No notes yet</div>';
+}
+
+async function addNote() {
+  const input = document.getElementById('noteInput');
+  const text = input.value.trim();
+  if (!text) return;
+  await api(API + '/note', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({text})
+  });
+  input.value = '';
+  toast('Note saved');
+  loadNotes();
+}
+
+// ── Escape HTML ──
+function esc(s) {
+  const d = document.createElement('div');
+  d.textContent = s;
+  return d.innerHTML;
+}
+
+// ── Countdown timers ──
+let _serverStartApprox = Date.now(); // fallback if no last_run
+
+function fmtTime(sec) {
+  if (sec <= 0) return 'now';
+  const m = Math.floor(sec / 60);
+  const s = Math.floor(sec % 60);
+  return m > 0 ? m + 'm ' + String(s).padStart(2,'0') + 's' : s + 's';
+}
+
+function loopDisplay(l) {
+  if (l.status === 'paused') return {label: 'paused', cls: 'paused'};
+  if (l.status === 'stopped') return {label: 'stopped', cls: 'stopped'};
+  if (l.status === 'error') return {label: 'error', cls: 'stopped'};
+  return l.is_busy ? {label: 'running', cls: 'running'} : {label: 'waiting', cls: 'waiting'};
+}
+
+function updateCountdowns() {
+  document.querySelectorAll('.loop-next').forEach(el => {
+    const interval = parseFloat(el.dataset.interval);
+    const lastRun = el.dataset.lastrun;
+    const status = el.dataset.status;
+    const delay = parseFloat(el.dataset.delay) || 0;
+    const busy = el.dataset.busy === '1';
+
+    if (!interval || status === 'paused') {
+      el.textContent = status === 'paused' ? 'paused' : '';
+      return;
+    }
+
+    // Currently executing — no countdown needed
+    if (busy) {
+      el.textContent = 'running now';
+      return;
+    }
+
+    let nextRun;
+    if (lastRun) {
+      // Has run before — next fire = last_run + interval
+      nextRun = new Date(lastRun).getTime() + interval * 1000;
+    } else {
+      // Never ran yet — first fire = server start + initial_delay
+      nextRun = _serverStartApprox + delay * 1000;
+    }
+
+    const remaining = Math.max(0, (nextRun - Date.now()) / 1000);
+    el.textContent = remaining <= 0 ? 'due' : 'next: ' + fmtTime(remaining);
+  });
+}
+
+// Tick every second
+setInterval(updateCountdowns, 1000);
+
+// ── Init ──
+function loadAll() {
+  loadStatus();
+  loadLoops();
+  loadTasks();
+  loadNotes();
+}
+loadAll();
+
+// Auto-refresh status every 30s
+setInterval(loadStatus, 30000);
+</script>
+</body>
+</html>

@@ -73,6 +73,7 @@ class LoopConfig:
     max_errors: int = 3  # Stop after this many consecutive errors
     error_backoff: float = 2.0  # Multiply interval by this on error
     context_aware: bool = False  # When True, loop injects orchestrator STATE into prompts
+    initial_delay: float = 0.0  # Seconds to wait before first tick (stagger starts)
 
 
 class BackgroundLoop:
@@ -96,6 +97,8 @@ class BackgroundLoop:
         self._last_run: Optional[str] = None
         self._run_count = 0
         self._error_count = 0
+        self._last_duration: Optional[float] = None  # seconds
+        self._durations: list = []  # last N run durations for averaging
 
     @property
     def is_busy(self) -> bool:
@@ -121,10 +124,13 @@ class BackgroundLoop:
     
     @property
     def stats(self) -> Dict[str, Any]:
+        durations = self._durations
         return {
             "name": self.config.name,
             "status": self._status.value,
+            "is_busy": self._busy.is_set(),
             "interval": self.config.interval_seconds,
+            "initial_delay": self.config.initial_delay,
             "enabled": self.config.enabled,
             "context_aware": self.config.context_aware,
             "max_errors": self.config.max_errors,
@@ -133,6 +139,10 @@ class BackgroundLoop:
             "run_count": self._run_count,
             "error_count": self._error_count,
             "consecutive_errors": self._consecutive_errors,
+            "last_duration": round(self._last_duration, 2) if self._last_duration is not None else None,
+            "avg_duration": round(sum(durations) / len(durations), 2) if durations else None,
+            "min_duration": round(min(durations), 2) if durations else None,
+            "max_duration": round(max(durations), 2) if durations else None,
         }
 
     def _get_state(self, query: str = "") -> str:
@@ -198,16 +208,22 @@ class BackgroundLoop:
         The timer lives here but actual task execution is dispatched to the
         shared thread pool so we never exceed AIOS_LOOP_POOL_SIZE concurrent
         heavy operations.
+
+        initial_delay is measured from server start: the loop waits that long
+        then fires immediately, then repeats every interval after that.
         """
+        # Stagger startup: wait initial_delay, then fire immediately
+        first_wait = self.config.initial_delay if self.config.initial_delay > 0 else self.config.interval_seconds
+        if self._stop_event.wait(timeout=first_wait):
+            return
+
         interval = self.config.interval_seconds
         
         while not self._stop_event.is_set():
-            # Wait for interval or stop signal
-            if self._stop_event.wait(timeout=interval):
-                break
-            
             # Skip if paused
             if self._status == LoopStatus.PAUSED:
+                if self._stop_event.wait(timeout=5.0):
+                    break
                 continue
             
             # Dispatch task to the bounded pool instead of running inline.
@@ -245,17 +261,30 @@ class BackgroundLoop:
                 if self._consecutive_errors >= self.config.max_errors:
                     self._status = LoopStatus.ERROR
                     break
+                # Wait with backoff before retrying
+                if self._stop_event.wait(timeout=interval):
+                    break
                 continue
 
             # Success — reset
             interval = self.config.interval_seconds
 
+            # Wait for next interval (sleep AFTER execution)
+            if self._stop_event.wait(timeout=interval):
+                break
+
     def _execute_task(self) -> None:
         """Run the task on a pool worker thread (niced, with stats bookkeeping)."""
         _nice_thread()
         self._busy.set()
+        t0 = time.monotonic()
         try:
             self.task()
+            elapsed = time.monotonic() - t0
+            self._last_duration = elapsed
+            self._durations.append(elapsed)
+            if len(self._durations) > 20:
+                self._durations.pop(0)
             self._last_run = datetime.now(timezone.utc).isoformat()
             self._run_count += 1
             self._consecutive_errors = 0

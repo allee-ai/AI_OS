@@ -110,80 +110,97 @@ class LoopManager:
 def create_default_loops() -> LoopManager:
     """
     Create a LoopManager with all default background loops.
-    
+
+    Intervals are spread so no two loops fire within 15 minutes of each
+    other.  initial_delay stagger prevents startup stampede.  Once we
+    collect avg_duration data we can tighten the schedule.
+
     Returns:
         Configured LoopManager ready to start
     """
     manager = LoopManager()
-    manager.add(MemoryLoop())       # Extract facts from conversations
-    manager.add(ConsolidationLoop()) # Promote approved facts
-    manager.add(SyncLoop())          # Sync state across threads
-    manager.add(HealthLoop())        # Monitor thread health
-    
-    # Thought loop — proactive agent reasoning
-    thought_enabled = os.getenv("AIOS_THOUGHT_LOOP", "1") == "1"
-    thought_interval = float(os.getenv("AIOS_THOUGHT_INTERVAL", "120"))
-    manager.add(ThoughtLoop(
-        interval=thought_interval,
-        enabled=thought_enabled,
-    ))
-    
-    # Task planner — context-aware multi-step task execution
-    task_enabled = os.getenv("AIOS_TASK_PLANNER", "1") == "1"
-    task_interval = float(os.getenv("AIOS_TASK_INTERVAL", "30"))
-    manager.add(TaskPlanner(
-        interval=task_interval,
-        enabled=task_enabled,
-    ))
-    
-    # Goal generation — proposes goals from recurring concepts + values
-    goal_enabled = os.getenv("AIOS_GOAL_LOOP", "1") == "1"
-    goal_interval = float(os.getenv("AIOS_GOAL_INTERVAL", "600"))
-    manager.add(GoalLoop(
-        interval=goal_interval,
-        enabled=goal_enabled,
-    ))
 
-    # Self-improvement — proposes small code fixes for human approval
-    improve_enabled = os.getenv("AIOS_SELF_IMPROVE", "1") == "1"
-    improve_interval = float(os.getenv("AIOS_SELF_IMPROVE_INTERVAL", "3600"))
-    manager.add(SelfImprovementLoop(
-        interval=improve_interval,
-        enabled=improve_enabled,
-    ))
+    # ── Tier 1 — lightweight / operational  (every 20 min) ──────────
+    health = HealthLoop(
+        interval=float(os.getenv("AIOS_HEALTH_INTERVAL", "1200")),  # 20 min
+    )
+    health.config.initial_delay = 10  # fire ~10s after boot
+    manager.add(health)
 
-    # Training data generator — LLM generates synthetic training examples
-    training_gen_enabled = os.getenv("AIOS_TRAINING_GEN", "1") == "1"
-    training_gen_interval = float(os.getenv("AIOS_TRAINING_GEN_INTERVAL", "7200"))
-    manager.add(TrainingGenLoop(
-        interval=training_gen_interval,
-        enabled=training_gen_enabled,
-    ))
+    task = TaskPlanner(
+        interval=float(os.getenv("AIOS_TASK_INTERVAL", "1200")),  # 20 min
+        enabled=os.getenv("AIOS_TASK_PLANNER", "1") == "1",
+    )
+    task.config.initial_delay = 300  # +5 min
+    manager.add(task)
 
-    # Conversation concept extraction — backfill imported conversations into graph
-    convo_concepts_enabled = os.getenv("AIOS_CONVO_CONCEPTS", "1") == "1"
-    convo_concepts_interval = float(os.getenv("AIOS_CONVO_CONCEPTS_INTERVAL", "300"))
-    manager.add(ConvoConceptLoop(
-        interval=convo_concepts_interval,
-        enabled=convo_concepts_enabled,
-    ))
+    # ── Tier 2 — medium / knowledge work  (every 45–60 min) ────────
+    mem = MemoryLoop()
+    mem.config.interval_seconds = float(os.getenv("AIOS_MEMORY_INTERVAL", "2700"))  # 45 min
+    mem.config.initial_delay = 600  # +10 min
+    manager.add(mem)
 
-    # Demo audit — audits demo-data.json with Kimi K2
-    demo_audit_enabled = os.getenv("AIOS_DEMO_AUDIT", "1") == "1"
-    demo_audit_interval = float(os.getenv("AIOS_DEMO_AUDIT_INTERVAL", "900"))
-    manager.add(DemoAuditLoop(
-        interval=demo_audit_interval,
-        enabled=demo_audit_enabled,
-    ))
+    consol = ConsolidationLoop()
+    consol.config.interval_seconds = float(os.getenv("AIOS_CONSOLIDATION_INTERVAL", "3600"))  # 60 min
+    consol.config.initial_delay = 900  # +15 min
+    manager.add(consol)
 
-    # Workspace Q&A — deterministic training pairs from DB (no LLM calls)
-    ws_qa_enabled = os.getenv("AIOS_WORKSPACE_QA", "1") == "1"
-    ws_qa_interval = float(os.getenv("AIOS_WORKSPACE_QA_INTERVAL", "1800"))
-    manager.add(WorkspaceQALoop(
-        interval=ws_qa_interval,
-        enabled=ws_qa_enabled,
-    ))
-    
+    thought = ThoughtLoop(
+        interval=float(os.getenv("AIOS_THOUGHT_INTERVAL", "2700")),  # 45 min
+        enabled=os.getenv("AIOS_THOUGHT_LOOP", "1") == "1",
+    )
+    thought.config.initial_delay = 1500  # +25 min
+    manager.add(thought)
+
+    convo = ConvoConceptLoop(
+        interval=float(os.getenv("AIOS_CONVO_CONCEPTS_INTERVAL", "3600")),  # 60 min
+        enabled=os.getenv("AIOS_CONVO_CONCEPTS", "1") == "1",
+    )
+    convo.config.initial_delay = 1800  # +30 min
+    manager.add(convo)
+
+    sy = SyncLoop()
+    sy.config.interval_seconds = float(os.getenv("AIOS_SYNC_INTERVAL", "5400"))  # 90 min
+    sy.config.initial_delay = 2400  # +40 min
+    manager.add(sy)
+
+    # ── Tier 3 — heavy LLM work  (every 3–4 h) ────────────────────
+    goal = GoalLoop(
+        interval=float(os.getenv("AIOS_GOAL_INTERVAL", "10800")),  # 3 h
+        enabled=os.getenv("AIOS_GOAL_LOOP", "1") == "1",
+    )
+    goal.config.initial_delay = 3000  # +50 min
+    manager.add(goal)
+
+    demo = DemoAuditLoop(
+        interval=float(os.getenv("AIOS_DEMO_AUDIT_INTERVAL", "10800")),  # 3 h
+        enabled=os.getenv("AIOS_DEMO_AUDIT", "1") == "1",
+    )
+    demo.config.initial_delay = 3900  # +65 min
+    manager.add(demo)
+
+    ws_qa = WorkspaceQALoop(
+        interval=float(os.getenv("AIOS_WORKSPACE_QA_INTERVAL", "14400")),  # 4 h
+        enabled=os.getenv("AIOS_WORKSPACE_QA", "1") == "1",
+    )
+    ws_qa.config.initial_delay = 4800  # +80 min
+    manager.add(ws_qa)
+
+    # ── Tier 4 — very heavy / infrequent  (every 6 h) ─────────────
+    improve = SelfImprovementLoop(
+        interval=float(os.getenv("AIOS_SELF_IMPROVE_INTERVAL", "21600")),  # 6 h
+        enabled=os.getenv("AIOS_SELF_IMPROVE", "1") == "1",
+    )
+    improve.config.initial_delay = 5700  # +95 min
+    manager.add(improve)
+
+    tgen = TrainingGenLoop(
+        interval=float(os.getenv("AIOS_TRAINING_GEN_INTERVAL", "21600")),  # 6 h
+        enabled=os.getenv("AIOS_TRAINING_GEN", "1") == "1",
+    )
+    tgen.config.initial_delay = 6600  # +110 min
+    manager.add(tgen)
+
     # Load user-defined custom loops from DB
     try:
         manager.load_custom_loops()
