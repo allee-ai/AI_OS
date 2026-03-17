@@ -71,20 +71,31 @@ MODEL="${AIOS_FT_MODEL:-mlx-community/Llama-3.2-3B-Instruct-4bit}"
 ADAPTER_DIR="${AIOS_FT_ADAPTER_DIR:-adapters}"
 RUN_NAME="${AIOS_FT_RUN_NAME:-manual}"
 RUN_DIR="${AIOS_FT_RUN_DIR:-}"
+RESUME_ADAPTER="${AIOS_FT_RESUME_ADAPTER:-}"
 
 echo "🔥 Starting Training (Expect Heat!)..."
 echo "   Model:    $MODEL"
 echo "   Adapter:  $ADAPTER_DIR"
 echo "   Run:      $RUN_NAME"
+if [ -n "$RESUME_ADAPTER" ]; then
+    echo "   Resume:   $RESUME_ADAPTER"
+fi
 echo "ℹ️  Monitor limits with 'sudo powermetrics --samplers smc | grep -i \"CPU die temperature\"'"
 
 # mlx_lm.lora: The MLX LoRA training tool.
+RESUME_FLAG=""
+if [ -n "$RESUME_ADAPTER" ]; then
+    RESUME_FLAG="--resume-adapter-file $RESUME_ADAPTER"
+    echo "🔄 Resuming from adapter: $RESUME_ADAPTER"
+fi
+
 mlx_lm lora \
     --model "$MODEL" \
     --config mlx_config.yaml \
     --train \
     --data . \
-    --adapter-path "$ADAPTER_DIR"
+    --adapter-path "$ADAPTER_DIR" \
+    $RESUME_FLAG
 
 TRAIN_EXIT=$?
 

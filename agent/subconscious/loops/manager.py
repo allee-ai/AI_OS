@@ -53,6 +53,19 @@ class LoopManager:
         """Stop all managed loops."""
         for loop in self._loops:
             loop.stop()
+
+    def pause_all(self, wait: bool = True, timeout: float = 120.0) -> None:
+        """Pause all loops. If *wait*, block until every in-progress task finishes."""
+        for loop in self._loops:
+            loop.pause()
+        if wait:
+            for loop in self._loops:
+                loop.wait_idle(timeout=timeout)
+
+    def resume_all(self) -> None:
+        """Resume all paused loops."""
+        for loop in self._loops:
+            loop.resume()
     
     def get_stats(self) -> List[Dict[str, Any]]:
         """Get stats for all loops."""

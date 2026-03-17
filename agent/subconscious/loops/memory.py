@@ -77,13 +77,19 @@ class MemoryLoop(BackgroundLoop):
         return self._call_ollama_extract(model, messages, temperature)
 
     def _call_ollama_extract(self, model: str, messages: list, temperature: float) -> str:
+        from .base import acquire_ollama_gate, release_ollama_gate
         import ollama
-        response = ollama.chat(
-            model=model,
-            messages=messages,
-            options={"temperature": temperature},
-        )
-        return response['message']['content'].strip()
+        if not acquire_ollama_gate():
+            raise RuntimeError("Ollama gate timeout")
+        try:
+            response = ollama.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": temperature},
+            )
+            return response['message']['content'].strip()
+        finally:
+            release_ollama_gate()
 
     def _call_openai(self, model: str, messages: list, temperature: float) -> str:
         """Call an OpenAI-compatible endpoint for extraction."""

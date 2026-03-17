@@ -13,6 +13,8 @@ from .base import (
     BackgroundLoop,
     LoopConfig,
     LoopStatus,
+    acquire_ollama_gate,
+    release_ollama_gate,
 )
 
 # Individual loops

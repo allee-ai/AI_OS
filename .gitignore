@@ -123,3 +123,6 @@ finetune/runs/*/adapters/*.safetensors
 finetune/aios_base.jsonl
 
 # Keep generated training data in git (small JSONL)
+
+# Website has its own repo (allee-ai/allee-ai.github.io)
+workspace/allee-ai.github.io/

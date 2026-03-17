@@ -2,14 +2,58 @@
 Background Loop Base Classes
 ============================
 Core abstractions for periodic background tasks.
+
+Concurrency strategy:
+- All loop tasks share a bounded ThreadPoolExecutor (_loop_pool)
+  so heavy LLM / embedding work can't spawn unlimited threads.
+- An Ollama semaphore (_ollama_gate) limits concurrent Ollama calls
+  to 1 by default (env AIOS_OLLAMA_CONCURRENCY), preventing loops
+  from starving the chat endpoint of inference capacity.
+- Loop worker threads are niced +10 (best-effort) so the main
+  uvicorn thread wins GIL / CPU contention.
 """
 
+import os
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 from typing import Callable, Optional, Dict, Any
 from dataclasses import dataclass
 from enum import Enum
+
+
+# ── Process-wide resources shared by all BackgroundLoops ────
+
+_POOL_SIZE = int(os.getenv("AIOS_LOOP_POOL_SIZE", "2"))
+_loop_pool = ThreadPoolExecutor(
+    max_workers=_POOL_SIZE,
+    thread_name_prefix="loop-worker",
+)
+
+# Ollama semaphore: prevents multiple loops from calling Ollama at the
+# same time (embedding + inference).  Chat requests bypass this gate
+# because they go through agent_service directly.
+_OLLAMA_CONCURRENCY = int(os.getenv("AIOS_OLLAMA_CONCURRENCY", "1"))
+_ollama_gate = threading.Semaphore(_OLLAMA_CONCURRENCY)
+
+
+def acquire_ollama_gate(timeout: float = 300.0) -> bool:
+    """Acquire the Ollama semaphore (blocks until available or timeout)."""
+    return _ollama_gate.acquire(timeout=timeout)
+
+
+def release_ollama_gate() -> None:
+    """Release the Ollama semaphore."""
+    _ollama_gate.release()
+
+
+def _nice_thread() -> None:
+    """Best-effort: lower this thread's scheduling priority."""
+    try:
+        os.nice(10)
+    except (OSError, AttributeError):
+        pass  # Windows or permission denied — not critical
 
 
 class LoopStatus(Enum):
@@ -36,6 +80,8 @@ class BackgroundLoop:
     Base class for background loops.
     
     Runs a task function periodically on a daemon thread.
+    Heavy task work is dispatched to a bounded thread pool so at most
+    AIOS_LOOP_POOL_SIZE (default 2) loops execute simultaneously.
     Handles error recovery, backoff, and graceful shutdown.
     """
     
@@ -45,10 +91,29 @@ class BackgroundLoop:
         self._status = LoopStatus.STOPPED
         self._thread: Optional[threading.Thread] = None
         self._stop_event = threading.Event()
+        self._busy = threading.Event()   # set while a task is executing
         self._consecutive_errors = 0
         self._last_run: Optional[str] = None
         self._run_count = 0
         self._error_count = 0
+
+    @property
+    def is_busy(self) -> bool:
+        """True when the loop is currently executing a task."""
+        return self._busy.is_set()
+
+    def wait_idle(self, timeout: float = 120.0) -> bool:
+        """Block until the current task (if any) finishes. Returns True if idle."""
+        if not self._busy.is_set():
+            return True
+        # Spin-wait: _busy is cleared at the end of _execute_task
+        deadline = __import__('time').time() + timeout
+        while self._busy.is_set():
+            remaining = deadline - __import__('time').time()
+            if remaining <= 0:
+                return False
+            __import__('time').sleep(min(0.5, remaining))
+        return True
     
     @property
     def status(self) -> LoopStatus:
@@ -128,7 +193,12 @@ class BackgroundLoop:
             self._status = LoopStatus.RUNNING
     
     def _run_loop(self) -> None:
-        """Main loop runner (runs on background thread)."""
+        """Main loop runner (runs on background thread).
+        
+        The timer lives here but actual task execution is dispatched to the
+        shared thread pool so we never exceed AIOS_LOOP_POOL_SIZE concurrent
+        heavy operations.
+        """
         interval = self.config.interval_seconds
         
         while not self._stop_event.is_set():
@@ -140,14 +210,20 @@ class BackgroundLoop:
             if self._status == LoopStatus.PAUSED:
                 continue
             
-            # Run the task
+            # Dispatch task to the bounded pool instead of running inline.
+            # .result() blocks this timer thread until the pool worker
+            # finishes, which is fine — each loop has its own timer thread,
+            # and the pool bounds actual concurrency.
             try:
-                self.task()
-                self._last_run = datetime.now(timezone.utc).isoformat()
-                self._run_count += 1
-                self._consecutive_errors = 0
-                interval = self.config.interval_seconds  # Reset interval
-                
+                future = _loop_pool.submit(self._execute_task)
+                # Wait for completion but respect stop signal
+                while not future.done():
+                    if self._stop_event.wait(timeout=1.0):
+                        future.cancel()
+                        break
+                if future.done() and not future.cancelled():
+                    future.result()  # re-raise any exception
+                    
             except Exception as e:
                 self._error_count += 1
                 self._consecutive_errors += 1
@@ -169,3 +245,19 @@ class BackgroundLoop:
                 if self._consecutive_errors >= self.config.max_errors:
                     self._status = LoopStatus.ERROR
                     break
+                continue
+
+            # Success — reset
+            interval = self.config.interval_seconds
+
+    def _execute_task(self) -> None:
+        """Run the task on a pool worker thread (niced, with stats bookkeeping)."""
+        _nice_thread()
+        self._busy.set()
+        try:
+            self.task()
+            self._last_run = datetime.now(timezone.utc).isoformat()
+            self._run_count += 1
+            self._consecutive_errors = 0
+        finally:
+            self._busy.clear()

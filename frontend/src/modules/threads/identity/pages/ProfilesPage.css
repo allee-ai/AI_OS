@@ -414,6 +414,9 @@
 .fact-value {
   color: var(--text);
   max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   word-wrap: break-word;
 }
 

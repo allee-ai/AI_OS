@@ -138,9 +138,9 @@ async def remove_identity(profile_id: str):
 # ============================================================================
 
 @router.get("/{profile_id}/facts")
-async def get_identity_facts(profile_id: str):
+async def get_identity_facts(profile_id: str, limit: int = 500):
     """Get all identity facts for a profile."""
-    return pull_profile_facts(profile_id=profile_id)
+    return pull_profile_facts(profile_id=profile_id, limit=limit)
 
 
 @router.post("/facts")

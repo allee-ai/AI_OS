@@ -153,7 +153,9 @@ class AgentService:
                 db_name = get_db_path().name
                 print(f"📁 Conversations stored in database ({db_name})")
         
-    async def send_message(self, user_message: str, session_id: Optional[str] = None, on_tool_event: Optional[Callable] = None,\n                           provider_override: Optional[str] = None, model_override: Optional[str] = None,\n                           endpoint_override: Optional[str] = None) -> ChatMessage:
+    async def send_message(self, user_message: str, session_id: Optional[str] = None, on_tool_event: Optional[Callable] = None,
+                           provider_override: Optional[str] = None, model_override: Optional[str] = None,
+                           endpoint_override: Optional[str] = None) -> ChatMessage:
         """Send message to the agent and manage context automatically"""
         
         # Add user message to history

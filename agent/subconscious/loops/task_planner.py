@@ -675,13 +675,19 @@ STEP RESULTS:
         return self._call_ollama(prompt)
     
     def _call_ollama(self, prompt: str) -> str:
+        from .base import acquire_ollama_gate, release_ollama_gate
         import ollama
-        response = ollama.chat(
-            model=self.model,
-            messages=[{"role": "user", "content": prompt}],
-            options={"temperature": 0.2}
-        )
-        return response["message"]["content"].strip()
+        if not acquire_ollama_gate():
+            raise RuntimeError("Ollama gate timeout")
+        try:
+            response = ollama.chat(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                options={"temperature": 0.2}
+            )
+            return response["message"]["content"].strip()
+        finally:
+            release_ollama_gate()
     
     def _call_openai(self, prompt: str) -> str:
         import os, requests

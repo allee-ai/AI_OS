@@ -131,6 +131,7 @@ export const FileViewer: React.FC<FileViewerProps> = ({
 
   const language = getLanguage(file);
   const isMarkdown = file.name.endsWith('.md');
+  const isHtml = /\.html?$/i.test(file.name);
   const isImage = !!file.is_image;
   const isPdf = !!file.is_pdf;
   const isDocx = !!file.is_docx;
@@ -239,6 +240,15 @@ export const FileViewer: React.FC<FileViewerProps> = ({
         ) : isMarkdown && file.content ? (
           <div className="markdown-preview">
             {renderSimpleMarkdown(file.content)}
+          </div>
+        ) : isHtml && file.content ? (
+          <div className="html-preview">
+            <iframe
+              srcDoc={file.content}
+              title={file.name}
+              sandbox="allow-scripts allow-same-origin"
+              style={{ width: '100%', height: '100%', border: 'none' }}
+            />
           </div>
         ) : file.content ? (
           <pre className={`code-preview ${language ? `lang-${language}` : ''}`}>

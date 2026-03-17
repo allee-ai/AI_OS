@@ -402,9 +402,18 @@ const ProfileView: React.FC<ProfileViewProps> = ({
                 <span className="fact-key">{fact.key}</span>
               </td>
               <td className="fact-value">
-                {contextLevel === 1 && (fact.l1_value || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No L1 value</span>)}
-                {contextLevel === 2 && (fact.l2_value || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No L2 value</span>)}
-                {contextLevel === 3 && (fact.l3_value || <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No L3 value</span>)}
+                {(() => {
+                  const raw = contextLevel === 1 ? fact.l1_value : contextLevel === 2 ? fact.l2_value : fact.l3_value;
+                  const label = `L${contextLevel}`;
+                  if (!raw) return <span style={{ color: 'var(--text-muted)', fontStyle: 'italic' }}>No {label} value</span>;
+                  const MAX = 120;
+                  if (raw.length <= MAX) return raw;
+                  return (
+                    <span title={raw}>
+                      {raw.slice(0, MAX)}…
+                    </span>
+                  );
+                })()}
               </td>
               <td>
                 <span className="fact-type-badge">{fact.fact_type}</span>

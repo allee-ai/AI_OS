@@ -434,7 +434,12 @@ def push_profile_fact(
     l3_value: str = None,
     weight: float = None
 ) -> None:
-    """Push a fact to a profile with L1/L2/L3 verbosity levels."""
+    """Push a fact to a profile with L1/L2/L3 verbosity levels.
+    
+    Protected facts are never overwritten.  For non-protected facts the
+    update preserves existing l2/l3 values when the incoming value is NULL
+    and keeps the original fact_type when it is a curated type (not 'learned').
+    """
     
     with closing(get_connection()) as conn:
         with conn:
@@ -449,14 +454,33 @@ def push_profile_fact(
                 INSERT INTO profile_facts (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight, updated_at)
                 VALUES (?, ?, ?, ?, ?, ?, ?, CURRENT_TIMESTAMP)
                 ON CONFLICT(profile_id, key) DO UPDATE SET
-                    fact_type = excluded.fact_type,
-                    l1_value = excluded.l1_value,
-                    l2_value = excluded.l2_value,
-                    l3_value = excluded.l3_value,
-                    weight = excluded.weight,
+                    fact_type = CASE
+                        WHEN profile_facts.protected THEN profile_facts.fact_type
+                        WHEN profile_facts.fact_type != 'learned' THEN profile_facts.fact_type
+                        ELSE excluded.fact_type
+                    END,
+                    l1_value = CASE
+                        WHEN profile_facts.protected THEN profile_facts.l1_value
+                        ELSE COALESCE(excluded.l1_value, profile_facts.l1_value)
+                    END,
+                    l2_value = CASE
+                        WHEN profile_facts.protected THEN profile_facts.l2_value
+                        ELSE COALESCE(excluded.l2_value, profile_facts.l2_value)
+                    END,
+                    l3_value = CASE
+                        WHEN profile_facts.protected THEN profile_facts.l3_value
+                        ELSE COALESCE(excluded.l3_value, profile_facts.l3_value)
+                    END,
+                    weight = CASE
+                        WHEN profile_facts.protected THEN profile_facts.weight
+                        ELSE excluded.weight
+                    END,
                     access_count = access_count + 1,
                     last_accessed = CURRENT_TIMESTAMP,
-                    updated_at = CURRENT_TIMESTAMP
+                    updated_at = CASE
+                        WHEN profile_facts.protected THEN profile_facts.updated_at
+                        ELSE CURRENT_TIMESTAMP
+                    END
             """, (profile_id, key, fact_type, l1_value, l2_value, l3_value, weight))
 
 
@@ -466,32 +490,49 @@ def pull_profile_facts(
     min_weight: float = 0.0,
     limit: int = 100
 ) -> List[Dict]:
-    """Pull facts, optionally filtered by profile and/or fact type."""
+    """Pull facts, optionally filtered by profile and/or fact type.
+    
+    Protected facts are always included regardless of weight or limit.
+    """
     ensure_initialized()
     conn = get_connection(readonly=True)
     try:
         cur = conn.cursor()
-        
-        query = """
-            SELECT pf.*, p.display_name, p.type_name, pt.trust_level
-            FROM profile_facts pf
-            JOIN profiles p ON pf.profile_id = p.profile_id
-            JOIN profile_types pt ON p.type_name = pt.type_name
-            WHERE pf.weight >= ?
-        """
-        params = [min_weight]
-        
+
+        # --- filters shared by both halves of the UNION ----
+        where_extra = ""
+        base_params: list = []
         if profile_id:
-            query += " AND pf.profile_id = ?"
-            params.append(profile_id) # pyright: ignore[reportArgumentType]
-        
+            where_extra += " AND pf.profile_id = ?"
+            base_params.append(profile_id)
         if fact_type:
-            query += " AND pf.fact_type = ?"
-            params.append(fact_type)
-        
-        query += " ORDER BY pf.weight DESC, pf.key LIMIT ?"
-        params.append(limit)
-        
+            where_extra += " AND pf.fact_type = ?"
+            base_params.append(fact_type)
+
+        # Protected facts first (no weight / limit filter)
+        # then regular facts by weight desc, up to limit
+        query = f"""
+            SELECT * FROM (
+                SELECT pf.*, p.display_name, p.type_name AS profile_type, pt.trust_level, 0 AS _sort
+                FROM profile_facts pf
+                JOIN profiles p ON pf.profile_id = p.profile_id
+                JOIN profile_types pt ON p.type_name = pt.type_name
+                WHERE pf.protected = 1 {where_extra}
+              UNION ALL
+                SELECT * FROM (
+                    SELECT pf.*, p.display_name, p.type_name AS profile_type, pt.trust_level, 1 AS _sort
+                    FROM profile_facts pf
+                    JOIN profiles p ON pf.profile_id = p.profile_id
+                    JOIN profile_types pt ON p.type_name = pt.type_name
+                    WHERE pf.protected != 1 AND pf.weight >= ? {where_extra}
+                    ORDER BY pf.weight DESC, pf.key
+                    LIMIT ?
+                )
+            )
+            ORDER BY _sort, weight DESC, key
+        """
+        params = base_params + [min_weight] + base_params + [limit]
+
         cur.execute(query, params)
         return [dict(row) for row in cur.fetchall()]
     finally:

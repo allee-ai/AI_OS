@@ -417,6 +417,7 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
   const [selectedModel, setSelectedModel] = useState('mlx-community/Qwen2.5-7B-Instruct-4bit');
   const [runName, setRunName] = useState('');
   const [runs, setRuns] = useState<FTRun[]>([]);
+  const [resumeAdapter, setResumeAdapter] = useState('');
 
   const mod = modules.find(m => m.name === selectedModule);
 
@@ -515,12 +516,12 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
   const handleTrain = async () => {
     setTraining(true);
     const label = runName.trim() || undefined;
-    setLogs(prev => [...prev, `🚀 Starting training: ${label || 'auto-named'} on ${selectedModel.split('/').pop()}…`]);
+    setLogs(prev => [...prev, `🚀 Starting training: ${label || 'auto-named'} on ${selectedModel.split('/').pop()}${resumeAdapter ? ' (resuming)' : ''}…`]);
     try {
       const res = await fetch('/api/finetune/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ ...config, base_model: selectedModel, run_name: label }),
+        body: JSON.stringify({ ...config, base_model: selectedModel, run_name: label, resume_adapter: resumeAdapter || undefined }),
       });
       if (!res.ok) throw new Error('start failed');
       const d = await res.json();
@@ -591,6 +592,26 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
             <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
               Leave blank for auto-generated timestamp name
             </div>
+            {runs.filter(r => r.has_adapters).length > 0 && (
+              <>
+                <div style={{ ...S.sectionTitle, marginTop: 12 }}>🔄 Resume From Adapter</div>
+                <select
+                  style={{ ...S.input, width: '100%', textAlign: 'left', padding: '8px 12px', fontSize: 13 }}
+                  value={resumeAdapter}
+                  onChange={e => setResumeAdapter(e.target.value)}
+                >
+                  <option value="">Fresh training (no resume)</option>
+                  {runs.filter(r => r.has_adapters).map(r => (
+                    <option key={r.name} value={`runs/${r.name}/adapters`}>
+                      {r.name} {r.base_model ? `(${r.base_model.split('/').pop()})` : ''}
+                    </option>
+                  ))}
+                </select>
+                <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 4 }}>
+                  Continue training from a previous run's adapter weights
+                </div>
+              </>
+            )}
           </div>
 
           {/* Global actions */}

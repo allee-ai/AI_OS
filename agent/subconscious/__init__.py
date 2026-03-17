@@ -236,6 +236,20 @@ def sleep() -> None:
     core.sleep()
 
 
+def pause_loops(wait: bool = True, timeout: float = 120.0) -> None:
+    """Pause all background loops, optionally waiting for in-progress tasks to finish."""
+    if _loop_manager:
+        _loop_manager.pause_all(wait=wait, timeout=timeout)
+        print("[Subconscious] All loops paused")
+
+
+def resume_loops() -> None:
+    """Resume all previously paused background loops."""
+    if _loop_manager:
+        _loop_manager.resume_all()
+        print("[Subconscious] All loops resumed")
+
+
 def get_consciousness_context(level: int = 2, query: str = "") -> str:
     """
     Format context as a string for system prompt injection.
@@ -319,6 +333,8 @@ __all__ = [
     # Main API
     "wake",
     "sleep",
+    "pause_loops",
+    "resume_loops",
     "get_consciousness_context",
     "get_status",
     "register_thread",

@@ -47,11 +47,21 @@ class ConsolidationLoop(BackgroundLoop):
         return base
     
     def _consolidate(self) -> None:
-        """Run consolidation - score facts and promote approved ones."""
-        self._update_thread_summaries()
-        self._summarize_unsummarized_conversations()
-        self._score_and_triage_pending()
-        self._promote_approved_facts()
+        """Run consolidation - score facts and promote approved ones.
+        
+        Acquires the Ollama gate for the full cycle since summarization
+        and scoring both hit Ollama (LLM + embeddings).
+        """
+        from .base import acquire_ollama_gate, release_ollama_gate
+        if not acquire_ollama_gate():
+            return  # Another heavy loop is using Ollama — skip this cycle
+        try:
+            self._update_thread_summaries()
+            self._summarize_unsummarized_conversations()
+            self._score_and_triage_pending()
+            self._promote_approved_facts()
+        finally:
+            release_ollama_gate()
     
     def _get_linking_core(self):
         """Get or create the LinkingCore adapter for scoring."""
@@ -229,6 +239,17 @@ class ConsolidationLoop(BackgroundLoop):
             identity_count = 0
             philosophy_count = 0
             
+            # Pre-fetch existing identity keys to avoid overwriting curated facts
+            existing_keys = set()
+            try:
+                existing_facts = pull_profile_facts(profile_id="primary_user", limit=5000)
+                for f in existing_facts:
+                    # Consider a key "occupied" if it has actual data (l1_value set)
+                    if f.get("l1_value"):
+                        existing_keys.add(f["key"])
+            except Exception:
+                pass
+            
             for fact in approved:
                 try:
                     fact_destination = self._classify_fact_destination(fact.text)
@@ -249,6 +270,11 @@ class ConsolidationLoop(BackgroundLoop):
                         )
                         philosophy_count += 1
                     else:
+                        # Skip if this key already has real data — don't overwrite
+                        # curated facts with extracted snippets
+                        if key in existing_keys:
+                            mark_consolidated(fact.id)
+                            continue
                         push_profile_fact(
                             profile_id="primary_user",
                             key=key,

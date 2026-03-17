@@ -157,17 +157,54 @@ class TrainingGenLoop(BackgroundLoop):
         base["generated_dir"] = str(GENERATED_DIR)
         return base
     
+    # Map modules to their best-matching Claude example files
+    CLAUDE_SEED_MAP: Dict[str, str] = {
+        "identity": "claude_identity", "form": "claude_form_tools",
+        "form_tools": "claude_form_tools", "subconscious": "claude_subconscious",
+        "architecture": "claude_architecture", "agent_core": "claude_architecture",
+        "agent_services": "claude_architecture", "linking_core": "claude_orchestrator",
+        "log": "claude_threads_detail", "reflex": "claude_threads_detail",
+        "philosophy": "claude_threads_detail", "chat": "claude_architecture",
+        "docs": "claude_training_pipeline", "scripts": "claude_training_pipeline",
+        "feeds": "claude_architecture", "workspace": "claude_architecture",
+        "data_db": "claude_architecture", "parsers": "claude_architecture",
+    }
+
     def _get_seed_examples(self, module: str) -> str:
-        """Get reasoning examples for a module as seed context."""
-        try:
-            from finetune.gold_examples import get_reasoning_for_module
-            reasoning = get_reasoning_for_module(module)
-            if not reasoning:
-                return ""
-            seeds = reasoning[:3]
-            return json.dumps(seeds, indent=2)
-        except Exception:
+        """Get reasoning examples for a module as seed context.
+        
+        Prefers high-quality Claude-generated examples when available,
+        falls back to gold_examples.py.
+        """
+        seeds: list = []
+
+        # 1. Try Claude seeds first
+        claude_file = self.CLAUDE_SEED_MAP.get(module)
+        if claude_file:
+            claude_path = GENERATED_DIR / f"{claude_file}.jsonl"
+            if claude_path.exists():
+                try:
+                    with open(claude_path) as f:
+                        for line in f:
+                            line = line.strip()
+                            if line:
+                                seeds.append(json.loads(line))
+                except Exception:
+                    pass
+
+        # 2. Fall back to gold examples if we have fewer than 2 Claude seeds
+        if len(seeds) < 2:
+            try:
+                from finetune.gold_examples import get_reasoning_for_module
+                reasoning = get_reasoning_for_module(module)
+                if reasoning:
+                    seeds.extend(reasoning[:3])
+            except Exception:
+                pass
+
+        if not seeds:
             return ""
+        return json.dumps(seeds[:5], indent=2)
     
     def _get_module_context(self, module: str) -> str:
         """Get module-specific context for generation."""
@@ -396,16 +433,22 @@ class TrainingGenLoop(BackgroundLoop):
             return resp.json()["choices"][0]["message"]["content"].strip()
         
         # Default: Ollama
+        from .base import acquire_ollama_gate, release_ollama_gate
         import ollama
-        response = ollama.chat(
-            model=self.model,
-            messages=[
-                {"role": "system", "content": GENERATOR_SYSTEM},
-                {"role": "user", "content": prompt},
-            ],
-            options={"temperature": 0.7, "num_predict": 4096},
-        )
-        return response["message"]["content"].strip()
+        if not acquire_ollama_gate():
+            raise RuntimeError("Ollama gate timeout")
+        try:
+            response = ollama.chat(
+                model=self.model,
+                messages=[
+                    {"role": "system", "content": GENERATOR_SYSTEM},
+                    {"role": "user", "content": prompt},
+                ],
+                options={"temperature": 0.7, "num_predict": 4096},
+            )
+            return response["message"]["content"].strip()
+        finally:
+            release_ollama_gate()
     
     def _parse_examples(self, raw: str, module: str) -> List[Dict[str, Any]]:
         """Parse and validate LLM output into training examples."""
@@ -603,6 +646,28 @@ class TrainingGenLoop(BackgroundLoop):
             pass
         
         print(f"[TrainingGen] Run #{self._generation_count}: generated {total} examples, total lifetime: {self._total_generated}")
+
+    def generate_seeded_batch(self, questions_per_module: int = 10) -> Dict[str, int]:
+        """Generate a batch of seeded examples across all modules.
+        
+        Calls _generate_for_module() ceil(N/5) times per module
+        since each call produces ~5 examples.
+        Returns dict of {module: examples_generated}.
+        """
+        import math
+        calls_per = math.ceil(questions_per_module / 5)
+        results: Dict[str, int] = {}
+        for module in MODULES:
+            count = 0
+            for _ in range(calls_per):
+                count += self._generate_for_module(module)
+                time.sleep(1)
+            results[module] = count
+            if count > 0:
+                time.sleep(2)
+        total = sum(results.values())
+        print(f"[TrainingGen] Seeded batch: {total} examples across {len(MODULES)} modules")
+        return results
 
 
 # ─────────────────────────────────────────────────────

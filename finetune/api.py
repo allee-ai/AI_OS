@@ -37,6 +37,7 @@ class FinetuneConfig(BaseModel):
     iters: Optional[int] = None
     warmup: Optional[int] = None            # LR warmup steps
     max_seq_length: Optional[int] = None    # Max context window for training
+    resume_adapter: Optional[str] = None    # Path to adapter to resume from (e.g. runs/base-v1/adapters)
 
 
 # ── Known MLX models (downloadable from HF) ─────────────────────────
@@ -55,21 +56,44 @@ RUNS_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def run_training_script(script_path: Path, cwd: Path, env_overrides: Optional[Dict[str, str]] = None):
-    """Run training script in background with optional env overrides."""
+    """Run training script in background with optional env overrides.
+    
+    Pauses all subconscious loops before training (waiting for any
+    in-progress iteration to finish) and resumes them when training
+    completes or fails.
+    """
     import os as _os
+
+    # Pause loops — waits for any in-flight task to finish
+    try:
+        from agent.subconscious import pause_loops, resume_loops
+        pause_loops(wait=True, timeout=120.0)
+        loops_paused = True
+    except Exception as e:
+        logger.warning(f"Could not pause loops: {e}")
+        loops_paused = False
+
     try:
         env = {**_os.environ, **(env_overrides or {})}
         logger.info(f"Starting training script: {script_path} in {cwd}")
-        subprocess.Popen(
+        proc = subprocess.Popen(
             ["/bin/bash", script_path.name],
             cwd=str(cwd),
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
             env=env,
         )
-        logger.info("Training process spawned successfully.")
+        logger.info("Training process spawned — loops paused until it finishes.")
+        proc.wait()  # block until training completes
+        logger.info(f"Training process exited with code {proc.returncode}.")
     except Exception as e:
-        logger.error(f"Failed to start training subprocess: {e}")
+        logger.error(f"Failed to run training subprocess: {e}")
+    finally:
+        if loops_paused:
+            try:
+                resume_loops()
+            except Exception as e:
+                logger.warning(f"Could not resume loops: {e}")
 
 
 @router.get("/models")
@@ -185,6 +209,20 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
             "started_at": datetime.now(timezone.utc).isoformat(),
             "status": "training",
         }
+
+        # Resolve resume adapter path
+        resume_path = ""
+        if config.resume_adapter:
+            candidate = Path(config.resume_adapter)
+            if not candidate.is_absolute():
+                candidate = FINETUNE_DIR / candidate
+            if candidate.exists():
+                resume_path = str(candidate)
+                run_meta["resumed_from"] = config.resume_adapter
+                logger.info(f"Resuming from adapter: {resume_path}")
+            else:
+                logger.warning(f"Resume adapter path not found: {candidate}")
+
         (run_dir / "run_meta.json").write_text(json.dumps(run_meta, indent=2))
 
         logger.info(f"Training started: run={run_name}, model={base_model}")
@@ -195,6 +233,7 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
             "AIOS_FT_ADAPTER_DIR": str(adapter_dir),
             "AIOS_FT_RUN_NAME": run_name,
             "AIOS_FT_RUN_DIR": str(run_dir),
+            "AIOS_FT_RESUME_ADAPTER": resume_path,
         }
         background_tasks.add_task(run_training_script, script_path, FINETUNE_DIR, env_overrides)
 
@@ -961,6 +1000,32 @@ async def trigger_generation(body: GenerateRequest, background_tasks: Background
         "status": "started",
         "mode": "module",
         "modules": target_modules,
+        "before_counts": before,
+    }
+
+
+class SeededBatchRequest(BaseModel):
+    questions_per_module: int = 10
+
+
+@router.post("/generate/seeded-batch")
+async def trigger_seeded_batch(body: SeededBatchRequest, background_tasks: BackgroundTasks):
+    """Generate a full batch of Claude-seeded examples across all modules."""
+    from agent.subconscious.loops.training_gen import TrainingGenLoop, ALL_MODULES, get_generated_count
+
+    before = {m: get_generated_count(m) for m in ALL_MODULES}
+    loop = TrainingGenLoop(enabled=True)
+
+    def _run():
+        loop.generate_seeded_batch(questions_per_module=body.questions_per_module)
+
+    background_tasks.add_task(_run)
+
+    return {
+        "status": "started",
+        "mode": "seeded-batch",
+        "questions_per_module": body.questions_per_module,
+        "modules": list(ALL_MODULES),
         "before_counts": before,
     }
 
