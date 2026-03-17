@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
 import type { WebSocketMessage } from '../types/chat';
 import { API_CONFIG, CHAT_CONFIG } from '../utils/constants';
+import { IS_DEMO } from '../../../config/api';
 
 export const useWebSocket = () => {
   const ws = useRef<WebSocket | null>(null);
@@ -9,6 +10,7 @@ export const useWebSocket = () => {
   const [connectionAttempts, setConnectionAttempts] = useState(0);
 
   const connect = useCallback(() => {
+    if (IS_DEMO) return;
     if (ws.current?.readyState === WebSocket.OPEN) {
       return;
     }

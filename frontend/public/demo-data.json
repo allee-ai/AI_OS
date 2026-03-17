@@ -1,0 +1,576 @@
+{
+  "GET /api/db-mode/mode": {
+    "mode": "demo",
+    "label": "Demo Mode"
+  },
+  "GET /api/models/setup/status": {
+    "configured": true,
+    "provider": "ollama",
+    "model": "qwen2.5:7b"
+  },
+  "GET /api/chat/agent-status": {
+    "status": "awake",
+    "name": "Nola",
+    "uptime": 86400,
+    "version": "0.9.0"
+  },
+  "GET /api/chat/history": {
+    "messages": [
+      {
+        "id": "msg-001",
+        "role": "user",
+        "content": "What is AI OS?",
+        "timestamp": "2025-01-15T10:30:00Z"
+      },
+      {
+        "id": "msg-002",
+        "role": "assistant",
+        "content": "AI OS is a local-first cognitive operating system. It gives you a personal AI agent that runs entirely on your machine — your data never leaves your device. It has identity threads, memory consolidation, feeds integration, and a subconscious processing loop that learns from your conversations over time.",
+        "timestamp": "2025-01-15T10:30:05Z"
+      },
+      {
+        "id": "msg-003",
+        "role": "user",
+        "content": "How does the memory system work?",
+        "timestamp": "2025-01-15T10:31:00Z"
+      },
+      {
+        "id": "msg-004",
+        "role": "assistant",
+        "content": "The memory system has three layers:\n\n1. **Short-term memory** — Recent conversation turns held in a buffer\n2. **Temporary facts** — Extracted insights awaiting your approval\n3. **Long-term memory** — Approved facts consolidated into identity threads\n\nThe subconscious loop processes conversations in the background, extracting facts and strengthening neural pathways through a potentiation system inspired by how biological memory works.",
+        "timestamp": "2025-01-15T10:31:08Z"
+      },
+      {
+        "id": "msg-005",
+        "role": "user",
+        "content": "Can you show me what threads look like?",
+        "timestamp": "2025-01-15T10:32:00Z"
+      },
+      {
+        "id": "msg-006",
+        "role": "assistant",
+        "content": "Sure! Navigate to the **Threads** page to see all your cognitive threads. Each thread represents a domain of self-knowledge:\n\n- **Identity** — Who you are, preferences, background\n- **Philosophy** — Your beliefs, values, worldview\n- **Reflex** — Communication patterns, tone, style\n- **Form** — Tools and capabilities\n\nEach thread has its own health score based on how many facts it contains and how recently they've been updated.",
+        "timestamp": "2025-01-15T10:32:12Z"
+      }
+    ]
+  },
+  "GET /api/chat/sessions": {
+    "sessions": [
+      {
+        "session_id": "sess-001",
+        "title": "Getting started with AI OS",
+        "message_count": 6,
+        "created_at": "2025-01-15T10:30:00Z",
+        "updated_at": "2025-01-15T10:32:12Z"
+      },
+      {
+        "session_id": "sess-002",
+        "title": "Memory and identity threads",
+        "message_count": 4,
+        "created_at": "2025-01-14T15:00:00Z",
+        "updated_at": "2025-01-14T15:10:00Z"
+      },
+      {
+        "session_id": "sess-003",
+        "title": "Setting up feeds",
+        "message_count": 8,
+        "created_at": "2025-01-13T09:00:00Z",
+        "updated_at": "2025-01-13T09:20:00Z"
+      }
+    ]
+  },
+  "GET /api/chat/conversations": {
+    "conversations": [
+      {
+        "id": "conv-001",
+        "title": "Getting started with AI OS",
+        "message_count": 6,
+        "created_at": "2025-01-15T10:30:00Z",
+        "updated_at": "2025-01-15T10:32:12Z"
+      },
+      {
+        "id": "conv-002",
+        "title": "Memory and identity threads",
+        "message_count": 4,
+        "created_at": "2025-01-14T15:00:00Z",
+        "updated_at": "2025-01-14T15:10:00Z"
+      }
+    ],
+    "total": 2
+  },
+  "GET /api/chat/conversations/:id": {
+    "id": "conv-001",
+    "title": "Getting started with AI OS",
+    "messages": [
+      { "id": "msg-001", "role": "user", "content": "What is AI OS?", "timestamp": "2025-01-15T10:30:00Z" },
+      { "id": "msg-002", "role": "assistant", "content": "AI OS is a local-first cognitive operating system that runs entirely on your machine.", "timestamp": "2025-01-15T10:30:05Z" }
+    ]
+  },
+  "GET /api/models": {
+    "models": [
+      { "id": "qwen2.5:7b", "name": "Qwen 2.5 7B", "provider": "ollama", "description": "Recommended — fast and capable" },
+      { "id": "llama3.2:3b", "name": "Llama 3.2 3B", "provider": "ollama", "description": "Lightweight, good for lower-end hardware" },
+      { "id": "nola-v1", "name": "Nola v1 (Fine-tuned)", "provider": "ollama", "description": "Custom fine-tuned model" }
+    ]
+  },
+  "GET /api/models/current": {
+    "model": "qwen2.5:7b",
+    "provider": "ollama"
+  },
+  "GET /api/models/providers": {
+    "providers": [
+      { "id": "ollama", "name": "Ollama", "description": "Local models via Ollama", "requires_key": false, "requires_endpoint": false, "connected": true, "setup_url": null },
+      { "id": "openai", "name": "OpenAI", "description": "GPT models via API", "requires_key": true, "requires_endpoint": false, "connected": false, "setup_url": null }
+    ]
+  },
+  "GET /api/models/library": {
+    "models": [
+      { "id": "qwen2.5:7b", "name": "Qwen 2.5 7B", "parameters": "7B", "size": "4.4GB", "description": "Great all-around model", "installed": true },
+      { "id": "llama3.2:3b", "name": "Llama 3.2 3B", "parameters": "3B", "size": "2.0GB", "description": "Fast and lightweight", "installed": true },
+      { "id": "deepseek-r1:7b", "name": "DeepSeek R1 7B", "parameters": "7B", "size": "4.7GB", "description": "Strong reasoning model", "installed": false }
+    ]
+  },
+  "POST /api/db-mode/mode": {
+    "mode": "demo"
+  },
+  "POST /api/chat/message": {
+    "id": "msg-demo",
+    "role": "assistant",
+    "content": "This is a demo — chat is view-only in this mode. Try exploring the other pages to see how AI OS works!",
+    "timestamp": "2025-01-15T12:00:00Z"
+  },
+  "POST /api/chat/start-session": {
+    "session_id": "demo-session",
+    "created": true
+  },
+  "GET /api/chat/search": {
+    "results": [],
+    "total": 0
+  },
+  "GET /api/chat/export": {
+    "messages": [],
+    "exported_at": "2025-01-15T12:00:00Z"
+  },
+  "GET /api/chat/conversations/search": {
+    "conversations": [],
+    "total": 0
+  },
+  "GET /api/chat/conversations/summary": {
+    "total": 3,
+    "this_week": 2,
+    "avg_length": 5
+  },
+
+  "GET /api/feeds/sources": {
+    "sources": [
+      { "id": "src-001", "name": "Hacker News", "type": "rss", "url": "https://news.ycombinator.com/rss", "enabled": true, "last_poll": "2025-01-15T08:00:00Z", "item_count": 30 },
+      { "id": "src-002", "name": "ArXiv AI Papers", "type": "rss", "url": "https://arxiv.org/rss/cs.AI", "enabled": true, "last_poll": "2025-01-15T07:00:00Z", "item_count": 25 },
+      { "id": "src-003", "name": "Personal Gmail", "type": "email", "url": null, "enabled": false, "last_poll": null, "item_count": 0 }
+    ]
+  },
+  "GET /api/feeds/items": {
+    "items": [
+      { "id": "item-001", "source_id": "src-001", "title": "Show HN: Local-first AI assistant that runs on your laptop", "url": "https://example.com/1", "summary": "A new open-source project for running AI locally...", "published": "2025-01-15T06:00:00Z", "read": false, "starred": true },
+      { "id": "item-002", "source_id": "src-001", "title": "The case for personal AI that doesn't phone home", "url": "https://example.com/2", "summary": "Privacy-first approaches to AI assistants are gaining traction...", "published": "2025-01-15T05:30:00Z", "read": true, "starred": false },
+      { "id": "item-003", "source_id": "src-002", "title": "Efficient Fine-tuning with Memory-Augmented Architectures", "url": "https://example.com/3", "summary": "We present a novel approach to fine-tuning that leverages memory augmentation...", "published": "2025-01-15T04:00:00Z", "read": false, "starred": false },
+      { "id": "item-004", "source_id": "src-002", "title": "Neural Potentiation: A Biologically-Inspired Memory System", "url": "https://example.com/4", "summary": "Drawing from neuroscience, we propose a memory consolidation framework...", "published": "2025-01-14T22:00:00Z", "read": false, "starred": true },
+      { "id": "item-005", "source_id": "src-001", "title": "Why SQLite is the best database for desktop apps", "url": "https://example.com/5", "summary": "SQLite remains the gold standard for local-first applications...", "published": "2025-01-14T20:00:00Z", "read": true, "starred": false }
+    ],
+    "total": 55
+  },
+  "GET /api/feeds/templates": {
+    "templates": [
+      { "id": "tpl-001", "name": "Tech News Digest", "prompt": "Summarize these articles focusing on AI and developer tools", "source_ids": ["src-001"] },
+      { "id": "tpl-002", "name": "Research Paper Brief", "prompt": "Extract key findings and methodologies from these papers", "source_ids": ["src-002"] }
+    ]
+  },
+  "GET /api/feeds/triggers": {
+    "triggers": [
+      { "id": "trg-001", "name": "Morning Digest", "schedule": "0 8 * * *", "template_id": "tpl-001", "enabled": true, "last_run": "2025-01-15T08:00:00Z" }
+    ]
+  },
+  "GET /api/feeds/integrations/email/status": {
+    "connected": false,
+    "provider": null
+  },
+  "GET /api/feeds/integrations/github/status": {
+    "connected": false,
+    "username": null
+  },
+
+  "GET /api/threads/health": {
+    "threads": {
+      "identity": { "fact_count": 47, "health": 0.85, "last_updated": "2025-01-15T09:00:00Z" },
+      "philosophy": { "fact_count": 23, "health": 0.72, "last_updated": "2025-01-14T18:00:00Z" },
+      "reflex": { "fact_count": 18, "health": 0.65, "last_updated": "2025-01-14T12:00:00Z" },
+      "form": { "fact_count": 12, "health": 0.55, "last_updated": "2025-01-13T15:00:00Z" }
+    },
+    "overall_health": 0.72
+  },
+  "GET /api/database/threads-summary": {
+    "threads": [
+      { "name": "identity", "tables": ["identity_profiles", "identity_facts"], "total_rows": 47 },
+      { "name": "philosophy", "tables": ["philosophy_profiles", "philosophy_facts"], "total_rows": 23 },
+      { "name": "reflex", "tables": ["reflex_protocols"], "total_rows": 18 },
+      { "name": "form", "tables": ["form_tools"], "total_rows": 12 }
+    ]
+  },
+  "GET /api/database/tables": {
+    "tables": ["conversations", "messages", "identity_profiles", "identity_facts", "philosophy_profiles", "philosophy_facts", "reflex_protocols", "form_tools", "feeds_sources", "feeds_items", "temp_facts", "memory_potentiation"]
+  },
+  "GET /api/database/identity-hea": {
+    "modules": [
+      { "key": "core", "label": "Core Identity", "fact_count": 15 },
+      { "key": "preferences", "label": "Preferences", "fact_count": 12 },
+      { "key": "background", "label": "Background", "fact_count": 10 },
+      { "key": "goals", "label": "Goals", "fact_count": 10 }
+    ]
+  },
+  "GET /api/identity/introspect": {
+    "summary": "The agent has a well-formed identity with 47 facts across 4 modules. Core identity is strong with clear self-concept. Preferences are well-defined. Background knowledge is developing.",
+    "confidence": 0.85
+  },
+
+  "GET /api/identity/types": ["identity", "philosophy"],
+  "GET /api/identity/profiles": {
+    "profiles": [
+      { "id": "prof-001", "name": "Core Self", "type": "identity", "module": "core", "description": "Fundamental identity facts", "fact_count": 15, "created_at": "2025-01-10T10:00:00Z" },
+      { "id": "prof-002", "name": "Preferences", "type": "identity", "module": "preferences", "description": "User preferences and likes", "fact_count": 12, "created_at": "2025-01-10T10:00:00Z" },
+      { "id": "prof-003", "name": "Background", "type": "identity", "module": "background", "description": "Personal history and context", "fact_count": 10, "created_at": "2025-01-11T10:00:00Z" },
+      { "id": "prof-004", "name": "Goals", "type": "identity", "module": "goals", "description": "Active goals and aspirations", "fact_count": 10, "created_at": "2025-01-12T10:00:00Z" }
+    ]
+  },
+  "GET /api/identity/profiles/:id": {
+    "id": "prof-001",
+    "name": "Core Self",
+    "type": "identity",
+    "module": "core",
+    "description": "Fundamental identity facts",
+    "facts": [
+      { "id": "fact-001", "text": "Prefers direct, concise communication", "confidence": 0.95, "source": "conversation", "created_at": "2025-01-10T10:00:00Z" },
+      { "id": "fact-002", "text": "Values privacy and local-first software", "confidence": 0.92, "source": "conversation", "created_at": "2025-01-10T11:00:00Z" },
+      { "id": "fact-003", "text": "Interested in AI, machine learning, and cognitive science", "confidence": 0.90, "source": "conversation", "created_at": "2025-01-11T09:00:00Z" }
+    ]
+  },
+  "GET /api/identity/profiles/:id/facts": {
+    "facts": [
+      { "id": "fact-001", "text": "Prefers direct, concise communication", "confidence": 0.95, "source": "conversation", "created_at": "2025-01-10T10:00:00Z" },
+      { "id": "fact-002", "text": "Values privacy and local-first software", "confidence": 0.92, "source": "conversation", "created_at": "2025-01-10T11:00:00Z" },
+      { "id": "fact-003", "text": "Interested in AI, machine learning, and cognitive science", "confidence": 0.90, "source": "conversation", "created_at": "2025-01-11T09:00:00Z" }
+    ]
+  },
+
+  "GET /api/philosophy/profiles": {
+    "profiles": [
+      { "id": "phil-001", "name": "Ethics", "type": "philosophy", "module": "ethics", "description": "Ethical principles and values", "fact_count": 8, "created_at": "2025-01-10T10:00:00Z" },
+      { "id": "phil-002", "name": "Epistemology", "type": "philosophy", "module": "epistemology", "description": "Beliefs about knowledge and truth", "fact_count": 7, "created_at": "2025-01-10T10:00:00Z" },
+      { "id": "phil-003", "name": "Aesthetics", "type": "philosophy", "module": "aesthetics", "description": "Views on beauty, art, and design", "fact_count": 8, "created_at": "2025-01-11T10:00:00Z" }
+    ]
+  },
+  "GET /api/philosophy/profiles/:id": {
+    "id": "phil-001",
+    "name": "Ethics",
+    "type": "philosophy",
+    "module": "ethics",
+    "facts": [
+      { "id": "pfact-001", "text": "Believes in open-source as a public good", "confidence": 0.88, "source": "conversation" },
+      { "id": "pfact-002", "text": "Privacy is a fundamental right, not a feature", "confidence": 0.95, "source": "conversation" }
+    ]
+  },
+
+  "GET /api/reflex/all": {
+    "protocols": [
+      { "id": "ref-001", "trigger": "greeting", "pattern": "Warm but concise — no filler phrases", "confidence": 0.90, "fire_count": 42, "last_fired": "2025-01-15T10:30:00Z" },
+      { "id": "ref-002", "trigger": "technical_question", "pattern": "Lead with the answer, then explain. Use code blocks for code.", "confidence": 0.88, "fire_count": 28, "last_fired": "2025-01-15T10:31:00Z" },
+      { "id": "ref-003", "trigger": "emotional_support", "pattern": "Acknowledge first, then offer perspective. Never dismiss.", "confidence": 0.85, "fire_count": 15, "last_fired": "2025-01-14T20:00:00Z" },
+      { "id": "ref-004", "trigger": "clarification_needed", "pattern": "Ask one focused question rather than multiple", "confidence": 0.82, "fire_count": 20, "last_fired": "2025-01-15T09:00:00Z" }
+    ]
+  },
+  "GET /api/reflex/stats": {
+    "total_protocols": 4,
+    "total_fires": 105,
+    "avg_confidence": 0.86,
+    "most_fired": "greeting"
+  },
+  "GET /api/reflex/triggers": {
+    "triggers": ["greeting", "technical_question", "emotional_support", "clarification_needed", "code_review", "summarization"]
+  },
+
+  "GET /api/form/tools": {
+    "tools": [
+      { "id": "tool-001", "name": "web_search", "description": "Search the web for current information", "category": "research", "enabled": true },
+      { "id": "tool-002", "name": "file_read", "description": "Read file contents from workspace", "category": "workspace", "enabled": true },
+      { "id": "tool-003", "name": "code_execute", "description": "Execute code in a sandboxed environment", "category": "development", "enabled": false },
+      { "id": "tool-004", "name": "memory_search", "description": "Search through stored memories and facts", "category": "memory", "enabled": true }
+    ]
+  },
+  "GET /api/form/categories": ["research", "workspace", "development", "memory", "communication"],
+
+  "GET /api/linking_core/cooccurrence": {
+    "pairs": [
+      { "concept_a": "privacy", "concept_b": "local-first", "count": 12, "strength": 0.92 },
+      { "concept_a": "memory", "concept_b": "identity", "count": 8, "strength": 0.78 },
+      { "concept_a": "AI", "concept_b": "cognitive science", "count": 6, "strength": 0.70 }
+    ]
+  },
+  "GET /api/linking_core/graph": {
+    "nodes": [
+      { "id": "privacy", "label": "Privacy", "weight": 15 },
+      { "id": "local-first", "label": "Local-first", "weight": 12 },
+      { "id": "memory", "label": "Memory", "weight": 10 },
+      { "id": "identity", "label": "Identity", "weight": 9 },
+      { "id": "AI", "label": "AI", "weight": 8 },
+      { "id": "cognitive", "label": "Cognitive Science", "weight": 6 }
+    ],
+    "edges": [
+      { "source": "privacy", "target": "local-first", "weight": 0.92 },
+      { "source": "memory", "target": "identity", "weight": 0.78 },
+      { "source": "AI", "target": "cognitive", "weight": 0.70 },
+      { "source": "memory", "target": "AI", "weight": 0.55 }
+    ]
+  },
+
+  "GET /api/log/tables": {
+    "tables": ["events", "daemon", "server", "functions"]
+  },
+  "GET /api/log/events": {
+    "events": [
+      { "id": 1, "type": "chat", "message": "User conversation started", "timestamp": "2025-01-15T10:30:00Z" },
+      { "id": 2, "type": "memory", "message": "Fact extracted: prefers concise communication", "timestamp": "2025-01-15T10:30:10Z" },
+      { "id": 3, "type": "subconscious", "message": "Memory consolidation loop completed", "timestamp": "2025-01-15T10:35:00Z" },
+      { "id": 4, "type": "feeds", "message": "RSS poll: 5 new items from Hacker News", "timestamp": "2025-01-15T08:00:00Z" },
+      { "id": 5, "type": "system", "message": "Agent status: awake", "timestamp": "2025-01-15T07:00:00Z" }
+    ],
+    "total": 5
+  },
+
+  "GET /api/subconscious/loops": {
+    "loops": [
+      { "name": "memory", "status": "running", "interval": 300, "enabled": true, "context_aware": true, "max_errors": 3, "error_backoff": 60, "last_run": "2025-01-15T10:35:00Z", "run_count": 142, "error_count": 0, "consecutive_errors": 0, "model": "qwen2.5:7b", "unprocessed_turns": 3, "is_custom": false },
+      { "name": "consolidation", "status": "running", "interval": 600, "enabled": true, "context_aware": false, "max_errors": 3, "error_backoff": 60, "last_run": "2025-01-15T10:30:00Z", "run_count": 71, "error_count": 1, "consecutive_errors": 0, "model": "qwen2.5:7b", "unprocessed_turns": 0, "is_custom": false },
+      { "name": "reflection", "status": "paused", "interval": 1800, "enabled": false, "context_aware": true, "max_errors": 3, "error_backoff": 60, "last_run": "2025-01-14T22:00:00Z", "run_count": 24, "error_count": 0, "consecutive_errors": 0, "model": "qwen2.5:7b", "unprocessed_turns": 0, "is_custom": false }
+    ]
+  },
+  "GET /api/subconscious/temp-facts": {
+    "recent": [
+      { "id": 1, "text": "User is building a personal AI operating system", "status": "pending", "source": "conversation", "session_id": "sess-001", "confidence_score": 0.92, "hier_key": null, "timestamp": "2025-01-15T10:30:10Z" },
+      { "id": 2, "text": "Prefers Python for backend, TypeScript for frontend", "status": "pending", "source": "conversation", "session_id": "sess-001", "confidence_score": 0.85, "hier_key": null, "timestamp": "2025-01-15T10:31:05Z" },
+      { "id": 3, "text": "Interested in neuroscience-inspired memory architectures", "status": "approved", "source": "conversation", "session_id": "sess-002", "confidence_score": 0.88, "hier_key": null, "timestamp": "2025-01-14T15:05:00Z" }
+    ],
+    "by_status": { "pending": 2, "approved": 15, "rejected": 3 }
+  },
+  "GET /api/subconscious/potentiation": {
+    "potentiation": {
+      "SHORT": { "count": 18, "avg_strength": 0.55, "avg_fires": 2.3 },
+      "LONG": { "count": 42, "avg_strength": 0.82, "avg_fires": 8.7 }
+    }
+  },
+  "GET /api/subconscious/queue": {
+    "unprocessed": 3,
+    "total_turns": 156,
+    "last_processed_turn_id": 153,
+    "model": "qwen2.5:7b"
+  },
+  "GET /api/subconscious/goals": [
+    { "id": 1, "text": "Learn user's communication preferences deeply", "status": "active", "priority": "high" },
+    { "id": 2, "text": "Build comprehensive knowledge of user's technical stack", "status": "active", "priority": "medium" },
+    { "id": 3, "text": "Develop nuanced ethical reasoning framework", "status": "active", "priority": "low" }
+  ],
+  "GET /api/subconscious/notifications": [
+    { "id": 1, "text": "Memory consolidation promoted 3 facts to long-term storage", "read": false, "timestamp": "2025-01-15T10:35:00Z" },
+    { "id": 2, "text": "New identity fact extracted from conversation", "read": true, "timestamp": "2025-01-15T10:30:10Z" }
+  ],
+  "GET /api/subconscious/improvements": [
+    { "id": 1, "text": "Consider adding more granular emotion detection in reflex protocols", "status": "pending", "source": "consolidation" }
+  ],
+  "GET /api/subconscious/loops/custom": {
+    "available_sources": ["convos", "temp_memory"],
+    "available_targets": ["temp_memory", "identity"]
+  },
+
+  "GET /api/docs": {
+    "tree": {
+      "name": "docs",
+      "path": "",
+      "is_folder": true,
+      "children": [
+        { "name": "README.md", "path": "README.md", "is_folder": false, "size": 4096 },
+        { "name": "ARCHITECTURE.md", "path": "ARCHITECTURE.md", "is_folder": false, "size": 8192 },
+        { "name": "CHANGELOG.md", "path": "CHANGELOG.md", "is_folder": false, "size": 3072 },
+        { "name": "ROADMAP.md", "path": "ROADMAP.md", "is_folder": false, "size": 2048 },
+        { "name": "RESEARCH_PAPER.md", "path": "RESEARCH_PAPER.md", "is_folder": false, "size": 15360 },
+        { "name": "CONVERSATION_SEARCH_GUIDE.md", "path": "CONVERSATION_SEARCH_GUIDE.md", "is_folder": false, "size": 1024 }
+      ]
+    }
+  },
+  "GET /api/docs/content": {
+    "content": "# AI OS\n\nA local-first cognitive operating system.\n\n## Overview\n\nAI OS gives you a personal AI agent that runs entirely on your machine. Your data never leaves your device.\n\n## Features\n\n- **Identity Threads** — Build a persistent self-model across conversations\n- **Memory System** — Short-term, temporary, and long-term memory layers\n- **Subconscious Loops** — Background processing that learns while you're away\n- **Feeds Integration** — RSS, email, and GitHub notifications in one place\n- **Eval Framework** — Test and benchmark your agent's capabilities\n- **Fine-tuning** — Train custom models on your conversation data\n- **Workspace** — File management with AI-powered summaries\n\n## Getting Started\n\n```bash\npip install -r requirements.txt\npython cli.py serve\n```\n\nThen open http://localhost:5173 in your browser."
+  },
+
+  "GET /api/workspace/files": [
+    { "id": "1", "name": "Feeds", "path": "/Feeds", "type": "folder", "size": null, "mimeType": null, "createdAt": "2025-01-10T10:00:00Z", "updatedAt": "2025-01-15T08:00:00Z" },
+    { "id": "2", "name": "notes.md", "path": "/notes.md", "type": "file", "size": 2048, "mimeType": "text/markdown", "createdAt": "2025-01-12T10:00:00Z", "updatedAt": "2025-01-15T09:00:00Z" },
+    { "id": "3", "name": "research", "path": "/research", "type": "folder", "size": null, "mimeType": null, "createdAt": "2025-01-11T10:00:00Z", "updatedAt": "2025-01-14T15:00:00Z" },
+    { "id": "4", "name": "todo.md", "path": "/todo.md", "type": "file", "size": 512, "mimeType": "text/markdown", "createdAt": "2025-01-13T10:00:00Z", "updatedAt": "2025-01-15T10:00:00Z" },
+    { "id": "5", "name": "meeting-notes.md", "path": "/meeting-notes.md", "type": "file", "size": 1536, "mimeType": "text/markdown", "createdAt": "2025-01-14T14:00:00Z", "updatedAt": "2025-01-14T15:00:00Z" }
+  ],
+  "GET /api/workspace/stats": {
+    "files": 12,
+    "folders": 3,
+    "total_size_bytes": 52480,
+    "chunks": 45,
+    "indexed_files": 10
+  },
+  "GET /api/workspace/recent": [
+    { "path": "/notes.md", "name": "notes.md", "size": 2048, "modified_at": "2025-01-15T09:00:00Z", "summary": "Personal project notes and ideas" },
+    { "path": "/todo.md", "name": "todo.md", "size": 512, "modified_at": "2025-01-15T10:00:00Z", "summary": "Current task list" }
+  ],
+  "GET /api/workspace/pinned": [],
+  "GET /api/workspace/notes": [
+    { "path": "/notes.md", "name": "notes.md", "modified_at": "2025-01-15T09:00:00Z" },
+    { "path": "/todo.md", "name": "todo.md", "modified_at": "2025-01-15T10:00:00Z" }
+  ],
+  "GET /api/workspace/search": [],
+
+  "GET /api/eval/benchmarks": {
+    "benchmarks": [
+      { "id": "bench-001", "name": "Identity Recall", "type": "structured", "description": "Tests ability to recall stored identity facts", "prompts": ["What do you know about me?", "What are my preferences?"] },
+      { "id": "bench-002", "name": "Reasoning Quality", "type": "open", "description": "Evaluates depth and accuracy of reasoning", "prompts": ["Explain the tradeoffs of local vs cloud AI"] }
+    ]
+  },
+  "GET /api/eval/models": {
+    "models": ["nola-v1", "qwen2.5:7b", "llama3.2:3b"]
+  },
+  "GET /api/eval/evals": {
+    "evals": [
+      { "name": "state_impact", "description": "Measures how well state context improves responses", "defaults": { "model": "nola-v1" } },
+      { "name": "identity_recall", "description": "Tests retrieval of identity facts in conversation", "defaults": { "model": "nola-v1" } },
+      { "name": "tool_calling_direct", "description": "Evaluates tool selection and parameter accuracy", "defaults": { "model": "qwen2.5:7b" } }
+    ]
+  },
+  "GET /api/eval/runs": {
+    "runs": [
+      { "id": "run-001", "eval_name": "state_impact", "status": "complete", "score": 0.85, "total": 10, "passed": 8, "model": "nola-v1", "created_at": "2025-01-14T16:00:00Z" },
+      { "id": "run-002", "eval_name": "identity_recall", "status": "complete", "score": 0.90, "total": 10, "passed": 9, "model": "nola-v1", "created_at": "2025-01-14T16:30:00Z" },
+      { "id": "run-003", "eval_name": "tool_calling_direct", "status": "complete", "score": 0.70, "total": 10, "passed": 7, "model": "qwen2.5:7b", "created_at": "2025-01-13T12:00:00Z" }
+    ]
+  },
+  "GET /api/eval/comparisons": {
+    "comparisons": [
+      { "id": "cmp-001", "prompt": "What are my core values?", "winner": "nola-v1", "summary": "Fine-tuned model showed better identity recall", "judge_model": "gpt-4o-mini", "benchmark_type": "structured", "created_at": "2025-01-14T17:00:00Z" }
+    ]
+  },
+
+  "GET /api/finetune/modules": {
+    "modules": [
+      { "name": "identity", "enabled": true, "stats": { "examples": 50 } },
+      { "name": "philosophy", "enabled": true, "stats": { "examples": 30 } },
+      { "name": "chat", "enabled": true, "stats": { "examples": 200 } },
+      { "name": "reflex", "enabled": true, "stats": { "examples": 25 } },
+      { "name": "reasoning", "enabled": false, "stats": { "examples": 15 } }
+    ]
+  },
+  "GET /api/finetune/modules/:name/sections": {
+    "sections": {
+      "data": { "description": "Core training data", "examples": 20 },
+      "api": { "description": "API interaction examples", "examples": 15 },
+      "generated": { "description": "Auto-generated examples", "examples": 15 }
+    }
+  },
+  "GET /api/finetune/modules/:name/sections/:section": {
+    "examples": [
+      { "_id": 1, "messages": [{"role": "user", "content": "Who am I?"}, {"role": "assistant", "content": "Based on what I know..."}], "metadata": {"source": "identity", "section": "data"} }
+    ],
+    "total": 20,
+    "pages": 1
+  },
+  "GET /api/finetune/unified": {
+    "examples": [],
+    "total": 320,
+    "pages": 7
+  },
+  "GET /api/finetune/models": {
+    "models": [
+      { "id": "mlx-community/Qwen2.5-7B-Instruct-4bit", "label": "Qwen 2.5 7B 4bit", "size_gb": 4.5, "ram_gb": 6, "cached": true },
+      { "id": "mlx-community/Llama-3.2-3B-Instruct-4bit", "label": "Llama 3.2 3B 4bit", "size_gb": 2.0, "ram_gb": 4, "cached": false }
+    ]
+  },
+  "GET /api/finetune/runs": {
+    "runs": [
+      { "name": "nola-v1", "base_model": "mlx-community/Qwen2.5-7B-Instruct-4bit", "status": "complete", "started_at": "2025-01-14T12:00:00Z", "has_adapters": true }
+    ]
+  },
+  "GET /api/finetune/load/status": {
+    "status": "loaded",
+    "active_model": "nola-v1",
+    "base_model": "mlx-community/Qwen2.5-7B-Instruct-4bit"
+  },
+  "GET /api/finetune/generate/targets": {
+    "targets": [
+      { "module": "identity", "files": ["identity_profiles.py", "identity_facts.py"], "total_generated": 15 },
+      { "module": "chat", "files": ["chat_history.py", "sessions.py"], "total_generated": 50 }
+    ],
+    "total_files": 12,
+    "total_generated": 120
+  },
+
+  "GET /api/services/": [
+    { "id": "memory", "name": "Memory", "description": "Fact extraction and storage", "icon": "🧠", "status": "running", "message": "OK — 42 long-term facts", "config": { "enabled": true, "settings": {} } },
+    { "id": "subconscious", "name": "Subconscious", "description": "Background processing loops", "icon": "🌀", "status": "running", "message": "3 loops active", "config": { "enabled": true, "settings": {} } },
+    { "id": "feeds", "name": "Feeds", "description": "RSS and notification polling", "icon": "📡", "status": "running", "message": "2 sources, 55 items", "config": { "enabled": true, "settings": {} } },
+    { "id": "kernel", "name": "Kernel", "description": "MCP tool server connections", "icon": "⚙️", "status": "stopped", "message": "No active connections", "config": { "enabled": false, "settings": {} } }
+  ],
+  "GET /api/settings": {
+    "groups": {
+      "server": [
+        { "key": "HOST", "default": "0.0.0.0", "group": "server", "label": "Host", "type": "text", "value": "0.0.0.0", "display": "0.0.0.0" },
+        { "key": "PORT", "default": "8000", "group": "server", "label": "Port", "type": "text", "value": "8000", "display": "8000" }
+      ],
+      "provider": [
+        { "key": "LLM_PROVIDER", "default": "ollama", "group": "provider", "label": "LLM Provider", "type": "select", "value": "ollama", "display": "ollama" },
+        { "key": "OLLAMA_MODEL", "default": "qwen2.5:7b", "group": "provider", "label": "Ollama Model", "type": "text", "value": "qwen2.5:7b", "display": "qwen2.5:7b" }
+      ],
+      "kernel": [
+        { "key": "MCP_ENABLED", "default": "false", "group": "kernel", "label": "MCP Enabled", "type": "toggle", "value": "false", "display": "false" }
+      ]
+    }
+  },
+  "GET /api/services/memory/stats": {
+    "total_facts": 60,
+    "short_term": 18,
+    "long_term": 42
+  },
+  "GET /api/services/kernel/status": {
+    "connected": false,
+    "sessions": 0
+  },
+  "GET /api/services/consolidation/pending": {
+    "count": 2,
+    "facts": [
+      { "id": 1, "text": "User mentioned interest in distributed systems", "confidence": 0.75 },
+      { "id": 2, "text": "Prefers dark mode interfaces", "confidence": 0.80 }
+    ]
+  },
+
+  "GET /api/mcp/servers": {
+    "servers": [
+      { "name": "filesystem", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem"], "env": {}, "enabled": false }
+    ]
+  },
+  "GET /api/mcp/catalog": {
+    "servers": [
+      { "name": "filesystem", "description": "Read and write files", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem"], "category": "files", "installed": false },
+      { "name": "web-search", "description": "Search the web", "command": "npx", "args": ["-y", "@modelcontextprotocol/server-web-search"], "category": "research", "installed": false }
+    ]
+  },
+  "GET /api/mcp/connections": {
+    "connections": []
+  },
+  "GET /api/subconscious/health": {
+    "status": "healthy",
+    "loops_active": 2,
+    "loops_total": 3,
+    "memory_queue": 3,
+    "last_consolidation": "2025-01-15T10:30:00Z"
+  }
+}

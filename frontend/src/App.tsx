@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { IS_DEMO } from './config/api'
 // Modules
 import { Dashboard, ContactPage } from './modules/home'
 import { ChatPage } from './modules/chat/pages/ChatPage'
@@ -20,11 +21,12 @@ import './App.css'
 
 // App mode hook - inlined for simplicity
 const useAppMode = () => {
-  const [modeInfo, setModeInfo] = useState({ mode: 'personal' as const, is_demo: false });
-  const [setupDone, setSetupDone] = useState<boolean | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [modeInfo, setModeInfo] = useState({ mode: 'personal' as const, is_demo: IS_DEMO });
+  const [setupDone, setSetupDone] = useState<boolean | null>(IS_DEMO ? true : null);
+  const [loading, setLoading] = useState(!IS_DEMO);
   
   useEffect(() => {
+    if (IS_DEMO) return; // SW handles API responses in demo mode
     Promise.all([
       fetch('/api/db-mode/mode').then(res => res.ok ? res.json() : null).catch(() => null),
       fetch('/api/models/setup/status').then(res => res.ok ? res.json() : null).catch(() => null),

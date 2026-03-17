@@ -33,7 +33,20 @@ export const BASE_URL = resolveBaseUrl();
 /** WebSocket URL, e.g. "ws://localhost:8000/ws" */
 export const WS_URL = resolveWsUrl();
 
+/** True when built with VITE_DEMO_MODE=true */
+export const IS_DEMO = import.meta.env.VITE_DEMO_MODE === 'true';
+
 /** Build a full API URL from a relative path like "/api/chat/history" */
 export function apiUrl(path: string): string {
   return `${BASE_URL}${path}`;
+}
+
+// Register demo service worker on startup
+if (IS_DEMO && 'serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./demo-sw.js').then(() => {
+    // If controller isn't active yet, reload once so SW intercepts fetches
+    if (!navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(() => window.location.reload());
+    }
+  });
 }

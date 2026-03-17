@@ -1,0 +1,48 @@
+name: Deploy Demo
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/demo.yml'
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        working-directory: frontend
+        run: npm ci
+
+      - name: Build demo
+        working-directory: frontend
+        env:
+          VITE_DEMO_MODE: 'true'
+        run: npx vite build --base /aios-demo/
+
+      - name: Copy index.html to 404.html for SPA routing
+        run: cp frontend/dist/index.html frontend/dist/404.html
+
+      - name: Deploy to aios-demo repo
+        env:
+          DEPLOY_TOKEN: ${{ secrets.DEMO_DEPLOY_TOKEN }}
+        run: |
+          cd frontend/dist
+          git init
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "Deploy demo from ${{ github.sha }}"
+          git push --force "https://x-access-token:${DEPLOY_TOKEN}@github.com/allee-ai/aios-demo.git" HEAD:main
