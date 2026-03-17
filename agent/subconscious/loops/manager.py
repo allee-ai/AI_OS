@@ -19,6 +19,7 @@ from .task_planner import TaskPlanner
 from .goals import GoalLoop
 from .self_improve import SelfImprovementLoop
 from .convo_concepts import ConvoConceptLoop
+from .demo_audit import DemoAuditLoop
 
 
 class LoopManager:
@@ -164,6 +165,14 @@ def create_default_loops() -> LoopManager:
     manager.add(ConvoConceptLoop(
         interval=convo_concepts_interval,
         enabled=convo_concepts_enabled,
+    ))
+
+    # Demo audit — audits demo-data.json with Kimi K2
+    demo_audit_enabled = os.getenv("AIOS_DEMO_AUDIT", "1") == "1"
+    demo_audit_interval = float(os.getenv("AIOS_DEMO_AUDIT_INTERVAL", "900"))
+    manager.add(DemoAuditLoop(
+        interval=demo_audit_interval,
+        enabled=demo_audit_enabled,
     ))
     
     # Load user-defined custom loops from DB

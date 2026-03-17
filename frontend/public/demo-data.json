@@ -1435,9 +1435,29 @@
         "total_facts_extracted": 0,
         "use_llm": false,
         "model": "(entity-match)"
+      },
+      {
+        "name": "demo_audit",
+        "status": "running",
+        "interval": 900.0,
+        "enabled": true,
+        "context_aware": false,
+        "max_errors": 3,
+        "error_backoff": 2.0,
+        "last_run": "2026-03-17T04:15:00.000000+00:00",
+        "run_count": 3,
+        "error_count": 0,
+        "consecutive_errors": 0,
+        "model": "kimi-k2:1t-cloud",
+        "demo_data_path": "frontend/public/demo-data.json",
+        "last_issues": [
+          "[MEDIUM] GET /api/database/tables: returns empty tables array",
+          "[MEDIUM] GET /api/form/tools: returns empty array",
+          "[HIGH] GET /api/services/kernel/status: kernel shows connected:false"
+        ]
       }
     ],
-    "count": 10
+    "count": 11
   },
   "GET /api/subconscious/temp-facts": {
     "recent": [
@@ -1496,7 +1516,37 @@
       "pending": 2,
       "approved": 15,
       "rejected": 3
-    }
+    },
+    "facts": [
+      {
+        "id": 9001,
+        "text": "[MEDIUM] GET /api/database/tables: returns empty tables array when real data expected",
+        "source": "loop:demo_audit",
+        "session_id": "demo_audit",
+        "status": "pending_review",
+        "hier_key": "demo_audit./api/database/tables",
+        "created_at": "2026-03-17T04:15:00"
+      },
+      {
+        "id": 9002,
+        "text": "[HIGH] GET /api/services/kernel/status: kernel shows connected:false and 0 sessions",
+        "source": "loop:demo_audit",
+        "session_id": "demo_audit",
+        "status": "pending_review",
+        "hier_key": "demo_audit./api/services/kernel/status",
+        "created_at": "2026-03-17T04:15:01"
+      },
+      {
+        "id": 9003,
+        "text": "[MEDIUM] GET /api/form/tools: returns empty array while categories are populated",
+        "source": "loop:demo_audit",
+        "session_id": "demo_audit",
+        "status": "pending_review",
+        "hier_key": "demo_audit./api/form/tools",
+        "created_at": "2026-03-17T04:15:02"
+      }
+    ],
+    "count": 3
   },
   "GET /api/subconscious/potentiation": {
     "potentiation": {
@@ -1537,7 +1587,28 @@
     ]
   },
   "GET /api/subconscious/goals": [],
-  "GET /api/subconscious/notifications": [],
+  "GET /api/subconscious/notifications": [
+    {
+      "id": 1,
+      "type": "alert",
+      "message": "Demo audit found 14 issue(s) in demo-data.json",
+      "priority": "normal",
+      "read": false,
+      "dismissed": false,
+      "response": null,
+      "created_at": "2026-03-17T04:15:00"
+    },
+    {
+      "id": 2,
+      "type": "info",
+      "message": "Goal loop proposed: Improve conversational depth tracking",
+      "priority": "low",
+      "read": true,
+      "dismissed": false,
+      "response": null,
+      "created_at": "2026-03-17T03:30:00"
+    }
+  ],
   "GET /api/subconscious/improvements": [],
   "GET /api/subconscious/health": {
     "threads": {
