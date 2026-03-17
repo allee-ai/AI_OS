@@ -22,7 +22,7 @@ const PROVIDER_ICONS: Record<string, string> = {
 export const ModelSelector: React.FC<ModelSelectorProps> = ({ onModelChange }) => {
   const [models, setModels] = useState<ModelInfo[]>([]);
   const [currentModel, setCurrentModel] = useState<string>('');
-  const [currentProvider, setCurrentProvider] = useState<string>('ollama');
+  const [_currentProvider, setCurrentProvider] = useState<string>('ollama');
   const [isOpen, setIsOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);

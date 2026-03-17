@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import { BASE_URL } from '../../../config/api';
-import { ModelDropdown } from '../../../components/ModelDropdown';
 import { 
   MemoryDashboard, 
   ConsolidationDashboard, 
