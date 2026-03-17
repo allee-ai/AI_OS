@@ -65,7 +65,7 @@ function App() {
   }
 
   return (
-    <BrowserRouter>
+    <BrowserRouter basename={import.meta.env.BASE_URL}>
       {is_demo && (
         <div style={{
           backgroundColor: '#4a9eff',
