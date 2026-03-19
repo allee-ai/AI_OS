@@ -102,6 +102,9 @@ docs/checklist.md
 # Local archives (developer notes, old docs)
 docs/_archive/
 
+# Business plan (confidential)
+docs/BUSINESS_PLAN.md
+
 # Eval transcripts (generated at runtime)
 eval/transcripts/*.json
 eval/transcripts/*.md

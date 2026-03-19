@@ -132,6 +132,13 @@ EVAL_REGISTRY: Dict[str, Dict[str, Any]] = {
             "pass_threshold": 0.7,
         },
     },
+    "knowledge_retention": {
+        "description": "Does the model retain AI_OS system knowledge (threads, STATE, memory, tools) after fine-tuning?",
+        "defaults": {
+            "model": "nola",
+            "pass_threshold": 0.5,
+        },
+    },
 }
 
 
@@ -1750,6 +1757,57 @@ def _eval_injection_resistance(config: Dict) -> Dict[str, Any]:
     }
 
 
+# ── Eval 15: Knowledge Retention ─────────────────────────────────────────
+
+_KNOWLEDGE_PROMPTS = [
+    {"prompt": "What are your cognitive threads?", "keywords": ["identity", "philosophy", "log", "form", "reflex", "linking", "subconscious"], "min_hits": 3},
+    {"prompt": "What is your name?", "keywords": ["nola"], "min_hits": 1},
+    {"prompt": "How does your memory system work?", "keywords": ["thread", "state", "fact", "profile", "consolidat", "memory"], "min_hits": 2},
+    {"prompt": "What is STATE?", "keywords": ["state", "context", "identity", "thread", "assembl"], "min_hits": 2},
+    {"prompt": "What is the subconscious?", "keywords": ["scor", "thread", "context", "assembl", "background", "loop"], "min_hits": 2},
+    {"prompt": "What makes you different from a normal chatbot?", "keywords": ["persist", "thread", "memory", "identity", "state"], "min_hits": 2},
+    {"prompt": "How do you decide what to remember?", "keywords": ["scor", "embed", "relevance", "consolidat", "fact"], "min_hits": 2},
+    {"prompt": "What is the identity thread?", "keywords": ["identity", "who", "name", "profile", "fact"], "min_hits": 2},
+    {"prompt": "What tools do you have access to?", "keywords": ["form", "tool", "file", "search", "web", "read", "write"], "min_hits": 2},
+    {"prompt": "What values guide your behavior?", "keywords": ["honest", "curios", "kind", "transparen", "philosophy"], "min_hits": 2},
+]
+
+
+def _eval_knowledge_retention(config: Dict) -> Dict[str, Any]:
+    """Test whether the model retains AI_OS system knowledge (threads, STATE, memory, tools)."""
+    model = config.get("model", "nola")
+    threshold = config.get("pass_threshold", 0.5)
+
+    details = []
+    passed = 0
+    total = len(_KNOWLEDGE_PROMPTS)
+
+    for p in _KNOWLEDGE_PROMPTS:
+        r = run_prompt(model, p["prompt"])
+        response = r.get("response", "").lower()
+        hits = sum(1 for kw in p["keywords"] if kw.lower() in response)
+        ok = hits >= p["min_hits"]
+        if ok:
+            passed += 1
+        details.append({
+            "prompt": p["prompt"],
+            "passed": ok,
+            "keyword_hits": hits,
+            "min_required": p["min_hits"],
+            "response_preview": r.get("response", "")[:300],
+            "duration_ms": r.get("duration_ms", 0),
+        })
+
+    score = passed / total if total > 0 else 0.0
+    return {
+        "status": "passed" if score >= threshold else "failed",
+        "score": round(score, 2),
+        "total": total,
+        "passed": passed,
+        "details": details,
+    }
+
+
 # ── Registry ─────────────────────────────────────────────────────────────
 
 _EVAL_FUNCTIONS = {
@@ -1767,4 +1825,5 @@ _EVAL_FUNCTIONS = {
     "retrieval_precision": _eval_retrieval_precision,
     "state_drift": _eval_state_drift,
     "injection_resistance": _eval_injection_resistance,
+    "knowledge_retention": _eval_knowledge_retention,
 }

@@ -95,6 +95,9 @@ interface EvalCaseDetail {
   consistency?: number;
   // injection_resistance
   rejected_attack?: boolean;
+  // knowledge_retention
+  keyword_hits?: number;
+  min_required?: number;
 }
 
 interface StructuredEvalResult {
@@ -775,8 +778,21 @@ export const EvalDashboard = () => {
                                     </span>
                                   </div>
                                 )}
+                                {/* knowledge_retention: show keyword hits */}
+                                {d.keyword_hits !== undefined && (
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.7rem', alignItems: 'center' }}>
+                                    <span style={{ color: d.passed ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                      keywords: {d.keyword_hits}/{d.min_required} needed
+                                    </span>
+                                    {d.response_preview && (
+                                      <span style={{ color: 'var(--text-muted)', marginLeft: '0.5rem' }}>
+                                        {d.response_preview.slice(0, 100)}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
                                 {/* Default: show response preview */}
-                                {!d.response_state_preview && !d.scores && d.thread_coverage === undefined && !d.tiers && d.recalled === undefined && d.rejected_attack === undefined && d.response_preview && (
+                                {!d.response_state_preview && !d.scores && d.thread_coverage === undefined && !d.tiers && d.recalled === undefined && d.rejected_attack === undefined && d.keyword_hits === undefined && d.response_preview && (
                                   <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.2rem' }}>
                                     {d.response_preview.slice(0, 120)}
                                   </div>

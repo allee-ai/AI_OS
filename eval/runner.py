@@ -355,7 +355,7 @@ def inspect_state(query: str) -> Dict[str, Any]:
 
 
 def list_available_models() -> List[str]:
-    """List models available in Ollama + MLX adapters."""
+    """List models available in Ollama + MLX base models + MLX adapters."""
     models = []
 
     # Ollama models
@@ -366,6 +366,19 @@ def list_available_models() -> List[str]:
             models = [m.model for m in result.models]
         else:
             models = [m.model for m in result.get('models', result) if hasattr(m, 'model')]
+    except Exception:
+        pass
+
+    # MLX base models (common quantized models that may be cached locally)
+    mlx_base = []
+    try:
+        from pathlib import Path
+        hf_cache = Path.home() / '.cache' / 'huggingface' / 'hub'
+        if hf_cache.exists():
+            for d in hf_cache.iterdir():
+                if d.is_dir() and d.name.startswith('models--mlx-community--'):
+                    model_name = d.name.replace('models--mlx-community--', '').replace('--', '/')
+                    mlx_base.append(f'mlx:{model_name}')
     except Exception:
         pass
 
@@ -396,4 +409,4 @@ def list_available_models() -> List[str]:
     except Exception:
         pass
 
-    return models
+    return models + mlx_base

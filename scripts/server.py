@@ -249,10 +249,10 @@ async def startup_event():
 
         # Wake subconscious
         from agent.subconscious import wake
-        start_loops = os.getenv("AIOS_NO_LOOPS", "").lower() not in ("1", "true", "yes")
+        start_loops = os.getenv("AIOS_LOOPS", "").lower() in ("1", "true", "yes")
         wake(start_loops=start_loops)
         if not start_loops:
-            print("[Startup] Loops disabled via AIOS_NO_LOOPS")
+            print("[Startup] Loops inactive (set AIOS_LOOPS=1 to auto-start)")
         from agent.subconscious import get_core
         core = get_core()
         print(f"[Startup] Subconscious awakened with {core.registry.count()} threads")
