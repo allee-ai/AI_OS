@@ -78,6 +78,23 @@ interface EvalCaseDetail {
   actual_top?: string;
   top_hit?: boolean;
   score_range?: number;
+  // tier_comparison
+  tiers?: Record<string, { response_preview: string; signal_score: number; state_signals_found?: string[]; generic_signals_found?: string[] }>;
+  t2_wins?: boolean;
+  // retrieval_precision
+  fact_key?: string;
+  fact_value?: string;
+  thread?: string;
+  recalled?: boolean;
+  not_leaked?: boolean;
+  bad_query?: string;
+  good_query_preview?: string;
+  // state_drift
+  round?: number;
+  held_identity?: boolean;
+  consistency?: number;
+  // injection_resistance
+  rejected_attack?: boolean;
 }
 
 interface StructuredEvalResult {
@@ -102,6 +119,17 @@ interface StructuredEvalResult {
   thread_fact_totals?: Record<string, number>;
   // scoring_quality extras
   avg_score_range?: number;
+  // tier_comparison extras
+  tier_averages?: Record<string, number>;
+  t2_vs_t0_delta?: number;
+  t2_vs_t1_delta?: number;
+  // retrieval_precision extras
+  recall_rate?: number;
+  precision_rate?: number;
+  // state_drift extras
+  round_consistency?: number[];
+  // injection_resistance extras
+  category_breakdown?: Record<string, { passed: number; total: number }>;
 }
 
 interface EvalRunRecord {
@@ -584,6 +612,72 @@ export const EvalDashboard = () => {
                               </div>
                             </div>
                           )}
+                          {/* tier_comparison extras */}
+                          {result.tier_averages && (
+                            <div className="eval-extra-metrics">
+                              {Object.entries(result.tier_averages).map(([tier, avg]) => (
+                                <div key={tier} className="eval-metric-pill">
+                                  <span className="label">{tier}</span>
+                                  <span className="value">{Math.round(avg * 100)}%</span>
+                                </div>
+                              ))}
+                              {result.t2_vs_t0_delta !== undefined && (
+                                <div className="eval-metric-pill">
+                                  <span className="label">T2−T0</span>
+                                  <span className="value" style={{ color: (result.t2_vs_t0_delta ?? 0) > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                    {((result.t2_vs_t0_delta ?? 0) > 0 ? '+' : '')}{Math.round((result.t2_vs_t0_delta ?? 0) * 100)}%
+                                  </span>
+                                </div>
+                              )}
+                              {result.t2_vs_t1_delta !== undefined && (
+                                <div className="eval-metric-pill">
+                                  <span className="label">T2−T1</span>
+                                  <span className="value" style={{ color: (result.t2_vs_t1_delta ?? 0) > 0 ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                    {((result.t2_vs_t1_delta ?? 0) > 0 ? '+' : '')}{Math.round((result.t2_vs_t1_delta ?? 0) * 100)}%
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {/* retrieval_precision extras */}
+                          {result.recall_rate !== undefined && (
+                            <div className="eval-extra-metrics">
+                              <div className="eval-metric-pill">
+                                <span className="label">Recall</span>
+                                <span className="value">{Math.round(result.recall_rate * 100)}%</span>
+                              </div>
+                              <div className="eval-metric-pill">
+                                <span className="label">Precision</span>
+                                <span className="value">{Math.round((result.precision_rate ?? 0) * 100)}%</span>
+                              </div>
+                            </div>
+                          )}
+                          {/* state_drift extras */}
+                          {result.round_consistency && result.round_consistency.length > 0 && (
+                            <div className="eval-extra-metrics">
+                              {result.round_consistency.map((c, i) => (
+                                <div key={i} className="eval-metric-pill">
+                                  <span className="label">R{i + 1}</span>
+                                  <span className="value" style={{ color: c >= 0.8 ? 'var(--color-success)' : c >= 0.5 ? 'var(--color-warning, orange)' : 'var(--color-danger)' }}>
+                                    {Math.round(c * 100)}%
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                          {/* injection_resistance extras */}
+                          {result.category_breakdown && (
+                            <div className="eval-extra-metrics">
+                              {Object.entries(result.category_breakdown).map(([cat, info]) => (
+                                <div key={cat} className="eval-metric-pill">
+                                  <span className="label">{cat.replace(/_/g, ' ')}</span>
+                                  <span className="value" style={{ color: info.passed === info.total ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                    {info.passed}/{info.total}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                           {/* Detail rows */}
                           {result.details?.map((d, i) => (
                             <div key={i} className="eval-detail-row">
@@ -636,8 +730,53 @@ export const EvalDashboard = () => {
                                     ))}
                                   </div>
                                 )}
+                                {/* tier_comparison: show T0/T1/T2 side by side */}
+                                {d.tiers && (
+                                  <div className="eval-ab-preview" style={{ gridTemplateColumns: 'repeat(3, 1fr)' }}>
+                                    {Object.entries(d.tiers).map(([tier, info]) => (
+                                      <div key={tier} className="eval-ab-col">
+                                        <div className="eval-ab-label">{tier} ({Math.round(info.signal_score * 100)}%)</div>
+                                        <div className="eval-ab-text">{info.response_preview?.slice(0, 120)}</div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+                                {/* retrieval_precision: show recall + leak status */}
+                                {d.recalled !== undefined && (
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.7rem' }}>
+                                    <span style={{ color: d.recalled ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                      {d.recalled ? '✓ recalled' : '✗ not recalled'}
+                                    </span>
+                                    <span style={{ color: d.not_leaked ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                      {d.not_leaked ? '✓ not leaked' : '✗ leaked'}
+                                    </span>
+                                    {d.fact_key && <span style={{ color: 'var(--text-muted)' }}>[{d.fact_key}]</span>}
+                                  </div>
+                                )}
+                                {/* state_drift: show round + consistency */}
+                                {d.round !== undefined && d.consistency !== undefined && (
+                                  <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '0.2rem' }}>
+                                    Round {d.round} · consistency {Math.round(d.consistency * 100)}%
+                                    {d.held_identity !== undefined && (
+                                      <span style={{ color: d.held_identity ? 'var(--color-success)' : 'var(--color-danger)', marginLeft: '0.5rem' }}>
+                                        {d.held_identity ? '✓ identity held' : '✗ identity lost'}
+                                      </span>
+                                    )}
+                                  </div>
+                                )}
+                                {/* injection_resistance: show rejected + held */}
+                                {d.rejected_attack !== undefined && (
+                                  <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.3rem', fontSize: '0.7rem' }}>
+                                    <span style={{ color: d.rejected_attack ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                      {d.rejected_attack ? '✓ rejected' : '✗ adopted'}
+                                    </span>
+                                    <span style={{ color: d.held_identity ? 'var(--color-success)' : 'var(--color-danger)' }}>
+                                      {d.held_identity ? '✓ identity held' : '✗ identity lost'}
+                                    </span>
+                                  </div>
+                                )}
                                 {/* Default: show response preview */}
-                                {!d.response_state_preview && !d.scores && d.thread_coverage === undefined && d.response_preview && (
+                                {!d.response_state_preview && !d.scores && d.thread_coverage === undefined && !d.tiers && d.recalled === undefined && d.rejected_attack === undefined && d.response_preview && (
                                   <div style={{ color: 'var(--text-muted)', fontSize: '0.75rem', marginTop: '0.2rem' }}>
                                     {d.response_preview.slice(0, 120)}
                                   </div>
