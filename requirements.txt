@@ -1,5 +1,7 @@
 # AI_OS - Root Requirements
-# Install with: pip install -r requirements.txt
+# AI OS — Python Dependencies
+# Preferred: uv sync (uses pyproject.toml + uv.lock)
+# Fallback:  pip install -r requirements.txt
 
 # Core backend
 fastapi>=0.104.1

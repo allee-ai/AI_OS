@@ -13,6 +13,9 @@ jobs:
     steps:
     - uses: actions/checkout@v4
     
+    - name: Install uv
+      uses: astral-sh/setup-uv@v4
+    
     - name: Set up Python 3.11
       uses: actions/setup-python@v5
       with:
@@ -20,19 +23,18 @@ jobs:
     
     - name: Install dependencies
       run: |
-        python -m pip install --upgrade pip
-        pip install -r requirements.txt
-        pip install pytest pytest-asyncio
+        uv sync --frozen
+        uv pip install pytest pytest-asyncio
     
     - name: Smoke test imports
       run: |
-        python -c "from scripts.server import app; print('✅ Server imports OK')"
-        python -c "from agent.subconscious.orchestrator import get_subconscious; print('✅ Subconscious imports OK')"
-        python -c "from data.db import get_connection; print('✅ Database imports OK')"
+        uv run python -c "from scripts.server import app; print('✅ Server imports OK')"
+        uv run python -c "from agent.subconscious.orchestrator import get_subconscious; print('✅ Subconscious imports OK')"
+        uv run python -c "from data.db import get_connection; print('✅ Database imports OK')"
     
     - name: Run tests
       run: |
-        python -m pytest tests/ -v --tb=short
+        uv run python -m pytest tests/ -v --tb=short
 
   frontend:
     runs-on: ubuntu-latest

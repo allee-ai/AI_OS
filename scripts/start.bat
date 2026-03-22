@@ -67,7 +67,12 @@ call "%VENV_DIR%\Scripts\activate.bat"
 
 REM Install Python Dependencies
 echo [~] Syncing Python dependencies...
-pip install -q -r requirements.txt
+where uv >nul 2>&1
+if not errorlevel 1 (
+    uv sync --frozen
+) else (
+    pip install -q -r requirements.txt
+)
 
 REM Install Frontend Dependencies
 echo [~] Syncing Frontend dependencies...

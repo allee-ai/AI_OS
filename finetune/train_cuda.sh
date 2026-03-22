@@ -32,9 +32,14 @@ source venv-cuda/bin/activate
 
 # 3. Install PyTorch + PEFT
 echo "⬇️  Installing PyTorch + PEFT + dependencies..."
-pip install -U pip
-pip install torch --index-url https://download.pytorch.org/whl/cu121 2>/dev/null || pip install torch
-pip install transformers peft datasets accelerate bitsandbytes pandas trl
+if command -v uv &> /dev/null; then
+    uv pip install torch --index-url https://download.pytorch.org/whl/cu121 2>/dev/null || uv pip install torch
+    uv pip install transformers peft datasets accelerate bitsandbytes pandas trl
+else
+    pip install -U pip
+    pip install torch --index-url https://download.pytorch.org/whl/cu121 2>/dev/null || pip install torch
+    pip install transformers peft datasets accelerate bitsandbytes pandas trl
+fi
 
 # 4. Prepare Data
 DATA_FILE="${AIOS_FT_DATA:-aios_base.jsonl}"

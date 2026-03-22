@@ -27,8 +27,12 @@ source venv-mlx/bin/activate
 # 'mlx-lm' is Apple's specialized library for Large Language Models on Silicon.
 # It includes the 'lxm_lora' tool we use later.
 echo "⬇️  Installing Apple MLX Framework..."
-pip install -U pip
-pip install mlx-lm pandas
+if command -v uv &> /dev/null; then
+    uv pip install mlx-lm pandas
+else
+    pip install -U pip
+    pip install mlx-lm pandas
+fi
 
 # 4. Prepare Data
 # MLX requires two separate files: 'train.jsonl' (to learn from) and 'valid.jsonl' (to test against).
