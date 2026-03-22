@@ -1,0 +1,50 @@
+# CUDA LoRA Config for NVIDIA GPUs
+# Parallel to mlx_config.yaml — same structure, CUDA-specific defaults.
+# ==============================================================================
+
+# 1. The Model (HuggingFace model ID — NOT mlx-community variants)
+model: "Qwen/Qwen2.5-1.5B-Instruct"
+
+# 2. LoRA Parameters
+lora_parameters:
+  rank: 8       # Same as MLX config. 8 is good for style/format transfer.
+  alpha: 16     # 2x rank is standard.
+  dropout: 0.05
+  scale: 1.0
+
+# 3. Quantization (QLoRA — 4-bit quantized base, full-precision adapters)
+# This is what lets you train 7B models on a 6GB GPU.
+quantization:
+  load_in_4bit: true
+  quant_type: "nf4"           # Normalized float 4 — best quality per bit
+  compute_dtype: "bfloat16"   # Math precision during training
+  double_quant: true          # Quantize the quantization constants too (saves ~0.4GB)
+
+# 4. Memory & Speed
+batch_size: 1                   # Per-GPU batch size. Keep at 1 for ≤8GB VRAM.
+grad_accumulation_steps: 4      # Effective batch = batch_size * grad_accum = 4
+grad_checkpointing: true        # Trade compute for VRAM. ~20% slower, ~40% less VRAM.
+
+# 5. Learning Schedule
+learning_rate: 1e-5
+warmup: 50
+lr_scheduler: "cosine"          # cosine decay — matches MLX config behavior
+
+# 6. Training Duration
+iters: 700                      # Max training steps (not epochs)
+max_seq_length: 1024            # Keep under 2048 for ≤8GB VRAM
+
+# 7. Reporting & Saving
+steps_per_report: 25
+steps_per_eval: 100
+save_every: 100
+
+seed: 42
+
+# ==============================================================================
+# VRAM Estimates (4-bit QLoRA, batch=1, seq=1024):
+#   1.5B model: ~3 GB  — runs on GTX 1060 6GB
+#   3B model:   ~5 GB  — runs on RTX 3060 8GB
+#   7B model:   ~8 GB  — needs RTX 3070+ or A10
+#   7B + batch=2: ~12 GB — needs RTX 4080 or A100
+# ==============================================================================

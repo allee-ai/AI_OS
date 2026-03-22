@@ -25,8 +25,9 @@ FINETUNE_DIR = Path(__file__).resolve().parent
 
 
 class FinetuneConfig(BaseModel):
-    base_model: Optional[str] = None       # MLX model ID, e.g. "mlx-community/Qwen2.5-7B-Instruct-4bit"
+    base_model: Optional[str] = None       # Model ID (MLX or HF depending on backend)
     run_name: Optional[str] = None          # Human label, e.g. "1.5b-test"
+    backend: Optional[str] = None           # "mlx" (Apple Silicon) or "cuda" (NVIDIA). Auto-detected if omitted.
     rank: Optional[int] = None
     alpha: Optional[int] = None
     scale: Optional[float] = None           # LoRA scale (1.0 is standard, >2 risks collapse)
@@ -48,6 +49,119 @@ MLX_MODELS = [
     {"id": "mlx-community/Llama-3.2-3B-Instruct-4bit",  "label": "Llama 3.2 3B (4-bit)",   "size_gb": 1.8, "ram_gb": 4},
     {"id": "mlx-community/Llama-3.2-1B-Instruct-4bit",  "label": "Llama 3.2 1B (4-bit)",   "size_gb": 0.7, "ram_gb": 3},
 ]
+
+# ── Known CUDA models (standard HF, for NVIDIA GPUs) ────────────────
+CUDA_MODELS = [
+    {"id": "Qwen/Qwen2.5-1.5B-Instruct",   "label": "Qwen 2.5 1.5B",        "size_gb": 3.0,  "vram_gb": 3,  "vram_4bit_gb": 2},
+    {"id": "Qwen/Qwen2.5-3B-Instruct",     "label": "Qwen 2.5 3B",          "size_gb": 6.0,  "vram_gb": 7,  "vram_4bit_gb": 4},
+    {"id": "Qwen/Qwen2.5-7B-Instruct",     "label": "Qwen 2.5 7B",          "size_gb": 14.0, "vram_gb": 16, "vram_4bit_gb": 8},
+    {"id": "meta-llama/Llama-3.2-1B-Instruct", "label": "Llama 3.2 1B",      "size_gb": 2.5,  "vram_gb": 3,  "vram_4bit_gb": 2},
+    {"id": "meta-llama/Llama-3.2-3B-Instruct", "label": "Llama 3.2 3B",      "size_gb": 6.0,  "vram_gb": 7,  "vram_4bit_gb": 4},
+    {"id": "mistralai/Mistral-7B-Instruct-v0.3","label": "Mistral 7B v0.3",  "size_gb": 14.0, "vram_gb": 16, "vram_4bit_gb": 8},
+]
+
+
+def _detect_backend() -> str:
+    """Auto-detect training backend: mlx on Apple Silicon, cuda elsewhere."""
+    import platform
+    if platform.system() == "Darwin" and platform.machine() == "arm64":
+        return "mlx"
+    return "cuda"
+
+
+# ── Curated pairs (readme_pairs/) → module mapping ──────────────────
+CURATED_DIR = FINETUNE_DIR / "readme_pairs"
+
+# Maps each readme_pairs filename to its parent module
+CURATED_MAP: Dict[str, str] = {
+    "01_identity_thread.jsonl": "identity",
+    "02_threads_overview.jsonl": "docs",
+    "03_philosophy_thread.jsonl": "philosophy",
+    "04_linking_core.jsonl": "linking_core",
+    "05_log_thread.jsonl": "log",
+    "06_reflex_thread.jsonl": "reflex",
+    "07_form_thread.jsonl": "form",
+    "08_subconscious.jsonl": "docs",
+    "09_core.jsonl": "docs",
+    "10_architecture.jsonl": "docs",
+    "11_structural_identity.jsonl": "identity",
+    "12_prediction_as_cognition.jsonl": "philosophy",
+    "13_re_resolution_problem.jsonl": "identity",
+    "14_substrate_vs_self.jsonl": "identity",
+    "15_reflex_to_weight_pipeline.jsonl": "reflex",
+    "16_efficiency_and_scaling.jsonl": "philosophy",
+    "17_agi_and_symmetry.jsonl": "philosophy",
+}
+
+
+def _get_curated_examples(module: str) -> List[Dict[str, Any]]:
+    """Load hand-crafted curated pairs from readme_pairs/ for a module."""
+    examples = []
+    if not CURATED_DIR.exists():
+        return examples
+    for filename, mod in CURATED_MAP.items():
+        if mod != module:
+            continue
+        fpath = CURATED_DIR / filename
+        if not fpath.exists():
+            continue
+        with open(fpath) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ex = json.loads(line)
+                    if not ex.get("metadata"):
+                        ex["metadata"] = {}
+                    ex["metadata"]["source"] = module
+                    ex["metadata"]["section"] = "curated"
+                    ex["metadata"]["curated_file"] = filename
+                    examples.append(ex)
+                except json.JSONDecodeError:
+                    pass
+    return examples
+
+
+def _get_curated_count(module: str) -> int:
+    """Count curated pairs for a module without loading them all."""
+    count = 0
+    if not CURATED_DIR.exists():
+        return 0
+    for filename, mod in CURATED_MAP.items():
+        if mod != module:
+            continue
+        fpath = CURATED_DIR / filename
+        if fpath.exists():
+            count += sum(1 for line in open(fpath) if line.strip())
+    return count
+
+
+def _get_all_curated_examples() -> List[Dict[str, Any]]:
+    """Load ALL curated pairs across all modules."""
+    examples = []
+    if not CURATED_DIR.exists():
+        return examples
+    for filename, mod in CURATED_MAP.items():
+        fpath = CURATED_DIR / filename
+        if not fpath.exists():
+            continue
+        with open(fpath) as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    ex = json.loads(line)
+                    if not ex.get("metadata"):
+                        ex["metadata"] = {}
+                    ex["metadata"]["source"] = mod
+                    ex["metadata"]["section"] = "curated"
+                    ex["metadata"]["curated_file"] = filename
+                    examples.append(ex)
+                except json.JSONDecodeError:
+                    pass
+    return examples
 
 
 # ── Runs directory for named adapter sets ────────────────────────────
@@ -97,19 +211,25 @@ def run_training_script(script_path: Path, cwd: Path, env_overrides: Optional[Di
 
 
 @router.get("/models")
-async def list_models():
-    """List available MLX base models for finetuning."""
-    # Check which are already cached locally
+async def list_models(backend: Optional[str] = None):
+    """List available base models for finetuning.
+    
+    ?backend=mlx  — Apple Silicon models (mlx-community quantized)
+    ?backend=cuda — Standard HuggingFace models (for NVIDIA GPUs)
+    Omit backend to auto-detect based on current platform.
+    """
+    detected = backend or _detect_backend()
     hf_cache = Path.home() / ".cache" / "huggingface" / "hub"
+    
+    model_list = MLX_MODELS if detected == "mlx" else CUDA_MODELS
     result = []
-    for m in MLX_MODELS:
+    for m in model_list:
         cached = False
-        # HF cache dir format: models--org--name
         cache_name = "models--" + m["id"].replace("/", "--")
         if (hf_cache / cache_name).exists():
             cached = True
-        result.append({**m, "cached": cached})
-    return {"models": result}
+        result.append({**m, "cached": cached, "backend": detected})
+    return {"models": result, "backend": detected}
 
 
 @router.get("/runs")
@@ -140,14 +260,25 @@ async def list_runs():
 @router.post("/start")
 async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTasks):
     """
-    Updates mlx_config.yaml and launches training script in background.
+    Updates config and launches training script in background.
     
-    - config.base_model: MLX model to finetune (default: Qwen2.5-7B-Instruct-4bit)
+    - config.backend: "mlx" or "cuda" (auto-detected if omitted)
+    - config.base_model: Model ID appropriate for the backend
     - config.run_name: Label for this run (default: auto-generated timestamp)
     """
     try:
-        config_path = FINETUNE_DIR / "mlx_config.yaml"
-        script_path = FINETUNE_DIR / "train_mac.sh"
+        backend = config.backend or _detect_backend()
+        
+        if backend == "mlx":
+            config_path = FINETUNE_DIR / "mlx_config.yaml"
+            script_path = FINETUNE_DIR / "train_mac.sh"
+            default_model = "mlx-community/Llama-3.2-3B-Instruct-4bit"
+        elif backend == "cuda":
+            config_path = FINETUNE_DIR / "cuda_config.yaml"
+            script_path = FINETUNE_DIR / "train_cuda.sh"
+            default_model = "Qwen/Qwen2.5-1.5B-Instruct"
+        else:
+            raise HTTPException(status_code=400, detail=f"Unknown backend: {backend}. Use 'mlx' or 'cuda'.")
 
         if not config_path.exists():
             raise HTTPException(status_code=404, detail=f"Config file not found at {config_path}")
@@ -156,7 +287,7 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
             raise HTTPException(status_code=404, detail=f"Training script not found at {script_path}")
 
         # Resolve model
-        base_model = config.base_model or "mlx-community/Llama-3.2-3B-Instruct-4bit"
+        base_model = config.base_model or default_model
 
         # Resolve run name
         from datetime import datetime, timezone
@@ -205,6 +336,7 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
         run_meta = {
             "base_model": base_model,
             "run_name": run_name,
+            "backend": backend,
             "config": config.model_dump(exclude_unset=True),
             "started_at": datetime.now(timezone.utc).isoformat(),
             "status": "training",
@@ -235,12 +367,15 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
             "AIOS_FT_RUN_DIR": str(run_dir),
             "AIOS_FT_RESUME_ADAPTER": resume_path,
         }
+        if backend == "cuda":
+            env_overrides["AIOS_FT_CONFIG"] = str(config_path)
         background_tasks.add_task(run_training_script, script_path, FINETUNE_DIR, env_overrides)
 
         return {
             "status": "success", 
-            "message": f"Training initiated: {run_name}",
+            "message": f"Training initiated: {run_name} ({backend})",
             "run_name": run_name,
+            "backend": backend,
             "base_model": base_model,
             "adapter_dir": str(adapter_dir),
             "config_update": config.model_dump(exclude_unset=True),
@@ -254,12 +389,14 @@ async def start_finetune(config: FinetuneConfig, background_tasks: BackgroundTas
 
 
 @router.get("/config")
-async def get_finetune_config():
-    """Get current finetune configuration."""
-    config_path = FINETUNE_DIR / "mlx_config.yaml"
+async def get_finetune_config(backend: Optional[str] = None):
+    """Get current finetune configuration for the specified backend."""
+    detected = backend or _detect_backend()
+    filename = "mlx_config.yaml" if detected == "mlx" else "cuda_config.yaml"
+    config_path = FINETUNE_DIR / filename
     
     if not config_path.exists():
-        raise HTTPException(status_code=404, detail="Config file not found")
+        raise HTTPException(status_code=404, detail=f"Config file not found: {filename}")
     
     content = config_path.read_text("utf-8")
     return {"config": content, "path": str(config_path)}
@@ -287,6 +424,61 @@ async def list_training_data():
             })
     
     return {"files": files}
+
+
+@router.get("/datasets")
+async def get_dataset_summary():
+    """Full summary of all training data sources with counts per module."""
+    summary = {}
+    for name in ALL_MODULES:
+        module_data: Dict[str, int] = {}
+        # Module-exported *_train.jsonl
+        train_file = FINETUNE_DIR / f"{name}_train.jsonl"
+        if train_file.exists():
+            module_data["exported"] = sum(1 for line in open(train_file) if line.strip())
+        else:
+            module_data["exported"] = 0
+        # Generated
+        gen_file = FINETUNE_DIR / "generated" / f"{name}.jsonl"
+        if gen_file.exists():
+            module_data["generated"] = sum(1 for line in open(gen_file) if line.strip())
+        else:
+            module_data["generated"] = 0
+        # Curated (readme_pairs)
+        module_data["curated"] = _get_curated_count(name)
+        # Reasoning
+        try:
+            from finetune.gold_examples import get_reasoning_count_for_module
+            module_data["reasoning"] = get_reasoning_count_for_module(name)
+        except Exception:
+            module_data["reasoning"] = 0
+        module_data["total"] = sum(module_data.values())
+        summary[name] = module_data
+
+    # Unmapped curated files (auto-discovered)
+    unmapped = 0
+    if CURATED_DIR.exists():
+        for f in CURATED_DIR.glob("*.jsonl"):
+            if f.name not in CURATED_MAP:
+                unmapped += sum(1 for line in open(f) if line.strip())
+
+    grand_total = sum(m["total"] for m in summary.values()) + unmapped
+    combined_stale = False
+    combined_path = FINETUNE_DIR / "aios_combined.jsonl"
+    if combined_path.exists():
+        combined_count = sum(1 for line in open(combined_path) if line.strip())
+        combined_stale = combined_count != grand_total
+    else:
+        combined_count = 0
+        combined_stale = True
+
+    return {
+        "modules": summary,
+        "unmapped_curated": unmapped,
+        "grand_total": grand_total,
+        "combined_count": combined_count,
+        "combined_stale": combined_stale,
+    }
 
 
 # ─────────────────────────────────────────────────────────────
@@ -395,9 +587,18 @@ async def export_all_training_data():
                                 total_examples += 1
                                 generated_count += 1
 
+            # Curated pairs (readme_pairs/)
+            curated_count = 0
+            curated_examples = _get_all_curated_examples()
+            for ex in curated_examples:
+                combined.write(json.dumps(ex) + "\n")
+                total_examples += 1
+                curated_count += 1
+
         results["user_approved"] = {"examples": approved_count}
         results["reasoning_included"] = {"examples": reasoning_count}
         results["generated_included"] = {"examples": generated_count}
+        results["curated_included"] = {"examples": curated_count}
         results["combined"] = {
             "path": str(combined_path),
             "total_examples": total_examples
@@ -655,6 +856,7 @@ async def list_finetune_modules():
             info["generated_count"] = get_generated_count(name)
         except Exception:
             info["generated_count"] = 0
+        info["curated_count"] = _get_curated_count(name)
         modules.append(info)
     return {"modules": modules}
 
@@ -730,6 +932,13 @@ async def get_module_sections(name: str):
                 sections["generated"] = {"description": "LLM-generated synthetic examples", "examples": non_docstring}
         except Exception:
             pass
+        # Add curated section count
+        curated_count = _get_curated_count(name)
+        if curated_count > 0:
+            sections["curated"] = {
+                "description": "Hand-crafted structural identity & architecture pairs",
+                "examples": curated_count,
+            }
         return {"module": name, "sections": sections}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
@@ -774,7 +983,10 @@ def _get_all_examples_for_module(name: str) -> List[Dict[str, Any]]:
     except Exception:
         pass
 
-    # 4. Approved examples
+    # 4. Curated pairs (readme_pairs/)
+    examples.extend(_get_curated_examples(name))
+
+    # 5. Approved examples
     approved_path = FINETUNE_DIR / "approved" / f"{name}.jsonl"
     if approved_path.exists():
         with open(approved_path) as f:
@@ -801,7 +1013,9 @@ async def get_section_examples(name: str, section: str, page: int = 1, per_page:
 
     examples = []
 
-    if section == "reasoning":
+    if section == "curated":
+        examples = _get_curated_examples(name)
+    elif section == "reasoning":
         from finetune.gold_examples import get_reasoning_for_module
         examples = get_reasoning_for_module(name)
     elif section == "generated":
@@ -1184,19 +1398,23 @@ async def export_module_with_sections(name: str, body: ModuleExportRequest = Mod
     try:
         mod = _import_train_module(name)
         
-        # Separate reasoning and generated from other sections for the module export
+        # Separate reasoning, generated, curated from other sections for the module export
         include_reasoning = False
         include_generated = False
+        include_curated = False
         module_sections = body.sections
         if module_sections is not None:
             if "reasoning" in module_sections:
                 include_reasoning = True
             if "generated" in module_sections:
                 include_generated = True
-            module_sections = [s for s in module_sections if s not in ("reasoning", "generated")]
+            if "curated" in module_sections:
+                include_curated = True
+            module_sections = [s for s in module_sections if s not in ("reasoning", "generated", "curated")]
         else:
             include_reasoning = True
             include_generated = True
+            include_curated = True
 
         kwargs = {}
         if module_sections is not None:
@@ -1228,6 +1446,16 @@ async def export_module_with_sections(name: str, body: ModuleExportRequest = Mod
                     result["generated_examples"] = len(gen)
             except Exception:
                 pass
+
+        # Append curated pairs to the module's output file
+        if include_curated and output_path:
+            curated = _get_curated_examples(name)
+            if curated:
+                with open(output_path, "a") as f:
+                    for ex in curated:
+                        f.write(json.dumps(ex) + "\n")
+                result["examples"] = result.get("examples", 0) + len(curated)
+                result["curated_examples"] = len(curated)
 
         return {"status": "exported", "module": name, "result": result}
     except Exception as e:

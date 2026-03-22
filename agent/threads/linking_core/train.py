@@ -120,43 +120,108 @@ def export_training_data(
 
     # ── Data section: concept associations ──
     if "data" in sections:
+        def get_state(query: str) -> str:
+            try:
+                from agent.subconscious.orchestrator import build_state
+                return build_state(query)
+            except Exception:
+                return (
+                    "== STATE ==\n"
+                    "[self] My internal structure\n"
+                    "  Threads: identity, philosophy, log, reflex, form, linking_core\n"
+                    "[linking_core] My concept graph and relevance scoring\n"
+                    "  context_level: 2\n"
+                    "== END STATE =="
+                )
+
         links = get_long_links(limit=1000)
-        links = [l for l in links 
+        links = [l for l in links
                  if l["strength"] >= min_strength and l["fire_count"] >= min_fire_count]
-        # Sort by strength descending, keep only top associations
         links.sort(key=lambda l: l["strength"], reverse=True)
         links = links[:max_associations]
-        
+
+        # Instead of bidirectional mechanical pairs, generate ONE example per link
+        # with conversational framing
         for link in links:
             concept_a = link["concept_a"]
             concept_b = link["concept_b"]
             strength = link["strength"]
             fire_count = link["fire_count"]
-            
-            for primary, related in [(concept_a, concept_b), (concept_b, concept_a)]:
-                examples.append({
-                    "messages": [
-                        {"role": "system", "content": f"== STATE ==\nAssociations: {primary} ↔ {related} (strength: {strength:.2f})"},
-                        {"role": "user", "content": f"What do you associate with {primary}?"},
-                        {"role": "assistant", "content": f"When {primary} comes up, I also think of {related}. They've been connected {fire_count} times."}
-                    ],
-                    "metadata": {"source": "linking_core", "section": "data", "type": "association", "strength": strength}
-                })
-        
+
+            state = get_state(concept_a)
+            examples.append({
+                "messages": [
+                    {"role": "system", "content": state},
+                    {"role": "user", "content": f"What's related to {concept_a}?"},
+                    {"role": "assistant", "content": (
+                        f"My linking_core graph has {concept_a} ↔ {concept_b} "
+                        f"(strength: {strength:.2f}, fired {fire_count} times). "
+                        "This is a LONG-potentiated link — it's been reinforced enough "
+                        "to persist in long-term memory."
+                    )},
+                ],
+                "metadata": {"source": "linking_core", "section": "data", "type": "association", "strength": strength},
+            })
+
+        # Spread activation (keep a few, but conversational)
         if include_spread and links:
-            seeds = list(set([l["concept_a"] for l in links[:30]]))[:10]
+            seeds = list(set([l["concept_a"] for l in links[:30]]))[:5]
             for seed in seeds:
                 activated = spread_activate([seed], activation_threshold=0.3, max_hops=2, limit=5)
                 if activated:
                     chain = ", ".join([a['concept'] for a in activated])
+                    state = get_state(seed)
                     examples.append({
                         "messages": [
-                            {"role": "system", "content": f"== STATE ==\nSpread activation from '{seed}'"},
-                            {"role": "user", "content": f"What comes to mind when you think about {seed}?"},
-                            {"role": "assistant", "content": f"Thinking about {seed} brings up: {chain}."}
+                            {"role": "system", "content": state},
+                            {"role": "user", "content": f"What connects to {seed} in your mind?"},
+                            {"role": "assistant", "content": (
+                                f"Spread activation from '{seed}' reaches: {chain}. "
+                                "These are the concepts that light up through my Hebbian graph — "
+                                "each hop follows the strongest links first."
+                            )},
                         ],
-                        "metadata": {"source": "linking_core", "section": "data", "type": "spread_activation", "seed": seed}
+                        "metadata": {"source": "linking_core", "section": "data", "type": "spread_activation", "seed": seed},
                     })
+
+        # Architectural self-knowledge — this is critical, must be in weights
+        stats = get_potentiation_stats()
+        arch_state = get_state("linking core concept graph")
+        arch_examples = [
+            ("How does your concept graph work?",
+             "My linking_core thread answers WHICH — which concepts are related, which threads "
+             "are relevant to a query. It's a Hebbian associative graph stored in concept_links. "
+             "Every conversation extracts concepts and fires links between co-occurring ones. "
+             "Links have strength (0-1), fire_count, and potentiation state (SHORT or LONG). "
+             "SHORT links decay quickly; LONG links (fire_count ≥ 3, strength ≥ 0.5) persist. "
+             f"Current stats: {stats.get('long', 0)} LONG links, {stats.get('short', 0)} SHORT links."),
+            ("What is spread activation?",
+             "Spread activation is how I find relevant context. Given input concepts, I activate "
+             "their neighbors in the graph, weighted by link strength. It ripples outward — hop 1 "
+             "hits direct associations, hop 2 reaches second-order connections. The result is a "
+             "ranked list of activated concepts. The orchestrator uses this to score all my threads "
+             "and decide what goes into STATE."),
+            ("How does the scoring system work?",
+             "When you send a message, linking_core extracts concepts from your text, then scores "
+             "every thread (identity, form, philosophy, etc.) by relevance. The score determines "
+             "each thread's context_level in STATE: low score → L1 (lean, few facts), high score → "
+             "L3 (full detail). This is the gating mechanism — not everything I know goes into STATE, "
+             "only what's relevant to right now."),
+            ("What's Hebbian learning?",
+             "Neurons that fire together wire together. In my linking_core, when two concepts "
+             "appear in the same conversation, their link strength increases. The more they co-occur, "
+             "the stronger the link. Links also decay if they stop firing. This is how I build "
+             "associative memory organically from conversations, without explicit programming."),
+        ]
+        for q, a in arch_examples:
+            examples.append({
+                "messages": [
+                    {"role": "system", "content": arch_state},
+                    {"role": "user", "content": q},
+                    {"role": "assistant", "content": a},
+                ],
+                "metadata": {"source": "linking_core", "section": "data", "type": "architecture"},
+            })
 
     # ── Self-knowledge sections ──
     if "api" in sections:

@@ -214,6 +214,25 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         result.sort(key=lambda f: f.get("weight", 0), reverse=True)
         return result
 
+    def get_section_metadata(self) -> List[str]:
+        """Permanent identity metadata for STATE section header."""
+        try:
+            profiles = get_profiles()
+            profile_names = [p["profile_id"] for p in profiles]
+            protected = [p["profile_id"] for p in profiles if p.get("protected")]
+            total_facts = 0
+            for p in profiles:
+                facts = pull_profile_facts(p["profile_id"])
+                total_facts += len(facts)
+            lines = [
+                f"  profiles: {len(profiles)} ({', '.join(profile_names)})",
+                f"  facts: {total_facts}",
+                f"  protected: {', '.join(protected)}",
+            ]
+            return lines
+        except Exception:
+            return []
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Identity introspection with budget-aware fact packing.
@@ -240,7 +259,7 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             raw, relevant_concepts = self._relevance_boost(raw, query)
 
         # Pack into token budget at the right detail level
-        facts = self._budget_fill(raw, context_level)
+        facts = self._budget_fill(raw, context_level, query=query)
 
         return IntrospectionResult(
             facts=facts,

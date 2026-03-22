@@ -108,7 +108,22 @@ def export_training_data(
 
     # ── Data section: triggers ──
     if "data" in sections:
-        for t in get_triggers():
+        def get_state(query: str) -> str:
+            try:
+                from agent.subconscious.orchestrator import build_state
+                return build_state(query)
+            except Exception:
+                return (
+                    "== STATE ==\n"
+                    "[self] My internal structure\n"
+                    "  Threads: identity, philosophy, log, reflex, form, linking_core\n"
+                    "[reflex] My learned patterns and automations\n"
+                    "  context_level: 2\n"
+                    "== END STATE =="
+                )
+
+        triggers = get_triggers()
+        for t in triggers:
             name = t.get("name", "")
             feed = t.get("feed_name", "")
             event = t.get("event_type", "")
@@ -118,29 +133,34 @@ def export_training_data(
             mode = t.get("response_mode", "tool")
             params = t.get("tool_params") or {}
 
-            user_text = desc if desc else f"When {feed} fires a '{event}' event, run {tool}/{action}."
-            assistant_text = f"Trigger '{name}' → {tool}/{action} (mode={mode})"
-            if params:
-                assistant_text += f"\nParams: {json.dumps(params)}"
+            state = get_state(f"trigger {name} {feed}")
 
+            # Natural description of what the trigger does
+            trigger_desc = f"reflex.triggers.{name}: when {feed} fires '{event}', I run {tool}/{action}"
+            if params:
+                trigger_desc += f" with {json.dumps(params)}"
+            trigger_desc += f" (mode={mode})"
+
+            user_text = desc if desc else f"What happens when {feed} gets a {event} event?"
             examples.append({
                 "messages": [
-                    {"role": "system", "content": f"== STATE ==\nReflex trigger: {feed}/{event}"},
+                    {"role": "system", "content": state},
                     {"role": "user", "content": user_text},
-                    {"role": "assistant", "content": assistant_text},
+                    {"role": "assistant", "content": trigger_desc},
                 ],
                 "metadata": {"source": "reflex", "section": "data", "type": "trigger", "trigger_id": t.get("id")},
             })
 
-        # Also include logged reflex decisions
+        # Include logged reflex decisions
         if OUTPUT_FILE.exists():
             with open(OUTPUT_FILE) as f:
                 for line in f:
                     try:
                         rec = json.loads(line)
+                        state = get_state(rec.get("input", "reflex decision"))
                         examples.append({
                             "messages": [
-                                {"role": "system", "content": f"== STATE ==\nReflex: {rec.get('category', 'decision')}"},
+                                {"role": "system", "content": state},
                                 {"role": "user", "content": rec.get("input", "")},
                                 {"role": "assistant", "content": rec.get("output", "")},
                             ],
@@ -148,6 +168,31 @@ def export_training_data(
                         })
                     except json.JSONDecodeError:
                         pass
+
+        # Architectural self-knowledge
+        arch_state = get_state("reflex trigger automation")
+        arch_examples = [
+            ("How do your reflexes work?",
+             f"My reflex thread answers HOW — automated feed-to-tool triggers. I have "
+             f"{len(triggers)} triggers. Each one watches a feed (like RSS, email, webhooks) "
+             "for specific events and routes them to tools. It's stored in reflex_triggers "
+             "with conditions, scheduling (cron or interval), and execution counts. Think of "
+             "it as my if-this-then-that layer."),
+            ("Can you create automations?",
+             "Yes. POST /api/reflex/triggers creates a new trigger. You specify the feed_name, "
+             "event_type, conditions, and what tool/action to run. Triggers can be scheduled "
+             "with cron expressions or poll intervals. I also have protocol templates — "
+             "pre-built automations you can install with /protocols install <name>."),
+        ]
+        for q, a in arch_examples:
+            examples.append({
+                "messages": [
+                    {"role": "system", "content": arch_state},
+                    {"role": "user", "content": q},
+                    {"role": "assistant", "content": a},
+                ],
+                "metadata": {"source": "reflex", "section": "data", "type": "architecture"},
+            })
 
     # ── Self-knowledge sections ──
     if "api" in sections:

@@ -95,6 +95,12 @@ finetune/train.jsonl
 finetune/valid.jsonl
 finetune/reasoning_train.jsonl
 finetune/venv-mlx/
+finetune/venv-cuda/
+finetune/convo_chunks/
+finetune/pretrain_data/
+
+# Frontend build artifacts
+frontend/dist-demo/
 
 # Local evaluator checklist
 docs/checklist.md

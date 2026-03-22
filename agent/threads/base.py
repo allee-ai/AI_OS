@@ -173,6 +173,18 @@ class BaseThreadAdapter:
             "modules": modules,
         }
     
+    def get_section_metadata(self) -> List[str]:
+        """Return permanent metadata lines for the STATE section header.
+
+        These lines describe the thread's current program state —
+        counts, statuses, configuration — and appear between the
+        section header and the temporary dot-path facts.
+
+        Subclasses SHOULD override this with thread-specific stats.
+        The base implementation returns an empty list.
+        """
+        return []
+    
     # =========================================================================
     # BUDGET-AWARE FACT PACKING
     # =========================================================================
@@ -187,25 +199,77 @@ class BaseThreadAdapter:
         raw_facts: List[Dict[str, Any]],
         level: int,
         token_budget: int = 0,
+        query: str = "",
     ) -> List[str]:
-        """Pack facts into a token budget at varying detail levels.
+        """Pack facts into a token budget with per-fact detail levels.
 
         Each *raw_fact* dict must contain:
             path  – dot-notation prefix  (e.g. "identity.nola.name")
             l1_value, l2_value, l3_value – value at each tier
             weight – 0-1 importance
 
-        Algorithm (greedy, O(n)):
-            1. Sort by weight descending (most important first).
-            2. For each fact, try the *requested* level value.
-            3. If that would blow the remaining budget, try L1 instead.
-            4. If even L1 won't fit, skip the fact.
+        The thread-level ``level`` is a ceiling. Each fact gets its
+        own detail level based on how relevant it is to ``query``:
+
+            high relevance  → thread ceiling (full detail)
+            medium relevance → ceiling - 1
+            low relevance   → L1 (lean)
+
+        This mirrors the orchestrator's thread-level scoring: the same
+        concept-matching that decides "identity is L3" now also decides
+        "identity.user.name is L3 but identity.user.ssh_keys is L1."
+
+        Algorithm:
+            1. Score each fact's relevance to the query.
+            2. Assign per-fact detail level (capped at thread level).
+            3. Sort by weight descending.
+            4. Pack greedily: preferred level, fallback to L1.
 
         Returns a list of formatted "path: value" strings.
         """
         budget = token_budget or self._token_budgets.get(level, 400)
         used = 0
         result: List[str] = []
+
+        # --- Per-fact relevance scoring ---
+        relevant_concepts: set = set()
+        if query:
+            try:
+                from agent.threads.linking_core.schema import (
+                    spread_activate,
+                    extract_concepts_from_text,
+                )
+                query_concepts = extract_concepts_from_text(query)
+                if query_concepts:
+                    activated = spread_activate(
+                        input_concepts=query_concepts,
+                        activation_threshold=0.1,
+                        max_hops=1,
+                        limit=20,
+                    )
+                    relevant_concepts = set(query_concepts)
+                    for a in activated:
+                        relevant_concepts.add(a.get("concept", ""))
+            except Exception:
+                pass
+
+        # Score each fact and assign a per-fact detail level
+        for fact in raw_facts:
+            if relevant_concepts:
+                text = (
+                    f"{fact.get('path', '')} {fact.get('key', '')} "
+                    f"{fact.get('l1_value', '')} {fact.get('l2_value', '')}"
+                ).lower()
+                overlap = sum(1 for c in relevant_concepts if c.lower() in text)
+                if overlap >= 2:
+                    fact["_fact_level"] = level          # high → ceiling
+                elif overlap == 1:
+                    fact["_fact_level"] = max(1, level - 1)  # medium → ceiling-1
+                else:
+                    fact["_fact_level"] = 1              # low → L1
+            else:
+                # No query — use thread level uniformly
+                fact["_fact_level"] = level
 
         # Sort by weight descending — highest-value facts first
         sorted_facts = sorted(raw_facts, key=lambda f: f.get("weight", 0.5), reverse=True)
@@ -215,11 +279,12 @@ class BaseThreadAdapter:
             l1 = fact.get("l1_value") or ""
             l2 = fact.get("l2_value") or ""
             l3 = fact.get("l3_value") or ""
+            fact_level = fact.get("_fact_level", level)
 
-            # Pick value at requested level (with fallbacks)
-            if level >= 3:
+            # Pick value at THIS FACT's level (with fallbacks)
+            if fact_level >= 3:
                 preferred = l3 or l2 or l1
-            elif level >= 2:
+            elif fact_level >= 2:
                 preferred = l2 or l1 or l3
             else:
                 preferred = l1 or l2 or l3

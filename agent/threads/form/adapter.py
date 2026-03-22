@@ -211,6 +211,38 @@ class FormThreadAdapter(BaseThreadAdapter):
             weight=0.4
         )
     
+    def get_section_metadata(self) -> List[str]:
+        """Permanent form metadata for STATE section header."""
+        try:
+            if _HAS_TOOLS:
+                from .tools.registry import get_runnable_tools
+                available = get_available_tools()
+                enabled = [t for t in available if t.weight > 0]
+                runnable = get_runnable_tools()
+                lines = [
+                    f"  tools: {len(available)} ({len(runnable)} runnable)",
+                ]
+            else:
+                tools = self.get_tools(1)
+                lines = [f"  tools: {len(tools)}"]
+            # Trace stats
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                row = conn.execute(
+                    "SELECT COUNT(*) as cnt, AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as rate "
+                    "FROM tool_traces"
+                ).fetchone()
+                cnt = row["cnt"] if row else 0
+                rate = row["rate"] if row and row["rate"] is not None else 0
+                if cnt > 0:
+                    lines.append(f"  executions: {cnt} (success_rate: {rate:.0%})")
+            except Exception:
+                pass
+            return lines
+        except Exception:
+            return []
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Form introspection with budget-aware fact packing.
@@ -232,7 +264,7 @@ class FormThreadAdapter(BaseThreadAdapter):
         if query:
             raw, relevant_concepts = self._relevance_boost(raw, query)
 
-        facts = self._budget_fill(raw, context_level)
+        facts = self._budget_fill(raw, context_level, query=query)
 
         return IntrospectionResult(
             facts=facts,

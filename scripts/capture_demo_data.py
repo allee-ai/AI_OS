@@ -59,6 +59,7 @@ ENDPOINTS = [
     # Linking core
     ("GET", "/api/linking_core/cooccurrence"),
     ("GET", "/api/linking_core/graph"),
+    ("GET", "/api/linking_core/graph/structural"),
 
     # Log
     ("GET", "/api/log/tables"),

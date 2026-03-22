@@ -48,21 +48,54 @@ SCORE_THRESHOLDS = {
     "L3": 10.0,  # 7 - 10: L3 (full)
 }
 
-# Per-source token budget caps — prevents any single source from
-# dominating STATE.  Sources with large fact stores (identity) get
-# a tighter budget so smaller sources stay visible.
-SOURCE_BUDGETS = {
-    # Threads
-    "identity":     200,
-    "log":          120,
-    "form":         120,   # Now includes tool traces
-    "philosophy":    80,
-    "reflex":        60,
-    "linking_core":  60,
-    # Modules
-    "chat":         150,   # Past conversation summaries
-    "workspace":    150,   # Files, summaries, FTS matches
-}
+# Context-window aware budget allocation.
+# Total STATE budget = STATE_FRACTION of the target context window.
+# Each source gets a share proportional to its relevance score.
+# Higher score → more tokens to express itself.
+import os as _os
+CONTEXT_WINDOW = int(_os.getenv("AIOS_CONTEXT_WINDOW", "4096"))
+STATE_FRACTION = float(_os.getenv("AIOS_STATE_FRACTION", "0.25"))
+
+# Minimum tokens any included source gets (prevents zero-budget sources)
+MIN_SOURCE_BUDGET = 40
+# Maximum share any single source can claim (prevents domination)
+MAX_SOURCE_SHARE = 0.30
+
+
+def allocate_budgets(scores: Dict[str, float],
+                     context_window: int = 0,
+                     state_fraction: float = 0.0) -> Dict[str, int]:
+    """Allocate per-source token budgets proportional to relevance scores.
+
+    Sources with score 0 get nothing.  The rest split the total STATE
+    budget in proportion to their scores, clamped by MIN/MAX.
+
+    Returns dict mapping source_name → token budget.
+    """
+    cw = context_window or CONTEXT_WINDOW
+    sf = state_fraction or STATE_FRACTION
+    total = int(cw * sf)
+
+    # Only sources with positive scores participate
+    active = {k: v for k, v in scores.items() if v > 0}
+    if not active:
+        return {k: MIN_SOURCE_BUDGET for k in scores}
+
+    score_sum = sum(active.values())
+    budgets: Dict[str, int] = {}
+
+    for source, score in active.items():
+        share = score / score_sum
+        # Clamp share so no single source dominates
+        share = min(share, MAX_SOURCE_SHARE)
+        budgets[source] = max(MIN_SOURCE_BUDGET, int(total * share))
+
+    # Sources that scored 0 get nothing
+    for source in scores:
+        if source not in budgets:
+            budgets[source] = 0
+
+    return budgets
 
 
 def _fmt_size(n: int) -> str:
@@ -183,7 +216,7 @@ class Subconscious:
         All sources (threads like identity/log/form AND modules like
         chat/workspace) are sorted by relevance score together.  Each
         source goes through the same score → level → threshold pipeline
-        and is subject to its SOURCE_BUDGETS cap.
+        and gets a token budget proportional to its relevance score.
         
         Args:
             scores: Source relevance scores from score()
@@ -198,6 +231,9 @@ class Subconscious:
             key=lambda x: x[1],
             reverse=True,
         )
+
+        # Allocate token budgets proportional to scores
+        budgets = allocate_budgets(scores)
         
         lines = ["== STATE =="]
         
@@ -216,15 +252,19 @@ class Subconscious:
             # Threshold is INVERTED: high score → low weight threshold
             threshold = max(0.0, 10.0 - score)
             
+            source_budget = budgets.get(source_name, MIN_SOURCE_BUDGET)
+            if source_budget <= 0:
+                continue
+
             if source_name in THREADS:
                 # ---------- Thread source ----------
                 section = self._build_thread_section(
-                    source_name, level, threshold, query
+                    source_name, level, threshold, query, source_budget
                 )
             elif source_name in MODULES:
                 # ---------- Module source ----------
                 section = self._build_module_section(
-                    source_name, level, threshold, query
+                    source_name, level, threshold, query, source_budget
                 )
             else:
                 continue
@@ -246,20 +286,20 @@ class Subconscious:
     # ------------------------------------------------------------------
     
     def _build_thread_section(
-        self, thread_name: str, level: int, threshold: float, query: str
+        self, thread_name: str, level: int, threshold: float, query: str,
+        budget: int = 200,
     ) -> List[str]:
         """Build a STATE section for a scored thread via its adapter."""
         adapter = self._get_adapter(thread_name)
         if not adapter:
             return []
         
-        # Apply per-source token budget cap
-        cap = SOURCE_BUDGETS.get(thread_name)
-        if cap and hasattr(adapter, '_token_budgets'):
+        # Apply score-allocated budget to adapter's token budgets
+        if hasattr(adapter, '_token_budgets'):
             adapter._token_budgets = {
-                1: min(adapter._token_budgets.get(1, 150), cap),
-                2: min(adapter._token_budgets.get(2, 400), cap),
-                3: min(adapter._token_budgets.get(3, 800), cap),
+                1: budget,
+                2: budget,
+                3: budget,
             }
         
         try:
@@ -287,14 +327,22 @@ class Subconscious:
         description = getattr(adapter, '_description', '')
         section = [
             f"[{thread_name}] {description}",
-            f"  context_level: {level}",
-            f"  fact_count: {len(facts)}",
         ]
+        # Permanent program-state metadata
+        try:
+            meta_lines = adapter.get_section_metadata()
+            if meta_lines:
+                section.extend(meta_lines)
+        except Exception:
+            pass
+        section.append(f"  context_level: {level}")
+        section.append(f"  fact_count: {len(facts)}")
         section.extend(facts)
         return section
     
     def _build_module_section(
-        self, module_name: str, level: int, threshold: float, query: str
+        self, module_name: str, level: int, threshold: float, query: str,
+        budget: int = 200,
     ) -> List[str]:
         """Build a STATE section for a scored module (chat, workspace, …)."""
         providers = {
@@ -309,13 +357,12 @@ class Subconscious:
         if not facts:
             return []
         
-        # Enforce token budget
-        cap = SOURCE_BUDGETS.get(module_name, 200)
+        # Enforce score-allocated token budget
         budget_facts: List[str] = []
         tokens = 0
         for f in facts:
             t = len(f.split())
-            if tokens + t > cap:
+            if tokens + t > budget:
                 break
             budget_facts.append(f)
             tokens += t
@@ -329,12 +376,63 @@ class Subconscious:
         }
         section = [
             f"[{module_name}] {descriptions.get(module_name, '')}",
-            f"  context_level: {level}",
-            f"  fact_count: {len(budget_facts)}",
         ]
+        # Permanent program-state metadata for modules
+        try:
+            meta_lines = self._get_module_metadata(module_name)
+            if meta_lines:
+                section.extend(meta_lines)
+        except Exception:
+            pass
+        section.append(f"  context_level: {level}")
+        section.append(f"  fact_count: {len(budget_facts)}")
         section.extend(budget_facts)
         return section
     
+    def _get_module_metadata(self, module_name: str) -> List[str]:
+        """Return permanent metadata lines for a module (chat, workspace)."""
+        try:
+            from data.db import get_connection
+            conn = get_connection(readonly=True)
+        except Exception:
+            return []
+
+        if module_name == "chat":
+            try:
+                row = conn.execute(
+                    "SELECT COUNT(*) as cnt, SUM(turn_count) as turns, "
+                    "COUNT(CASE WHEN summary IS NOT NULL AND summary != '' THEN 1 END) as summaries "
+                    "FROM convos"
+                ).fetchone()
+                cnt = row["cnt"] if row else 0
+                turns = row["turns"] if row and row["turns"] else 0
+                summaries = row["summaries"] if row else 0
+                last_row = conn.execute(
+                    "SELECT session_id FROM convos ORDER BY last_updated DESC LIMIT 1"
+                ).fetchone()
+                last_session = last_row["session_id"] if last_row else "none"
+                return [
+                    f"  conversations: {cnt}",
+                    f"  total_turns: {turns}",
+                    f"  summaries: {summaries}",
+                    f"  last_session: {last_session}",
+                ]
+            except Exception:
+                return []
+
+        elif module_name == "workspace":
+            try:
+                from workspace.schema import get_workspace_stats
+                stats = get_workspace_stats()
+                return [
+                    f"  files: {stats.get('files', 0)}",
+                    f"  indexed: {stats.get('indexed_files', 0)}",
+                ]
+            except Exception:
+                return []
+
+        return []
+
     def _build_self_awareness_block(self) -> List[str]:
         """Build the self-awareness metadata for the top of STATE.
         
@@ -563,12 +661,16 @@ class Subconscious:
         state_block = self.build_state(scores, query)
         # Rough token estimate: ~0.75 tokens per word
         token_est = len(state_block.split()) * 0.75
+        budgets = allocate_budgets(scores)
         return {
             "query": query,
             "thread_scores": scores,
             "state_block": state_block,
             "total_tokens": int(token_est),
             "thresholds": SCORE_THRESHOLDS,
+            "context_window": CONTEXT_WINDOW,
+            "state_budget": int(CONTEXT_WINDOW * STATE_FRACTION),
+            "source_budgets": budgets,
         }
     
     def build_context(

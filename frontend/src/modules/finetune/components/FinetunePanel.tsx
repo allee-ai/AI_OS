@@ -56,6 +56,7 @@ const SECTION_ICONS: Record<string, string> = {
   reasoning: '🧩',
   generated: '🤖',
   approved: '✅',
+  curated: '✍️',
 };
 
 const SECTION_LABELS: Record<string, string> = {
@@ -66,6 +67,7 @@ const SECTION_LABELS: Record<string, string> = {
   reasoning: 'Reasoning Examples',
   generated: 'Generated',
   approved: 'Approved',
+  curated: 'Curated Pairs',
 };
 
 const MODULE_ICONS: Record<string, string> = {
@@ -402,7 +404,7 @@ export const FinetunePanel: React.FC<FinetunePanelProps> = ({
   const navigate = useNavigate();
   const [sections, setSections] = useState<Record<string, SectionInfo>>({});
   const [enabledSections, setEnabledSections] = useState<Record<string, boolean>>({
-    data: true, api: true, cli: true, schema: true,
+    data: true, api: true, cli: true, schema: true, curated: true,
   });
   const [samples, setSamples] = useState<Sample[]>([]);
   const [showPreview, setShowPreview] = useState(false);

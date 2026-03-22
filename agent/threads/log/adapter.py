@@ -234,6 +234,30 @@ class LogThreadAdapter(BaseThreadAdapter):
 
         return raw[:limit]
     
+    def get_section_metadata(self) -> List[str]:
+        """Permanent log metadata for STATE section header."""
+        try:
+            lines = []
+            if hasattr(self, '_session_id') and self._session_id:
+                lines.append(f"  session: {self._session_id}")
+            if hasattr(self, '_session_start') and self._session_start:
+                elapsed = (datetime.now(timezone.utc) - self._session_start).total_seconds()
+                if elapsed < 3600:
+                    lines.append(f"  duration: {int(elapsed // 60)}m")
+                else:
+                    lines.append(f"  duration: {elapsed / 3600:.1f}h")
+            if hasattr(self, '_message_count'):
+                lines.append(f"  messages: {self._message_count}")
+            try:
+                from agent.threads.log.schema import get_log_stats
+                stats = get_log_stats()
+                lines.append(f"  total_events: {stats.get('total_events', 0)}")
+            except Exception:
+                pass
+            return lines
+        except Exception:
+            return []
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Log introspection with budget-aware fact packing.
@@ -255,7 +279,7 @@ class LogThreadAdapter(BaseThreadAdapter):
         if query:
             raw, relevant_concepts = self._relevance_boost(raw, query)
 
-        facts = self._budget_fill(raw, context_level)
+        facts = self._budget_fill(raw, context_level, query=query)
 
         return IntrospectionResult(
             facts=facts,

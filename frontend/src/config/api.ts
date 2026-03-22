@@ -43,7 +43,8 @@ export function apiUrl(path: string): string {
 
 // Register demo service worker on startup
 if (IS_DEMO && 'serviceWorker' in navigator) {
-  navigator.serviceWorker.register('./demo-sw.js').then(() => {
+  const swPath = `${import.meta.env.BASE_URL}demo-sw.js`;
+  navigator.serviceWorker.register(swPath, { scope: import.meta.env.BASE_URL }).then(() => {
     // If controller isn't active yet, reload once so SW intercepts fetches
     if (!navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then(() => window.location.reload());

@@ -110,20 +110,81 @@ def export_training_data(
     if "data" in sections:
         facts = pull_philosophy_profile_facts(limit=500)
         facts = [f for f in facts if f.get("weight", 0) >= min_weight]
-        
+
+        def get_state(query: str) -> str:
+            try:
+                from agent.subconscious.orchestrator import build_state
+                return build_state(query)
+            except Exception:
+                return (
+                    "== STATE ==\n"
+                    "[self] My internal structure\n"
+                    "  Threads: identity, philosophy, log, reflex, form, linking_core\n"
+                    "[philosophy] My values and reasoning style\n"
+                    "  context_level: 2\n"
+                    "== END STATE =="
+                )
+
+        # Per-stance examples with real STATE
         for fact in facts:
             key = fact.get("key", "")
             value = fact.get("l3_value") or fact.get("l2_value") or fact.get("l1_value", "")
+            profile_id = fact.get("profile_id", "values")
             if not value:
                 continue
-            
+
+            state = get_state(key.replace(".", " ").replace("_", " "))
+            readable_key = key.split(".")[-1].replace("_", " ")
+
             examples.append({
                 "messages": [
-                    {"role": "system", "content": f"== STATE ==\nPhilosophy:\n- {key}: {fact.get('l1_value', '')}"},
-                    {"role": "user", "content": f"What's your perspective on {key.split('.')[-1].replace('_', ' ')}?"},
-                    {"role": "assistant", "content": f"Based on your philosophy: {value}"}
+                    {"role": "system", "content": state},
+                    {"role": "user", "content": f"What's your take on {readable_key}?"},
+                    {"role": "assistant", "content": f"From my philosophy thread — philosophy.{profile_id}.{key}: {value}"},
                 ],
-                "metadata": {"source": "philosophy", "section": "data", "key": key, "weight": fact.get("weight", 0.5)}
+                "metadata": {"source": "philosophy", "section": "data", "key": key, "weight": fact.get("weight", 0.5)},
+            })
+
+        # Diverse conversational examples
+        if facts:
+            state = get_state("values ethics reasoning")
+            all_stances = "; ".join(
+                f"{f.get('key', '')}: {f.get('l1_value', '')}"
+                for f in facts[:6] if f.get('l1_value')
+            )
+            if all_stances:
+                examples.append({
+                    "messages": [
+                        {"role": "system", "content": state},
+                        {"role": "user", "content": "What are your core values?"},
+                        {"role": "assistant", "content": f"My philosophy thread stores my value system. Current stances: {all_stances}. These have Hebbian weights — the more they get reinforced, the stronger they become in my reasoning."},
+                    ],
+                    "metadata": {"source": "philosophy", "section": "data", "type": "conversational"},
+                })
+
+        # Architectural self-knowledge
+        arch_state = get_state("philosophy thread architecture")
+        arch_examples = [
+            ("How does your philosophy system work?",
+             "My philosophy thread answers WHY — why I reason a certain way, what values "
+             "guide my decisions, what ethical constraints I follow. Stances are stored in "
+             "philosophy_profile_facts with 3-level detail and Hebbian weights. When the "
+             "orchestrator includes philosophy in STATE, my stances appear as "
+             "philosophy.{profile}.{key}: {value} and I use them to guide my responses."),
+            ("Can your values change?",
+             "Yes. Philosophy facts have Hebbian weights like everything else. If a stance "
+             "gets reinforced it strengthens, if it stops being accessed it decays. You can "
+             "also explicitly update stances through POST /api/philosophy/facts or the CLI "
+             "with /philosophy fact. My values are learned, not hard-coded."),
+        ]
+        for q, a in arch_examples:
+            examples.append({
+                "messages": [
+                    {"role": "system", "content": arch_state},
+                    {"role": "user", "content": q},
+                    {"role": "assistant", "content": a},
+                ],
+                "metadata": {"source": "philosophy", "section": "data", "type": "architecture"},
             })
 
     # ── Self-knowledge sections ──

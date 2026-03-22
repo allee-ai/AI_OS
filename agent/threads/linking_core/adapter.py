@@ -122,6 +122,33 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             details={"readme": False}
         )
     
+    def get_section_metadata(self) -> List[str]:
+        """Permanent linking_core metadata for STATE section header."""
+        try:
+            from data.db import get_connection
+            conn = get_connection(readonly=True)
+            link_row = conn.execute("SELECT COUNT(*) as cnt, AVG(strength) as avg FROM concept_links").fetchone()
+            link_count = link_row["cnt"] if link_row else 0
+            avg_strength = link_row["avg"] if link_row and link_row["avg"] else 0
+            concept_row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM ("
+                "SELECT concept_a AS c FROM concept_links UNION "
+                "SELECT concept_b FROM concept_links)"
+            ).fetchone()
+            concept_count = concept_row["cnt"] if concept_row else 0
+            long_row = conn.execute(
+                "SELECT COUNT(*) as cnt FROM concept_links WHERE potentiation='LONG'"
+            ).fetchone()
+            long_count = long_row["cnt"] if long_row else 0
+            lines = [
+                f"  concepts: {concept_count}",
+                f"  links: {link_count} (avg_strength: {avg_strength:.2f})",
+                f"  long_potentiated: {long_count}",
+            ]
+            return lines
+        except Exception:
+            return []
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """Return linking/relevance facts for context assembly.
         

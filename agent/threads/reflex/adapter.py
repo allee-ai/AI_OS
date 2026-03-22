@@ -168,6 +168,32 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         
         return None
     
+    def get_section_metadata(self) -> List[str]:
+        """Permanent reflex metadata for STATE section header."""
+        try:
+            greetings = get_greetings()
+            shortcuts = get_shortcuts()
+            patterns = len(greetings) + len(shortcuts)
+            lines = [f"  patterns: {patterns}"]
+            # Trigger stats from DB
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                row = conn.execute(
+                    "SELECT COUNT(*) as total, "
+                    "SUM(CASE WHEN enabled THEN 1 ELSE 0 END) as active "
+                    "FROM reflex_triggers"
+                ).fetchone()
+                total = row["total"] if row else 0
+                active = row["active"] if row else 0
+                if total > 0:
+                    lines.append(f"  triggers: {total} ({active} active)")
+            except Exception:
+                pass
+            return lines
+        except Exception:
+            return []
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Reflex introspection with budget-aware fact packing.
@@ -188,7 +214,7 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         if query:
             raw, relevant_concepts = self._relevance_boost(raw, query)
 
-        facts = self._budget_fill(raw, context_level)
+        facts = self._budget_fill(raw, context_level, query=query)
 
         return IntrospectionResult(
             facts=facts,

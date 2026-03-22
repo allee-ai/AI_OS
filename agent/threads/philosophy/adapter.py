@@ -118,6 +118,20 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         except Exception:
             return facts[:top_k]
     
+    def get_section_metadata(self) -> List[str]:
+        """Permanent philosophy metadata for STATE section header."""
+        try:
+            profiles = get_philosophy_profiles()
+            profile_names = [p["profile_id"] for p in profiles]
+            total_stances = len(pull_philosophy_profile_facts())
+            lines = [
+                f"  profiles: {len(profiles)} ({', '.join(profile_names)})",
+                f"  stances: {total_stances}",
+            ]
+            return lines
+        except Exception:
+            return []
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Philosophy introspection with budget-aware fact packing.
@@ -157,7 +171,7 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
                 "weight": f.get("weight", 0.5),
             })
 
-        facts = self._budget_fill(raw, context_level)
+        facts = self._budget_fill(raw, context_level, query=query)
 
         return IntrospectionResult(
             facts=facts,
