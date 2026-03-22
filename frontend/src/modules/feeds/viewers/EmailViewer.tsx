@@ -22,7 +22,16 @@ interface Draft {
   created: string;
 }
 
-type ViewMode = 'inbox' | 'drafts' | 'compose';
+interface TriageResult {
+  id: string;
+  from: string;
+  subject: string;
+  priority: 'urgent' | 'high' | 'normal' | 'low';
+  category: string;
+  reason: string;
+}
+
+type ViewMode = 'inbox' | 'drafts' | 'compose' | 'triage' | 'digest';
 type Provider = 'gmail' | 'outlook' | 'proton';
 
 interface ProviderStatus {
@@ -58,6 +67,14 @@ export default function EmailViewer() {
   // Proton Bridge state
   const [protonUser, setProtonUser] = useState('');
   const [protonPass, setProtonPass] = useState('');
+
+  // Intelligence state
+  const [threadSummary, setThreadSummary] = useState<string | null>(null);
+  const [smartReplies, setSmartReplies] = useState<string[]>([]);
+  const [triageResults, setTriageResults] = useState<TriageResult[]>([]);
+  const [digestText, setDigestText] = useState<string | null>(null);
+  const [aiLoading, setAiLoading] = useState(false);
+  const [actionItems, setActionItems] = useState<{task: string; assignee: string | null; deadline: string | null}[]>([]);
 
   useEffect(() => {
     checkProviderStatus();
@@ -186,6 +203,86 @@ export default function EmailViewer() {
     }
   };
 
+  // ── Intelligence handlers ──
+
+  const handleSummarize = async (email: Email) => {
+    setAiLoading(true);
+    setThreadSummary(null);
+    setActionItems([]);
+    setSmartReplies([]);
+    try {
+      const msgs = [{ from: email.from, subject: email.subject, snippet: email.snippet, date: email.date }];
+      const [sumRes, actRes, repRes] = await Promise.all([
+        fetch(`${API_BASE}/api/feeds/email/${activeProvider}/summarize`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: msgs }),
+        }),
+        fetch(`${API_BASE}/api/feeds/email/${activeProvider}/action-items`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: msgs }),
+        }),
+        fetch(`${API_BASE}/api/feeds/email/${activeProvider}/smart-replies`, {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ message: { from: email.from, subject: email.subject, snippet: email.snippet } }),
+        }),
+      ]);
+      if (sumRes.ok) { const d = await sumRes.json(); setThreadSummary(d.summary); }
+      if (actRes.ok) { const d = await actRes.json(); setActionItems(d.action_items || []); }
+      if (repRes.ok) { const d = await repRes.json(); setSmartReplies(d.replies || []); }
+    } catch (err) {
+      console.error('Intelligence error:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleTriage = async () => {
+    setAiLoading(true);
+    setTriageResults([]);
+    try {
+      const res = await fetch(`${API_BASE}/api/feeds/email/${activeProvider}/triage`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTriageResults(data.results || []);
+        setViewMode('triage');
+      }
+    } catch (err) {
+      console.error('Triage error:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleDigest = async () => {
+    setAiLoading(true);
+    setDigestText(null);
+    try {
+      const res = await fetch(`${API_BASE}/api/feeds/email/${activeProvider}/digest`, {
+        method: 'POST',
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setDigestText(data.digest);
+        setViewMode('digest');
+      }
+    } catch (err) {
+      console.error('Digest error:', err);
+    } finally {
+      setAiLoading(false);
+    }
+  };
+
+  const handleUseReply = (reply: string) => {
+    setComposeBody(reply);
+    if (selectedEmail) {
+      setComposeTo(selectedEmail.from);
+      setComposeSubject(selectedEmail.subject.startsWith('Re:') ? selectedEmail.subject : `Re: ${selectedEmail.subject}`);
+    }
+    setViewMode('compose');
+  };
+
   const formatDate = (iso: string) => {
     const d = new Date(iso);
     return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' });
@@ -240,6 +337,12 @@ export default function EmailViewer() {
             <button className={`tab ${viewMode === 'inbox' ? 'active' : ''}`} onClick={() => setViewMode('inbox')}>
               📥 Inbox
             </button>
+            <button className={`tab ${viewMode === 'triage' ? 'active' : ''}`} onClick={handleTriage} disabled={aiLoading}>
+              {aiLoading && viewMode === 'triage' ? '⏳' : '🎯'} Triage
+            </button>
+            <button className={`tab ${viewMode === 'digest' ? 'active' : ''}`} onClick={handleDigest} disabled={aiLoading}>
+              {aiLoading && viewMode === 'digest' ? '⏳' : '📋'} Digest
+            </button>
             <button className={`tab ${viewMode === 'drafts' ? 'active' : ''}`} onClick={() => setViewMode('drafts')}>
               📝 Drafts
             </button>
@@ -252,22 +355,102 @@ export default function EmailViewer() {
             {loading ? (
               <div className="viewer-loading">Loading...</div>
             ) : viewMode === 'inbox' ? (
-              <div className="email-list">
-                {emails.length === 0 ? (
-                  <div className="empty-state">No emails yet.</div>
-                ) : (
-                  emails.map((email) => (
-                    <div
-                      key={email.id}
-                      className={`email-item ${email.unread ? 'unread' : ''} ${selectedEmail?.id === email.id ? 'selected' : ''}`}
-                      onClick={() => setSelectedEmail(email)}
-                    >
-                      <div className="email-from">{email.from}</div>
-                      <div className="email-subject">{email.subject}</div>
-                      <div className="email-snippet">{email.snippet}</div>
-                      <div className="email-date">{formatDate(email.date)}</div>
+              <div className="email-inbox-layout">
+                <div className="email-list">
+                  {emails.length === 0 ? (
+                    <div className="empty-state">No emails yet.</div>
+                  ) : (
+                    emails.map((email) => (
+                      <div
+                        key={email.id}
+                        className={`email-item ${email.unread ? 'unread' : ''} ${selectedEmail?.id === email.id ? 'selected' : ''}`}
+                        onClick={() => { setSelectedEmail(email); setThreadSummary(null); setSmartReplies([]); setActionItems([]); }}
+                      >
+                        <div className="email-from">{email.from}</div>
+                        <div className="email-subject">{email.subject}</div>
+                        <div className="email-snippet">{email.snippet}</div>
+                        <div className="email-date">{formatDate(email.date)}</div>
+                      </div>
+                    ))
+                  )}
+                </div>
+
+                {/* AI Panel — shown when an email is selected */}
+                {selectedEmail && (
+                  <div className="email-ai-panel">
+                    <div className="ai-panel-header">
+                      <strong>{selectedEmail.subject}</strong>
+                      <button className="btn-ai" onClick={() => handleSummarize(selectedEmail)} disabled={aiLoading}>
+                        {aiLoading ? '⏳ Analyzing…' : '✨ Analyze'}
+                      </button>
                     </div>
-                  ))
+
+                    <div className="ai-panel-snippet">{selectedEmail.snippet}</div>
+
+                    {threadSummary && (
+                      <div className="ai-section">
+                        <div className="ai-section-label">Summary</div>
+                        <div className="ai-section-body">{threadSummary}</div>
+                      </div>
+                    )}
+
+                    {actionItems.length > 0 && (
+                      <div className="ai-section">
+                        <div className="ai-section-label">Action Items</div>
+                        <ul className="ai-action-items">
+                          {actionItems.map((item, i) => (
+                            <li key={i}>
+                              <span className="action-task">{item.task}</span>
+                              {item.assignee && <span className="action-assignee"> — {item.assignee}</span>}
+                              {item.deadline && <span className="action-deadline"> (by {item.deadline})</span>}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {smartReplies.length > 0 && (
+                      <div className="ai-section">
+                        <div className="ai-section-label">Quick Replies</div>
+                        <div className="ai-replies">
+                          {smartReplies.map((reply, i) => (
+                            <button key={i} className="btn-reply" onClick={() => handleUseReply(reply)}>
+                              {reply}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ) : viewMode === 'triage' ? (
+              <div className="triage-view">
+                {triageResults.length === 0 ? (
+                  <div className="empty-state">{aiLoading ? 'Analyzing inbox…' : 'Click Triage to classify your unread emails.'}</div>
+                ) : (
+                  <div className="triage-list">
+                    {triageResults.map((item) => (
+                      <div key={item.id} className={`triage-item priority-${item.priority}`}>
+                        <span className={`priority-badge ${item.priority}`}>{item.priority}</span>
+                        <span className="triage-category">{item.category}</span>
+                        <div className="triage-from">{item.from}</div>
+                        <div className="triage-subject">{item.subject}</div>
+                        <div className="triage-reason">{item.reason}</div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            ) : viewMode === 'digest' ? (
+              <div className="digest-view">
+                {digestText ? (
+                  <div className="digest-content">
+                    <h3>📋 Daily Digest</h3>
+                    <div className="digest-body">{digestText}</div>
+                  </div>
+                ) : (
+                  <div className="empty-state">{aiLoading ? 'Generating digest…' : 'Click Digest to generate a briefing of your inbox.'}</div>
                 )}
               </div>
             ) : viewMode === 'drafts' ? (

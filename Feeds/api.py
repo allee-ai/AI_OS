@@ -911,6 +911,102 @@ async def connect_proton_bridge(body: Dict[str, Any]):
 
 
 # ─────────────────────────────────────────────────────────────
+# Intelligence — LLM-powered email capabilities
+# ─────────────────────────────────────────────────────────────
+
+
+class ThreadSummarizeBody(BaseModel):
+    messages: List[Dict[str, Any]]
+
+    @property
+    def capped(self) -> List[Dict[str, Any]]:
+        """Return at most 25 messages to avoid context-window abuse."""
+        return self.messages[:25]
+
+
+class SmartReplyBody(BaseModel):
+    message: Dict[str, Any]
+
+
+@router.post("/email/{provider}/summarize")
+async def email_summarize_thread(provider: str, body: ThreadSummarizeBody):
+    """Summarize an email thread using the configured LLM."""
+    from .sources.email import EMAIL_PROVIDERS
+    from .intelligence import summarize_thread
+
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    summary = summarize_thread(body.capped)
+    if summary is None:
+        raise HTTPException(status_code=502, detail="LLM unavailable")
+    return {"summary": summary}
+
+
+@router.post("/email/{provider}/action-items")
+async def email_action_items(provider: str, body: ThreadSummarizeBody):
+    """Extract action items from an email thread."""
+    from .sources.email import EMAIL_PROVIDERS
+    from .intelligence import extract_action_items
+
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    items = extract_action_items(body.capped)
+    return {"action_items": items}
+
+
+@router.post("/email/{provider}/smart-replies")
+async def email_smart_replies(provider: str, body: SmartReplyBody):
+    """Generate 3 short reply suggestions for an email."""
+    from .sources.email import EMAIL_PROVIDERS
+    from .intelligence import smart_replies
+
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    replies = smart_replies(body.message)
+    return {"replies": replies}
+
+
+@router.post("/email/{provider}/triage")
+async def email_triage(provider: str, max_results: int = Query(20, ge=1, le=50)):
+    """Fetch inbox then classify each message by priority and category."""
+    from .sources.email import get_adapter, EMAIL_PROVIDERS
+    from .intelligence import triage_emails
+
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    adapter = get_adapter(provider)
+    try:
+        messages = await adapter.list_messages(max_results=max_results, query="is:unread")
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to fetch messages")
+    triaged = triage_emails(messages)
+    return {"results": triaged}
+
+
+@router.post("/email/{provider}/digest")
+async def email_digest(provider: str, max_results: int = Query(30, ge=1, le=50)):
+    """Generate a morning-briefing digest of recent emails."""
+    from .sources.email import get_adapter, EMAIL_PROVIDERS
+    from .intelligence import daily_digest
+
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    adapter = get_adapter(provider)
+    try:
+        messages = await adapter.list_messages(max_results=max_results)
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception:
+        raise HTTPException(status_code=500, detail="Failed to fetch messages")
+    digest = daily_digest(messages)
+    if digest is None:
+        raise HTTPException(status_code=502, detail="LLM unavailable")
+    return {"digest": digest}
+
+
+# ─────────────────────────────────────────────────────────────
 # Calendar
 # ─────────────────────────────────────────────────────────────
 

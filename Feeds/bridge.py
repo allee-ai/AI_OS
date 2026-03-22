@@ -174,18 +174,19 @@ def _build_agent_prompt(event: FeedEvent, template: ResponseTemplate) -> str:
 
     p = event.payload
     if event.feed_name == "email":
-        parts.append(f"From: {p.get('from', p.get('sender', 'unknown'))}")
+        # JSON-encode untrusted fields to prevent prompt injection
+        parts.append(f"From: {json.dumps(str(p.get('from', p.get('sender', 'unknown'))))}")
         if p.get("subject"):
-            parts.append(f"Subject: {p['subject']}")
+            parts.append(f"Subject: {json.dumps(str(p['subject']))}")
         if p.get("snippet") or p.get("body"):
-            parts.append(f"Body: {p.get('snippet', p.get('body', ''))[:500]}")
+            parts.append(f"Body: {json.dumps(str(p.get('snippet', p.get('body', '')))[:500])}")
     elif event.feed_name == "github":
-        parts.append(f"Repo: {p.get('repository', '')}")
-        parts.append(f"Title: {p.get('title', '')}")
-        parts.append(f"Reason: {p.get('reason', '')}")
+        parts.append(f"Repo: {json.dumps(str(p.get('repository', '')))}")
+        parts.append(f"Title: {json.dumps(str(p.get('title', '')))}")
+        parts.append(f"Reason: {json.dumps(str(p.get('reason', '')))}")
     elif event.feed_name == "discord":
-        parts.append(f"From: {p.get('sender_name', 'someone')}")
-        parts.append(f"Message: {p.get('content', '')[:500]}")
+        parts.append(f"From: {json.dumps(str(p.get('sender_name', 'someone')))}")
+        parts.append(f"Message: {json.dumps(str(p.get('content', ''))[:500])}")
     else:
         parts.append(f"Payload: {json.dumps(p)[:500]}")
 

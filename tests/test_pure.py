@@ -263,3 +263,86 @@ class TestConceptExtraction:
         result = self._extract("the and or but")
         # Should return empty or very short — stopwords aren't concepts
         assert len(result) <= 1
+
+
+# ===================================================================
+# Feed Intelligence — pure helpers
+# ===================================================================
+
+class TestFeedIntelligenceFormatThread:
+    """Feeds.intelligence._format_thread — no LLM, just text formatting."""
+
+    def _fmt(self, messages):
+        from Feeds.intelligence import _format_thread
+        return _format_thread(messages)
+
+    def test_empty_list(self):
+        assert self._fmt([]) == ""
+
+    def test_single_message(self):
+        result = self._fmt([
+            {"from": "alice@x.com", "date": "2025-01-01", "subject": "Hi", "snippet": "Hello!"}
+        ])
+        assert "alice@x.com" in result
+        assert "Hi" in result
+        assert "Hello!" in result
+
+    def test_multi_message_separator(self):
+        msgs = [
+            {"from": "a@x.com", "date": "d1", "subject": "s1", "snippet": "body1"},
+            {"from": "b@x.com", "date": "d2", "subject": "s2", "snippet": "body2"},
+        ]
+        result = self._fmt(msgs)
+        assert "---" in result
+        assert "a@x.com" in result
+        assert "b@x.com" in result
+
+    def test_missing_fields_graceful(self):
+        result = self._fmt([{}])
+        assert "?" in result  # fallback shows '?'
+
+
+class TestFeedIntelligenceParseJson:
+    """Feeds.intelligence._parse_json — best-effort JSON extraction."""
+
+    def _parse(self, raw, fallback=None):
+        from Feeds.intelligence import _parse_json
+        return _parse_json(raw, fallback)
+
+    def test_valid_json(self):
+        assert self._parse('[1,2,3]') == [1, 2, 3]
+
+    def test_json_in_markdown_fences(self):
+        raw = '```json\n[{"task": "do it"}]\n```'
+        result = self._parse(raw, [])
+        assert isinstance(result, list)
+        assert result[0]["task"] == "do it"
+
+    def test_none_input(self):
+        assert self._parse(None, "default") == "default"
+
+    def test_invalid_json(self):
+        assert self._parse("not json at all", []) == []
+
+    def test_empty_string(self):
+        assert self._parse("", "fb") == "fb"
+
+
+class TestFeedIntelligenceNullSafety:
+    """Intelligence public functions handle empty / None inputs gracefully."""
+
+    def test_summarize_thread_empty(self):
+        from Feeds.intelligence import summarize_thread
+        assert summarize_thread([]) is None
+
+    def test_extract_action_items_empty(self):
+        from Feeds.intelligence import extract_action_items
+        assert extract_action_items([]) == []
+
+    def test_triage_empty(self):
+        from Feeds.intelligence import triage_emails
+        assert triage_emails([]) == []
+
+    def test_daily_digest_empty(self):
+        from Feeds.intelligence import daily_digest
+        assert daily_digest([]) is None
