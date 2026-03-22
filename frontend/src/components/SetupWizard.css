@@ -452,3 +452,104 @@
   min-width: 30px;
   text-align: right;
 }
+
+/* ─── Feeds onboarding step ─── */
+
+.setup-feeds h2 {
+  text-align: center;
+  margin-bottom: 4px;
+}
+
+.setup-feeds .setup-subtitle {
+  text-align: center;
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+
+.feed-cards {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.feed-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 16px 20px;
+  background: var(--bg);
+  transition: border-color 0.2s;
+}
+
+.feed-card.connected {
+  border-color: #34c759;
+}
+
+.feed-card-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.feed-card-icon {
+  font-size: 20px;
+}
+
+.feed-card-name {
+  font-weight: 600;
+  font-size: 15px;
+}
+
+.feed-card-status {
+  margin-left: auto;
+  color: #34c759;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.feed-card-desc {
+  color: var(--text-muted);
+  font-size: 13px;
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.feed-card .config-input {
+  width: 100%;
+  margin-bottom: 8px;
+  padding: 8px 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  box-sizing: border-box;
+}
+
+.feed-card .config-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+  margin-bottom: 10px;
+  line-height: 1.4;
+}
+
+.feed-card .connect-btn {
+  display: inline-block;
+  padding: 8px 16px;
+  background: var(--accent);
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.feed-card .connect-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.proton-form {
+  margin-top: 8px;
+}

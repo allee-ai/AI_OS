@@ -124,7 +124,8 @@ async def get_doc_content(path: str = Query(..., description="Relative path to t
             "size": len(content),
         }
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error reading file: {str(e)}")
+        print(f"Error reading file: {e}")
+        raise HTTPException(status_code=500, detail="Error reading file")
 
 
 # =============================================================================

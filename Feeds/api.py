@@ -20,6 +20,12 @@ FEEDS_DIR = Path(__file__).resolve().parent
 SOURCES_DIR = FEEDS_DIR / "sources"
 _ENABLED_FILE = SOURCES_DIR / ".enabled.json"
 
+# Whitelist: only directories under sources/ that contain __init__.py
+_ALLOWED_MODULES = frozenset(
+    d.name for d in SOURCES_DIR.iterdir()
+    if d.is_dir() and (d / "__init__.py").exists()
+)
+
 
 def _load_enabled() -> Dict[str, bool]:
     """Load per-source enabled flags from disk."""
@@ -77,6 +83,8 @@ def _get_module_info(module_dir: Path) -> Optional[Dict[str, Any]]:
     }
     
     # Try to import the module to get its info
+    if name not in _ALLOWED_MODULES:
+        return info
     try:
         import importlib
         module = importlib.import_module(f"Feeds.sources.{name}")
@@ -175,6 +183,8 @@ async def test_source(name: str):
     
     if not module_dir.exists():
         raise HTTPException(status_code=404, detail=f"Feed module '{name}' not found")
+    if name not in _ALLOWED_MODULES:
+        raise HTTPException(status_code=403, detail=f"Module '{name}' is not whitelisted")
     
     # Check if module is properly configured
     try:
@@ -348,7 +358,8 @@ async def github_device_start():
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Failed to start device flow: {str(e)}")
+        print(f"Failed to start device flow: {e}")
+        raise HTTPException(status_code=500, detail="Failed to start device flow")
 
 
 @router.post("/github/device/poll")
@@ -393,7 +404,8 @@ async def github_device_poll(device_code: str):
     except HTTPException:
         raise
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Poll failed: {str(e)}")
+        print(f"Poll failed: {e}")
+        raise HTTPException(status_code=500, detail="Poll failed")
 
 
 @router.get("/{feed_name}/oauth/callback")
@@ -446,7 +458,8 @@ async def oauth_callback(feed_name: str, code: str, state: Optional[str] = None,
         raise HTTPException(status_code=400, detail=f"OAuth not supported for {feed_name}")
         
     except Exception as e:
-        raise HTTPException(status_code=400, detail=f"OAuth exchange failed: {e}")
+        print(f"OAuth exchange failed: {e}")
+        raise HTTPException(status_code=400, detail="OAuth exchange failed")
 
 
 @router.get("/{feed_name}/status")
@@ -494,14 +507,20 @@ async def feed_status(feed_name: str):
 @router.get("/email/providers/status")
 async def email_providers_status():
     """Get connection status for all email providers."""
-    from agent.core.secrets import get_oauth_tokens
+    from agent.core.secrets import get_oauth_tokens, get_secret
     
     status = {}
-    for provider in ["gmail", "outlook", "proton"]:
+    for provider in ["gmail", "outlook"]:
         tokens = get_oauth_tokens(f"email_{provider}")
         status[provider] = {
             "connected": bool(tokens and tokens.get("access_token")),
         }
+    # Proton uses IMAP Bridge credentials, not OAuth tokens
+    proton_user = get_secret("imap_user", "email_proton")
+    proton_pass = get_secret("imap_password", "email_proton")
+    status["proton"] = {
+        "connected": bool(proton_user and proton_pass),
+    }
     return status
 
 
@@ -804,6 +823,91 @@ async def configure_integration(feed_name: str, body: Dict[str, Any]):
         pass
 
     return {"status": "ok", "polling": get_polling_status()}
+
+
+# ─────────────────────────────────────────────────────────────
+# Email — message endpoints
+# ─────────────────────────────────────────────────────────────
+
+class SendEmailBody(BaseModel):
+    to: str
+    subject: str
+    body: str
+    thread_id: Optional[str] = None
+
+
+@router.get("/email/{provider}/messages")
+async def email_messages(provider: str, max_results: int = Query(20, ge=1, le=100), q: Optional[str] = None):
+    """Fetch inbox messages for a provider."""
+    from .sources.email import get_adapter, EMAIL_PROVIDERS
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    adapter = get_adapter(provider)
+    try:
+        return await adapter.list_messages(max_results=max_results, query=q)
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        print(f"Email fetch error ({provider}): {e}")
+        raise HTTPException(status_code=500, detail="Failed to fetch messages")
+
+
+@router.get("/email/{provider}/drafts")
+async def email_drafts(provider: str):
+    """Get AI-generated draft responses for a provider."""
+    from .bridge import get_response_log
+    log = get_response_log(limit=50)
+    # Filter to this provider
+    drafts = [
+        {
+            "id": str(i),
+            "to": entry.get("to", ""),
+            "subject": entry.get("subject", ""),
+            "body": entry.get("body", ""),
+            "created": entry.get("timestamp", ""),
+        }
+        for i, entry in enumerate(log)
+        if entry.get("provider") == provider or entry.get("feed_name") == f"email_{provider}"
+    ]
+    return drafts
+
+
+@router.post("/email/{provider}/send")
+async def email_send(provider: str, body: SendEmailBody):
+    """Send an email through a connected provider."""
+    from .sources.email import get_adapter, EMAIL_PROVIDERS
+    if provider not in EMAIL_PROVIDERS:
+        raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
+    adapter = get_adapter(provider)
+    try:
+        result = await adapter.send_message(
+            to=body.to, subject=body.subject, body=body.body, thread_id=body.thread_id
+        )
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=401, detail=str(e))
+    except Exception as e:
+        print(f"Email send error ({provider}): {e}")
+        raise HTTPException(status_code=500, detail="Failed to send email")
+
+
+@router.post("/email/proton/connect")
+async def connect_proton_bridge(body: Dict[str, Any]):
+    """Store Proton Bridge IMAP/SMTP credentials."""
+    from agent.core.secrets import store_secret
+
+    required = ["imap_user", "imap_password"]
+    for field in required:
+        if not body.get(field):
+            raise HTTPException(status_code=400, detail=f"Missing: {field}")
+
+    store_secret("imap_user", body["imap_user"], feed_name="email_proton", secret_type="credential")
+    store_secret("imap_password", body["imap_password"], feed_name="email_proton", secret_type="credential")
+    store_secret("imap_host", body.get("imap_host", "127.0.0.1"), feed_name="email_proton", secret_type="config")
+    store_secret("imap_port", str(body.get("imap_port", 1143)), feed_name="email_proton", secret_type="config")
+    store_secret("smtp_port", str(body.get("smtp_port", 1025)), feed_name="email_proton", secret_type="config")
+
+    return {"status": "connected", "provider": "proton"}
 
 
 # ─────────────────────────────────────────────────────────────

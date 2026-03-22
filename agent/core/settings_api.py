@@ -125,7 +125,11 @@ async def get_all_settings():
         display = current
         if item["type"] == "password" and current:
             display = current[:4] + "•" * max(0, len(current) - 8) + current[-4:] if len(current) > 8 else "••••"
-        entry = {**item, "value": current, "display": display}
+        # Never return raw secret values — only whether they're set
+        if item["type"] == "password":
+            entry = {**item, "value": "" if not current else "••••••••", "display": display, "is_set": bool(current)}
+        else:
+            entry = {**item, "value": current, "display": display}
         groups.setdefault(item["group"], []).append(entry)
     return {"groups": groups}
 

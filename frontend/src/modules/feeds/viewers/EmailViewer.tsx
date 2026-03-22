@@ -30,10 +30,10 @@ interface ProviderStatus {
   email?: string;
 }
 
-const PROVIDERS: { id: Provider; name: string; icon: string; comingSoon?: boolean }[] = [
+const PROVIDERS: { id: Provider; name: string; icon: string }[] = [
   { id: 'gmail', name: 'Gmail', icon: '📧' },
   { id: 'outlook', name: 'Outlook', icon: '📬' },
-  { id: 'proton', name: 'Proton', icon: '🔒', comingSoon: true },
+  { id: 'proton', name: 'Proton', icon: '🔒' },
 ];
 
 export default function EmailViewer() {
@@ -53,6 +53,11 @@ export default function EmailViewer() {
   const [composeTo, setComposeTo] = useState('');
   const [composeSubject, setComposeSubject] = useState('');
   const [composeBody, setComposeBody] = useState('');
+  const [sending, setSending] = useState(false);
+
+  // Proton Bridge state
+  const [protonUser, setProtonUser] = useState('');
+  const [protonPass, setProtonPass] = useState('');
 
   useEffect(() => {
     checkProviderStatus();
@@ -80,9 +85,49 @@ export default function EmailViewer() {
     }
   };
 
-  const handleConnect = (provider: Provider) => {
+  const handleConnect = async (provider: Provider) => {
+    if (provider === 'proton') return; // handled by bridge form
     // Redirect to OAuth flow
     window.location.href = `${API_BASE}/api/feeds/email/oauth/start?provider=${provider}`;
+  };
+
+  const handleConnectProton = async () => {
+    if (!protonUser || !protonPass) return;
+    try {
+      const res = await fetch(`${API_BASE}/api/feeds/email/proton/connect`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imap_user: protonUser, imap_password: protonPass }),
+      });
+      if (res.ok) {
+        checkProviderStatus();
+        setProtonUser('');
+        setProtonPass('');
+      }
+    } catch (err) {
+      console.error('Failed to connect Proton:', err);
+    }
+  };
+
+  const handleComposeSend = async () => {
+    if (!composeTo || !composeSubject) return;
+    setSending(true);
+    try {
+      await fetch(`${API_BASE}/api/feeds/email/${activeProvider}/send`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ to: composeTo, subject: composeSubject, body: composeBody }),
+      });
+      setComposeTo('');
+      setComposeSubject('');
+      setComposeBody('');
+      setViewMode('inbox');
+      fetchInbox();
+    } catch (err) {
+      console.error('Failed to send:', err);
+    } finally {
+      setSending(false);
+    }
   };
 
   const fetchInbox = async () => {
@@ -156,33 +201,37 @@ export default function EmailViewer() {
         {PROVIDERS.map((provider) => (
           <button
             key={provider.id}
-            className={`provider-tab ${activeProvider === provider.id ? 'active' : ''} ${provider.comingSoon ? 'coming-soon' : ''}`}
-            onClick={() => !provider.comingSoon && setActiveProvider(provider.id)}
-            disabled={provider.comingSoon}
+            className={`provider-tab ${activeProvider === provider.id ? 'active' : ''}`}
+            onClick={() => setActiveProvider(provider.id)}
           >
             <span className="provider-icon">{provider.icon}</span>
             <span className="provider-name">{provider.name}</span>
             {providerStatus[provider.id]?.connected && <span className="connected-dot">●</span>}
-            {provider.comingSoon && <span className="coming-soon-badge">Soon</span>}
           </button>
         ))}
       </div>
 
       {/* Not Connected State */}
-      {!currentStatus.connected && !currentProviderConfig.comingSoon ? (
+      {!currentStatus.connected ? (
         <div className="connect-prompt">
           <div className="connect-icon">{currentProviderConfig.icon}</div>
           <h3>Connect {currentProviderConfig.name}</h3>
-          <p>Connect your {currentProviderConfig.name} account to see your inbox, manage drafts, and send emails.</p>
-          <button className="connect-btn" onClick={() => handleConnect(activeProvider)}>
-            Connect with {currentProviderConfig.name}
-          </button>
-        </div>
-      ) : currentProviderConfig.comingSoon ? (
-        <div className="connect-prompt">
-          <div className="connect-icon">{currentProviderConfig.icon}</div>
-          <h3>{currentProviderConfig.name} Coming Soon</h3>
-          <p>We're working on {currentProviderConfig.name} integration. Check back soon!</p>
+          {activeProvider === 'proton' ? (
+            <>
+              <p>Connect via <a href="https://proton.me/mail/bridge" target="_blank" rel="noopener noreferrer">Proton Bridge</a> (runs on your machine).</p>
+              <div className="proton-form">
+                <input type="text" placeholder="Proton email address" value={protonUser} onChange={e => setProtonUser(e.target.value)} className="config-input" />
+                <input type="password" placeholder="Bridge password (from Proton Bridge app)" value={protonPass} onChange={e => setProtonPass(e.target.value)} className="config-input" />
+                <p className="config-hint">Open Proton Bridge → click your account → copy the password shown there. Default ports: IMAP 1143, SMTP 1025.</p>
+                <button className="connect-btn" onClick={handleConnectProton} disabled={!protonUser || !protonPass}>Connect Proton Bridge</button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p>Connect your {currentProviderConfig.name} account to see your inbox, manage drafts, and send emails.</p>
+              <button className="connect-btn" onClick={() => handleConnect(activeProvider)}>Connect with {currentProviderConfig.name}</button>
+            </>
+          )}
         </div>
       ) : (
         <>
@@ -258,8 +307,9 @@ export default function EmailViewer() {
                   <textarea value={composeBody} onChange={(e) => setComposeBody(e.target.value)} placeholder="Write your message..." rows={8} />
                 </div>
                 <div className="compose-actions">
-                  <button className="btn-primary">📤 Send</button>
-                  <button className="btn-secondary">💾 Save Draft</button>
+                  <button className="btn-primary" onClick={handleComposeSend} disabled={sending || !composeTo}>
+                    {sending ? '📤 Sending…' : '📤 Send'}
+                  </button>
                 </div>
               </div>
             )}

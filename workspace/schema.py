@@ -111,7 +111,12 @@ def init_workspace_tables():
 # =============================================================================
 
 def normalize_path(path: str) -> str:
-    """Normalize path to consistent format."""
+    """Normalize path to consistent format. Rejects traversal sequences."""
+    from pathlib import PurePosixPath
+
+    if '..' in path.split('/'):
+        raise ValueError("Path traversal (..) is not allowed")
+
     if not path.startswith('/'):
         path = '/' + path
     # Remove trailing slash except for root
@@ -120,6 +125,12 @@ def normalize_path(path: str) -> str:
     # Collapse multiple slashes
     while '//' in path:
         path = path.replace('//', '/')
+
+    # Resolve and verify still under root
+    resolved = str(PurePosixPath(path))
+    if '..' in resolved.split('/'):
+        raise ValueError("Path traversal (..) is not allowed")
+
     return path
 
 

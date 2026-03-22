@@ -60,7 +60,7 @@ EMAIL_PROVIDERS = {
         "redirect_uri": f"{_BASE_URL}/api/feeds/email/oauth/callback?provider=proton",
         "scopes": ["mail.read", "mail.send"],
         "api_base": "https://mail.proton.me/api",
-        "coming_soon": True,  # Proton's OAuth is limited, mark as coming soon
+        "auth_method": "imap_bridge",  # Uses Proton Bridge, not OAuth
     },
 }
 
@@ -304,6 +304,9 @@ class EmailAdapter:
         """List messages from inbox."""
         import httpx
         
+        if self.provider == "proton":
+            return await self._imap_list_messages(max_results, query)
+
         access_token = await self.get_access_token()
         if not access_token:
             raise ValueError(f"Not authenticated with {self.config['name']}")
@@ -322,13 +325,40 @@ class EmailAdapter:
             params["q"] = query
         
         async with httpx.AsyncClient() as client:
+            # Get message IDs
             response = await client.get(
                 f"{self.config['api_base']}/users/me/messages",
                 headers={"Authorization": f"Bearer {token}"},
                 params=params,
             )
             response.raise_for_status()
-            return response.json().get("messages", [])
+            message_ids = response.json().get("messages", [])
+
+            # Fetch each message's metadata
+            messages = []
+            for msg_ref in message_ids[:max_results]:
+                detail = await client.get(
+                    f"{self.config['api_base']}/users/me/messages/{msg_ref['id']}",
+                    headers={"Authorization": f"Bearer {token}"},
+                    params={"format": "metadata", "metadataHeaders": ["From", "To", "Subject", "Date"]},
+                )
+                if detail.status_code != 200:
+                    continue
+                d = detail.json()
+                headers_list = d.get("payload", {}).get("headers", [])
+                hdr = {h["name"]: h["value"] for h in headers_list}
+                messages.append({
+                    "id": d["id"],
+                    "threadId": d.get("threadId"),
+                    "from": hdr.get("From", ""),
+                    "to": hdr.get("To", ""),
+                    "subject": hdr.get("Subject", "(no subject)"),
+                    "snippet": d.get("snippet", ""),
+                    "date": hdr.get("Date", ""),
+                    "labels": d.get("labelIds", []),
+                    "unread": "UNREAD" in d.get("labelIds", []),
+                })
+            return messages
     
     async def _outlook_list_messages(self, token: str, max_results: int, query: Optional[str]) -> List[Dict[str, Any]]:
         import httpx
@@ -343,10 +373,27 @@ class EmailAdapter:
                 params=params,
             )
             response.raise_for_status()
-            return response.json().get("value", [])
+            raw = response.json().get("value", [])
+            messages = []
+            for m in raw:
+                messages.append({
+                    "id": m["id"],
+                    "threadId": m.get("conversationId"),
+                    "from": m.get("from", {}).get("emailAddress", {}).get("address", ""),
+                    "to": ", ".join(r.get("emailAddress", {}).get("address", "") for r in m.get("toRecipients", [])),
+                    "subject": m.get("subject", "(no subject)"),
+                    "snippet": m.get("bodyPreview", ""),
+                    "date": m.get("receivedDateTime", ""),
+                    "labels": ["INBOX"] + (["UNREAD"] if not m.get("isRead") else []),
+                    "unread": not m.get("isRead", True),
+                })
+            return messages
     
     async def send_message(self, to: str, subject: str, body: str, thread_id: Optional[str] = None) -> Dict[str, Any]:
         """Send an email."""
+        if self.provider == "proton":
+            return await self._imap_send(to, subject, body)
+
         access_token = await self.get_access_token()
         if not access_token:
             raise ValueError(f"Not authenticated with {self.config['name']}")
@@ -419,6 +466,121 @@ class EmailAdapter:
             })
             
             return {"status": "sent"}
+
+
+    # ─── IMAP Bridge (Proton Mail via Proton Bridge) ───────────
+
+    def _get_imap_creds(self):
+        """Get IMAP credentials from secrets store."""
+        from agent.core.secrets import get_secret
+        host = get_secret("imap_host", "email_proton") or "127.0.0.1"
+        port = int(get_secret("imap_port", "email_proton") or "1143")
+        smtp_port = int(get_secret("smtp_port", "email_proton") or "1025")
+        user = get_secret("imap_user", "email_proton") or ""
+        password = get_secret("imap_password", "email_proton") or ""
+        return host, port, smtp_port, user, password
+
+    async def _imap_list_messages(self, max_results: int, query: Optional[str]) -> List[Dict[str, Any]]:
+        """Fetch messages via IMAP (Proton Bridge runs on localhost)."""
+        import imaplib
+        import email as email_mod
+        from email.header import decode_header
+
+        host, port, _smtp, user, password = self._get_imap_creds()
+        if not user or not password:
+            raise ValueError("Proton Bridge credentials not configured. Add them in Settings → Feeds → Proton.")
+
+        def _decode_hdr(raw):
+            if not raw:
+                return ""
+            parts = decode_header(raw)
+            return " ".join(
+                part.decode(enc or "utf-8") if isinstance(part, bytes) else part
+                for part, enc in parts
+            )
+
+        # Run blocking IMAP in executor
+        import asyncio
+        loop = asyncio.get_event_loop()
+
+        def _fetch():
+            conn = imaplib.IMAP4(host, port)
+            conn.starttls()
+            conn.login(user, password)
+            conn.select("INBOX")
+            criteria = f'(SUBJECT "{query}")' if query else "ALL"
+            _typ, data = conn.search(None, criteria)
+            msg_nums = data[0].split()[-max_results:] if data[0] else []
+            messages = []
+            for num in reversed(msg_nums):
+                _typ, msg_data = conn.fetch(num, "(RFC822 FLAGS)")
+                raw = msg_data[0][1]
+                msg = email_mod.message_from_bytes(raw)
+                flags_raw = msg_data[0][0].decode() if msg_data[0][0] else ""
+                unread = "\\Seen" not in flags_raw
+                messages.append({
+                    "id": num.decode(),
+                    "threadId": msg.get("Message-ID", ""),
+                    "from": _decode_hdr(msg["From"]),
+                    "to": _decode_hdr(msg["To"]),
+                    "subject": _decode_hdr(msg["Subject"]) or "(no subject)",
+                    "snippet": _get_text_body(msg)[:200],
+                    "date": msg["Date"] or "",
+                    "labels": ["INBOX"] + (["UNREAD"] if unread else []),
+                    "unread": unread,
+                })
+            conn.logout()
+            return messages
+
+        return await loop.run_in_executor(None, _fetch)
+
+    async def _imap_send(self, to: str, subject: str, body: str) -> Dict[str, Any]:
+        """Send via SMTP through Proton Bridge."""
+        import smtplib
+        from email.mime.text import MIMEText
+        import asyncio
+
+        host, _imap_port, smtp_port, user, password = self._get_imap_creds()
+        if not user or not password:
+            raise ValueError("Proton Bridge credentials not configured")
+
+        msg = MIMEText(body)
+        msg["Subject"] = subject
+        msg["From"] = user
+        msg["To"] = to
+
+        def _send():
+            with smtplib.SMTP(host, smtp_port) as server:
+                server.starttls()
+                server.login(user, password)
+                server.sendmail(user, [to], msg.as_string())
+
+        loop = asyncio.get_event_loop()
+        await loop.run_in_executor(None, _send)
+
+        emit_event("email", "email_sent", {
+            "provider": "proton",
+            "message_id": "sent",
+            "thread_id": None,
+            "to": [to],
+            "subject": subject,
+        })
+        return {"status": "sent"}
+
+
+def _get_text_body(msg) -> str:
+    """Extract plain text body from an email message."""
+    if msg.is_multipart():
+        for part in msg.walk():
+            if part.get_content_type() == "text/plain":
+                payload = part.get_payload(decode=True)
+                if payload:
+                    return payload.decode("utf-8", errors="replace")
+    else:
+        payload = msg.get_payload(decode=True)
+        if payload:
+            return payload.decode("utf-8", errors="replace")
+    return ""
 
 
 # Adapter factory

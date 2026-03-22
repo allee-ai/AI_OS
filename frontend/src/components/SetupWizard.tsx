@@ -31,7 +31,7 @@ interface SetupWizardProps {
   onComplete: () => void;
 }
 
-type Step = 'choose' | 'configure' | 'test';
+type Step = 'choose' | 'configure' | 'test' | 'feeds';
 
 const OPENAI_MODELS: ModelOption[] = [
   { id: 'gpt-4o-mini', name: 'GPT-4o Mini', provider: 'openai', description: 'Fast, affordable' },
@@ -67,6 +67,12 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
   const [pulling, setPulling] = useState<string | null>(null);
   const [pullProgress, setPullProgress] = useState<{ status: string; percent: number }>({ status: '', percent: 0 });
 
+  // Feeds onboarding state
+  const [feedStatuses, setFeedStatuses] = useState<Record<string, boolean>>({});
+  const [protonUser, setProtonUser] = useState('');
+  const [protonPass, setProtonPass] = useState('');
+  const [feedConnecting, setFeedConnecting] = useState<string | null>(null);
+
   const refreshOllamaModels = () => {
     fetch('/api/models')
       .then(res => res.json())
@@ -92,6 +98,45 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
     refreshOllamaModels();
     refreshLibrary();
   }, []);
+
+  const refreshFeedStatuses = () => {
+    fetch('/api/feeds/email/providers/status')
+      .then(res => res.json())
+      .then(data => {
+        const statuses: Record<string, boolean> = {};
+        for (const [k, v] of Object.entries(data)) {
+          statuses[k] = (v as any).connected;
+        }
+        setFeedStatuses(statuses);
+      })
+      .catch(() => {});
+  };
+
+  const handleConnectGmail = () => {
+    // Save current wizard state, redirect to OAuth
+    window.location.href = '/api/feeds/email/oauth/start?provider=gmail';
+  };
+
+  const handleConnectProtonBridge = async () => {
+    if (!protonUser || !protonPass) return;
+    setFeedConnecting('proton');
+    try {
+      const res = await fetch('/api/feeds/email/proton/connect', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ imap_user: protonUser, imap_password: protonPass }),
+      });
+      if (res.ok) {
+        refreshFeedStatuses();
+        setProtonUser('');
+        setProtonPass('');
+      }
+    } catch (e) {
+      console.error('Failed to connect Proton:', e);
+    } finally {
+      setFeedConnecting(null);
+    }
+  };
 
   const handlePull = async (modelId: string) => {
     setPulling(modelId);
@@ -186,34 +231,6 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
       setTestResult({ success: false, message: e.message || 'Network error' });
     } finally {
       setTesting(false);
-    }
-  };
-
-  const handleSave = async () => {
-    setSaving(true);
-    setError('');
-
-    try {
-      const res = await fetch('/api/models/setup/configure', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          provider: selectedProvider,
-          model: model || providerDefaults[selectedProvider],
-          api_key: apiKey || undefined,
-          endpoint: endpoint || undefined,
-        }),
-      });
-      const data = await res.json();
-      if (data.success) {
-        onComplete();
-      } else {
-        setError(data.detail || 'Failed to save configuration');
-      }
-    } catch (e: any) {
-      setError(e.message || 'Network error');
-    } finally {
-      setSaving(false);
     }
   };
 
@@ -419,11 +436,110 @@ export const SetupWizard: React.FC<SetupWizardProps> = ({ onComplete }) => {
             </p>
             <button
               className="btn-save"
-              onClick={handleSave}
+              onClick={async () => {
+                setSaving(true);
+                setError('');
+                try {
+                  const res = await fetch('/api/models/setup/configure', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                      provider: selectedProvider,
+                      model: model || providerDefaults[selectedProvider],
+                      api_key: apiKey || undefined,
+                      endpoint: endpoint || undefined,
+                    }),
+                  });
+                  const data = await res.json();
+                  if (data.success) {
+                    refreshFeedStatuses();
+                    setStep('feeds');
+                  } else {
+                    setError(data.detail || 'Failed to save configuration');
+                  }
+                } catch (e: any) {
+                  setError(e.message || 'Network error');
+                } finally {
+                  setSaving(false);
+                }
+              }}
               disabled={saving}
             >
-              {saving ? 'Saving…' : 'Save & Start'}
+              {saving ? 'Saving…' : 'Next: Connect Feeds →'}
             </button>
+          </div>
+        )}
+
+        {step === 'feeds' && (
+          <div className="setup-feeds">
+            <h2>Connect Your Accounts</h2>
+            <p className="setup-subtitle">Optional — connect email and other feeds so your agent can help you.</p>
+
+            <div className="feed-cards">
+              {/* Gmail */}
+              <div className={`feed-card ${feedStatuses['gmail'] ? 'connected' : ''}`}>
+                <div className="feed-card-header">
+                  <span className="feed-card-icon">📧</span>
+                  <span className="feed-card-name">Gmail</span>
+                  {feedStatuses['gmail'] && <span className="feed-card-status">● Connected</span>}
+                </div>
+                {feedStatuses['gmail'] ? (
+                  <p className="feed-card-desc">Your Gmail inbox is connected.</p>
+                ) : (
+                  <>
+                    <p className="feed-card-desc">Read inbox, send emails, manage drafts via Google OAuth.</p>
+                    <button className="connect-btn" onClick={handleConnectGmail}>Connect Gmail</button>
+                  </>
+                )}
+              </div>
+
+              {/* Proton */}
+              <div className={`feed-card ${feedStatuses['proton'] ? 'connected' : ''}`}>
+                <div className="feed-card-header">
+                  <span className="feed-card-icon">🔒</span>
+                  <span className="feed-card-name">Proton Mail</span>
+                  {feedStatuses['proton'] && <span className="feed-card-status">● Connected</span>}
+                </div>
+                {feedStatuses['proton'] ? (
+                  <p className="feed-card-desc">Proton Bridge is connected.</p>
+                ) : (
+                  <>
+                    <p className="feed-card-desc">
+                      Connects via <a href="https://proton.me/mail/bridge" target="_blank" rel="noopener noreferrer">Proton Bridge</a> on your machine.
+                    </p>
+                    <input type="text" className="config-input" placeholder="Proton email" value={protonUser} onChange={e => setProtonUser(e.target.value)} />
+                    <input type="password" className="config-input" placeholder="Bridge password" value={protonPass} onChange={e => setProtonPass(e.target.value)} />
+                    <p className="config-hint">Open Proton Bridge → click your account → copy the password shown.</p>
+                    <button className="connect-btn" onClick={handleConnectProtonBridge} disabled={feedConnecting === 'proton' || !protonUser || !protonPass}>
+                      {feedConnecting === 'proton' ? 'Connecting…' : 'Connect Proton Bridge'}
+                    </button>
+                  </>
+                )}
+              </div>
+
+              {/* Outlook */}
+              <div className={`feed-card ${feedStatuses['outlook'] ? 'connected' : ''}`}>
+                <div className="feed-card-header">
+                  <span className="feed-card-icon">📬</span>
+                  <span className="feed-card-name">Outlook</span>
+                  {feedStatuses['outlook'] && <span className="feed-card-status">● Connected</span>}
+                </div>
+                {feedStatuses['outlook'] ? (
+                  <p className="feed-card-desc">Your Outlook inbox is connected.</p>
+                ) : (
+                  <>
+                    <p className="feed-card-desc">Read inbox, send emails via Microsoft OAuth.</p>
+                    <button className="connect-btn" onClick={() => { window.location.href = '/api/feeds/email/oauth/start?provider=outlook'; }}>Connect Outlook</button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            <div className="config-actions" style={{ marginTop: '1.5rem' }}>
+              <button className="btn-save" onClick={onComplete}>
+                {Object.values(feedStatuses).some(Boolean) ? 'Done — Launch AI OS' : 'Skip — Launch AI OS'}
+              </button>
+            </div>
           </div>
         )}
       </div>

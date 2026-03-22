@@ -10,7 +10,7 @@ Run with:
     python -m scripts.server
 """
 
-from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter, Request
+from fastapi import FastAPI, WebSocket, WebSocketDisconnect, APIRouter, Request, Depends
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -25,6 +25,9 @@ import uuid
 _project_root = Path(__file__).resolve().parents[1]
 if str(_project_root) not in sys.path:
     sys.path.insert(0, str(_project_root))
+
+# Auth
+from agent.core.auth import require_auth, require_ws_auth, get_or_create_token
 
 # Database mode functions
 from data.db import is_demo_mode, set_demo_mode, get_db_path
@@ -116,7 +119,8 @@ app = FastAPI(
     title=settings.app_name,
     description="AI OS - Backend API",
     version="1.0.0",
-    debug=settings.debug
+    debug=settings.debug,
+    dependencies=[Depends(require_auth)],
 )
 
 # Middleware
@@ -125,7 +129,7 @@ app.add_middleware(
     allow_origins=settings.cors_origins,
     allow_credentials=True,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-    allow_headers=["*"],
+    allow_headers=["Content-Type", "Authorization", "X-Requested-With"],
 )
 app.add_middleware(GZipMiddleware, minimum_size=1000)
 app.add_middleware(HTTPLoggingMiddleware)
@@ -225,6 +229,11 @@ if _frontend_dist.exists():
 async def startup_event():
     """Initialize subconscious core on startup."""
     try:
+        # Generate/display API token
+        token = get_or_create_token()
+        print(f"[Startup] API token: {token}")
+        print(f"[Startup] Set Authorization: Bearer <token> for API access")
+        
         # Verify database path
         from data.db import get_db_path, DB_PATH
         print(f"[Startup] DB_PATH: {DB_PATH}")

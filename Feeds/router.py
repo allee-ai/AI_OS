@@ -175,6 +175,9 @@ class FeedsRouter:
         body: Any = None
     ) -> Dict[str, Any]:
         """Make HTTP request and return JSON response"""
+        from agent.core.url_validation import validate_url
+        validate_url(url)
+
         headers = headers or {}
         headers["Content-Type"] = "application/json"
         

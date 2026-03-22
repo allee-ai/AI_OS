@@ -188,7 +188,8 @@ async def get_chat_history(limit: int = 50):
         
         return messages
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving chat history: {str(e)}")
+        print(f"Error retrieving chat history: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving chat history")
 
 
 @chat_router.post("/message", response_model=SendMessageResponse)
@@ -207,7 +208,8 @@ async def send_message(request: SendMessageRequest):
             agent_status=agent_status_data.get("status", "ready")
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error processing message: {str(e)}")
+        print(f"Error processing message: {e}")
+        raise HTTPException(status_code=500, detail="Error processing message")
 
 
 @chat_router.get("/agent-status", response_model=AgentStatus)
@@ -223,7 +225,8 @@ async def get_agent_status():
             last_interaction=status_data.get("last_interaction")
         )
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error retrieving agent status: {str(e)}")
+        print(f"Error retrieving agent status: {e}")
+        raise HTTPException(status_code=500, detail="Error retrieving agent status")
 
 
 @chat_router.post("/clear")
@@ -234,7 +237,8 @@ async def clear_chat_history():
         agent_service.message_history.clear()
         return {"message": "Chat history cleared"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error clearing history: {str(e)}")
+        print(f"Error clearing history: {e}")
+        raise HTTPException(status_code=500, detail="Error clearing history")
 
 
 @chat_router.post("/start-session")
@@ -246,7 +250,8 @@ async def start_session():
         
         return {"session_id": new_session_id, "status": "ok"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error starting session: {str(e)}")
+        print(f"Error starting session: {e}")
+        raise HTTPException(status_code=500, detail="Error starting session")
 
 
 @chat_router.post("/set-session/{session_id}")
@@ -257,7 +262,8 @@ async def set_session(session_id: str):
         agent_service.set_session(session_id)
         return {"session_id": session_id, "status": "ok"}
     except Exception as e:
-        raise HTTPException(status_code=500, detail=f"Error setting session: {str(e)}")
+        print(f"Error setting session: {e}")
+        raise HTTPException(status_code=500, detail="Error setting session")
 
 
 # =============================================================================
@@ -683,12 +689,17 @@ async def get_rating_stats():
 class WebSocketManager:
     """Manage WebSocket connections for real-time chat."""
     
+    MAX_CONNECTIONS = 50
+
     def __init__(self):
         from typing import Dict
         from fastapi import WebSocket
         self.active_connections: Dict[str, WebSocket] = {}
         
     async def connect(self, websocket, client_id: str):
+        if len(self.active_connections) >= self.MAX_CONNECTIONS:
+            await websocket.close(code=1013, reason="Too many connections")
+            return
         await websocket.accept()
         self.active_connections[client_id] = websocket
         print(f"WebSocket client {client_id} connected")

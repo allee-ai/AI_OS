@@ -251,6 +251,9 @@ def poll_calendars() -> int:
         if not cal["enabled"]:
             continue
         try:
+            from agent.core.url_validation import validate_url
+            validate_url(cal["ical_url"])
+
             ctx = ssl.create_default_context()
             req = urllib.request.Request(cal["ical_url"], headers={"User-Agent": "AIOS-Calendar/1.0"})
             with urllib.request.urlopen(req, context=ctx, timeout=15) as resp:

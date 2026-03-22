@@ -407,20 +407,43 @@ async def get_kernel_status():
 # Import Endpoints
 # =============================================================================
 
+MAX_UPLOAD_BYTES = 50 * 1024 * 1024  # 50 MB
+MAX_ZIP_EXTRACTED_BYTES = 200 * 1024 * 1024  # 200 MB total extracted
+MAX_ZIP_FILES = 5000
+
 @router.post("/import/upload")
 async def upload_export(file: UploadFile = File(...), platform: Optional[str] = Form(None)):
     """Upload an export file or folder (as zip)."""
-    upload_id = f"upload_{file.filename}_{os.urandom(8).hex()}"
+    # --- size guard: read up to limit + 1 byte to detect oversize ---
+    content = await file.read(MAX_UPLOAD_BYTES + 1)
+    if len(content) > MAX_UPLOAD_BYTES:
+        raise HTTPException(status_code=413, detail="File exceeds 50 MB limit")
+
+    safe_name = Path(file.filename).name  # strip directory components
+    upload_id = f"upload_{safe_name}_{os.urandom(8).hex()}"
     upload_path = UPLOAD_TEMP_DIR / upload_id
     upload_path.mkdir(parents=True, exist_ok=True)
     
     try:
-        file_path = upload_path / file.filename
+        file_path = upload_path / safe_name
         with open(file_path, "wb") as f:
-            shutil.copyfileobj(file.file, f)
+            f.write(content)
         
-        if file.filename.endswith('.zip'):
+        if safe_name.endswith('.zip'):
+            if not zipfile.is_zipfile(file_path):
+                raise HTTPException(status_code=400, detail="Invalid ZIP file")
             with zipfile.ZipFile(file_path, 'r') as zip_ref:
+                # ZIP bomb protection: check member count + total size
+                members = zip_ref.infolist()
+                if len(members) > MAX_ZIP_FILES:
+                    raise HTTPException(status_code=400, detail=f"ZIP contains too many files (>{MAX_ZIP_FILES})")
+                total_size = sum(m.file_size for m in members)
+                if total_size > MAX_ZIP_EXTRACTED_BYTES:
+                    raise HTTPException(status_code=400, detail="ZIP extracted size exceeds 200 MB limit")
+                # Reject path traversal in zip entries
+                for m in members:
+                    if '..' in m.filename or m.filename.startswith('/'):
+                        raise HTTPException(status_code=400, detail="ZIP contains unsafe paths")
                 zip_ref.extractall(upload_path)
             file_path.unlink()
             # Filter out macOS artifacts
@@ -441,10 +464,13 @@ async def upload_export(file: UploadFile = File(...), platform: Optional[str] = 
             "platform": platform
         })
         
+    except HTTPException:
+        raise
     except Exception as e:
+        print(f"Upload failed: {e}")
         if upload_path.exists():
             shutil.rmtree(upload_path)
-        raise HTTPException(status_code=500, detail=f"Upload failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="Upload failed")
 
 
 @router.post("/import/parse")
