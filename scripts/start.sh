@@ -290,7 +290,18 @@ VENV_DIR="$REPO_ROOT/.venv"
 
 # Helper functions
 command_exists() { command -v "$1" >/dev/null 2>&1; }
-port_in_use() { lsof -i:"$1" >/dev/null 2>&1; }
+port_in_use() {
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -i:"$1" >/dev/null 2>&1
+    elif command -v ss >/dev/null 2>&1; then
+        ss -tlnp 2>/dev/null | grep -q ":$1 "
+    elif command -v netstat >/dev/null 2>&1; then
+        netstat -tln 2>/dev/null | grep -q ":$1 "
+    else
+        # Fallback: use Python to check the port
+        python3 -c "import socket; s=socket.socket(); s.settimeout(0.5); exit(0 if s.connect_ex(('127.0.0.1',$1))==0 else 1); s.close()" 2>/dev/null
+    fi
+}
 
 
 wait_for_service() {
@@ -414,15 +425,25 @@ find "$REPO_ROOT" -type d -name "__pycache__" -exec rm -rf {} + 2>/dev/null || t
 find "$REPO_ROOT" -name "*.pyc" -delete 2>/dev/null || true
 
 # Clear ports if in use
+kill_port() {
+    local port=$1
+    if command -v lsof >/dev/null 2>&1; then
+        lsof -ti:"$port" | xargs kill -9 2>/dev/null || true
+    elif command -v fuser >/dev/null 2>&1; then
+        fuser -k "$port/tcp" 2>/dev/null || true
+    elif command -v ss >/dev/null 2>&1; then
+        ss -tlnp 2>/dev/null | grep ":$port " | grep -oP 'pid=\K[0-9]+' | xargs kill -9 2>/dev/null || true
+    fi
+}
 if port_in_use 8000; then
     echo -e "${YELLOW}  Clearing port 8000...${NC}"
-    lsof -ti:8000 | xargs kill -9 2>/dev/null || true
+    kill_port 8000
     sleep 1
 fi
 
 if [ "$HEADLESS" != true ] && port_in_use 5173; then
     echo -e "${YELLOW}  Clearing port 5173...${NC}"
-    lsof -ti:5173 | xargs kill -9 2>/dev/null || true
+    kill_port 5173
     sleep 1
 fi
 

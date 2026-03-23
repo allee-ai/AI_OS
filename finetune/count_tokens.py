@@ -1,5 +1,6 @@
 """Count tokens across all data sources for pretraining estimate."""
 import json, os, glob
+from pathlib import Path
 
 def count_words_in_files(pattern, exclude=None):
     total = 0
@@ -21,7 +22,7 @@ def count_jsonl_content(path):
             total += len(msg.get("content", "").split())
     return total
 
-os.chdir("/Users/cade/Desktop/AI_OS")
+os.chdir(Path(__file__).resolve().parent.parent)
 
 # Source 1: Raw codebase
 code_words = count_words_in_files("./**/*.py", exclude=[".venv", "node_modules", ".git"])

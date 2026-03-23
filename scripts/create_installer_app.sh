@@ -4,6 +4,12 @@
 
 set -e
 
+# This script creates a macOS .app bundle — macOS only
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "Error: create_installer_app.sh is macOS-only (creates .app bundles)."
+    exit 1
+fi
+
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 

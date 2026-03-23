@@ -15,10 +15,20 @@ if [ ! -f ".aios_installed" ]; then
     exit 0
 fi
 
-# Check if daemon is running (background feature)
+# Cross-platform browser opener
+open_url() {
+    local url="$1"
+    case "$(uname -s)" in
+        Darwin*)  open "$url" 2>/dev/null || true ;;
+        Linux*)   xdg-open "$url" 2>/dev/null || sensible-browser "$url" 2>/dev/null || true ;;
+        MINGW*|MSYS*|CYGWIN*)  start "$url" 2>/dev/null || true ;;
+    esac
+}
+
+# Check if daemon is running (macOS LaunchAgent feature)
 PLIST_NAME="com.aios.server"
 daemon_running() {
-    launchctl list 2>/dev/null | grep -q "$PLIST_NAME"
+    command -v launchctl >/dev/null 2>&1 && launchctl list 2>/dev/null | grep -q "$PLIST_NAME"
 }
 
 daemon_installed() {
@@ -29,7 +39,7 @@ daemon_installed() {
 if daemon_running; then
     echo "AI OS daemon is running. Opening browser..."
     sleep 1
-    open "http://localhost:5173" 2>/dev/null || open "http://127.0.0.1:5173" 2>/dev/null || true
+    open_url "http://localhost:5173"
     exit 0
 fi
 
@@ -40,7 +50,7 @@ if daemon_installed; then
     sleep 2
     if daemon_running; then
         echo "Daemon started. Opening browser..."
-        open "http://localhost:5173" 2>/dev/null || open "http://127.0.0.1:5173" 2>/dev/null || true
+        open_url "http://localhost:5173"
         exit 0
     fi
 fi

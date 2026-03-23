@@ -10,6 +10,13 @@
 
 set -e
 
+# This script uses macOS LaunchAgents — check early
+if [ "$(uname -s)" != "Darwin" ]; then
+    echo "Error: install_daemon.sh is macOS-only (uses launchctl)."
+    echo "On Linux, create a systemd unit instead:  sudo systemctl enable aios"
+    exit 1
+fi
+
 # Get the directory where this script lives
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 AIOS_PATH="$(dirname "$SCRIPT_DIR")"
