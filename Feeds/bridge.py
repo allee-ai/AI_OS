@@ -233,61 +233,9 @@ async def _dispatch(event: FeedEvent, template: ResponseTemplate) -> Dict[str, A
         "timestamp": datetime.utcnow().isoformat(),
     }
 
-    if _is_draft_only():
-        result["status"] = "drafted"
-        return result
-
-    # Actually send
-    try:
-        if event.feed_name == "email":
-            from .sources.email import get_adapter
-            provider = event.payload.get("provider", "gmail")
-            adapter = get_adapter(provider)
-            send_result = await adapter.send_message(
-                to=template.to,
-                subject=template.subject or "",
-                body=template.body or "",
-                thread_id=template.thread_id or None,
-            )
-            result["status"] = "sent"
-            result["send_result"] = send_result
-
-        elif event.feed_name == "github":
-            from .sources.github import get_adapter
-            adapter = get_adapter()
-            # GitHub responses are issue/PR comments
-            url = event.payload.get("url", "")
-            repo = event.payload.get("repository", "")
-            # Extract issue number from URL if possible
-            issue_number = _extract_issue_number(url)
-            if repo and issue_number:
-                send_result = await adapter.create_issue_comment(
-                    repo=repo,
-                    issue_number=issue_number,
-                    body=template.body or "",
-                )
-                result["status"] = "sent"
-                result["send_result"] = send_result
-            else:
-                result["status"] = "draft_only_no_target"
-
-        elif event.feed_name == "discord":
-            from .sources.discord import get_adapter
-            adapter = get_adapter()
-            send_result = await adapter.send_message(
-                channel_id=template.to,
-                content=template.body or "",
-            )
-            result["status"] = "sent"
-            result["send_result"] = send_result
-
-        else:
-            result["status"] = "no_adapter"
-
-    except Exception as e:
-        result["status"] = "send_failed"
-        result["error"] = str(e)
-
+    # AI OS never sends directly — always draft-only.
+    # The user reviews and sends from their own email client.
+    result["status"] = "drafted"
     return result
 
 

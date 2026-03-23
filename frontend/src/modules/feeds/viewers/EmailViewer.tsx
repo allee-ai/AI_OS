@@ -126,11 +126,11 @@ export default function EmailViewer() {
     }
   };
 
-  const handleComposeSend = async () => {
+  const handleSaveDraft = async () => {
     if (!composeTo || !composeSubject) return;
     setSending(true);
     try {
-      await fetch(`${API_BASE}/api/feeds/email/${activeProvider}/send`, {
+      await fetch(`${API_BASE}/api/feeds/email/${activeProvider}/draft`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ to: composeTo, subject: composeSubject, body: composeBody }),
@@ -138,10 +138,10 @@ export default function EmailViewer() {
       setComposeTo('');
       setComposeSubject('');
       setComposeBody('');
-      setViewMode('inbox');
-      fetchInbox();
+      setViewMode('drafts');
+      fetchDrafts();
     } catch (err) {
-      console.error('Failed to send:', err);
+      console.error('Failed to save draft:', err);
     } finally {
       setSending(false);
     }
@@ -190,17 +190,11 @@ export default function EmailViewer() {
     }
   };
 
-  const handleSendDraft = async (draft: Draft) => {
-    try {
-      await fetch(`${API_BASE}/api/feeds/email/${activeProvider}/send`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ to: draft.to, subject: draft.subject, body: draft.body }),
-      });
-      fetchDrafts();
-    } catch (err) {
-      console.error('Failed to send:', err);
-    }
+  const handleEditDraft = (draft: Draft) => {
+    setComposeTo(draft.to);
+    setComposeSubject(draft.subject);
+    setComposeBody(draft.body);
+    setViewMode('compose');
   };
 
   // ── Intelligence handlers ──
@@ -325,7 +319,7 @@ export default function EmailViewer() {
             </>
           ) : (
             <>
-              <p>Connect your {currentProviderConfig.name} account to see your inbox, manage drafts, and send emails.</p>
+              <p>Connect your {currentProviderConfig.name} account to see your inbox and manage drafts.</p>
               <button className="connect-btn" onClick={() => handleConnect(activeProvider)}>Connect with {currentProviderConfig.name}</button>
             </>
           )}
@@ -467,8 +461,7 @@ export default function EmailViewer() {
                       <div className="draft-subject">{draft.subject}</div>
                       <div className="draft-body">{draft.body}</div>
                       <div className="draft-actions">
-                        <button className="btn-send" onClick={() => handleSendDraft(draft)}>📤 Send</button>
-                        <button className="btn-edit">✏️ Edit</button>
+                        <button className="btn-edit" onClick={() => handleEditDraft(draft)}>✏️ Edit</button>
                         <button className="btn-delete">🗑️ Delete</button>
                       </div>
                     </div>
@@ -490,8 +483,8 @@ export default function EmailViewer() {
                   <textarea value={composeBody} onChange={(e) => setComposeBody(e.target.value)} placeholder="Write your message..." rows={8} />
                 </div>
                 <div className="compose-actions">
-                  <button className="btn-primary" onClick={handleComposeSend} disabled={sending || !composeTo}>
-                    {sending ? '📤 Sending…' : '📤 Send'}
+                  <button className="btn-primary" onClick={handleSaveDraft} disabled={sending || !composeTo}>
+                    {sending ? '💾 Saving…' : '💾 Save Draft'}
                   </button>
                 </div>
               </div>

@@ -28,7 +28,7 @@ EMAIL_PROVIDERS = {
         "redirect_uri": f"{_BASE_URL}/api/feeds/email/oauth/callback?provider=gmail",
         "scopes": [
             "https://www.googleapis.com/auth/gmail.readonly",
-            "https://www.googleapis.com/auth/gmail.send",
+            "https://www.googleapis.com/auth/gmail.compose",
             "https://www.googleapis.com/auth/gmail.labels",
         ],
         "api_base": "https://gmail.googleapis.com/gmail/v1",
@@ -44,7 +44,7 @@ EMAIL_PROVIDERS = {
         "redirect_uri": f"{_BASE_URL}/api/feeds/email/oauth/callback?provider=outlook",
         "scopes": [
             "https://graph.microsoft.com/Mail.Read",
-            "https://graph.microsoft.com/Mail.Send",
+            "https://graph.microsoft.com/Mail.ReadWrite",
             "offline_access",
         ],
         "api_base": "https://graph.microsoft.com/v1.0/me",
@@ -389,83 +389,82 @@ class EmailAdapter:
                 })
             return messages
     
-    async def send_message(self, to: str, subject: str, body: str, thread_id: Optional[str] = None) -> Dict[str, Any]:
-        """Send an email."""
+    async def create_draft(self, to: str, subject: str, body: str, thread_id: Optional[str] = None) -> Dict[str, Any]:
+        """Save a message as a draft (never sends directly)."""
         if self.provider == "proton":
-            return await self._imap_send(to, subject, body)
+            return await self._imap_create_draft(to, subject, body)
 
         access_token = await self.get_access_token()
         if not access_token:
             raise ValueError(f"Not authenticated with {self.config['name']}")
-        
+
         if self.provider == "gmail":
-            return await self._gmail_send(access_token, to, subject, body, thread_id)
+            return await self._gmail_create_draft(access_token, to, subject, body, thread_id)
         elif self.provider == "outlook":
-            return await self._outlook_send(access_token, to, subject, body)
+            return await self._outlook_create_draft(access_token, to, subject, body)
         else:
-            raise NotImplementedError(f"Send not implemented for {self.provider}")
-    
-    async def _gmail_send(self, token: str, to: str, subject: str, body: str, thread_id: Optional[str]) -> Dict[str, Any]:
+            raise NotImplementedError(f"Drafts not implemented for {self.provider}")
+
+    async def _gmail_create_draft(self, token: str, to: str, subject: str, body: str, thread_id: Optional[str]) -> Dict[str, Any]:
         import httpx
         import base64
         from email.mime.text import MIMEText
-        
+
         message = MIMEText(body)
         message["to"] = to
         message["subject"] = subject
         raw = base64.urlsafe_b64encode(message.as_bytes()).decode()
-        
-        payload = {"raw": raw}
+
+        draft_payload: Dict[str, Any] = {"message": {"raw": raw}}
         if thread_id:
-            payload["threadId"] = thread_id
-        
+            draft_payload["message"]["threadId"] = thread_id
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.config['api_base']}/users/me/messages/send",
+                f"{self.config['api_base']}/users/me/drafts",
                 headers={"Authorization": f"Bearer {token}"},
-                json=payload,
+                json=draft_payload,
             )
             response.raise_for_status()
             result = response.json()
-            
-            emit_event("email", "email_sent", {
+
+            emit_event("email", "email_draft_created", {
                 "provider": "gmail",
-                "message_id": result.get("id"),
-                "thread_id": result.get("threadId"),
+                "draft_id": result.get("id"),
                 "to": [to],
                 "subject": subject,
+                "body_preview": body[:100],
             })
-            
-            return result
-    
-    async def _outlook_send(self, token: str, to: str, subject: str, body: str) -> Dict[str, Any]:
+
+            return {"status": "drafted", "draft_id": result.get("id")}
+
+    async def _outlook_create_draft(self, token: str, to: str, subject: str, body: str) -> Dict[str, Any]:
         import httpx
-        
+
         payload = {
-            "message": {
-                "subject": subject,
-                "body": {"contentType": "Text", "content": body},
-                "toRecipients": [{"emailAddress": {"address": to}}],
-            }
+            "subject": subject,
+            "body": {"contentType": "Text", "content": body},
+            "toRecipients": [{"emailAddress": {"address": to}}],
         }
-        
+
         async with httpx.AsyncClient() as client:
             response = await client.post(
-                f"{self.config['api_base']}/sendMail",
+                f"{self.config['api_base']}/messages",
                 headers={"Authorization": f"Bearer {token}", "Content-Type": "application/json"},
                 json=payload,
             )
             response.raise_for_status()
-            
-            emit_event("email", "email_sent", {
+            result = response.json()
+
+            emit_event("email", "email_draft_created", {
                 "provider": "outlook",
-                "message_id": "sent",
-                "thread_id": None,
+                "draft_id": result.get("id", ""),
                 "to": [to],
                 "subject": subject,
+                "body_preview": body[:100],
             })
-            
-            return {"status": "sent"}
+
+            return {"status": "drafted", "draft_id": result.get("id", "")}
 
 
     # ─── IMAP Bridge (Proton Mail via Proton Bridge) ───────────
@@ -534,13 +533,15 @@ class EmailAdapter:
 
         return await loop.run_in_executor(None, _fetch)
 
-    async def _imap_send(self, to: str, subject: str, body: str) -> Dict[str, Any]:
-        """Send via SMTP through Proton Bridge."""
-        import smtplib
+    async def _imap_create_draft(self, to: str, subject: str, body: str) -> Dict[str, Any]:
+        """Save a draft via IMAP APPEND to the Drafts folder."""
+        import imaplib
         from email.mime.text import MIMEText
         import asyncio
+        from datetime import datetime, timezone
+        import time as _time
 
-        host, _imap_port, smtp_port, user, password = self._get_imap_creds()
+        host, port, _smtp_port, user, password = self._get_imap_creds()
         if not user or not password:
             raise ValueError("Proton Bridge credentials not configured")
 
@@ -549,23 +550,29 @@ class EmailAdapter:
         msg["From"] = user
         msg["To"] = to
 
-        def _send():
-            with smtplib.SMTP(host, smtp_port) as server:
-                server.starttls()
-                server.login(user, password)
-                server.sendmail(user, [to], msg.as_string())
+        def _save_draft():
+            conn = imaplib.IMAP4(host, port)
+            conn.starttls()
+            conn.login(user, password)
+            # Proton Bridge typically uses "Drafts"; fall back to INBOX
+            status, _ = conn.select("Drafts")
+            if status != "OK":
+                conn.select("INBOX")
+            now = imaplib.Time2Internaldate(_time.time())
+            conn.append("Drafts", "(\\Draft)", now, msg.as_bytes())
+            conn.logout()
 
         loop = asyncio.get_event_loop()
-        await loop.run_in_executor(None, _send)
+        await loop.run_in_executor(None, _save_draft)
 
-        emit_event("email", "email_sent", {
+        emit_event("email", "email_draft_created", {
             "provider": "proton",
-            "message_id": "sent",
-            "thread_id": None,
+            "draft_id": "",
             "to": [to],
             "subject": subject,
+            "body_preview": body[:100],
         })
-        return {"status": "sent"}
+        return {"status": "drafted"}
 
 
 def _get_text_body(msg) -> str:

@@ -872,23 +872,23 @@ async def email_drafts(provider: str):
     return drafts
 
 
-@router.post("/email/{provider}/send")
-async def email_send(provider: str, body: SendEmailBody):
-    """Send an email through a connected provider."""
+@router.post("/email/{provider}/draft")
+async def email_create_draft(provider: str, body: SendEmailBody):
+    """Save an email as a draft (read-only — AI OS never sends directly)."""
     from .sources.email import get_adapter, EMAIL_PROVIDERS
     if provider not in EMAIL_PROVIDERS:
         raise HTTPException(status_code=404, detail=f"Unknown provider: {provider}")
     adapter = get_adapter(provider)
     try:
-        result = await adapter.send_message(
+        result = await adapter.create_draft(
             to=body.to, subject=body.subject, body=body.body, thread_id=body.thread_id
         )
         return result
     except ValueError as e:
         raise HTTPException(status_code=401, detail=str(e))
     except Exception as e:
-        print(f"Email send error ({provider}): {e}")
-        raise HTTPException(status_code=500, detail="Failed to send email")
+        print(f"Email draft error ({provider}): {e}")
+        raise HTTPException(status_code=500, detail="Failed to create draft")
 
 
 @router.post("/email/proton/connect")
