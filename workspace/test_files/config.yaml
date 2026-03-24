@@ -1,0 +1,32 @@
+# YAML Preview Test
+# Tests syntax highlighting for YAML files
+
+server:
+  host: 0.0.0.0
+  port: 8000
+  debug: false
+
+database:
+  engine: sqlite
+  path: ./data/db/state.db
+  pool_size: 5
+
+models:
+  - name: qwen2.5:7b
+    provider: ollama
+    context_length: 32768
+  - name: gpt-4o-mini
+    provider: openai
+    context_length: 128000
+
+features:
+  llm_enabled: true
+  loops: false
+  feeds:
+    email: true
+    rss: true
+    calendar: false
+
+logging:
+  level: INFO
+  format: "%(asctime)s [%(levelname)s] %(message)s"

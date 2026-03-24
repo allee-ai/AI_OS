@@ -1,0 +1,22 @@
+[project]
+name = "ai-os-example"
+version = "1.0.0"
+description = "TOML preview test for workspace FileViewer"
+readme = "README.md"
+license = "MIT"
+
+[project.urls]
+homepage = "https://allee-ai.com"
+repository = "https://github.com/allee-ai/AI_OS"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "I"]
+ignore = ["E501"]
