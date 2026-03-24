@@ -1,6 +1,7 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { FileExplorer } from './FileExplorer';
+import { FileTree } from './FileTree';
 import { FileViewer } from './FileViewer';
 import { useWorkspace } from '../hooks/useWorkspace';
 import './WorkspacePanel.css';
@@ -177,20 +178,7 @@ export const WorkspacePanel: React.FC = () => {
           </div>
 
           {sidebarTab === 'explorer' && (
-            <FileExplorer
-              files={workspace.files}
-              currentPath={workspace.currentPath}
-              selectedFiles={workspace.selectedFiles}
-              isLoading={workspace.isLoading}
-              error={workspace.error}
-              onNavigateTo={workspace.navigateTo}
-              onNavigateUp={workspace.navigateUp}
-              onUploadFiles={workspace.uploadFiles}
-              onDeleteFile={workspace.deleteFile}
-              onCreateFolder={workspace.createFolder}
-              onDownloadFile={workspace.downloadFile}
-              onToggleSelect={workspace.toggleSelect}
-              onMoveFile={workspace.moveFile}
+            <FileTree
               onOpenFile={workspace.handleOpenFile}
               activeFilePath={workspace.openFile?.path ?? null}
             />

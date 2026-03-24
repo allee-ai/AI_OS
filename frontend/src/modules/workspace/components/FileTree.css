@@ -1,0 +1,151 @@
+/* ── VS Code-style File Tree ── */
+
+.file-tree {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  user-select: none;
+  font-size: 13px;
+}
+
+.file-tree-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--text-muted);
+  text-transform: uppercase;
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.file-tree-refresh {
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  font-size: 14px;
+  padding: 2px 4px;
+  border-radius: 4px;
+  line-height: 1;
+}
+
+.file-tree-refresh:hover {
+  background: var(--bg-hover);
+  color: var(--text);
+}
+
+.file-tree-title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-tree-content {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+
+.file-tree-loading,
+.file-tree-empty {
+  padding: 16px 12px;
+  color: var(--text-muted);
+  font-size: 12px;
+  text-align: center;
+}
+
+/* ── Tree item row ── */
+
+.tree-item {
+  display: flex;
+  align-items: center;
+  height: 26px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.1s;
+  padding-right: 8px;
+}
+
+.tree-item:hover {
+  background: var(--bg-hover, rgba(255, 255, 255, 0.05));
+}
+
+.tree-item.active {
+  background: var(--bg-active, rgba(88, 166, 255, 0.12));
+}
+
+.tree-item.active .tree-label {
+  color: var(--accent, #58a6ff);
+}
+
+/* ── Chevron ── */
+
+.tree-chevron {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  font-size: 8px;
+  color: var(--text-muted);
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.tree-chevron.expanded {
+  transform: rotate(90deg);
+}
+
+.tree-chevron.spacer {
+  visibility: hidden;
+}
+
+/* ── Icon & label ── */
+
+.tree-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  font-size: 14px;
+  flex-shrink: 0;
+  margin-right: 4px;
+}
+
+.tree-label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text);
+  font-size: 13px;
+  line-height: 26px;
+}
+
+.tree-item.folder .tree-label {
+  font-weight: 500;
+}
+
+/* ── Scrollbar ── */
+
+.file-tree-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.file-tree-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.file-tree-content::-webkit-scrollbar-thumb {
+  background: var(--border);
+  border-radius: 3px;
+}
+
+.file-tree-content::-webkit-scrollbar-thumb:hover {
+  background: var(--text-muted);
+}
