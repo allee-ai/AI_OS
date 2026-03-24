@@ -29,9 +29,15 @@ class WorkspaceAPIService {
 
     const data = await response.json();
     return data.map((file: any) => ({
-      ...file,
-      createdAt: new Date(file.createdAt),
-      updatedAt: new Date(file.updatedAt),
+      id: file.id || file.path,
+      name: file.name,
+      path: file.path,
+      type: file.is_folder ? 'folder' : 'file',
+      size: file.size,
+      mimeType: file.mime_type,
+      summary: file.summary,
+      createdAt: new Date(file.modified_at || Date.now()),
+      updatedAt: new Date(file.modified_at || Date.now()),
     }));
   }
 
