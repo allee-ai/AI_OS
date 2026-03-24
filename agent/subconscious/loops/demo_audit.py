@@ -142,6 +142,9 @@ If everything looks good, output: []
             return resp.json()["choices"][0]["message"]["content"].strip()
 
         # Default: Ollama
+        from .base import is_llm_enabled
+        if not is_llm_enabled():
+            return ""
         import ollama
 
         response = ollama.chat(

@@ -72,11 +72,32 @@ create_log_dir() {
     fi
 }
 
+build_frontend() {
+    local FRONTEND_DIR="$AIOS_PATH/frontend"
+    if [ ! -d "$FRONTEND_DIR" ]; then
+        log_warn "Frontend directory not found, skipping build"
+        return 0
+    fi
+    if [ -d "$FRONTEND_DIR/dist" ] && [ -f "$FRONTEND_DIR/dist/index.html" ]; then
+        log_info "Frontend already built (frontend/dist/ exists)"
+        return 0
+    fi
+    log_info "Building frontend for production..."
+    cd "$FRONTEND_DIR"
+    if [ ! -d "node_modules" ]; then
+        npm install --silent 2>/dev/null || { log_error "npm install failed"; return 1; }
+    fi
+    npm run build || { log_error "Frontend build failed"; return 1; }
+    cd "$AIOS_PATH"
+    log_info "Frontend built to frontend/dist/"
+}
+
 install_daemon() {
     log_info "Installing AI_OS daemon..."
     
     check_requirements
     create_log_dir
+    build_frontend
     
     # Create LaunchAgents directory if it doesn't exist
     mkdir -p "$HOME/Library/LaunchAgents"

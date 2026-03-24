@@ -62,6 +62,7 @@ const SOURCE_ICONS: Record<string, string> = {
   gcal: '📅',
   shopify: '🛒',
   hubspot: '🧡',
+  website: '🌐',
 };
 
 // ── Category grouping ──────────────────────────────────────────────
@@ -77,6 +78,7 @@ const FEED_CATEGORIES: FeedCategory[] = [
   { label: 'Calendar',   icon: '📅', members: ['calendar', 'gcal'] },
   { label: 'Dev Tools',  icon: '🛠️', members: ['github', 'linear', 'jira', 'notion', 'airtable'] },
   { label: 'Commerce',   icon: '🛒', members: ['shopify', 'hubspot', 'zendesk'] },
+  { label: 'Web',        icon: '🌐', members: ['website'] },
   { label: 'Other',      icon: '📡', members: [] }, // catch-all
 ];
 

@@ -301,19 +301,96 @@ class AgentService:
         except Exception as e:
             print(f"Warning: concept extraction failed: {e}")
     
-    def _build_conversation_context(self, max_turns: int = 5) -> str:
-        """Build conversation context string from recent history"""
+    def _build_conversation_context(self, max_turns: int = 0) -> str:
+        """Build conversation context with auto-summarization.
+        
+        When message history exceeds the configured turn limit or token budget,
+        older turns are summarized into a condensed block to stay within the
+        model's context window.
+        """
         if len(self.message_history) < 2:
             return ""
-        
-        recent = self.message_history[-(max_turns * 2):]  # Last N turns (user + assistant)
+
+        # Read settings (env vars, set via Settings UI)
+        chat_max_turns = int(os.getenv("AIOS_CHAT_MAX_TURNS", "20"))
+        summary_turns = int(os.getenv("AIOS_CHAT_SUMMARY_TURNS", "10"))
+        context_reserve = float(os.getenv("AIOS_CHAT_CONTEXT_RESERVE", "0.6"))
+        context_window = int(os.getenv("AIOS_CONTEXT_WINDOW", "4096"))
+
+        if max_turns <= 0:
+            max_turns = chat_max_turns
+
+        # Calculate token budget for chat (word-count * 1.3 ≈ tokens)
+        chat_token_budget = int(context_window * context_reserve)
+
+        # Get all messages except the current one (last item)
+        messages = list(self.message_history[:-1])
+
+        # Check if summarization is needed
+        turn_count = len(messages) // 2  # approximate user+assistant pairs
+        total_words = sum(len(m.content.split()) for m in messages)
+        estimated_tokens = int(total_words * 1.3)
+
+        if turn_count > max_turns or estimated_tokens > chat_token_budget:
+            # Summarize the oldest N messages
+            num_to_summarize = min(summary_turns * 2, len(messages) - 2)  # keep at least 1 recent turn
+            if num_to_summarize > 0:
+                old_messages = messages[:num_to_summarize]
+                remaining = messages[num_to_summarize:]
+
+                # Build transcript of old messages for summarization
+                transcript = "\n".join(
+                    f"{'User' if m.role == 'user' else 'Agent'}: {m.content}"
+                    for m in old_messages
+                )
+
+                # Call the existing summarizer (provider-aware)
+                summary = None
+                try:
+                    from workspace.summarizer import summarize_text
+                    summary = summarize_text(
+                        transcript,
+                        prompt="Summarize this conversation excerpt in 2-3 sentences. "
+                               "Preserve key topics, decisions, and any action items. Be concise.",
+                    )
+                except Exception as e:
+                    print(f"[ChatSummarization] summarize_text failed: {e}")
+
+                if summary:
+                    # Replace old messages with summary in history
+                    summary_msg = ChatMessage(
+                        id=f"summary_{datetime.now().timestamp()}",
+                        content=f"[Previous conversation summary]: {summary}",
+                        role="assistant",
+                        timestamp=datetime.now(),
+                    )
+                    self.message_history = [summary_msg] + remaining + [self.message_history[-1]]
+                    messages = [summary_msg] + remaining
+
+                    # Persist summary to DB if available
+                    if _HAS_CHAT_SCHEMA and self.session_id:
+                        try:
+                            from chat.schema import update_summary
+                            update_summary(self.session_id, summary)
+                        except Exception:
+                            pass
+
+        # Build context string from (possibly summarized) messages
         context_parts = []
-        
-        for msg in recent[:-1]:  # Exclude the current message
+        for msg in messages:
             role = "User" if msg.role == "user" else "Agent"
             context_parts.append(f"{role}: {msg.content}")
-        
-        return "\n".join(context_parts)
+
+        # Final token trim: if still over budget, take only most recent messages
+        result = "\n".join(context_parts)
+        words = result.split()
+        if len(words) * 1.3 > chat_token_budget:
+            # Keep trimming from the front until within budget
+            while len(words) * 1.3 > chat_token_budget and len(words) > 50:
+                words = words[len(words) // 4:]  # drop oldest quarter
+            result = " ".join(words)
+
+        return result
     
     def _is_demo_command(self, message: str) -> bool:
         """Check if message is a special demo command."""

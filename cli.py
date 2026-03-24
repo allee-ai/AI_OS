@@ -18,6 +18,11 @@ import sys
 import subprocess
 from pathlib import Path
 
+try:
+    import readline  # noqa: F401 — enables arrow-key editing + history in input()
+except ImportError:
+    pass  # Windows fallback: pyreadline3 or bare input()
+
 # Ensure project root on path
 _ROOT = Path(__file__).resolve().parent
 if str(_ROOT) not in sys.path:

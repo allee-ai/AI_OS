@@ -19,11 +19,43 @@ _current_model = os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
 _current_provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama")
 
 
+# Known context lengths for common models (fallback when API doesn't provide it)
+_KNOWN_CONTEXT_LENGTHS: Dict[str, int] = {
+    # OpenAI
+    "gpt-4o": 128000, "gpt-4o-mini": 128000,
+    "gpt-4.1": 1047576, "gpt-4.1-mini": 1047576,
+    "gpt-4-turbo": 128000, "gpt-3.5-turbo": 16385,
+    # Ollama common
+    "qwen2.5:7b": 32768, "qwen2.5:3b": 32768, "qwen2.5:14b": 32768,
+    "llama3.2:3b": 131072, "llama3.1:8b": 131072,
+    "mistral:7b": 32768, "gemma2:9b": 8192, "phi3:mini": 128000,
+    "deepseek-r1:7b": 65536, "deepseek-r1:14b": 65536,
+    # Claude (via OpenAI-compatible)
+    "claude-3-opus": 200000, "claude-3-sonnet": 200000, "claude-3-haiku": 200000,
+    "claude-sonnet-4": 200000,
+    # Gemini (via OpenAI-compatible)
+    "gemini-2.0-flash": 1048576, "gemini-1.5-pro": 2097152,
+}
+
+
+def _lookup_context_length(model_id: str) -> Optional[int]:
+    """Look up context length from known models dict, trying exact then prefix match."""
+    if model_id in _KNOWN_CONTEXT_LENGTHS:
+        return _KNOWN_CONTEXT_LENGTHS[model_id]
+    # Try without tag (e.g. 'qwen2.5:7b' -> 'qwen2.5')
+    base = model_id.split(":")[0]
+    for key, val in _KNOWN_CONTEXT_LENGTHS.items():
+        if key.startswith(base):
+            return val
+    return None
+
+
 class ModelInfo(BaseModel):
     id: str
     name: str
     provider: str
     description: Optional[str] = None
+    context_length: Optional[int] = None
 
 
 class ModelsResponse(BaseModel):
@@ -56,17 +88,17 @@ class SetupStatus(BaseModel):
 
 # Default models per provider
 OLLAMA_DEFAULTS = [
-    ModelInfo(id="qwen2.5:7b", name="Qwen 2.5 7B", provider="ollama", description="Local (recommended)"),
-    ModelInfo(id="llama3.2:3b", name="Llama 3.2 3B", provider="ollama", description="Local, fast"),
-    ModelInfo(id="mistral:7b", name="Mistral 7B", provider="ollama", description="Local"),
-    ModelInfo(id="gemma2:9b", name="Gemma 2 9B", provider="ollama", description="Local"),
+    ModelInfo(id="qwen2.5:7b", name="Qwen 2.5 7B", provider="ollama", description="Local (recommended)", context_length=32768),
+    ModelInfo(id="llama3.2:3b", name="Llama 3.2 3B", provider="ollama", description="Local, fast", context_length=131072),
+    ModelInfo(id="mistral:7b", name="Mistral 7B", provider="ollama", description="Local", context_length=32768),
+    ModelInfo(id="gemma2:9b", name="Gemma 2 9B", provider="ollama", description="Local", context_length=8192),
 ]
 
 OPENAI_DEFAULTS = [
-    ModelInfo(id="gpt-4o-mini", name="GPT-4o Mini", provider="openai", description="Fast, affordable"),
-    ModelInfo(id="gpt-4o", name="GPT-4o", provider="openai", description="Flagship"),
-    ModelInfo(id="gpt-4.1-mini", name="GPT-4.1 Mini", provider="openai", description="Latest mini"),
-    ModelInfo(id="gpt-4.1", name="GPT-4.1", provider="openai", description="Latest flagship"),
+    ModelInfo(id="gpt-4o-mini", name="GPT-4o Mini", provider="openai", description="Fast, affordable", context_length=128000),
+    ModelInfo(id="gpt-4o", name="GPT-4o", provider="openai", description="Flagship", context_length=128000),
+    ModelInfo(id="gpt-4.1-mini", name="GPT-4.1 Mini", provider="openai", description="Latest mini", context_length=1047576),
+    ModelInfo(id="gpt-4.1", name="GPT-4.1", provider="openai", description="Latest flagship", context_length=1047576),
 ]
 
 
@@ -86,9 +118,22 @@ def get_available_models() -> List[ModelInfo]:
             display_name = model_name.replace(":", " ").title()
             size = m.get("size", 0)
             size_str = f"{size / 1e9:.1f}GB" if size > 0 else ""
+            # Try to get context length from Ollama model info
+            ctx_len = _lookup_context_length(model_name)
+            if ctx_len is None:
+                try:
+                    info = ollama.show(model_name)
+                    params = info.get("model_info", info.get("details", {}))
+                    for key in ("num_ctx", "context_length"):
+                        if key in params:
+                            ctx_len = int(params[key])
+                            break
+                except Exception:
+                    pass
             models.append(ModelInfo(
                 id=model_name, name=display_name,
-                provider="ollama", description=f"Local {size_str}".strip()
+                provider="ollama", description=f"Local {size_str}".strip(),
+                context_length=ctx_len,
             ))
     except Exception:
         if provider == "ollama":
@@ -375,16 +420,24 @@ async def set_current_model(request: SetModelRequest):
         _current_provider = request.provider.lower()
         os.environ["AIOS_MODEL_PROVIDER"] = _current_provider
     
-    # Persist
-    _persist_env({
+    # Auto-update context window based on model's known context length
+    env_updates: Dict[str, str] = {
         "AIOS_MODEL_NAME": request.model_id,
         **({"AIOS_MODEL_PROVIDER": _current_provider} if request.provider else {}),
-    })
+    }
+    ctx_len = _lookup_context_length(request.model_id)
+    if ctx_len:
+        os.environ["AIOS_CONTEXT_WINDOW"] = str(ctx_len)
+        env_updates["AIOS_CONTEXT_WINDOW"] = str(ctx_len)
+    
+    # Persist
+    _persist_env(env_updates)
     
     return {
         "success": True,
         "model": request.model_id,
         "provider": _current_provider,
+        "context_length": ctx_len,
         "message": f"Switched to {request.model_id} ({_current_provider})"
     }
 

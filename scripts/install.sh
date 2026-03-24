@@ -113,6 +113,12 @@ echo ""
 echo "📍 App bundle created at: $SCRIPT_DIR/AIOS.app"
 echo "   Drag to Applications folder or Dock for easy access"
 echo ""
+if [[ "$OSTYPE" == "darwin"* ]]; then
+    echo "💡 To auto-start AI OS on login:"
+    echo "   System Settings → General → Login Items → add AIOS.app"
+    echo "   Or: drag AIOS.app to your Dock"
+    echo ""
+fi
 
 # Ask if user wants to start now
 read -p "🚀 Start the agent now? (y/n) " -n 1 -r

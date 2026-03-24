@@ -421,6 +421,11 @@ class Agent:
         """
         provider = provider.lower()
 
+        # Check if LLM is globally disabled
+        llm_enabled = os.getenv("AIOS_LLM_ENABLED", "true").lower()
+        if llm_enabled in ("false", "0", "no", "off"):
+            return {"content": "[LLM disabled] Tools require an active model. Enable LLM in Settings → Provider.", "tool_calls": []}
+
         if provider == "openai":
             return self._call_openai_with_tools(model, messages, tools, api_key, endpoint)
 
@@ -607,6 +612,14 @@ class Agent:
             overrides: Optional dict with provider/model/endpoint overrides
         """
         ov = overrides or {}
+
+        # Check if LLM is globally disabled
+        llm_enabled = os.getenv("AIOS_LLM_ENABLED", "true").lower()
+        if llm_enabled in ("false", "0", "no", "off"):
+            return ("[LLM disabled] Chat is offline, but you can still browse "
+                    "threads, memory, knowledge graph, and settings. "
+                    "Enable LLM in Settings → Provider to connect a model.")
+
         provider = (ov.get("provider") or os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
         model_name = ov.get("model") or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
         endpoint = ov.get("endpoint") or os.getenv("AIOS_MODEL_ENDPOINT", "")

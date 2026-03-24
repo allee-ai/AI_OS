@@ -30,6 +30,8 @@ _CONFIG_SCHEMA: list[dict] = [
      "hint": "The externally-reachable URL of the backend (used for OAuth callbacks, etc.)"},
 
     # ── Provider / Model ──
+    {"key": "AIOS_LLM_ENABLED", "default": "true", "group": "provider", "label": "Enable LLM",
+     "type": "bool", "hint": "Toggle LLM on/off. When off, the app runs standalone without any model."},
     {"key": "AIOS_MODEL_PROVIDER", "default": "ollama", "group": "provider", "label": "LLM Provider",
      "type": "select", "options": ["ollama", "openai", "http", "mock"],
      "hint": "Which LLM backend to use"},
@@ -62,6 +64,14 @@ _CONFIG_SCHEMA: list[dict] = [
      "label": "Stealth Mode", "type": "bool", "hint": "Enable bot-detection avoidance"},
     {"key": "KERNEL_TIMEOUT", "default": "3600", "group": "kernel",
      "label": "Session Timeout (s)", "type": "number", "hint": "Browser session timeout in seconds"},
+
+    # ── Chat ──
+    {"key": "AIOS_CHAT_MAX_TURNS", "default": "20", "group": "chat", "label": "Max Unsummarized Turns",
+     "type": "number", "hint": "After this many turns, older messages are auto-summarized to stay within context."},
+    {"key": "AIOS_CHAT_SUMMARY_TURNS", "default": "10", "group": "chat", "label": "Turns to Summarize",
+     "type": "number", "hint": "How many of the oldest turns to collapse into a summary each cycle."},
+    {"key": "AIOS_CHAT_CONTEXT_RESERVE", "default": "0.6", "group": "chat", "label": "Chat Context Fraction",
+     "type": "text", "hint": "Fraction of model context window reserved for chat history (0.0-1.0). Remainder is for STATE + response."},
 
     # ── MCP ──
     {"key": "MCP_SERVERS", "default": "[]", "group": "mcp", "label": "MCP Server List",

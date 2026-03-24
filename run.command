@@ -35,11 +35,25 @@ daemon_installed() {
     [ -f "$HOME/Library/LaunchAgents/$PLIST_NAME.plist" ]
 }
 
+# Daemon serves built frontend on port 8000 (no Vite/Node needed)
+AIOS_URL="http://localhost:8000"
+
+wait_for_server() {
+    local attempts=0
+    while [ $attempts -lt 15 ]; do
+        if curl -sf "$AIOS_URL/health" >/dev/null 2>&1; then
+            return 0
+        fi
+        sleep 1
+        attempts=$((attempts + 1))
+    done
+    return 1
+}
+
 # If daemon is running, just open browser
 if daemon_running; then
     echo "AI OS daemon is running. Opening browser..."
-    sleep 1
-    open_url "http://localhost:5173"
+    open_url "$AIOS_URL"
     exit 0
 fi
 
@@ -47,15 +61,26 @@ fi
 if daemon_installed; then
     echo "Starting AI OS daemon..."
     launchctl load "$HOME/Library/LaunchAgents/$PLIST_NAME.plist" 2>/dev/null || true
-    sleep 2
-    if daemon_running; then
+    if wait_for_server; then
         echo "Daemon started. Opening browser..."
-        open_url "http://localhost:5173"
+        open_url "$AIOS_URL"
         exit 0
     fi
 fi
 
-# Fallback: run start.sh directly (also offers daemon install)
+# Install daemon if not present, then start
+if [ -f "./scripts/install_daemon.sh" ]; then
+    echo "Installing AI OS daemon for always-on operation..."
+    chmod +x "./scripts/install_daemon.sh" 2>/dev/null || true
+    ./scripts/install_daemon.sh install
+    if wait_for_server; then
+        echo "Daemon installed and running. Opening browser..."
+        open_url "$AIOS_URL"
+        exit 0
+    fi
+fi
+
+# Final fallback: run start.sh directly
 if [ -f "./scripts/start.sh" ] && [ ! -x "./scripts/start.sh" ]; then
   chmod +x "./scripts/start.sh" 2>/dev/null || true
 fi

@@ -48,6 +48,11 @@ def release_ollama_gate() -> None:
     _ollama_gate.release()
 
 
+def is_llm_enabled() -> bool:
+    """Check if LLM is globally enabled via AIOS_LLM_ENABLED env var."""
+    return os.getenv("AIOS_LLM_ENABLED", "true").lower() not in ("false", "0", "no", "off")
+
+
 def _nice_thread() -> None:
     """Best-effort: lower this thread's scheduling priority."""
     try:

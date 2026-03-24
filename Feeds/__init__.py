@@ -24,4 +24,9 @@ try:
 except ImportError:
     pass
 
+try:
+    from .sources import website
+except ImportError:
+    pass
+
 __all__ = ["api_router", "FeedsRouter"]

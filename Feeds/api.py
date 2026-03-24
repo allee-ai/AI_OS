@@ -1052,3 +1052,26 @@ async def poll_calendars_now():
     from .sources.calendar import poll_calendars
     count = poll_calendars()
     return {"status": "polled", "events_emitted": count}
+
+
+# ============================================================================
+# Website Viewer
+# ============================================================================
+
+class WebsiteURLBody(BaseModel):
+    url: str
+
+
+@router.get("/website/url")
+async def get_website_url():
+    """Get the current website viewer URL."""
+    from .sources.website import get_url
+    return {"url": get_url()}
+
+
+@router.put("/website/url")
+async def set_website_url(body: WebsiteURLBody):
+    """Set the website viewer URL."""
+    from .sources.website import set_url
+    new_url = set_url(body.url)
+    return {"url": new_url}

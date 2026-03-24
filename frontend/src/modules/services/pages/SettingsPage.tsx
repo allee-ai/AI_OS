@@ -144,7 +144,7 @@ export const SettingsPage = () => {
 
   const renderContent = () => {
     // Config-driven sections
-    if (['server', 'provider', 'kernel'].includes(activeSection)) {
+    if (['server', 'provider', 'kernel', 'chat'].includes(activeSection)) {
       return <ConfigSection group={activeSection} onDirty={() => setHasUnsavedChanges(true)} onClean={() => setHasUnsavedChanges(false)} />;
     }
     if (activeSection === 'mcp') {
@@ -201,6 +201,11 @@ export const SettingsPage = () => {
             <span className="sidebar-icon">🤖</span><span>Provider & Models</span>
           </button>
 
+          <button className={`sidebar-item ${activeSection === 'chat' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/chat')}>
+            <span className="sidebar-icon">💬</span><span>Chat & Context</span>
+          </button>
+
           <button className={`sidebar-item ${activeSection === 'kernel' ? 'active' : ''}`}
             onClick={() => handleNavigation('/settings/kernel')}>
             <span className="sidebar-icon">🌐</span><span>Kernel</span>
@@ -253,11 +258,62 @@ export const SettingsPage = () => {
   );
 };
 
-/* ───────── Config Section (server / provider / kernel) ───────── */
+/* ───────── Chat Context Info Banner ───────── */
+
+const ChatContextInfo = () => {
+  const [info, setInfo] = useState<{ model: string; context_length: number | null } | null>(null);
+  const [chatReserve, setChatReserve] = useState(0.6);
+
+  useEffect(() => {
+    // Fetch current model info
+    fetch(`${BASE_URL}/api/models/current`)
+      .then(r => r.json())
+      .then(data => {
+        const model = data.model;
+        // Find context_length from models list
+        fetch(`${BASE_URL}/api/models`)
+          .then(r2 => r2.json())
+          .then(mData => {
+            const match = mData.models?.find((m: any) => m.id === model?.id || m.id === model?.name);
+            setInfo({ model: model?.id || model?.name || 'unknown', context_length: match?.context_length || null });
+          })
+          .catch(() => setInfo({ model: model?.id || 'unknown', context_length: null }));
+      })
+      .catch(() => {});
+    // Fetch chat reserve setting
+    fetch(`${BASE_URL}/api/settings`)
+      .then(r => r.json())
+      .then(data => {
+        const chatItems = data.groups?.chat || [];
+        const reserve = chatItems.find((i: any) => i.key === 'AIOS_CHAT_CONTEXT_RESERVE');
+        if (reserve) setChatReserve(parseFloat(reserve.value || reserve.default || '0.6'));
+      })
+      .catch(() => {});
+  }, []);
+
+  if (!info) return null;
+
+  const ctxLen = info.context_length;
+  const chatBudget = ctxLen ? Math.round(ctxLen * chatReserve) : null;
+
+  return (
+    <div style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border)', borderRadius: 8, padding: '12px 16px', marginBottom: 16, fontSize: 13 }}>
+      <div style={{ fontWeight: 600, marginBottom: 6 }}>Current Model Context</div>
+      <div style={{ display: 'flex', gap: 24, color: 'var(--text-secondary)' }}>
+        <span>Model: <strong style={{ color: 'var(--text-primary)' }}>{info.model}</strong></span>
+        <span>Context Window: <strong style={{ color: 'var(--text-primary)' }}>{ctxLen ? ctxLen.toLocaleString() + ' tokens' : 'unknown'}</strong></span>
+        {chatBudget && <span>Chat Budget: <strong style={{ color: 'var(--accent)' }}>{chatBudget.toLocaleString()} tokens</strong></span>}
+      </div>
+    </div>
+  );
+};
+
+/* ───────── Config Section (server / provider / kernel / chat) ───────── */
 
 const GROUP_META: Record<string, { icon: string; title: string; desc: string }> = {
   server: { icon: '🖥️', title: 'Server Configuration', desc: 'Host, port, CORS, and public URL settings.' },
   provider: { icon: '🤖', title: 'Provider & Models', desc: 'LLM provider, model, API keys, and extraction overrides.' },
+  chat: { icon: '💬', title: 'Chat & Summarization', desc: 'Context window budgets, auto-summarization thresholds, and conversation limits.' },
   kernel: { icon: '🌐', title: 'Kernel Browser Automation', desc: 'API key, browser profile, stealth & headless settings.' },
 };
 
@@ -312,6 +368,8 @@ const ConfigSection = ({ group, onDirty, onClean }: { group: string; onDirty: ()
         <span className="service-icon">{meta.icon}</span>
         <div><h1>{meta.title}</h1><p className="settings-description">{meta.desc}</p></div>
       </div>
+
+      {group === 'chat' && <ChatContextInfo />}
 
       <section className="settings-section">
         {items.map(item => {
@@ -451,15 +509,19 @@ const MCPSection = () => {
   };
 
   const removeServer = async (name: string) => {
-    // Disconnect first if connected
-    if (connections[name]?.connected) await disconnectServer(name);
-    await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}`, { method: 'DELETE' });
-    refresh();
+    try {
+      // Disconnect first if connected
+      if (connections[name]?.connected) await disconnectServer(name);
+      await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}`, { method: 'DELETE' });
+      refresh();
+    } catch { setMessage(`Failed to remove ${name}`); }
   };
 
   const toggleServer = async (name: string) => {
-    await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}/toggle`, { method: 'POST' });
-    refresh();
+    try {
+      await fetch(`${BASE_URL}/api/mcp/servers/${encodeURIComponent(name)}/toggle`, { method: 'POST' });
+      refresh();
+    } catch { setMessage(`Failed to toggle ${name}`); }
   };
 
   return (

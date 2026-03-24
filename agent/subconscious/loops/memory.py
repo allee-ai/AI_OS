@@ -77,7 +77,9 @@ class MemoryLoop(BackgroundLoop):
         return self._call_ollama_extract(model, messages, temperature)
 
     def _call_ollama_extract(self, model: str, messages: list, temperature: float) -> str:
-        from .base import acquire_ollama_gate, release_ollama_gate
+        from .base import acquire_ollama_gate, release_ollama_gate, is_llm_enabled
+        if not is_llm_enabled():
+            return ""
         import ollama
         if not acquire_ollama_gate():
             raise RuntimeError("Ollama gate timeout")

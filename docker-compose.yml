@@ -24,6 +24,8 @@ services:
       - OLLAMA_HOST=http://host.docker.internal:11434
       - AIOS_MODEL_PROVIDER=ollama
       - AIOS_MODEL_NAME=qwen2.5:7b
+      # Disable LLM for zero-dependency demo (browse threads, memory, graph without Ollama)
+      # - AIOS_LLM_ENABLED=false
       # Set CORS_ORIGINS if frontend runs on a different host/port
       # - CORS_ORIGINS=http://your-host:3000,http://your-host:5173
       # Set AIOS_BASE_URL for OAuth redirects if not on localhost:8000

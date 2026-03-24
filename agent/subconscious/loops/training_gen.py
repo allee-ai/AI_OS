@@ -433,7 +433,9 @@ class TrainingGenLoop(BackgroundLoop):
             return resp.json()["choices"][0]["message"]["content"].strip()
         
         # Default: Ollama
-        from .base import acquire_ollama_gate, release_ollama_gate
+        from .base import acquire_ollama_gate, release_ollama_gate, is_llm_enabled
+        if not is_llm_enabled():
+            return ""
         import ollama
         if not acquire_ollama_gate():
             raise RuntimeError("Ollama gate timeout")
