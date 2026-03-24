@@ -101,6 +101,13 @@ async def require_auth(
     if _is_public(request.url.path):
         return None
 
+    # Same-origin requests from the built-in frontend skip token auth.
+    # Browsers always send Sec-Fetch-Site on fetch() calls — this header
+    # cannot be forged by JavaScript, so it's safe to trust.
+    fetch_site = request.headers.get("sec-fetch-site")
+    if fetch_site in ("same-origin", "same-site"):
+        return None
+
     expected = _read_token_from_env()
     if not expected:
         # No token configured — auth disabled (first-run / local dev)
