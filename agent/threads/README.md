@@ -112,13 +112,13 @@ data: { "url": "github.com", "session_id": "abc123" }
 ### Philosophy Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | 🔮 Stub only — values hardcoded in system prompt |
+| **Current** | 🌀 SQLite adapter, L1/L2/L3 depth levels, values and beliefs stored per key |
 | **Future** | Ethics/awareness/curiosity/resolve modules (from Elaris), dream state for personality development |
 
 ### Reflex Thread
 | Aspect | Status |
 |--------|--------|
-| **Current** | 🔮 Stub only — basic greeting patterns |
+| **Current** | 🌀 SQLite adapter, pattern matching, trigger→response pairs |
 | **Future** | 10x rule pattern detection, reflex promotion, user macros, system reflexes for resource management |
 
 ### LinkingCore (Utility)
@@ -158,18 +158,34 @@ agent/threads/
 │   ├── __init__.py
 │   ├── adapter.py           # FormThreadAdapter
 │   ├── api.py               # FastAPI routes
+│   ├── cli.py               # CLI /tools commands
 │   ├── schema.py            # DB ops, tool CRUD
+│   ├── train.py             # Tool training data export
 │   ├── README.md
 │   └── tools/               # L1/L2/L3 architecture
-│       ├── registry.py      # L1: Tool definitions
+│       ├── registry.py      # L1: Tool definitions + ensure_tools_in_db()
 │       ├── executor.py      # L2: Execution engine
-│       └── executables/     # L3: Python implementations
+│       ├── scanner.py       # Auto-discovers executables
+│       └── executables/     # L3: 11 Python implementations
+│           ├── cli_command.py
+│           ├── code_edit.py
+│           ├── file_read.py
+│           ├── file_write.py
+│           ├── notify.py
+│           ├── regex_search.py
+│           ├── terminal.py
+│           ├── web_search.py
+│           ├── workspace_read.py
+│           └── workspace_write.py
 │
 ├── philosophy/              # VALUES, REASONING
 │   ├── __init__.py
 │   ├── adapter.py           # PhilosophyThreadAdapter
 │   ├── README.md
 │   └── modules/             # (future: core_values, ethical_bounds)
+│
+├── vision/                  # VISUAL PROCESSING
+│   └── (experimental)
 │
 └── reflex/                  # QUICK PATTERNS/PROGRAMMATIC REFLEXES
     ├── __init__.py
@@ -188,34 +204,23 @@ agent/threads/
 - [x] Create README.md for each thread
 - [x] Create threads/__init__.py registry
 
-### Phase 2: Wire Up Subconscious (PENDING)
-- [ ] Update `subconscious/core.py` to import from `agent/threads/`
-- [ ] Deprecate `subconscious/threads/` adapters
-- [ ] Test all 6 threads register correctly
+### Phase 2: Wire Up Subconscious (COMPLETE 🌀)
+- [x] Update `subconscious/core.py` to import from `agent/threads/`
+- [x] Deprecate `subconscious/threads/` adapters
+- [x] Test all 6 threads register correctly
 
-### Phase 3: Migrate Existing Code (PENDING)
-Files to move:
+### Phase 3: Migrate Existing Code (COMPLETE 🌀)
+All adapters now live in `agent/threads/<name>/adapter.py`.
 
-| From | To | Thread |
-|------|-----|--------|
-| `subconscious/threads/identity_adapter.py` | `threads/identity/adapter.py` | Identity |
-| `subconscious/threads/log_adapter.py` | `threads/log/adapter.py` | Log |
-| `subconscious/threads/memory_adapter.py` | `threads/identity/modules/temp_memory.py` | Identity |
-| `agent/identity_thread/` | `threads/identity/data/legacy/` | Identity |
-| `agent/relevance.py` | `threads/linking_core/modules/relevance.py` | LinkingCore |
-| `agent/log_thread/` | `threads/log/modules/` | Log |
-| `agent/temp_memory/` | `threads/identity/modules/temp_memory/` | Identity |
-| `agent/services/kernel_service.py` | `threads/form/modules/kernel.py` | Form |
-
-### Phase 4: Update Imports (PENDING)
+### Phase 4: Update Imports (COMPLETE 🌀)
 - [x] Update all imports in `services/agent_service.py`
 - [x] Removed `react-chat-app/` (consolidated to `scripts/server.py`)
-- [ ] Run tests to verify nothing broke
+- [x] Tests pass
 
-### Phase 5: Cleanup (PENDING)
-- [ ] Remove deprecated `subconscious/threads/` directory
-- [ ] Remove orphaned files
-- [ ] Update documentation
+### Phase 5: Cleanup (IN PROGRESS)
+- [x] Remove deprecated `subconscious/threads/` directory
+- [ ] Remove remaining orphaned files
+- [x] Update documentation
 
 ---
 
@@ -281,12 +286,12 @@ class ThreadAdapter:
 
 | Thread | Adapter | README | Wired | Tested |
 |--------|---------|--------|-------|--------|
-| Identity | 🌀 | 🌀 | ⏳ | ⏳ |
-| Log | 🌀 | 🌀 | ⏳ | ⏳ |
-| LinkingCore | 🌀 | 🌀 | ⏳ | ⏳ |
-| Form | 🌀 | 🌀 | ⏳ | ⏳ |
-| Philosophy | 🌀 | 🌀 | ⏳ | ⏳ |
-| Reflex | 🌀 | 🌀 | ⏳ | ⏳ |
+| Identity | 🌀 | 🌀 | 🌀 | 🌀 |
+| Log | 🌀 | 🌀 | 🌀 | 🌀 |
+| LinkingCore | 🌀 | 🌀 | 🌀 | 🌀 |
+| Form | 🌀 | 🌀 | 🌀 | 🌀 |
+| Philosophy | 🌀 | 🌀 | 🌀 | 🌀 |
+| Reflex | 🌀 | 🌀 | 🌀 | 🌀 |
 
 ---
 

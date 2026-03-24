@@ -44,7 +44,9 @@ subconscious/
 │   ├── goals.py            # GoalLoop — propose high-level goals
 │   ├── self_improve.py     # SelfImprovementLoop — reads thoughts, proposes code edits
 │   ├── training_gen.py     # TrainingGenLoop — kimi-k2 teacher, 17 modules, 105+ files
-│   └── convo_concepts.py   # ConvoConceptLoop — backfill concept graph from convos
+│   ├── convo_concepts.py   # ConvoConceptLoop — backfill concept graph from convos
+│   ├── demo_audit.py       # DemoAuditLoop — audit and check demo readiness
+│   └── workspace_qa.py     # WorkspaceQALoop — workspace file quality checks
 └── temp_memory/        # Short-term fact storage pending consolidation
 ```
 
@@ -70,7 +72,7 @@ Sources: `identity`, `log`, `form`, `philosophy`, `reflex`, `linking_core` (thre
 | L2 | 3.5–7.0 | ~400 | Default conversational |
 | L3 | 7.0–10 | ~800 | High relevance / deep queries |
 
-### Background Loops (14 total)
+### Background Loops (13 total)
 
 | Loop | Interval | Purpose |
 |------|----------|---------|
@@ -85,6 +87,8 @@ Sources: `identity`, `log`, `form`, `philosophy`, `reflex`, `linking_core` (thre
 | SelfImprovementLoop | varies | Reads thoughts → proposes code edits (never auto-applied) |
 | TrainingGenLoop | 7200s | kimi-k2 generates training data across 17 modules |
 | ConvoConceptLoop | varies | Backfills concept graph from imported conversations |
+| DemoAuditLoop | varies | Audits system readiness for demos |
+| WorkspaceQALoop | varies | Quality checks on workspace files |
 
 ### API Endpoints (51 routes at `/api/subconscious/`)
 

@@ -104,6 +104,8 @@ class BackgroundLoop:
         self._error_count = 0
         self._last_duration: Optional[float] = None  # seconds
         self._durations: list = []  # last N run durations for averaging
+        self._last_result: Optional[str] = None  # text output of last run
+        self._last_error: Optional[str] = None   # error text if last run failed
 
     @property
     def is_busy(self) -> bool:
@@ -148,6 +150,8 @@ class BackgroundLoop:
             "avg_duration": round(sum(durations) / len(durations), 2) if durations else None,
             "min_duration": round(min(durations), 2) if durations else None,
             "max_duration": round(max(durations), 2) if durations else None,
+            "last_result": self._last_result,
+            "last_error": self._last_error,
         }
 
     def _get_state(self, query: str = "") -> str:
@@ -284,7 +288,7 @@ class BackgroundLoop:
         self._busy.set()
         t0 = time.monotonic()
         try:
-            self.task()
+            result = self.task()
             elapsed = time.monotonic() - t0
             self._last_duration = elapsed
             self._durations.append(elapsed)
@@ -293,5 +297,12 @@ class BackgroundLoop:
             self._last_run = datetime.now(timezone.utc).isoformat()
             self._run_count += 1
             self._consecutive_errors = 0
+            self._last_error = None
+            # Capture task output if the task returns a string
+            if result is not None:
+                self._last_result = str(result)[:5000]  # cap at 5k chars
+        except Exception as e:
+            self._last_error = str(e)[:2000]
+            raise
         finally:
             self._busy.clear()

@@ -12,6 +12,22 @@ from typing import Dict, Any, Optional
 
 from .base import BackgroundLoop, LoopConfig
 
+DEFAULT_PROMPTS = {
+    "audit": """You are auditing demo mock data for a React frontend.
+Each line below is an API endpoint key followed by the first 300 chars of its JSON response.
+
+Audit checklist:
+1. Are any endpoint responses clearly empty or placeholder where real data is expected?
+2. Do any responses have obviously wrong shapes (e.g. object where array expected)?
+3. Is any PII present (real names, emails, addresses, API keys)?
+4. Are there endpoints that a typical dashboard would need but are missing?
+5. Data quality: any null fields that should be populated, or unrealistic values?
+
+Output a concise JSON array of issue objects:
+[{"endpoint": "...", "severity": "high|medium|low", "issue": "..."}]
+If everything looks good, output: []""",
+}
+
 
 # Resolve the demo-data path relative to the project root
 _PROJECT_ROOT = Path(__file__).resolve().parents[3]
@@ -38,21 +54,22 @@ class DemoAuditLoop(BackgroundLoop):
         )
         super().__init__(config, self._audit_demo)
         self._model = model
+        self._prompts: Dict[str, str] = {k: v for k, v in DEFAULT_PROMPTS.items()}
         self._last_issues: list[str] = []
 
     # ------------------------------------------------------------------
     # core task
     # ------------------------------------------------------------------
 
-    def _audit_demo(self) -> None:
+    def _audit_demo(self) -> str:
         if not _DEMO_DATA_PATH.exists():
             self._log("demo-data.json not found – skipping audit")
-            return
+            return "demo-data.json not found"
 
         data: Dict[str, Any] = json.loads(_DEMO_DATA_PATH.read_text())
         if not data:
             self._log("demo-data.json is empty")
-            return
+            return "demo-data.json is empty"
 
         # Build a compact summary (endpoint -> first 300 chars of JSON)
         summary_lines: list[str] = []
@@ -62,24 +79,13 @@ class DemoAuditLoop(BackgroundLoop):
 
         summary_text = "\n".join(summary_lines)
 
-        prompt = f"""You are auditing demo mock data for a React frontend.
-Each line below is an API endpoint key followed by the first 300 chars of its JSON response.
+        audit_instruction = self._prompts.get("audit", DEFAULT_PROMPTS["audit"])
+        prompt = f"""{audit_instruction}
 
 DEMO DATA ({len(data)} endpoints):
 \"\"\"
 {summary_text}
 \"\"\"
-
-Audit checklist:
-1. Are any endpoint responses clearly empty or placeholder where real data is expected?
-2. Do any responses have obviously wrong shapes (e.g. object where array expected)?
-3. Is any PII present (real names, emails, addresses, API keys)?
-4. Are there endpoints that a typical dashboard would need but are missing?
-5. Data quality: any null fields that should be populated, or unrealistic values?
-
-Output a concise JSON array of issue objects:
-[{{"endpoint": "...", "severity": "high|medium|low", "issue": "..."}}]
-If everything looks good, output: []
 """
 
         try:
@@ -95,20 +101,21 @@ If everything looks good, output: []
                     f"Found {len(issues)} issue(s) in demo-data.json:\n"
                     + "\n".join(self._last_issues)
                 )
-                # Surface each issue as a temp fact (visible in loop detail)
                 self._write_facts(issues)
-                # Post a summary notification (visible in Notifications panel)
                 self._notify(
                     f"Demo audit found {len(issues)} issue(s) in demo-data.json",
                     priority="high" if any(
                         i.get("severity") == "high" for i in issues
                     ) else "normal",
                 )
+                return f"Found {len(issues)} issues:\n" + "\n".join(self._last_issues)
             else:
                 self._log("Demo data audit passed – no issues found")
+                return "Demo data audit passed – no issues found"
 
         except Exception as exc:
             self._log(f"Audit model call failed: {exc}")
+            return f"Audit model call failed: {exc}"
 
     # ------------------------------------------------------------------
     # model helper  (mirrors CustomLoop._call_model_chain pattern)
@@ -268,4 +275,5 @@ If everything looks good, output: []
         base["model"] = self._model
         base["demo_data_path"] = str(_DEMO_DATA_PATH)
         base["last_issues"] = self._last_issues
+        base["prompts"] = {k: v for k, v in getattr(self, '_prompts', DEFAULT_PROMPTS).items()}
         return base

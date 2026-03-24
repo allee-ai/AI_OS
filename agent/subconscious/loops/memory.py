@@ -14,15 +14,22 @@ from .base import BackgroundLoop, LoopConfig
 # ── Default prompts (editable at runtime) ───────────────────
 
 DEFAULT_PROMPTS = {
-    "extract": """Extract facts about the user from this conversation as a Python list.
-Each fact is a dict with "key" and "text".
-Keys should be simple, flat names (1-2 words joined by underscore) — NOT hierarchical.
-Think of them like field labels: favorite_language, project_name, pet, coffee_preference.
+    "extract": """Extract ONLY high-value personal facts about the user from this conversation.
+
+RULES:
+- Only extract facts a personal assistant would genuinely need to remember
+- Good facts: name, occupation, hobbies, preferences, relationships, goals, location, tools they use
+- BAD facts (DO NOT EXTRACT): error messages, API paths, code snippets, technical debug info,
+  file names, git operations, installation steps, HTTP status codes, stack traces
+- Each fact needs a "key" (1-2 word label) and "text" (the actual fact)
+- If the user mentions another person, set "profile" to that person's name (lowercase)
+- If the fact is about the user themselves, set "profile" to "primary_user"
+- Maximum 3 facts per conversation — only the most important ones
 
 ONLY output a Python list. No explanation.
 
 Example:
-[{"key": "favorite_language", "text": "User prefers Python"}, {"key": "current_project", "text": "User is building TaskMaster app"}]
+[{"key": "hobby", "text": "User enjoys rock climbing", "profile": "primary_user"}, {"key": "partner", "text": "User's partner is named Ike", "profile": "primary_user"}, {"key": "occupation", "text": "Ike works as a veterinarian", "profile": "ike"}]
 
 If nothing worth remembering, output: []""",
 }
@@ -188,8 +195,8 @@ class MemoryLoop(BackgroundLoop):
         base["prompts"] = {k: v for k, v in getattr(self, '_prompts', DEFAULT_PROMPTS).items()}
         return base
     
-    def _extract(self) -> None:
-        """Extract facts from recent conversation turns."""
+    def _extract(self) -> str:
+        """Extract facts from recent conversation turns. Returns summary."""
         import json
         import os
         from contextlib import closing
@@ -221,13 +228,15 @@ class MemoryLoop(BackgroundLoop):
                 turns = cur.fetchall()
             
             if not turns:
-                return
+                return "No new turns to process"
             
         except Exception as e:
             print(f"[MemoryLoop] DB error: {e}")
-            return
+            return f"DB error: {e}"
         
         # 2. Extract facts from each turn
+        total_facts = 0
+        fact_texts = []
         for turn in turns:
             turn_id, user_msg, assistant_msg, session_id = turn
             
@@ -253,9 +262,12 @@ class MemoryLoop(BackgroundLoop):
                                 "hier_key": fact.get("key"),
                                 "category": fact.get("category", "general"),
                                 "confidence": fact.get("confidence", 0.5),
+                                "profile": fact.get("profile", "primary_user"),
                                 "turn_id": turn_id,
                             }
                         )
+                        total_facts += 1
+                        fact_texts.append(fact.get("text", "")[:80])
                 except Exception as e:
                     print(f"[MemoryLoop] Failed to store fact: {e}")
             
@@ -264,15 +276,19 @@ class MemoryLoop(BackgroundLoop):
             self._save_last_turn_id(turn_id)
         
         # Log extraction run
+        summary = f"Processed {len(turns)} turns, extracted {total_facts} facts"
+        if fact_texts:
+            summary += "\n" + "\n".join(f"  - {t}" for t in fact_texts[:10])
         try:
             from agent.threads.log import log_event
             log_event(
                 "system:memory_extract",
                 "memory_loop",
-                f"Processed {len(turns)} turns, extracted facts"
+                f"Processed {len(turns)} turns, extracted {total_facts} facts"
             )
         except:
             pass
+        return summary
     
     def _extract_facts_from_text(self, text: str, session_id: str) -> list:
         """
@@ -387,7 +403,7 @@ Or if no facts: []'''
         return None
     
     def _validate_fact(self, fact: dict) -> bool:
-        """Validate a fact dict before storing."""
+        """Validate a fact dict before storing — filters noise aggressively."""
         if not isinstance(fact, dict):
             return False
         if not fact.get("text") or not fact.get("key"):
@@ -402,15 +418,32 @@ Or if no facts: []'''
         if not isinstance(key, str):
             return False
         
-        garbage_patterns = [
+        text_lower = text.lower()
+        
+        # Reject technical noise — these are NOT personal facts
+        noise_patterns = [
             r'^[\[\]\{\}]+$',
             r'^["\s]+$',
             r'^\[.*\]$',
             r'^(ok|yes|no|hi|hello|thanks)\.?$',
+            r'(500 internal server error|404 not found|403 forbidden)',
+            r'(GET|POST|PUT|DELETE|PATCH)\s+/api/',
+            r'(\.gitignore|\.env|node_modules|__pycache__|\.pyc)',
+            r'(traceback|stacktrace|errno|exception|error code)',
+            r'(pip install|npm install|brew install|apt-get)',
+            r'(import\s+\w+|from\s+\w+\s+import)',
+            r'(localhost:\d+|127\.0\.0\.1|0\.0\.0\.0)',
+            r'(\.js|\.ts|\.py|\.json|\.yaml|\.yml|\.md)$',
+            r'(commit\s+[a-f0-9]{7,}|merge\s+branch)',
         ]
-        for pattern in garbage_patterns:
-            if re.match(pattern, text, re.IGNORECASE):
+        for pattern in noise_patterns:
+            if re.search(pattern, text_lower):
                 return False
+        
+        # Reject if it looks like code (has too many special chars)
+        special_chars = sum(1 for c in text if c in '{}[]()=><;|&@#$%^*~`')
+        if special_chars > len(text) * 0.15:
+            return False
         
         if "." in key:
             fact["key"] = key.rsplit(".", 1)[-1]

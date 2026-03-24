@@ -1,16 +1,27 @@
 # Tool Executables
 
-This directory contains executable files for tools registered in the `form_tools` database table.
+L3 implementations for the Form thread's tool system. Each file exports a `run(action, params)` function.
+
+## Current Executables (11)
+
+| File | Tool | Actions |
+|------|------|---------|
+| `cli_command.py` | CLI passthrough | Shell command execution |
+| `code_edit.py` | Code editing | Read/write/patch code files |
+| `file_read.py` | File read | Read files (sandboxed to workspace) |
+| `file_write.py` | File write | Write files (sandboxed to workspace) |
+| `notify.py` | Notifications | Send user notifications |
+| `regex_search.py` | Regex search | Search files by pattern |
+| `terminal.py` | Terminal | Shell commands (30s timeout) |
+| `web_search.py` | Web search | DuckDuckGo search |
+| `workspace_read.py` | Workspace read | `read_file`, `list_directory`, `search_files` |
+| `workspace_write.py` | Workspace write | `write_file`, `create_directory`, `move_file`, `delete_file` |
 
 ## How it works
 
-1. **Tool definitions** live in the SQLite database (`form_tools` table)
-2. **Executable files** are created here when tools are added via the API
-3. File extensions are determined by `run_type`:
-   - `python` → `.py`
-   - `shell` / `bash` → `.sh`
-   - `node` / `javascript` → `.js`
-   - `typescript` → `.ts`
+1. **Tool definitions** live in the `form_tools` database table (synced from `registry.py` via `ensure_tools_in_db()`)
+2. **Executable files** here implement the actual logic
+3. The executor (`executor.py`) dispatches to these based on tool name
 
 ## File lifecycle
 

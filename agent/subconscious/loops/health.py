@@ -25,8 +25,8 @@ class HealthLoop(BackgroundLoop):
         super().__init__(config, self._check_health)
         self._last_status: Dict[str, str] = {}
     
-    def _check_health(self) -> None:
-        """Check health of all registered threads."""
+    def _check_health(self) -> str:
+        """Check health of all registered threads. Returns summary."""
         try:
             from agent.subconscious.core import get_core
             from agent.threads.base import ThreadStatus
@@ -34,6 +34,7 @@ class HealthLoop(BackgroundLoop):
             core = get_core()
             health_reports = core.registry.health_all()
             
+            lines = []
             for name, report in health_reports.items():
                 current_status = report.status.value
                 previous_status = self._last_status.get(name, "unknown")
@@ -48,8 +49,13 @@ class HealthLoop(BackgroundLoop):
                         f"Thread '{name}' status: {previous_status} → {current_status}",
                         level=level
                     )
+                    lines.append(f"{name}: {previous_status} → {current_status}")
+                else:
+                    lines.append(f"{name}: {current_status}")
                 
                 self._last_status[name] = current_status
+            
+            return "\n".join(lines) if lines else "No threads registered"
                 
-        except Exception:
-            pass  # Best effort
+        except Exception as e:
+            return f"Health check error: {e}"

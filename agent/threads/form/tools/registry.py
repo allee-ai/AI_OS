@@ -227,6 +227,28 @@ TOOLS: List[ToolDefinition] = [
         weight=0.5,
     ),
     
+    # --- Workspace DB Tools ---
+    ToolDefinition(
+        name="workspace_read",
+        description="Read files from the workspace database (user-uploaded / UI-created files visible in the workspace panel)",
+        category=ToolCategory.FILES,
+        actions=["read_file", "list_directory", "search_files"],
+        run_file="workspace_read.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.6,
+    ),
+    ToolDefinition(
+        name="workspace_write",
+        description="Write, create, move, or delete files in the workspace database (appears in workspace UI, does NOT touch git)",
+        category=ToolCategory.FILES,
+        actions=["write_file", "create_directory", "move_file", "delete_file"],
+        run_file="workspace_write.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.6,
+    ),
+    
     # --- Automation Tools ---
     ToolDefinition(
         name="terminal",
@@ -399,6 +421,8 @@ SAFE_ACTIONS: Dict[str, List[str]] = {
     "web_search": ["search", "get_results"],
     "terminal": ["get_output"],
     "file_write": ["create_directory"],
+    "workspace_read": ["read_file", "list_directory", "search_files"],
+    "workspace_write": ["write_file", "create_directory", "move_file"],
     "memory_identity": ["get_identity", "list_keys"],
     "memory_philosophy": ["get_beliefs", "list_values"],
     "memory_log": ["search_logs", "get_recent", "get_session"],
@@ -415,6 +439,7 @@ BLOCKED_ACTIONS: Dict[str, List[str]] = {
     "terminal": ["run_command", "kill_process"],
     "file_write": ["write_file", "append_file"],
     "code_edit": ["edit_file"],
+    "workspace_write": ["delete_file"],
 }
 
 
@@ -495,6 +520,18 @@ _ACTION_PARAM_SCHEMAS: Dict[str, Dict[str, str]] = {
                                         "directory": "Directory to search (default '.')",
                                         "file_pattern": "Glob e.g. *.py (default *.py)"},
     "code_edit__list_files":            {"path": "Directory to list (default '.')"},
+    # workspace_read
+    "workspace_read__read_file":        {"path": "File path in workspace DB (e.g. /notes/todo.md)"},
+    "workspace_read__list_directory":   {"path": "Directory path to list (default '/')"},
+    "workspace_read__search_files":     {"query": "Full-text search query",
+                                         "limit": "Max results (default 20)"},
+    # workspace_write
+    "workspace_write__write_file":      {"path": "File path to create/update in workspace DB",
+                                         "content": "File content to write"},
+    "workspace_write__create_directory":{"path": "Folder path to create in workspace DB"},
+    "workspace_write__move_file":       {"old_path": "Current path of file/folder to move",
+                                         "new_path": "Destination path (e.g. /organized/file.txt)"},
+    "workspace_write__delete_file":     {"path": "File or folder path to delete from workspace DB"},
 }
 
 
@@ -586,6 +623,59 @@ def format_tools_for_prompt(tools: Optional[List[ToolDefinition]] = None, level:
     return "\n".join(lines)
 
 
+# ============================================================================
+# DB SYNC — write registry tools to form_tools table once
+# ============================================================================
+
+_db_synced = False
+
+
+def ensure_tools_in_db() -> int:
+    """Write all TOOLS definitions into the form_tools DB table.
+
+    Idempotent: INSERT OR REPLACE so the registry is always the authority.
+    Called once per process; subsequent calls are a no-op.
+    Returns the number of tools written.
+    """
+    global _db_synced
+    if _db_synced:
+        return 0
+
+    try:
+        import json as _json
+        from contextlib import closing as _closing
+        from agent.threads.form.schema import init_form_tools_table
+        from data.db import get_connection
+
+        init_form_tools_table()
+
+        with _closing(get_connection()) as conn:
+            for tool in TOOLS:
+                conn.execute("""
+                    INSERT OR REPLACE INTO form_tools
+                        (name, description, category, actions, run_file,
+                         run_type, requires_env, weight, enabled, allowed)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """, (
+                    tool.name,
+                    tool.description,
+                    tool.category.value,
+                    _json.dumps(tool.actions),
+                    tool.run_file,
+                    tool.run_type.value,
+                    _json.dumps(tool.requires_env),
+                    tool.weight,
+                    1 if tool.enabled else 0,
+                    1,  # allowed=True for all registry tools
+                ))
+            conn.commit()
+
+        _db_synced = True
+        return len(TOOLS)
+    except Exception:
+        return 0
+
+
 __all__ = [
     "ToolCategory",
     "RunType",
@@ -604,4 +694,5 @@ __all__ = [
     "BLOCKED_ACTIONS",
     "is_action_safe",
     "to_ollama_tools",
+    "ensure_tools_in_db",
 ]

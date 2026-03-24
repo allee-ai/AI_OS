@@ -168,12 +168,18 @@ def wake(start_loops: bool = True) -> None:
     
     if start_loops:
         _loop_manager = create_default_loops()
-        _loop_manager.start_all()
+        # Only start the health loop on fresh boot.
+        # All other loops start PAUSED — user must explicitly start them.
+        health_loop = _loop_manager.get_loop("health")
+        if health_loop:
+            health_loop.start()
         
         # Log custom loops loaded
         custom_count = sum(1 for l in _loop_manager._loops if isinstance(l, CustomLoop))
         if custom_count:
-            print(f"  ✓ Loaded {custom_count} custom loop(s)")
+            print(f"  ✓ Loaded {custom_count} custom loop(s) (paused)")
+        
+        print("  ✓ Loops created (only health auto-started, others paused until manually started)")
     
     _trigger_manager = TriggerManager()
     

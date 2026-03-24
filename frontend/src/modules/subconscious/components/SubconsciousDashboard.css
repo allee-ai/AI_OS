@@ -1310,3 +1310,67 @@
   .review-card-actions .btn-sm.reject { color: #fca5a5; border-color: #991b1b; }
   .review-card-actions .btn-sm.reject:hover { background: #7f1d1d; }
 }
+
+/* ── Loop Output ── */
+
+.loop-output-block {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  padding: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.loop-output-block.error {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.output-label {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #ef4444;
+  margin-bottom: 0.35rem;
+}
+
+.output-text {
+  margin: 0;
+  font-size: 0.8rem;
+  line-height: 1.5;
+  white-space: pre-wrap;
+  word-break: break-word;
+  color: var(--text);
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.busy-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 500;
+  color: #f59e0b;
+  margin-left: 0.5rem;
+  animation: pulse-busy 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse-busy {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+.busy-dot {
+  color: #f59e0b;
+  font-size: 0.6rem;
+  margin-left: auto;
+  margin-right: 0.25rem;
+  animation: pulse-busy 1.5s ease-in-out infinite;
+}
+
+@media (prefers-color-scheme: dark) {
+  .loop-output-block { background: #1f2937; border-color: #374151; }
+  .loop-output-block.error { background: #1c1012; border-color: #7f1d1d; }
+  .output-text { color: #e5e7eb; }
+}

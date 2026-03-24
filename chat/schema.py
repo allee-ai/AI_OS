@@ -535,14 +535,14 @@ def get_unindexed_high_weight_convos(min_weight: float = 0.3, limit: int = 10) -
     with closing(get_connection(readonly=True)) as conn:
         cur = conn.cursor()
         cur.execute("""
-            SELECT session_id, name, weight, turn_count
+            SELECT session_id, name, weight, turn_count, summary
             FROM convos
             WHERE indexed = FALSE AND weight >= ?
             ORDER BY weight DESC
             LIMIT ?
         """, (min_weight, limit))
         
-        convos = [{"session_id": r[0], "name": r[1], "weight": r[2], "turn_count": r[3]} for r in cur.fetchall()]
+        convos = [{"session_id": r[0], "name": r[1], "weight": r[2], "turn_count": r[3], "summary": r[4]} for r in cur.fetchall()]
     return convos
 
 

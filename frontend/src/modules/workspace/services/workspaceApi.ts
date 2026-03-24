@@ -271,6 +271,32 @@ class WorkspaceAPIService {
     if (!response.ok) return [];
     return response.json();
   }
+
+  /**
+   * Create a new empty file
+   */
+  async createFile(path: string, content: string = '', mimeType?: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/file`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ path, content, mime_type: mimeType }),
+    });
+    if (!response.ok) throw new Error(`Failed to create file: ${response.status}`);
+    return response.json();
+  }
+
+  /**
+   * Rename/move a file (wrapper for moveFile with simpler args)
+   */
+  async renameFile(oldPath: string, newPath: string): Promise<any> {
+    const response = await fetch(`${this.baseUrl}/api/workspace/move`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ old_path: oldPath, new_path: newPath }),
+    });
+    if (!response.ok) throw new Error(`Failed to rename: ${response.status}`);
+    return response.json();
+  }
 }
 
 export const workspaceApi = new WorkspaceAPIService();

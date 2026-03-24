@@ -128,16 +128,21 @@ class Agent:
         if tool_mode == "schema":
             # Ollama JSON tool calling protocol
             try:
-                from agent.threads.form.tools.registry import to_ollama_tools, get_runnable_tools
+                from agent.threads.form.tools.registry import (
+                    to_ollama_tools, get_runnable_tools, ensure_tools_in_db,
+                )
+                ensure_tools_in_db()  # write registry → form_tools DB (once)
                 provider = (overrides.get("provider") or os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
                 model_name = overrides.get("model") or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
                 api_key = os.getenv("OPENAI_API_KEY", "")
                 endpoint = overrides.get("endpoint") or os.getenv("AIOS_MODEL_ENDPOINT", "")
                 ollama_tools = to_ollama_tools(get_runnable_tools())
                 if ollama_tools and provider in ("ollama", "openai"):
+                    max_tool_rounds = int(os.getenv("AIOS_MAX_TOOL_ROUNDS", "15"))
                     response_text = self._process_schema_tool_calls(
                         model_name, messages, ollama_tools,
                         on_tool_event=on_tool_event,
+                        max_rounds=max_tool_rounds,
                         provider=provider, api_key=api_key, endpoint=endpoint,
                     )
                 else:
@@ -147,6 +152,11 @@ class Agent:
                 response_text = self._call_llm(messages, overrides=overrides)
         else:
             # Default: text-native :::execute::: block parsing
+            try:
+                from agent.threads.form.tools.registry import ensure_tools_in_db
+                ensure_tools_in_db()
+            except Exception:
+                pass
             response_text = self._call_llm(messages, overrides=overrides)
             if _HAS_SCANNER:
                 response_text = self._process_tool_calls(
@@ -623,19 +633,19 @@ class Agent:
         provider = (ov.get("provider") or os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
         model_name = ov.get("model") or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
         endpoint = ov.get("endpoint") or os.getenv("AIOS_MODEL_ENDPOINT", "")
-        
+
         if provider == "mock":
             return "[Mock Agent] Placeholder response."
-        
-        if provider == "openai":
-            api_key = os.getenv("OPENAI_API_KEY", "")
-            return self._call_openai(model_name, messages, api_key, endpoint)
-        
-        if provider == "http":
-            return self._call_http(endpoint, messages)
-        
-        # Default: ollama
-        return self._call_ollama(model_name, messages)
+
+        # For custom HTTP endpoints, set env so the http provider picks it up
+        if provider == "http" and endpoint:
+            os.environ["AIOS_MODEL_ENDPOINT"] = endpoint
+
+        try:
+            from agent.services.llm import generate
+            return generate(messages=messages, provider=provider, model=model_name)
+        except Exception as e:
+            return f"[Error: {e}]"
     
     def _call_ollama(self, model: str, messages: list) -> str:
         """Call local Ollama."""

@@ -106,50 +106,50 @@ def get_available_models() -> List[ModelInfo]:
     """Get list of available models from all configured providers."""
     models = []
     provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
-    
-    # Always try Ollama
+
+    # Pull models from the shared provider layer (respects API key presence)
     try:
-        import ollama
-        response = ollama.list()
-        for m in response.get("models", []):
-            model_name = m.get("name", m.get("model", ""))
-            if not model_name:
-                continue
-            display_name = model_name.replace(":", " ").title()
-            size = m.get("size", 0)
-            size_str = f"{size / 1e9:.1f}GB" if size > 0 else ""
-            # Try to get context length from Ollama model info
-            ctx_len = _lookup_context_length(model_name)
-            if ctx_len is None:
-                try:
-                    info = ollama.show(model_name)
-                    params = info.get("model_info", info.get("details", {}))
-                    for key in ("num_ctx", "context_length"):
-                        if key in params:
-                            ctx_len = int(params[key])
-                            break
-                except Exception:
-                    pass
+        from agent.services.llm import available_models as _llm_models
+        for m in _llm_models():
+            ctx = m.get("context") or _lookup_context_length(m["id"])
             models.append(ModelInfo(
-                id=model_name, name=display_name,
-                provider="ollama", description=f"Local {size_str}".strip(),
-                context_length=ctx_len,
+                id=m["id"],
+                name=m.get("display", m["id"]),
+                provider=m.get("provider", "unknown"),
+                description=m.get("description"),
+                context_length=ctx,
             ))
     except Exception:
-        if provider == "ollama":
-            models = list(OLLAMA_DEFAULTS)
-    
-    # Add OpenAI models if key is present
-    if os.getenv("OPENAI_API_KEY"):
-        models.extend(OPENAI_DEFAULTS)
-    
+        # Fallback: legacy behaviour — Ollama + OpenAI only
+        try:
+            import ollama
+            response = ollama.list()
+            for m in response.get("models", []):
+                model_name = m.get("name", m.get("model", ""))
+                if not model_name:
+                    continue
+                display_name = model_name.replace(":", " ").title()
+                size = m.get("size", 0)
+                size_str = f"{size / 1e9:.1f}GB" if size > 0 else ""
+                ctx_len = _lookup_context_length(model_name)
+                models.append(ModelInfo(
+                    id=model_name, name=display_name,
+                    provider="ollama", description=f"Local {size_str}".strip(),
+                    context_length=ctx_len,
+                ))
+        except Exception:
+            if provider == "ollama":
+                models = list(OLLAMA_DEFAULTS)
+        if os.getenv("OPENAI_API_KEY"):
+            models.extend(OPENAI_DEFAULTS)
+
     # Add current model if not in list (custom http, etc.)
     current = os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
     if not any(m.id == current for m in models):
         models.append(ModelInfo(
             id=current, name=current, provider=provider, description="Active"
         ))
-    
+
     models.sort(key=lambda m: (0 if m.provider == provider else 1, m.id))
     return models if models else list(OLLAMA_DEFAULTS)
 
@@ -169,7 +169,7 @@ async def get_providers():
         ollama_ok = True
     except Exception:
         pass
-    
+
     return {
         "providers": [
             {
@@ -182,6 +182,24 @@ async def get_providers():
                 "setup_url": "https://ollama.com",
             },
             {
+                "id": "gemini",
+                "name": "Google Gemini",
+                "description": "Gemini 2.0 Flash and more. Free tier: 15 RPM.",
+                "requires_key": True,
+                "requires_endpoint": False,
+                "connected": bool(os.getenv("GEMINI_API_KEY")),
+                "setup_url": "https://aistudio.google.com/apikey",
+            },
+            {
+                "id": "claude",
+                "name": "Anthropic Claude",
+                "description": "Claude Sonnet 4, Haiku. Requires an API key.",
+                "requires_key": True,
+                "requires_endpoint": False,
+                "connected": bool(os.getenv("ANTHROPIC_API_KEY")),
+                "setup_url": "https://console.anthropic.com/settings/keys",
+            },
+            {
                 "id": "openai",
                 "name": "OpenAI",
                 "description": "GPT-4o, GPT-4.1, and more. Requires an API key.",
@@ -189,6 +207,15 @@ async def get_providers():
                 "requires_endpoint": False,
                 "connected": bool(os.getenv("OPENAI_API_KEY")),
                 "setup_url": "https://platform.openai.com/api-keys",
+            },
+            {
+                "id": "openrouter",
+                "name": "OpenRouter",
+                "description": "Access many models, including free tiers. Great for aggregate mode.",
+                "requires_key": True,
+                "requires_endpoint": False,
+                "connected": bool(os.getenv("OPENROUTER_API_KEY")),
+                "setup_url": "https://openrouter.ai/keys",
             },
             {
                 "id": "http",
@@ -269,20 +296,28 @@ async def configure_provider(config: ProviderConfig):
     global _current_model, _current_provider
     
     provider = config.provider.lower()
-    if provider not in ("ollama", "openai", "http", "mock"):
+    valid_providers = ("ollama", "gemini", "claude", "openai", "openrouter", "http", "mock")
+    if provider not in valid_providers:
         raise HTTPException(status_code=400, detail=f"Unknown provider: {provider}")
-    
+
     # Set env vars for the running process
     os.environ["AIOS_MODEL_PROVIDER"] = provider
     _current_provider = provider
-    
+
     if config.model:
         os.environ["AIOS_MODEL_NAME"] = config.model
         _current_model = config.model
-    
-    if config.api_key is not None:
-        os.environ["OPENAI_API_KEY"] = config.api_key
-    
+
+    # Map API key to the correct env var per provider
+    _KEY_ENV_MAP = {
+        "openai": "OPENAI_API_KEY",
+        "gemini": "GEMINI_API_KEY",
+        "claude": "ANTHROPIC_API_KEY",
+        "openrouter": "OPENROUTER_API_KEY",
+    }
+    if config.api_key is not None and provider in _KEY_ENV_MAP:
+        os.environ[_KEY_ENV_MAP[provider]] = config.api_key
+
     if config.endpoint is not None:
         os.environ["AIOS_MODEL_ENDPOINT"] = config.endpoint
     

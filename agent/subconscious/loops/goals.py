@@ -204,8 +204,8 @@ Recent activity: {activity}
 Existing goals (do not duplicate): {existing}"""
 
 
-def _generate_goals() -> None:
-    """Run one cycle of goal generation."""
+def _generate_goals(prompt_template: str = GOAL_PROMPT) -> str:
+    """Run one cycle of goal generation. Returns summary."""
     concepts = _get_recurring_concepts()
     values = _get_values()
     activity = _get_recent_activity()
@@ -213,9 +213,9 @@ def _generate_goals() -> None:
 
     # Skip if there's nothing to work with
     if not concepts and not values:
-        return
+        return "No concepts or values to generate goals from"
 
-    prompt = GOAL_PROMPT.format(
+    prompt = prompt_template.format(
         concepts=json.dumps(concepts[:10], default=str),
         values=json.dumps(values[:10]),
         activity=json.dumps(activity[:10]),
@@ -227,23 +227,23 @@ def _generate_goals() -> None:
         response = call_llm(prompt, max_tokens=1024)
     except Exception as e:
         print(f"[GoalLoop] LLM call failed: {e}")
-        return
+        return f"LLM call failed: {e}"
 
-    # Parse response
+    # Parse response — lazy parse: try JSON, fall back to raw text
     try:
-        # Extract JSON array from response
         text = response.strip()
         start = text.find("[")
         end = text.rfind("]") + 1
         if start == -1 or end == 0:
-            return
+            return f"[raw output - no JSON array found]\n{text[:2000]}"
         goals = json.loads(text[start:end])
     except (json.JSONDecodeError, ValueError):
-        return
+        return f"[raw output - JSON parse failed]\n{response.strip()[:2000]}"
 
     if not isinstance(goals, list):
-        return
+        return f"[raw output - not a list]\n{response.strip()[:2000]}"
 
+    proposed = []
     for g in goals:
         if not isinstance(g, dict) or "goal" not in g:
             continue
@@ -260,6 +260,11 @@ def _generate_goals() -> None:
             priority=str(g.get("priority", "medium")),
             sources=["linking_core", "philosophy", "log"],
         )
+        proposed.append(f"[{g.get('priority', 'medium')}] {goal_text}")
+
+    if proposed:
+        return f"Proposed {len(proposed)} goals:\n" + "\n".join(proposed)
+    return "No new goals proposed this cycle"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -281,4 +286,14 @@ class GoalLoop(BackgroundLoop):
             error_backoff=2.0,
             context_aware=False,
         )
-        super().__init__(config, task=_generate_goals)
+        super().__init__(config, task=self._run)
+        self._prompts: Dict[str, str] = {"generate": GOAL_PROMPT}
+
+    def _run(self) -> str:
+        return _generate_goals(self._prompts.get("generate", GOAL_PROMPT))
+
+    @property
+    def stats(self) -> Dict[str, Any]:
+        base = super().stats
+        base["prompts"] = dict(self._prompts)
+        return base

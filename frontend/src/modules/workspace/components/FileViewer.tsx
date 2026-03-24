@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import type { FileMeta } from '../types/workspace';
+import { CodeEditor } from './CodeEditor';
 import './FileViewer.css';
 
 interface FileViewerProps {
@@ -215,11 +216,10 @@ export const FileViewer: React.FC<FileViewerProps> = ({
                 </button>
               </div>
             </div>
-            <textarea
-              className="edit-textarea"
+            <CodeEditor
               value={editContent}
-              onChange={e => setEditContent(e.target.value)}
-              spellCheck={false}
+              onChange={setEditContent}
+              language={language}
             />
           </div>
         ) : isImage && imageUrl ? (
@@ -251,9 +251,12 @@ export const FileViewer: React.FC<FileViewerProps> = ({
             />
           </div>
         ) : file.content ? (
-          <pre className={`code-preview ${language ? `lang-${language}` : ''}`}>
-            <code>{file.content}</code>
-          </pre>
+          <CodeEditor
+            value={file.content}
+            onChange={() => {}}
+            language={language}
+            readOnly
+          />
         ) : (
           <div className="no-preview">
             <p>Preview not available for this file type</p>

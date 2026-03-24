@@ -269,20 +269,18 @@ CURRENT FILES:
 {files}"""
 
 
-def _generate_improvements() -> None:
-    """Run one cycle of improvement proposal generation."""
+def _generate_improvements(prompt_template: str = IMPROVE_PROMPT) -> str:
+    """Run one cycle of improvement proposal generation. Returns summary."""
     thoughts = _get_actionable_thoughts()
     errors = _get_recent_errors()
     files = _read_allowed_files()
 
-    # Skip if nothing to work with
     if not thoughts and not errors:
-        return
+        return "No actionable thoughts or errors to work with"
 
-    # Don't let pending proposals pile up
     pending = get_proposed_improvements("pending")
     if len(pending) >= 5:
-        return
+        return f"Skipped — already {len(pending)} pending proposals"
 
     file_list = list(files.keys())
     file_contents = "\n\n".join(
@@ -290,7 +288,7 @@ def _generate_improvements() -> None:
         for path, content in list(files.items())[:10]
     )
 
-    prompt = IMPROVE_PROMPT.format(
+    prompt = prompt_template.format(
         allowed_files=json.dumps(file_list),
         thoughts=json.dumps([t["thought"] for t in thoughts[:5]]),
         errors=json.dumps(errors[:5]),
@@ -302,22 +300,23 @@ def _generate_improvements() -> None:
         response = call_llm(prompt, max_tokens=2048)
     except Exception as e:
         print(f"[SelfImprove] LLM call failed: {e}")
-        return
+        return f"LLM call failed: {e}"
 
-    # Parse response
+    # Parse response — lazy parse: try JSON, fall back to raw text
     try:
         text = response.strip()
         start = text.find("[")
         end = text.rfind("]") + 1
         if start == -1 or end == 0:
-            return
+            return f"[raw output - no JSON array]\n{text[:2000]}"
         proposals = json.loads(text[start:end])
     except (json.JSONDecodeError, ValueError):
-        return
+        return f"[raw output - JSON parse failed]\n{response.strip()[:2000]}"
 
     if not isinstance(proposals, list):
-        return
+        return f"[raw output - not a list]\n{response.strip()[:2000]}"
 
+    proposed_lines = []
     for p in proposals:
         if not isinstance(p, dict):
             continue
@@ -327,7 +326,6 @@ def _generate_improvements() -> None:
         diff = p.get("diff", {})
         if not isinstance(diff, dict) or "old" not in diff or "new" not in diff:
             continue
-        # Mark source thought as acted on
         if thoughts:
             try:
                 from .thought import mark_thought_acted
@@ -340,6 +338,11 @@ def _generate_improvements() -> None:
             diff=json.dumps(diff),
             rationale=str(p.get("rationale", "")),
         )
+        proposed_lines.append(f"  {file_path}: {p.get('description', '')[:100]}")
+
+    if proposed_lines:
+        return f"Proposed {len(proposed_lines)} improvements:\n" + "\n".join(proposed_lines)
+    return "No valid improvements to propose"
 
 
 # ─────────────────────────────────────────────────────────────
@@ -361,4 +364,14 @@ class SelfImprovementLoop(BackgroundLoop):
             error_backoff=3.0,
             context_aware=False,
         )
-        super().__init__(config, task=_generate_improvements)
+        super().__init__(config, task=self._run)
+        self._prompts: Dict[str, str] = {"improve": IMPROVE_PROMPT}
+
+    def _run(self) -> str:
+        return _generate_improvements(self._prompts.get("improve", IMPROVE_PROMPT))
+
+    @property
+    def stats(self) -> Dict[str, Any]:
+        base = super().stats
+        base["prompts"] = dict(self._prompts)
+        return base

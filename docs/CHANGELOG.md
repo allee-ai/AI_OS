@@ -5,6 +5,73 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-03-24 — Loop Prompt Visibility, Workspace Tools, Model Router, Doc Refresh
+
+### Loop Prompt Visibility (All 8 LLM Loops)
+- **Universal prompt editing**: All 8 LLM-powered loops now expose their prompts via `_prompts` dict and `stats["prompts"]` — previously only memory, thought, and task_planner did
+- **Newly exposed**: `custom`, `demo_audit`, `training_gen`, `convo_concepts`, `goal_generation`, `self_improvement`
+- **Pattern**: Each loop stores `_prompts = {"key": DEFAULT}` in `__init__`, reads from `self._prompts.get(key, DEFAULT)` at runtime, and includes `"prompts": self._prompts` in `stats`
+- **API reset-to-default**: `set_loop_prompt` endpoint updated with correct defaults for all 6 new loops
+- **Frontend**: SubconsciousDashboard prompt editor now works for every LLM loop
+
+### Workspace File Browser & Tools
+- **FileTree component** (`frontend/src/modules/workspace/components/FileTree.tsx`): New recursive tree with expand/collapse, file icons, sorting (dirs first)
+- **FileViewer** (`FileViewer.tsx`): View file contents from the workspace panel via API
+- **CodeEditor** (`CodeEditor.tsx`): New — inline editing component (untracked)
+- **workspaceApi.ts**: New service layer for workspace endpoints (`listFiles`, `readFile`)
+- **workspace_read.py / workspace_write.py**: New tool executables (untracked) — agent can read/write workspace files
+- **workspace/cli.py**: Expanded CLI commands
+- **workspace/summarizer.py**: Enhanced summarization logic
+
+### Model Router & Settings
+- **models_api.py**: Major refactor — cleaner routing for model selection, better error handling
+- **settings_api.py**: New settings endpoints
+- **LLM service** (`agent/services/llm.py`): New centralized LLM abstraction (untracked)
+- **SettingsPage.tsx**: Updated settings UI
+
+### Subconscious System Hardening
+- **Loop base class** (`loops/base.py`): Improved lifecycle management
+- **Loop manager** (`loops/manager.py`): Cleaner loop registration and startup
+- **Consolidation loop**: Significant expansion — better link promotion logic
+- **Health/sync/workspace_qa loops**: Minor robustness improvements
+- **Memory loop**: Extended prompt handling and stat reporting
+- **Docker**: Added `AIOS_LOOPS=1` env var — loops auto-start in container
+
+### Form Thread & Tool Registry
+- **Tool registry** (`agent/threads/form/tools/registry.py`): +91 lines — expanded tool definitions and discovery
+- **Form adapter** (`agent/threads/form/adapter.py`): Better tool routing
+
+### Documentation Refresh
+- Updated READMEs: `Feeds/`, `agent/core/`, `agent/services/`, `agent/subconscious/`, `agent/threads/form/`, `agent/threads/form/tools/executables/`, `agent/threads/log/`, `chat/`, `docs/`, `eval/`, `finetune/`, `frontend/`, `tests/`, `workspace/`
+- **Chinese README** (`README.zh.md`): Updated to match English version
+
+### Training Data Regeneration
+- **Docstring-based training**: Regenerated all 17 module-level `.jsonl` files in `finetune/generated/`
+- **Cloud generation** (`finetune/cloud_gen.py`): New cloud-based training data generator (untracked)
+- **Finetune CLI** (`finetune/cli.py`): New CLI entry point (untracked)
+
+### Scripts & Tests
+- **db_audit.py**: New DB auditing script (untracked)
+- **cleanup_facts.py**: New fact cleanup utility (untracked)
+- **_check_syntax.py**: New syntax checker (untracked)
+- **test_workspace_tools.py**: New workspace tool tests (untracked)
+- **live_kimi_test.py**: New live model test (untracked)
+
+### Files Changed (74 tracked + 13 untracked)
+- `agent/subconscious/loops/{custom,demo_audit,training_gen,convo_concepts,goals,self_improve}.py` — Prompt visibility
+- `agent/subconscious/api.py` — Reset-to-default for all loop prompts
+- `agent/subconscious/loops/{base,manager,consolidation,health,sync,memory,thought,task_planner,workspace_qa}.py` — Hardening
+- `agent/core/models_api.py` — Model router refactor
+- `agent/threads/form/{adapter,tools/registry}.py` — Tool expansion
+- `frontend/src/modules/workspace/components/{FileTree,FileViewer,WorkspacePanel}.tsx` — Workspace browser
+- `frontend/src/modules/subconscious/components/SubconsciousDashboard.{tsx,css}` — Prompt editor for all loops
+- `docker-compose.yml` — `AIOS_LOOPS=1`
+- `workspace/{cli,summarizer}.py` — Expanded workspace tools
+- 14 `finetune/generated/*.jsonl` — Regenerated training data
+- 14 READMEs updated across all modules
+
+---
+
 ## 2026-03-14 — Self-Improvement Loop, Goal Loop, Concept Backfill, New Tools, Frontend Visibility
 
 ### Self-Improvement Loop (`agent/subconscious/loops/self_improve.py`)

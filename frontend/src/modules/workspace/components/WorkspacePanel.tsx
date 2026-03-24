@@ -1,6 +1,5 @@
 import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { Link } from 'react-router-dom';
-import { FileExplorer } from './FileExplorer';
 import { FileTree } from './FileTree';
 import { FileViewer } from './FileViewer';
 import { useWorkspace } from '../hooks/useWorkspace';

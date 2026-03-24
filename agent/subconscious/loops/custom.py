@@ -219,6 +219,7 @@ class CustomLoop(BackgroundLoop):
         self.prompt = prompt
         self.max_iterations = max(1, min(max_iterations, 20))
         self.max_tokens_per_iter = max(64, max_tokens_per_iter)
+        self._prompts: Dict[str, str] = {"prompt": prompt}
         self._last_iteration_count = 0
         self._last_token_estimate = 0
     
@@ -240,6 +241,7 @@ class CustomLoop(BackgroundLoop):
         base["target"] = self.target
         base["model"] = self.model
         base["prompt_preview"] = self.prompt[:80] + ("..." if len(self.prompt) > 80 else "")
+        base["prompts"] = dict(self._prompts)
         base["is_custom"] = True
         base["max_iterations"] = self.max_iterations
         base["max_tokens_per_iter"] = self.max_tokens_per_iter
@@ -386,7 +388,7 @@ Use this context to produce more relevant, personalized output.
         
         for iteration in range(self.max_iterations):
             if iteration == 0:
-                full_prompt = f"""{state_preamble}{self.prompt}
+                full_prompt = f"""{state_preamble}{self._prompts.get("prompt", self.prompt)}
 
 SOURCE DATA:
 \"\"\"
@@ -403,7 +405,7 @@ Python list:"""
                 chain_context = "\n\n".join(
                     f"--- Iteration {i+1} output ---\n{h}" for i, h in enumerate(chain_history)
                 )
-                full_prompt = f"""{state_preamble}{self.prompt}
+                full_prompt = f"""{state_preamble}{self._prompts.get("prompt", self.prompt)}
 
 SOURCE DATA:
 \"\"\"

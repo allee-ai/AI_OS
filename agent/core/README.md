@@ -20,7 +20,13 @@ agent/core/
 ├── config.py        # Application settings via pydantic-settings
 ├── locks.py         # Thread-safe locks for memory/DB writes
 ├── models_api.py    # Model management API endpoints
-└── secrets.py       # Encrypted credential storage
+├── secrets.py       # Encrypted credential storage
+├── auth.py          # Bearer token authentication middleware
+├── mcp_api.py       # MCP (Model Context Protocol) API endpoints
+├── mcp_client.py    # MCP client for external tool servers
+├── migrations.py    # Database schema migrations
+├── settings_api.py  # User settings API endpoints
+└── url_validation.py # URL validation and sanitization
 ```
 
 ### Components
@@ -31,6 +37,12 @@ agent/core/
 | `locks.py` | Thread-safe locks. Prevents race conditions. |
 | `models_api.py` | Lists available models, switches active model. |
 | `secrets.py` | Encrypted API keys, OAuth tokens, etc. |
+| `auth.py` | Bearer token auth for API and mobile endpoints. |
+| `mcp_api.py` | MCP server endpoints for external tool integration. |
+| `mcp_client.py` | Client for connecting to MCP tool servers. |
+| `migrations.py` | DDL migrations for all SQLite tables. |
+| `settings_api.py` | User-facing settings CRUD (model, theme, etc.). |
+| `url_validation.py` | URL validation and SSRF prevention. |
 
 ### Data Flow
 

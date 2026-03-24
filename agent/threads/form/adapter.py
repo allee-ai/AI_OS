@@ -71,17 +71,29 @@ class FormThreadAdapter(BaseThreadAdapter):
             return HealthReport.error(str(e))
     
     def seed_tools(self, force: bool = False) -> int:
-        """
-        Seed tool definitions from tools.py into the database.
-        
-        Returns number of tools registered.
+        """Seed tool definitions into the form_tools DB table.
+
+        Delegates to registry.ensure_tools_in_db() which does INSERT OR
+        REPLACE, so the registry.py TOOLS list is the single source of truth.
+        Also pushes lightweight entries into the thread memory so that
+        introspection can still list tools.
+
+        Returns number of tools written.
         """
         if not _HAS_TOOLS:
             return 0
-        
+
         if FormThreadAdapter._seeded and not force:
             return 0
-        
+
+        # Write to form_tools DB (the path execute_tool_action reads)
+        try:
+            from .tools.registry import ensure_tools_in_db
+            ensure_tools_in_db()
+        except Exception:
+            pass
+
+        # Also push lightweight entries into thread memory for introspection
         count = 0
         for tool in TOOLS:
             available = check_tool_availability(tool)
@@ -95,7 +107,7 @@ class FormThreadAdapter(BaseThreadAdapter):
                 weight=tool.weight,
             )
             count += 1
-        
+
         FormThreadAdapter._seeded = True
         return count
     

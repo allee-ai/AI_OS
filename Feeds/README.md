@@ -12,17 +12,6 @@ The Feeds module manages external data streams entering and leaving AI OS. It ab
 
 ---
 
-## Changelog
-
-### 2026-02-01: Module System Migration
-- **YAML → Python**: Converted all feed configs from YAML to Python modules
-- **Email Module**: Multi-provider support (Gmail, Outlook, Proton) with unified OAuth
-- **GitHub Module**: 6 event types with OAuth integration
-- **Discord Module**: Converted from YAML, added OAuth flow
-- **Viewers**: Created native viewer components (EmailViewer with provider tabs, GithubViewer, DiscordViewer)
-- **API**: Updated OAuth endpoints to support provider parameter for email
-- **Events**: New centralized event emission system
-
 ## Architecture
 
 <!-- ARCHITECTURE:feeds -->
@@ -33,12 +22,21 @@ Feeds/
 ├── router.py              # Main message bus
 ├── api.py                 # FastAPI endpoints (secrets, OAuth, events)
 ├── events.py              # Event registry and emission system
+├── bridge.py              # Feed↔Agent bridge for message routing
+├── cli.py                 # Headless CLI (/feeds commands)
+├── intelligence.py        # Feed content analysis / scoring
+├── polling.py             # Background feed polling scheduler
 └── sources/               # Modular feed directories
-    ├── gmail/
-    │   └── __init__.py    # OAuth, adapter, event types
+    ├── calendar/
+    │   └── __init__.py    # Calendar integration
     ├── discord/
     │   └── __init__.py    # Bot adapter, event types
-    └── _template.yaml     # Legacy YAML structure
+    ├── email/
+    │   └── __init__.py    # Multi-provider (Gmail, Outlook, Proton)
+    ├── github/
+    │   └── __init__.py    # Issues, PRs, mentions, pushes
+    └── website/
+        └── __init__.py    # RSS/web scraping adapter
 ```
 
 ### Feed Modules

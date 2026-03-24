@@ -144,7 +144,7 @@ export const SettingsPage = () => {
 
   const renderContent = () => {
     // Config-driven sections
-    if (['server', 'provider', 'kernel', 'chat'].includes(activeSection)) {
+    if (['server', 'provider', 'kernel', 'chat', 'workspace'].includes(activeSection)) {
       return <ConfigSection group={activeSection} onDirty={() => setHasUnsavedChanges(true)} onClean={() => setHasUnsavedChanges(false)} />;
     }
     if (activeSection === 'mcp') {
@@ -214,6 +214,11 @@ export const SettingsPage = () => {
           <button className={`sidebar-item ${activeSection === 'mcp' ? 'active' : ''}`}
             onClick={() => handleNavigation('/settings/mcp')}>
             <span className="sidebar-icon">🔌</span><span>MCP Servers</span>
+          </button>
+
+          <button className={`sidebar-item ${activeSection === 'workspace' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/workspace')}>
+            <span className="sidebar-icon">📂</span><span>Workspace</span>
           </button>
 
           {/* ── Tools ── */}
@@ -315,6 +320,7 @@ const GROUP_META: Record<string, { icon: string; title: string; desc: string }> 
   provider: { icon: '🤖', title: 'Provider & Models', desc: 'LLM provider, model, API keys, and extraction overrides.' },
   chat: { icon: '💬', title: 'Chat & Summarization', desc: 'Context window budgets, auto-summarization thresholds, and conversation limits.' },
   kernel: { icon: '🌐', title: 'Kernel Browser Automation', desc: 'API key, browser profile, stealth & headless settings.' },
+  workspace: { icon: '📂', title: 'Workspace', desc: 'Control which workspace operations the LLM/agent can perform and file size limits.' },
 };
 
 const ConfigSection = ({ group, onDirty, onClean }: { group: string; onDirty: () => void; onClean: () => void }) => {

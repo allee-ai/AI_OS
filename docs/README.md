@@ -14,8 +14,8 @@ Welcome to the AI_OS documentation. Use the tree on the left to browse all markd
 ```
 AI_OS/
 ├── agent/           # Core agent logic
-│   ├── core/        # Config, locks, API models
-│   ├── services/    # Runtime, Kernel integration
+│   ├── core/        # Config, locks, auth, MCP, migrations, settings
+│   ├── services/    # Runtime, Kernel integration, mobile API
 │   ├── subconscious/# Context assembly, loops
 │   └── threads/     # 5 data threads + linking core
 │       ├── identity/
@@ -24,12 +24,14 @@ AI_OS/
 │       ├── philosophy/
 │       ├── reflex/
 │       └── linking_core/
-├── chat/            # Conversation API and storage
+├── chat/            # Conversation API, import, CLI
 ├── Feeds/           # External data sources
-├── workspace/       # User file management
+├── workspace/       # User file management (SQLite VFS)
 ├── finetune/        # Fire-Tuner — training studio
-├── eval/            # Benchmarking
+├── eval/            # Benchmarking + LLM-as-judge
 ├── docs/            # This documentation
+│   ├── api.py       # FastAPI endpoints for doc browser
+│   └── train.py     # Training data export from docs
 ├── frontend/        # React UI (modules mirror backend)
 └── scripts/         # Utilities
 ```

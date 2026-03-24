@@ -60,6 +60,7 @@ def _load_commands() -> dict:
         "chat.cli",
         "Feeds.cli",
         "eval.cli",
+        "finetune.cli",
     ]
     for mod_name in modules:
         try:
@@ -268,6 +269,10 @@ def _cmd_help():
   {CYAN}Workspace / Files{RESET}
     {BOLD}/files [path]{RESET}              List directory (default /)
     {BOLD}/files read <path>{RESET}         Show file content
+    {BOLD}/files write <path> <content>{RESET}  Create / update a file
+    {BOLD}/files mkdir <path>{RESET}        Create a folder
+    {BOLD}/files mv <old> <new>{RESET}      Move / rename
+    {BOLD}/files rm <path>{RESET}           Delete file or folder
     {BOLD}/files search <query>{RESET}      Search files
     {BOLD}/files stats{RESET}               Workspace statistics
 
@@ -328,6 +333,14 @@ def _cmd_help():
     {BOLD}/eval run all [opts]{RESET}       Run all evals
     {BOLD}/eval results [--last N]{RESET}   Show saved runs
     {BOLD}/eval judge <run_id>{RESET}       Human-judge a saved run
+
+  {CYAN}Finetune{RESET}
+    {BOLD}/finetune{RESET}                  Training data overview & stats
+    {BOLD}/finetune export{RESET}           Export all thread data → combined JSONL
+    {BOLD}/finetune gen [opts]{RESET}       Cloud data generator (--dry-run --provider X --resume)
+    {BOLD}/finetune train{RESET}            Launch MLX training (train_mac.sh)
+    {BOLD}/finetune runs{RESET}             List training run directories
+    {BOLD}/finetune config{RESET}           Show MLX training configuration
 
   {CYAN}Session{RESET}
     {BOLD}/clear{RESET}                     Clear message history

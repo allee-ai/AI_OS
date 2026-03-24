@@ -24,12 +24,14 @@ The training pipeline is self-improving: a background `TrainingGenLoop` uses kim
 ```
 finetune/
 ├── api.py                  # 7 FastAPI endpoints (export, train, load, config, data)
+├── cli.py                  # CLI commands (/finetune, /finetune gen, etc.)
+├── cloud_gen.py            # Multi-provider cloud data generator (AST → conversational Q&A)
 ├── sections.py             # Shared JSONL builders (API, CLI, schema examples)
 ├── docstring_extractor.py  # AST-based docstring harvesting across all modules
 ├── gold_examples.py        # Hand-curated reasoning examples (9 categories)
 ├── mlx_config.yaml         # Apple MLX LoRA configuration
 ├── train_mac.sh            # Local fine-tuning script (Apple Silicon)
-├── generated/              # Background-generated training data (TrainingGenLoop)
+├── generated/              # Background-generated training data (TrainingGenLoop + cloud_gen)
 └── auto_generated/         # Docstring-extracted training data
 ```
 
@@ -42,6 +44,7 @@ finetune/
 | Gold examples | `gold_examples.py` | Hand-written reasoning pairs (9 categories) |
 | Live decisions | `train.py` per thread | High-confidence decisions from `source='aios'` conversations (threshold 0.7) |
 | Synthetic (kimi-k2) | `TrainingGenLoop` | Teacher model reads source code + mechanical examples → generates 5 better pairs per file |
+| Cloud-generated | `cloud_gen.py` | AST-walks every def/class block, round-robins free-tier APIs (Gemini, Claude, OpenAI, OpenRouter, Ollama) → 5 conversational Q&A per block |
 
 ### Module Coverage
 
@@ -101,14 +104,61 @@ cd finetune && bash train_mac.sh
 
 Uses MLX LoRA on Apple Silicon. Config in `mlx_config.yaml`.
 
+### Cloud Data Generator (`cloud_gen.py`)
+
+AST-walks every Python file in the codebase, discovers all `def` and `class` blocks (~2,066), and generates 5 conversational Q&A pairs per block using free-tier LLM APIs.
+
+**Providers** (round-robin by default):
+| Provider | Free Tier | Rate Limit |
+|----------|-----------|------------|
+| Gemini | 15 RPM | 4s delay default |
+| Claude | API key required | |
+| OpenAI | API key required | |
+| OpenRouter | Free models (qwen, mistral) | |
+| Ollama | Local, unlimited | |
+
+**Usage:**
+```bash
+# Preview what would be generated
+python -m finetune.cloud_gen --dry-run
+
+# Generate from all blocks via Ollama
+python -m finetune.cloud_gen --provider ollama
+
+# Resume interrupted run, single module
+python -m finetune.cloud_gen --resume --module identity
+
+# Limit to 50 blocks
+python -m finetune.cloud_gen --max 50
+
+# Or via CLI
+/finetune gen --dry-run
+/finetune gen --provider gemini --resume --max 100
+```
+
+Output: `finetune/generated/cloud_<module>.jsonl` with progress tracking in `.cloud_gen_progress.json`.
+
+### CLI Commands
+
+| Command | Description |
+|---------|-------------|
+| `/finetune` | Training data overview & stats |
+| `/finetune export` | Export all thread data → aios_combined.jsonl |
+| `/finetune gen [opts]` | Run cloud data generator |
+| `/finetune train` | Launch MLX training (train_mac.sh) |
+| `/finetune runs` | List training run directories |
+| `/finetune config` | Show MLX training configuration |
+
 ### Status
 
 | Feature | Status |
 |---------|--------|
 | Export pipeline | ✅ Wired |
 | Per-thread train.py | ✅ All 6 threads (source='aios' filtered) |
-| Docstring extraction | ✅ AST-based |
+| Docstrings | ✅ AST-based extraction |
 | Gold examples | ✅ 9 categories |
+| Cloud data generator | ✅ Multi-provider, 2,066 blocks discovered |
+| CLI commands | ✅ /finetune, gen, export, train, runs, config |
 | MLX config | ✅ |
 | Training gen loop | ✅ kimi-k2 teacher, 17 modules, 105+ files |
 | Data quality filtering | ✅ Source-filtered, capped associations |

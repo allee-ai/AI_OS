@@ -19,8 +19,15 @@ The Chat module handles all conversation interactions. It provides the real-time
 chat/
 ├── api.py              # FastAPI endpoints
 ├── schema.py           # SQLite tables
+├── cli.py              # Headless CLI (/chat commands)
 ├── import_convos.py    # Import from other providers
+├── train.py            # Training data export from chat history
 └── parsers/            # Format-specific parsers
+    ├── export_parser_base.py     # Base class for all parsers
+    ├── chatgpt_export_parser.py  # ChatGPT conversations.json
+    ├── claude_export_parser.py   # Claude export format
+    ├── gemini_export_parser.py   # Gemini JSON export
+    └── vscode_export_parser.py   # VS Code Copilot export
 ```
 
 ### Database Schema

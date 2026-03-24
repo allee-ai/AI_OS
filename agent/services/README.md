@@ -19,7 +19,9 @@ Services contains the main agent runtime that handles message processing, contex
 agent/services/
 ├── agent_service.py     # Main runtime — message handling
 ├── api.py               # FastAPI endpoints
-└── kernel_service.py    # Kernel browser integration
+├── kernel_service.py    # Kernel browser integration
+├── mobile_api.py        # Mobile app REST API
+└── mobile_panel.html    # Mobile web panel
 ```
 
 ### Components
@@ -29,6 +31,8 @@ agent/services/
 | `agent_service.py` | Message pipeline, context assembly |
 | `kernel_service.py` | Kernel browser automation |
 | `api.py` | Agent control endpoints |
+| `mobile_api.py` | Mobile-optimized REST API with bearer token auth |
+| `mobile_panel.html` | Mobile web interface |
 
 ### Data Flow
 

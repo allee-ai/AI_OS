@@ -19,23 +19,35 @@ You don't need to run tests for normal use. These are for developers to verify A
 pytest tests/ -v
 
 # Specific file
-pytest tests/test_api.py -v
+pytest tests/test_workspace_tools.py -v
 
 # With coverage
 pytest tests/ --cov=agent --cov-report=html
+
+# Live LLM tests (requires Ollama running)
+AIOS_TEST_LIVE=1 pytest tests/ -v --live
 ```
 
 ### Test Files
 
 | File | What It Tests |
 |------|---------------|
-| `test_api.py` | API endpoints (health, chat, identity, philosophy, subconscious) |
-| `test_database.py` | SQLite connections, WAL mode, closing context managers |
-| `test_threads.py` | Thread adapters (identity, log, form, philosophy, reflex, linking) |
-| `test_subconscious.py` | Thread scoring, state building, context injection |
-| `test_memory_loop.py` | Memory consolidation and recall |
-| `test_consolidation.py` | Memory consolidation logic |
-| `conftest.py` | Shared fixtures |
+| `test_workspace_tools.py` | Workspace read/write/move/delete, registry, DB sync, settings, CLI, LLM sorting |
+| `test_flows.py` | End-to-end conversation flows and agent pipeline |
+| `test_pure.py` | Pure function unit tests (no DB or network) |
+| `test_weights.py` | Thread scoring and weight calculations |
+| `test_task_planner.py` | Task planning loop and goal decomposition |
+| `live_kimi_test.py` | Live Kimi K2 workspace sorting integration test |
+| `conftest.py` | Shared fixtures (demo mode, DB isolation) |
+| `reset_demo.sh` | Reset demo database to clean state |
+| `runtests.sh` | Convenience wrapper for running test suite |
+
+### Test Modes
+
+| Mode | Flag | Description |
+|------|------|-------------|
+| Demo (default) | `AIOS_MODE=demo` | Uses `state_demo.db`, isolated from live data |
+| Live LLM | `--live` or `AIOS_TEST_LIVE=1` | Runs tests that call real LLM (Kimi K2 / Ollama) |
 
 ### Writing New Tests
 

@@ -27,10 +27,24 @@ Six benchmark categories ship seeded:
 eval/
 ├── __init__.py    # Exports router
 ├── api.py         # FastAPI router /api/eval
+├── cli.py         # Headless CLI (/eval commands)
 ├── evals.py       # 10 structured evals (state_format, identity, recall, tools, etc.)
+├── judge.py       # LLM-as-judge scoring logic
 ├── runner.py      # run_prompt(), judge_responses(), list_available_models()
 ├── schema.py      # SQLite tables + CRUD + seed benchmarks
 ├── scanner.py     # Tool call parser — validates :::execute blocks
+├── analyze_training_data.py  # Training data quality analysis
+├── dump_responses.py         # Export responses for inspection
+├── run_3b_baseline.py        # 3B model baseline benchmark
+├── run_3b_showdown.py        # 3B model comparison
+├── run_full_v1_showdown.py   # Full v1 model showdown
+├── run_knowledge_retention.py # Knowledge retention eval
+├── run_kr_best.py            # Best knowledge retention config
+├── run_kr_registry.py        # KR with registry tools
+├── run_kr_v2.py              # Knowledge retention v2
+├── run_smol135m_5e6_full.py  # SmolLM 135M (5e-6 lr) eval
+├── run_smol135m_full.py      # SmolLM 135M eval
+├── _show_3b_results.py       # Display 3B results
 └── README.md
 ```
 

@@ -78,8 +78,8 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
         os.environ.get("AIOS_MODEL_NAME", "qwen2.5:7b"),
     )
 
-    # Truncate to first 4KB to keep it cheap
-    truncated = text[:4096]
+    # Truncate to first 6KB to keep it reasonable
+    truncated = text[:6144]
     messages = [
         {"role": "system", "content": prompt},
         {"role": "user", "content": truncated},
@@ -90,7 +90,7 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
             import urllib.request, json
             api_key = os.environ.get("OPENAI_API_KEY", "")
             base_url = os.environ.get("AIOS_MODEL_ENDPOINT", "").rstrip("/") or "https://api.openai.com/v1"
-            payload = {"model": model, "messages": messages, "max_tokens": 200, "temperature": 0.3}
+            payload = {"model": model, "messages": messages, "max_tokens": 500, "temperature": 0.3}
             req = urllib.request.Request(
                 f"{base_url}/chat/completions",
                 data=json.dumps(payload).encode("utf-8"),
@@ -122,7 +122,7 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
             resp = client.chat(
                 model=model,
                 messages=messages,
-                options={"temperature": 0.3, "num_predict": 200},
+                options={"temperature": 0.3, "num_predict": 500},
             )
             content = resp.get("message", {}).get("content", "").strip()
 
@@ -209,9 +209,13 @@ def summarize_conversation(session_id: str, prompt: Optional[str] = None) -> Opt
     """
     Summarize a conversation and store the result.
 
-    Reads turns from the DB, formats them into a transcript,
-    calls the LLM, and stores via chat.schema.update_summary().
+    For short conversations (<=4K chars), summarizes directly.
+    For long conversations, uses chunked hierarchical summarization:
+      1. Split transcript into ~3K-char chunks
+      2. Summarize each chunk independently
+      3. Combine chunk summaries and produce a final summary
 
+    Target output: ~500 tokens (3-5 dense sentences).
     Returns the summary string or None.
     """
     from chat.schema import get_conversation, update_summary
@@ -224,21 +228,73 @@ def summarize_conversation(session_id: str, prompt: Optional[str] = None) -> Opt
     if not turns:
         return None
 
-    # Build a transcript (truncated to fit context window)
+    # Build full transcript — keep more per turn for better summaries
     lines = []
     for t in turns:
         if t.get("user"):
-            lines.append(f"User: {t['user'][:300]}")
+            lines.append(f"User: {t['user'][:500]}")
         if t.get("assistant"):
-            lines.append(f"Assistant: {t['assistant'][:300]}")
+            lines.append(f"Assistant: {t['assistant'][:500]}")
 
     transcript = "\n".join(lines)
-
     prompt = prompt or get_convo_summary_prompt()
-    summary = summarize_text(transcript, prompt)
+
+    CHUNK_SIZE = 3000  # chars per chunk (~750 tokens)
+
+    if len(transcript) <= CHUNK_SIZE + 500:
+        # Short conversation — single pass
+        summary = summarize_text(transcript, prompt)
+    else:
+        # Chunked hierarchical summarization
+        chunks = _split_into_chunks(transcript, CHUNK_SIZE)
+
+        chunk_prompt = (
+            "Summarize this section of a conversation in 2-3 sentences. "
+            "Capture the key topics, decisions, and context. Be factual and concise."
+        )
+        chunk_summaries = []
+        for i, chunk in enumerate(chunks):
+            cs = summarize_text(chunk, chunk_prompt)
+            if cs:
+                chunk_summaries.append(f"[Part {i+1}/{len(chunks)}] {cs}")
+
+        if not chunk_summaries:
+            # All chunks failed — fall back to truncated single pass
+            summary = summarize_text(transcript[:CHUNK_SIZE], prompt)
+        elif len(chunk_summaries) == 1:
+            summary = chunk_summaries[0]
+        else:
+            # Final pass: combine chunk summaries into one cohesive summary
+            combined = "\n".join(chunk_summaries)
+            final_prompt = (
+                f"Below are summaries of {len(chunk_summaries)} sections of a single conversation. "
+                "Combine them into one cohesive 3-5 sentence summary covering the main topics, "
+                "key decisions, and outcomes. Do not mention 'parts' or 'sections'."
+            )
+            summary = summarize_text(combined, final_prompt)
+            if not summary:
+                # Fall back to joining chunk summaries
+                summary = " ".join(cs.split("] ", 1)[-1] for cs in chunk_summaries)
+
     if summary:
         update_summary(session_id, summary)
     return summary
+
+
+def _split_into_chunks(text: str, chunk_size: int) -> list:
+    """Split text into chunks, preferring to break at newlines."""
+    chunks = []
+    while text:
+        if len(text) <= chunk_size:
+            chunks.append(text)
+            break
+        # Find a newline near the chunk boundary to break cleanly
+        cut = text.rfind("\n", chunk_size // 2, chunk_size)
+        if cut == -1:
+            cut = chunk_size
+        chunks.append(text[:cut])
+        text = text[cut:].lstrip("\n")
+    return chunks
 
 
 def batch_summarize_conversations(limit: int = 10) -> int:
@@ -252,6 +308,8 @@ def batch_summarize_conversations(limit: int = 10) -> int:
     """
     from chat.schema import get_unindexed_high_weight_convos
 
+    from chat.schema import mark_conversation_indexed
+
     convos = get_unindexed_high_weight_convos(min_weight=0.0, limit=limit)
     count = 0
     for c in convos:
@@ -262,6 +320,10 @@ def batch_summarize_conversations(limit: int = 10) -> int:
             result = summarize_conversation(sid)
             if result:
                 count += 1
+                mark_conversation_indexed(sid)
+        elif summary:
+            # Already has a summary but wasn't marked indexed
+            mark_conversation_indexed(sid)
     return count
 
     # Decode

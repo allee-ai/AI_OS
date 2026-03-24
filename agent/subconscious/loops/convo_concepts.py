@@ -74,6 +74,7 @@ class ConvoConceptLoop(BackgroundLoop):
         super().__init__(config, self._process_batch)
         self.batch_size = batch_size
         self.use_llm = use_llm
+        self._prompts: Dict[str, str] = {"extract": _EXTRACT_SYSTEM}
         self._total_processed = 0
         self._total_concepts = 0
         self._total_links = 0
@@ -103,6 +104,7 @@ class ConvoConceptLoop(BackgroundLoop):
             "total_facts_extracted": self._total_facts_extracted,
             "use_llm": self.use_llm,
             "model": self.model if self.use_llm else "(entity-match)",
+            "prompts": dict(self._prompts),
         })
         return base
 
@@ -110,8 +112,8 @@ class ConvoConceptLoop(BackgroundLoop):
     # Core logic
     # ------------------------------------------------------------------
 
-    def _process_batch(self) -> None:
-        """Process up to batch_size un-extracted conversations."""
+    def _process_batch(self) -> str:
+        """Process up to batch_size un-extracted conversations. Returns summary."""
         from data.db import get_connection
         from contextlib import closing
 
@@ -125,21 +127,19 @@ class ConvoConceptLoop(BackgroundLoop):
             ).fetchall()
 
         if not rows:
-            # All caught up — run consolidation once per cycle
             self._run_consolidation()
-            return
+            return "All caught up — ran consolidation"
 
         for convo_id, session_id in rows:
             self._extract_conversation(convo_id, session_id)
 
-        # Update progress to the last processed id
         new_last_id = rows[-1][0]
         self._set_progress(new_last_id)
 
-        # If we processed a full batch, there may be more — skip consolidation.
-        # If we processed less than a full batch, we're caught up — consolidate.
         if len(rows) < self.batch_size:
             self._run_consolidation()
+
+        return f"Processed {len(rows)} conversations, {self._total_concepts} concepts, {self._total_links} links"
 
     def _extract_conversation(self, convo_id: int, session_id: str) -> None:
         """Extract concepts from a single conversation."""
@@ -213,7 +213,7 @@ class ConvoConceptLoop(BackgroundLoop):
         try:
             raw = self._call_model(
                 [
-                    {"role": "system", "content": _EXTRACT_SYSTEM},
+                    {"role": "system", "content": self._prompts.get("extract", _EXTRACT_SYSTEM)},
                     {"role": "user", "content": prompt},
                 ],
                 temperature=0.1,

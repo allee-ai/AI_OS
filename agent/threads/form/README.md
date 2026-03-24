@@ -29,16 +29,24 @@ L3: Executables (actual implementations)
 form/
 ├── adapter.py      # Thread adapter (introspection, state)
 ├── api.py          # FastAPI routes (/api/form/*)
+├── cli.py          # Headless CLI (/tools commands)
 ├── schema.py       # DB operations, tool management
+├── train.py        # Training data export for tool calling
 └── tools/
-    ├── registry.py     # L1: Tool definitions + safety allowlist
+    ├── registry.py     # L1: Tool definitions, safety allowlist, ensure_tools_in_db()
     ├── scanner.py      # :::execute::: block parser
     ├── executor.py     # L2: Execution engine
-    └── executables/    # L3: Python implementations
-        ├── file_read.py    # Read files (sandboxed)
-        ├── file_write.py   # Write files (sandboxed)
-        ├── terminal.py     # Shell commands (30s timeout)
-        └── web_search.py   # DuckDuckGo search
+    └── executables/    # L3: 11 Python implementations
+        ├── cli_command.py      # CLI passthrough
+        ├── code_edit.py        # Code editing
+        ├── file_read.py        # Read files (sandboxed)
+        ├── file_write.py       # Write files (sandboxed)
+        ├── notify.py           # User notifications
+        ├── regex_search.py     # Regex file search
+        ├── terminal.py         # Shell commands (30s timeout)
+        ├── web_search.py       # DuckDuckGo search
+        ├── workspace_read.py   # Workspace read/list/search
+        └── workspace_write.py  # Workspace write/mkdir/move/delete
 ```
 
 ### Tool Definition
@@ -89,7 +97,9 @@ ToolDefinition(
 - [x] **Safety allowlist** — `SAFE_ACTIONS` / `BLOCKED_ACTIONS` in registry.py with `is_action_safe()` gating
 - [x] **Core executables** — file_read, file_write, terminal, web_search (sandboxed)
 - [x] **Permission system** — Two-layer safety: allowlist check + DB `allowed` flag
-- [x] **Tool loop in agent** — `_process_tool_calls()` with max 5 rounds, auto-re-call after execution
+- [x] **Tool loop in agent** — `_process_tool_calls()` with max 15 rounds (configurable via AIOS_MAX_TOOL_ROUNDS), auto-re-call after execution
+- [x] **JSON Schema tool mode** — `AIOS_TOOL_MODE=schema` sends tools as JSON schema to LLM; `ensure_tools_in_db()` syncs registry → DB
+- [x] **Workspace tools** — workspace_read (read/list/search) + workspace_write (write/mkdir/move/delete)
 - [x] **Frontend rendering** — `:::execute:::` and `:::result:::` blocks render as styled cards in chat
 - [x] **WebSocket tool events** — Real-time `tool_executing` / `tool_complete` messages
 - [x] **Hebbian tool traces** — Tool success/failure adjusts weight via learning rule

@@ -269,14 +269,13 @@ class ThoughtLoop(BackgroundLoop):
         
         return ctx
     
-    def _think(self) -> None:
-        """Execute one proactive thinking cycle."""
+    def _think(self) -> str:
+        """Execute one proactive thinking cycle. Returns summary of thoughts."""
         # When context_aware, use the full orchestrator STATE instead of ad-hoc context
         state_block = self._get_state("proactive thinking about the user")
+        context = {}
         
         if state_block:
-            # Full STATE path — the orchestrator already assembled identity,
-            # philosophy, linking, log, workspace, etc.
             ctx_text = state_block
             total_items = len(state_block.splitlines())
         else:
@@ -284,7 +283,7 @@ class ThoughtLoop(BackgroundLoop):
             context = self._gather_context()
             total_items = sum(len(v) for v in context.values())
             if total_items < 2:
-                return
+                return "Not enough context to think (< 2 items)"
             ctx_parts = []
             for source, items in context.items():
                 ctx_parts.append(f"## {source.replace('_', ' ').title()}")
@@ -314,6 +313,11 @@ Python list:"""
             response = self._call_model(prompt)
             results = self._parse_results(response)
             
+            # Lazy parse: if parsing returned nothing but we got text, show it raw
+            if not results and response and response.strip():
+                return f"[raw output - parse failed]\n{response.strip()[:2000]}"
+            
+            thought_lines = []
             for result in results[:3]:
                 thought_text = result.get("thought", "").strip()
                 category = result.get("category", "insight")
@@ -326,13 +330,15 @@ Python list:"""
                 if priority not in THOUGHT_PRIORITIES:
                     priority = "low"
                 
+                source_count = len(context) if context else 1
                 thought_id = save_thought(
                     thought=thought_text,
                     category=category,
                     priority=priority,
-                    source_summary=f"{total_items} items from {len(context)} sources",
+                    source_summary=f"{total_items} items from {source_count} sources",
                 )
                 self._thought_count += 1
+                thought_lines.append(f"[{priority}:{category}] {thought_text}")
                 
                 if priority in ("high", "urgent"):
                     try:
@@ -361,9 +367,14 @@ Python list:"""
                     )
                 except Exception:
                     pass
+            
+            if thought_lines:
+                return f"Generated {len(thought_lines)} thoughts:\n" + "\n".join(thought_lines)
+            return "No thoughts generated this cycle"
         
         except Exception as e:
             print(f"[ThoughtLoop] Error: {e}")
+            return f"Error: {e}"
     
     def _call_model(self, prompt: str) -> str:
         """Call the LLM for thinking."""

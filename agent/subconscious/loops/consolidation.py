@@ -46,20 +46,30 @@ class ConsolidationLoop(BackgroundLoop):
         base["duplicate_threshold"] = self.DUPLICATE_THRESHOLD
         return base
     
-    def _consolidate(self) -> None:
+    def _consolidate(self) -> str:
         """Run consolidation - score facts and promote approved ones.
         
         Acquires the Ollama gate for the full cycle since summarization
         and scoring both hit Ollama (LLM + embeddings).
+        Returns summary of what was done.
         """
         from .base import acquire_ollama_gate, release_ollama_gate
         if not acquire_ollama_gate():
-            return  # Another heavy loop is using Ollama — skip this cycle
+            return "Skipped — Ollama gate busy"
         try:
             self._update_thread_summaries()
-            self._summarize_unsummarized_conversations()
-            self._score_and_triage_pending()
-            self._promote_approved_facts()
+            convo_summary = self._summarize_unsummarized_conversations()
+            scored = self._score_and_triage_pending()
+            promoted = self._promote_approved_facts()
+            
+            parts = []
+            if convo_summary:
+                parts.append(convo_summary)
+            if scored:
+                parts.append(scored)
+            if promoted:
+                parts.append(promoted)
+            return "\n".join(parts) if parts else "No pending facts to process"
         finally:
             release_ollama_gate()
     
@@ -73,19 +83,18 @@ class ConsolidationLoop(BackgroundLoop):
                 self._linking_core = None
         return self._linking_core
 
-    def _summarize_unsummarized_conversations(self) -> None:
+    def _summarize_unsummarized_conversations(self) -> str:
         """Batch-summarize conversations that lack a summary."""
         try:
             from workspace.summarizer import batch_summarize_conversations
             count = batch_summarize_conversations(limit=5)
             if count > 0:
-                import sys
-                print(f"[Consolidation] Summarized {count} conversations", file=sys.stderr)
+                return f"Summarized {count} conversations"
+            return ""
         except Exception as e:
-            import sys
-            print(f"[Consolidation] Convo summarization failed: {e}", file=sys.stderr)
+            return f"Convo summarization failed: {e}"
 
-    def _score_and_triage_pending(self) -> None:
+    def _score_and_triage_pending(self) -> str:
         """Score pending facts using LinkingCore's scoring pipeline."""
         try:
             from agent.subconscious.temp_memory import (
@@ -95,7 +104,7 @@ class ConsolidationLoop(BackgroundLoop):
             
             pending = get_all_pending()
             if not pending:
-                return
+                return ""
             
             existing_facts = pull_profile_facts(limit=500)
             existing_texts = [
@@ -106,6 +115,7 @@ class ConsolidationLoop(BackgroundLoop):
             
             linking_core = self._get_linking_core()
             
+            counts = {"approved": 0, "rejected": 0, "pending_review": 0}
             for fact in pending:
                 if fact.status != 'pending':
                     continue
@@ -124,6 +134,7 @@ class ConsolidationLoop(BackgroundLoop):
                     else:
                         new_status = 'pending_review'
                     
+                    counts[new_status] = counts.get(new_status, 0) + 1
                     update_fact_status(fact.id, new_status, abs(confidence))
                     
                 except Exception as e:
@@ -131,9 +142,12 @@ class ConsolidationLoop(BackgroundLoop):
                     print(f"Error scoring fact {fact.id}: {e}", file=sys.stderr)
                     update_fact_status(fact.id, 'pending_review', 0.0)
             
+            return f"Scored {sum(counts.values())} facts: {counts['approved']} approved, {counts['rejected']} rejected, {counts['pending_review']} needs review"
+            
         except Exception as e:
             import sys
             print(f"Error in _score_and_triage_pending: {e}", file=sys.stderr)
+            return f"Scoring error: {e}"
     
     def _calculate_confidence(
         self,
@@ -200,15 +214,15 @@ class ConsolidationLoop(BackgroundLoop):
         
         return min(1.0, max(0.0, confidence))
     
-    def _promote_approved_facts(self) -> None:
-        """Promote approved facts to long-term memory."""
+    def _promote_approved_facts(self) -> str:
+        """Promote approved facts to long-term memory. Returns summary."""
         try:
             from agent.subconscious.temp_memory import (
                 get_approved_pending, mark_consolidated
             )
             from agent.threads.identity.schema import (
                 push_profile_fact, create_profile, get_profiles,
-                create_fact_type, get_fact_types
+                create_fact_type, get_fact_types, pull_profile_facts
             )
             from agent.threads.philosophy.schema import (
                 push_philosophy_profile_fact
@@ -216,7 +230,7 @@ class ConsolidationLoop(BackgroundLoop):
             
             approved = get_approved_pending()
             if not approved:
-                return
+                return ""
             
             # Ensure default user profile exists
             try:
@@ -239,12 +253,24 @@ class ConsolidationLoop(BackgroundLoop):
             identity_count = 0
             philosophy_count = 0
             
+            # ── Enforce per-profile cap of 12 facts ────────────────────
+            MAX_FACTS_PER_PROFILE = 12
+            
+            # Count existing facts per profile
+            profile_counts = {}
+            try:
+                for p in get_profiles():
+                    pid = p.get("profile_id", "primary_user")
+                    existing = pull_profile_facts(profile_id=pid, limit=5000)
+                    profile_counts[pid] = len(existing)
+            except Exception:
+                pass
+            
             # Pre-fetch existing identity keys to avoid overwriting curated facts
             existing_keys = set()
             try:
                 existing_facts = pull_profile_facts(profile_id="primary_user", limit=5000)
                 for f in existing_facts:
-                    # Consider a key "occupied" if it has actual data (l1_value set)
                     if f.get("l1_value"):
                         existing_keys.add(f["key"])
             except Exception:
@@ -252,6 +278,32 @@ class ConsolidationLoop(BackgroundLoop):
             
             for fact in approved:
                 try:
+                    # Determine target profile from metadata
+                    target_profile = "primary_user"
+                    if hasattr(fact, 'metadata') and fact.metadata:
+                        meta = fact.metadata if isinstance(fact.metadata, dict) else {}
+                        target_profile = meta.get("profile", "primary_user")
+                    
+                    # Ensure target profile exists
+                    if target_profile != "primary_user":
+                        try:
+                            existing_profiles = [p.get("profile_id") for p in get_profiles()]
+                            if target_profile not in existing_profiles:
+                                create_profile(target_profile, "human", target_profile.title())
+                                profile_counts[target_profile] = 0
+                        except Exception:
+                            pass
+                    
+                    # Check cap — skip if profile already at limit
+                    current_count = profile_counts.get(target_profile, 0)
+                    if current_count >= MAX_FACTS_PER_PROFILE:
+                        # Profile full — try to evict lowest-weight fact
+                        evicted = self._evict_lowest_weight(target_profile)
+                        if not evicted:
+                            mark_consolidated(fact.id)
+                            continue
+                        profile_counts[target_profile] = current_count - 1
+                    
                     fact_destination = self._classify_fact_destination(fact.text)
                     
                     if fact.hier_key:
@@ -270,13 +322,11 @@ class ConsolidationLoop(BackgroundLoop):
                         )
                         philosophy_count += 1
                     else:
-                        # Skip if this key already has real data — don't overwrite
-                        # curated facts with extracted snippets
                         if key in existing_keys:
                             mark_consolidated(fact.id)
                             continue
                         push_profile_fact(
-                            profile_id="primary_user",
+                            profile_id=target_profile,
                             key=key,
                             fact_type="learned",
                             l1_value=fact.text[:100],
@@ -285,6 +335,7 @@ class ConsolidationLoop(BackgroundLoop):
                             weight=fact.confidence_score or 0.5
                         )
                         identity_count += 1
+                        profile_counts[target_profile] = profile_counts.get(target_profile, 0) + 1
                     
                     mark_consolidated(fact.id)
 
@@ -300,19 +351,49 @@ class ConsolidationLoop(BackgroundLoop):
             
             total = identity_count + philosophy_count
             if total > 0:
+                result = f"Promoted {total} facts ({identity_count} identity, {philosophy_count} philosophy)"
                 try:
                     from agent.threads.log import log_event
                     log_event(
                         "system:consolidation",
                         "facts_promoted",
-                        f"Promoted {total} facts ({identity_count} identity, {philosophy_count} philosophy)"
+                        result
                     )
                 except:
                     pass
+                return result
+            return ""
                     
         except Exception as e:
             import sys
             print(f"Error in _promote_approved_facts: {e}", file=sys.stderr)
+            return f"Promotion error: {e}"
+    
+    def _evict_lowest_weight(self, profile_id: str) -> bool:
+        """Remove the lowest-weight non-protected fact from a profile to make room.
+        
+        Returns True if a fact was evicted, False if nothing could be removed.
+        """
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection()) as conn:
+                cur = conn.cursor()
+                # Find the lowest-weight, non-protected, auto-learned fact
+                cur.execute("""
+                    SELECT profile_id, key FROM profile_facts 
+                    WHERE profile_id = ? AND protected = 0 AND fact_type = 'learned'
+                    ORDER BY weight ASC, access_count ASC
+                    LIMIT 1
+                """, (profile_id,))
+                row = cur.fetchone()
+                if not row:
+                    return False
+                cur.execute("DELETE FROM profile_facts WHERE profile_id = ? AND key = ?", (row[0], row[1]))
+                conn.commit()
+                return True
+        except Exception:
+            return False
     
     def _classify_fact_destination(self, fact_text: str) -> str:
         """Classify whether a fact belongs in identity or philosophy thread."""

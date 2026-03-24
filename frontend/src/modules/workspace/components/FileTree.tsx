@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import type { WorkspaceFile } from '../types/workspace';
 import { workspaceApi } from '../services/workspaceApi';
 import './FileTree.css';
@@ -42,12 +42,32 @@ interface TreeItemProps {
   activeFilePath?: string | null;
   onToggle: (path: string) => void;
   onSelect: (file: WorkspaceFile) => void;
+  onRename: (oldPath: string, newName: string) => void;
+  onDelete: (path: string, isFolder: boolean) => void;
+  renamingPath: string | null;
+  setRenamingPath: (path: string | null) => void;
 }
 
-const TreeItem: React.FC<TreeItemProps> = ({ node, depth, activeFilePath, onToggle, onSelect }) => {
+const TreeItem: React.FC<TreeItemProps> = ({
+  node, depth, activeFilePath, onToggle, onSelect,
+  onRename, onDelete, renamingPath, setRenamingPath,
+}) => {
   const { file, children, expanded, loading } = node;
   const isFolder = file.type === 'folder';
   const isActive = activeFilePath === file.path;
+  const isRenaming = renamingPath === file.path;
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [renameValue, setRenameValue] = useState(file.name);
+  const [showCtx, setShowCtx] = useState(false);
+  const [ctxPos, setCtxPos] = useState({ x: 0, y: 0 });
+
+  useEffect(() => {
+    if (isRenaming && inputRef.current) {
+      inputRef.current.focus();
+      const dot = file.name.lastIndexOf('.');
+      inputRef.current.setSelectionRange(0, dot > 0 ? dot : file.name.length);
+    }
+  }, [isRenaming, file.name]);
 
   const handleClick = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -58,12 +78,41 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth, activeFilePath, onTogg
     }
   };
 
+  const handleContext = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setShowCtx(true);
+    setCtxPos({ x: e.clientX, y: e.clientY });
+  };
+
+  const commitRename = () => {
+    const trimmed = renameValue.trim();
+    if (trimmed && trimmed !== file.name) {
+      onRename(file.path, trimmed);
+    }
+    setRenamingPath(null);
+  };
+
+  const cancelRename = () => {
+    setRenameValue(file.name);
+    setRenamingPath(null);
+  };
+
+  // Close context menu on outside click
+  useEffect(() => {
+    if (!showCtx) return;
+    const close = () => setShowCtx(false);
+    window.addEventListener('click', close);
+    return () => window.removeEventListener('click', close);
+  }, [showCtx]);
+
   return (
     <>
       <div
         className={`tree-item ${isActive ? 'active' : ''} ${isFolder ? 'folder' : ''}`}
         style={{ paddingLeft: depth * 16 + 8 }}
         onClick={handleClick}
+        onContextMenu={handleContext}
         title={file.path}
       >
         {isFolder ? (
@@ -74,8 +123,36 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth, activeFilePath, onTogg
           <span className="tree-chevron spacer" />
         )}
         <span className="tree-icon">{getFileIcon(file.name, isFolder, expanded)}</span>
-        <span className="tree-label">{file.name}</span>
+        {isRenaming ? (
+          <input
+            ref={inputRef}
+            className="tree-rename-input"
+            value={renameValue}
+            onChange={e => setRenameValue(e.target.value)}
+            onBlur={commitRename}
+            onKeyDown={e => {
+              if (e.key === 'Enter') commitRename();
+              if (e.key === 'Escape') cancelRename();
+            }}
+            onClick={e => e.stopPropagation()}
+          />
+        ) : (
+          <span className="tree-label">{file.name}</span>
+        )}
       </div>
+
+      {/* Context menu */}
+      {showCtx && (
+        <div className="tree-context-menu" style={{ top: ctxPos.y, left: ctxPos.x }}>
+          <button onClick={() => { setRenamingPath(file.path); setRenameValue(file.name); setShowCtx(false); }}>
+            Rename
+          </button>
+          <button onClick={() => { onDelete(file.path, isFolder); setShowCtx(false); }}>
+            Delete
+          </button>
+        </div>
+      )}
+
       {expanded && children && children.map(child => (
         <TreeItem
           key={child.file.path}
@@ -84,6 +161,10 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth, activeFilePath, onTogg
           activeFilePath={activeFilePath}
           onToggle={onToggle}
           onSelect={onSelect}
+          onRename={onRename}
+          onDelete={onDelete}
+          renamingPath={renamingPath}
+          setRenamingPath={setRenamingPath}
         />
       ))}
     </>
@@ -95,6 +176,10 @@ const TreeItem: React.FC<TreeItemProps> = ({ node, depth, activeFilePath, onTogg
 export const FileTree: React.FC<FileTreeProps> = ({ onOpenFile, activeFilePath }) => {
   const [nodes, setNodes] = useState<TreeNode[]>([]);
   const [rootLoading, setRootLoading] = useState(true);
+  const [renamingPath, setRenamingPath] = useState<string | null>(null);
+  const [creatingIn, setCreatingIn] = useState<{ parentPath: string; type: 'file' | 'folder' } | null>(null);
+  const [newName, setNewName] = useState('');
+  const newInputRef = useRef<HTMLInputElement>(null);
 
   // Load root on mount
   useEffect(() => {
@@ -180,17 +265,97 @@ export const FileTree: React.FC<FileTreeProps> = ({ onOpenFile, activeFilePath }
     setRootLoading(false);
   }, []);
 
+  // Rename handler
+  const handleRename = useCallback(async (oldPath: string, newName: string) => {
+    const parentPath = oldPath.substring(0, oldPath.lastIndexOf('/')) || '/';
+    const newPath = parentPath === '/' ? `/${newName}` : `${parentPath}/${newName}`;
+    try {
+      await workspaceApi.renameFile(oldPath, newPath);
+      await refresh();
+    } catch (e: any) {
+      console.error('Rename failed:', e);
+    }
+  }, [refresh]);
+
+  // Delete handler
+  const handleDelete = useCallback(async (path: string, isFolder: boolean) => {
+    const label = isFolder ? 'folder' : 'file';
+    if (!window.confirm(`Delete ${label} "${path.split('/').pop()}"?`)) return;
+    try {
+      await workspaceApi.deleteFile(path, path);
+      await refresh();
+    } catch (e: any) {
+      console.error('Delete failed:', e);
+    }
+  }, [refresh]);
+
+  // New file / new folder
+  const startCreate = useCallback((type: 'file' | 'folder') => {
+    setCreatingIn({ parentPath: '/', type });
+    setNewName(type === 'file' ? 'untitled.txt' : 'new-folder');
+    setTimeout(() => newInputRef.current?.focus(), 50);
+  }, []);
+
+  const commitCreate = useCallback(async () => {
+    if (!creatingIn || !newName.trim()) { setCreatingIn(null); return; }
+    const fullPath = creatingIn.parentPath === '/'
+      ? `/${newName.trim()}`
+      : `${creatingIn.parentPath}/${newName.trim()}`;
+    try {
+      if (creatingIn.type === 'folder') {
+        await workspaceApi.createFolder({ name: newName.trim(), parentPath: creatingIn.parentPath });
+      } else {
+        await workspaceApi.createFile(fullPath, '');
+      }
+      await refresh();
+    } catch (e: any) {
+      console.error('Create failed:', e);
+    }
+    setCreatingIn(null);
+    setNewName('');
+  }, [creatingIn, newName, refresh]);
+
+  // Focus new-name input when creating
+  useEffect(() => {
+    if (creatingIn && newInputRef.current) {
+      newInputRef.current.focus();
+      const dot = newName.lastIndexOf('.');
+      newInputRef.current.setSelectionRange(0, dot > 0 ? dot : newName.length);
+    }
+  }, [creatingIn, newName]);
+
   return (
     <div className="file-tree">
       <div className="file-tree-header">
         <span className="file-tree-title">EXPLORER</span>
-        <button className="file-tree-refresh" onClick={refresh} title="Refresh">⟳</button>
+        <div className="file-tree-actions">
+          <button className="file-tree-action" onClick={() => startCreate('file')} title="New File">+</button>
+          <button className="file-tree-action" onClick={() => startCreate('folder')} title="New Folder">📁+</button>
+          <button className="file-tree-action" onClick={refresh} title="Refresh">⟳</button>
+        </div>
       </div>
       <div className="file-tree-content">
+        {/* Inline new-item input */}
+        {creatingIn && (
+          <div className="tree-item creating" style={{ paddingLeft: 8 }}>
+            <span className="tree-icon">{creatingIn.type === 'folder' ? '📁' : '📄'}</span>
+            <input
+              ref={newInputRef}
+              className="tree-rename-input"
+              value={newName}
+              onChange={e => setNewName(e.target.value)}
+              onBlur={commitCreate}
+              onKeyDown={e => {
+                if (e.key === 'Enter') commitCreate();
+                if (e.key === 'Escape') { setCreatingIn(null); setNewName(''); }
+              }}
+            />
+          </div>
+        )}
         {rootLoading ? (
           <div className="file-tree-loading">Loading...</div>
-        ) : nodes.length === 0 ? (
-          <div className="file-tree-empty">No files</div>
+        ) : nodes.length === 0 && !creatingIn ? (
+          <div className="file-tree-empty">No files — click + to create one</div>
         ) : (
           nodes.map(node => (
             <TreeItem
@@ -200,6 +365,10 @@ export const FileTree: React.FC<FileTreeProps> = ({ onOpenFile, activeFilePath }
               activeFilePath={activeFilePath}
               onToggle={handleToggle}
               onSelect={handleSelect}
+              onRename={handleRename}
+              onDelete={handleDelete}
+              renamingPath={renamingPath}
+              setRenamingPath={setRenamingPath}
             />
           ))
         )}

@@ -21,6 +21,7 @@ services:
       - "host.docker.internal:host-gateway"  # Linux compat
     environment:
       - AIOS_MODE=personal
+      - AIOS_LOOPS=1
       - OLLAMA_HOST=http://host.docker.internal:11434
       - AIOS_MODEL_PROVIDER=ollama
       - AIOS_MODEL_NAME=qwen2.5:7b

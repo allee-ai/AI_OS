@@ -290,6 +290,33 @@ async def get_loop_status(loop_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+@router.get("/loops/{loop_name}/output")
+async def get_loop_output(loop_name: str):
+    """Get the last text output of a loop's most recent run.
+    
+    Returns the raw text result from the loop's task function.
+    If the loop hasn't produced output yet, returns null.
+    """
+    from . import _loop_manager
+    
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+    
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+    
+    return {
+        "loop": loop_name,
+        "last_result": loop._last_result,
+        "last_error": loop._last_error,
+        "last_run": loop._last_run,
+        "run_count": loop._run_count,
+    }
+
+
 @router.get("/temp-facts")
 async def get_temp_facts_summary():
     """Get summary of temp_facts for dashboard."""
@@ -580,7 +607,19 @@ async def set_loop_prompt(loop_name: str, stage: str, body: dict):
         from agent.subconscious.loops.memory import DEFAULT_PROMPTS as MEM_DEFAULTS
         from agent.subconscious.loops.thought import DEFAULT_PROMPTS as THOUGHT_DEFAULTS
         from agent.subconscious.loops.task_planner import DEFAULT_PROMPTS as TASK_DEFAULTS
-        all_defaults = {**MEM_DEFAULTS, **THOUGHT_DEFAULTS, **TASK_DEFAULTS}
+        from agent.subconscious.loops.demo_audit import DEFAULT_PROMPTS as AUDIT_DEFAULTS
+        from agent.subconscious.loops.training_gen import GENERATOR_SYSTEM
+        from agent.subconscious.loops.convo_concepts import _EXTRACT_SYSTEM
+        from agent.subconscious.loops.goals import GOAL_PROMPT
+        from agent.subconscious.loops.self_improve import IMPROVE_PROMPT
+        all_defaults = {
+            **MEM_DEFAULTS, **THOUGHT_DEFAULTS, **TASK_DEFAULTS,
+            **AUDIT_DEFAULTS,
+            "system": GENERATOR_SYSTEM,
+            "extract": _EXTRACT_SYSTEM,
+            "generate": GOAL_PROMPT,
+            "improve": IMPROVE_PROMPT,
+        }
         if stage in all_defaults:
             prompts[stage] = all_defaults[stage]
             return {"status": "reset_to_default", "loop": loop_name, "stage": stage}

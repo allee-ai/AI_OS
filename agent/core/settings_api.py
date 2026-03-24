@@ -76,6 +76,23 @@ _CONFIG_SCHEMA: list[dict] = [
     # ── MCP ──
     {"key": "MCP_SERVERS", "default": "[]", "group": "mcp", "label": "MCP Server List",
      "type": "json", "hint": "JSON array of MCP server configs [{name, command, args, env}]"},
+
+    # ── Workspace ──
+    {"key": "AIOS_WORKSPACE_LLM_READ", "default": "true", "group": "workspace",
+     "label": "Allow LLM to read workspace files", "type": "bool",
+     "hint": "When enabled, the agent can read files from your workspace DB."},
+    {"key": "AIOS_WORKSPACE_LLM_WRITE", "default": "true", "group": "workspace",
+     "label": "Allow LLM to write workspace files", "type": "bool",
+     "hint": "When enabled, the agent can create/update files in your workspace DB."},
+    {"key": "AIOS_WORKSPACE_LLM_DELETE", "default": "false", "group": "workspace",
+     "label": "Allow LLM to delete workspace files", "type": "bool",
+     "hint": "When enabled, the agent can delete files from your workspace. Off by default for safety."},
+    {"key": "AIOS_WORKSPACE_LLM_MOVE", "default": "true", "group": "workspace",
+     "label": "Allow LLM to move/rename workspace files", "type": "bool",
+     "hint": "When enabled, the agent can reorganize files by moving/renaming them."},
+    {"key": "AIOS_WORKSPACE_MAX_FILE_SIZE", "default": "1048576", "group": "workspace",
+     "label": "Max file size (bytes)", "type": "number",
+     "hint": "Maximum file size the LLM can write to workspace (default 1MB)."},
 ]
 
 

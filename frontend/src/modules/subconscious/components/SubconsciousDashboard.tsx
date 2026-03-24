@@ -36,6 +36,14 @@ interface LoopStats {
   run_count: number;
   error_count: number;
   consecutive_errors: number;
+  is_busy?: boolean;
+  initial_delay?: number;
+  last_duration?: number | null;
+  avg_duration?: number | null;
+  min_duration?: number | null;
+  max_duration?: number | null;
+  last_result?: string | null;
+  last_error?: string | null;
   model?: string;
   unprocessed_turns?: number;
   last_processed_turn_id?: number | null;
@@ -77,6 +85,23 @@ const STATUS_COLORS: Record<string, string> = {
   paused: '#f59e0b',
   error: '#ef4444',
 };
+
+/** Format seconds into a human-friendly duration string. */
+function formatDuration(seconds: number): string {
+  if (seconds >= 86400) {
+    const d = seconds / 86400;
+    return d === Math.floor(d) ? `${d}d` : `${d.toFixed(1)}d`;
+  }
+  if (seconds >= 3600) {
+    const h = seconds / 3600;
+    return h === Math.floor(h) ? `${h}h` : `${h.toFixed(1)}h`;
+  }
+  if (seconds >= 60) {
+    const m = seconds / 60;
+    return m === Math.floor(m) ? `${m}m` : `${m.toFixed(1)}m`;
+  }
+  return `${seconds}s`;
+}
 
 const FACT_STATUS_COLORS: Record<string, { bg: string; text: string }> = {
   pending: { bg: '#e5e7eb', text: '#4b5563' },
@@ -616,6 +641,7 @@ export default function SubconsciousDashboard() {
                 style={{ background: STATUS_COLORS[loop.status] || '#6b7280' }}
               />
               <span className="loop-list-name">{loop.name}</span>
+              {loop.is_busy && <span className="busy-dot" title="Running now">●</span>}
               <span className="loop-list-meta">
                 {loop.run_count > 0 ? `${loop.run_count} runs` : loop.status}
               </span>
@@ -847,7 +873,7 @@ export default function SubconsciousDashboard() {
                         className="config-value editable"
                         onClick={() => { setEditingInterval(true); setIntervalValue(String(selected.interval)); }}
                       >
-                        Every {selected.interval}s ✎
+                        Every {formatDuration(selected.interval)} ({selected.interval}s) ✎
                       </span>
                     )}
                   </div>
@@ -918,6 +944,14 @@ export default function SubconsciousDashboard() {
                       }
                     </span>
                   </div>
+
+                  {/* Initial delay */}
+                  {selected.initial_delay != null && selected.initial_delay > 0 && (
+                    <div className="config-row">
+                      <span className="config-label">Start Delay</span>
+                      <span className="config-value">{formatDuration(selected.initial_delay)}</span>
+                    </div>
+                  )}
 
                   {/* Error tolerance */}
                   <div className="config-row">
@@ -1014,8 +1048,52 @@ export default function SubconsciousDashboard() {
                       <span className="stat-mini-label">Last Run</span>
                     </div>
                   )}
+                  {selected.last_duration != null && (
+                    <div className="stat-mini">
+                      <span className="stat-mini-value">{selected.last_duration}s</span>
+                      <span className="stat-mini-label">Last Duration</span>
+                    </div>
+                  )}
+                  {selected.avg_duration != null && (
+                    <div className="stat-mini">
+                      <span className="stat-mini-value">{selected.avg_duration}s</span>
+                      <span className="stat-mini-label">Avg Duration</span>
+                    </div>
+                  )}
                 </div>
               </div>
+
+              {/* Last Output section */}
+              {(selected.last_result || selected.last_error) && (
+                <div className="detail-section">
+                  <h4>
+                    Last Output
+                    {selected.is_busy && <span className="busy-badge">running now...</span>}
+                  </h4>
+                  {selected.last_error && (
+                    <div className="loop-output-block error">
+                      <span className="output-label">Error</span>
+                      <pre className="output-text">{selected.last_error}</pre>
+                    </div>
+                  )}
+                  {selected.last_result && (
+                    <div className="loop-output-block">
+                      <pre className="output-text">{selected.last_result}</pre>
+                    </div>
+                  )}
+                </div>
+              )}
+              {!selected.last_result && !selected.last_error && (
+                <div className="detail-section">
+                  <h4>
+                    Last Output
+                    {selected.is_busy && <span className="busy-badge">running now...</span>}
+                  </h4>
+                  <div className="no-data">
+                    {selected.run_count === 0 ? 'Loop has not run yet' : 'No output captured'}
+                  </div>
+                </div>
+              )}
 
               {/* Queue bar for memory loop */}
               {selected.name === 'memory' && (queue?.unprocessed || 0) > 0 && (

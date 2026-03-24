@@ -38,9 +38,17 @@ src/
 - **Chat**: WebSocket-based messaging with tool call rendering (`:::execute:::` / `:::result:::` blocks)
 - **Subconscious Dashboard**: Loop editor (start/stop/interval/prompts), goals panel, notifications, proposed improvements
 - **Thread Panels**: Identity profile editor, philosophy stances, form tool registry, concept graph (3D via Three.js), reflex trigger builder
-- **Workspace**: File browser with edit mode, FTS5 search, pinned files, quick notes
+- **Workspace**: File browser with VS Code-style FileTree, CodeMirror 6 editor with syntax highlighting, FTS5 search, pinned files, quick notes
 - **Eval**: Side-by-side model comparison, benchmark categories, LLM-as-judge scoring
 - **Fire-Tuner**: Sections browser, docstring extraction, unified training view, generated example approval
+
+## Dev Workflow
+
+```bash
+cp .env.example .env     # Set VITE_API_URL if backend isn't localhost:8000
+npm install
+npm run dev
+```
 
 ## Tech Stack
 

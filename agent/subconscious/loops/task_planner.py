@@ -280,14 +280,29 @@ class TaskPlanner(BackgroundLoop):
     
     # ── Main loop tick ──────────────────────────────────────
     
-    def _check_and_execute(self) -> None:
-        """Check for pending tasks and execute the oldest one."""
+    def _check_and_execute(self) -> str:
+        """Check for pending tasks and execute the oldest one. Returns summary."""
         pending = get_tasks(status="pending", limit=1)
         if not pending:
-            return
+            return "No pending tasks"
         
         task = pending[0]
-        self.execute_task(task["id"])
+        result = self.execute_task(task["id"])
+        
+        # Build a readable summary
+        status = result.get("status", "unknown")
+        goal = result.get("goal", "")
+        lines = [f"Task #{result.get('id', '?')}: {goal}", f"Status: {status}"]
+        
+        results_list = result.get("results", [])
+        for r in results_list:
+            step_label = r.get("step", "?")
+            output = r.get("output", r.get("error", ""))
+            success = r.get("success", False)
+            mark = "✓" if success else "✗"
+            lines.append(f"  {mark} Step {step_label}: {str(output)[:200]}")
+        
+        return "\n".join(lines)
     
     # ── Public API ──────────────────────────────────────────
     

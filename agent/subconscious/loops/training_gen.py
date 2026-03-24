@@ -138,6 +138,7 @@ class TrainingGenLoop(BackgroundLoop):
             context_aware=True,
         )
         super().__init__(config, self._generate_all)
+        self._prompts: Dict[str, str] = {"system": GENERATOR_SYSTEM}
         self._last_module: Optional[str] = None
         self._total_generated = 0
         self._generation_count = 0
@@ -155,6 +156,7 @@ class TrainingGenLoop(BackgroundLoop):
         base["total_generated"] = self._total_generated
         base["generation_count"] = self._generation_count
         base["generated_dir"] = str(GENERATED_DIR)
+        base["prompts"] = dict(self._prompts)
         return base
     
     # Map modules to their best-matching Claude example files
@@ -409,48 +411,33 @@ class TrainingGenLoop(BackgroundLoop):
         return 0
     
     def _call_model(self, prompt: str) -> str:
-        """Call the LLM to generate examples."""
+        """Call the LLM to generate examples. Uses shared provider layer."""
         provider = os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama"))
-        
-        if provider == "openai":
-            base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-            api_key = os.getenv("OPENAI_API_KEY", "")
-            import requests
-            resp = requests.post(
-                f"{base_url}/chat/completions",
-                headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-                json={
-                    "model": self.model,
-                    "messages": [
-                        {"role": "system", "content": GENERATOR_SYSTEM},
-                        {"role": "user", "content": prompt},
-                    ],
-                    "temperature": 0.7,
-                },
-                timeout=120,
-            )
-            resp.raise_for_status()
-            return resp.json()["choices"][0]["message"]["content"].strip()
-        
-        # Default: Ollama
-        from .base import acquire_ollama_gate, release_ollama_gate, is_llm_enabled
-        if not is_llm_enabled():
-            return ""
-        import ollama
-        if not acquire_ollama_gate():
-            raise RuntimeError("Ollama gate timeout")
-        try:
-            response = ollama.chat(
-                model=self.model,
-                messages=[
-                    {"role": "system", "content": GENERATOR_SYSTEM},
-                    {"role": "user", "content": prompt},
-                ],
-                options={"temperature": 0.7, "num_predict": 4096},
-            )
-            return response["message"]["content"].strip()
-        finally:
-            release_ollama_gate()
+
+        # Gate Ollama access to avoid contention with main agent
+        if provider == "ollama":
+            from .base import acquire_ollama_gate, release_ollama_gate, is_llm_enabled
+            if not is_llm_enabled():
+                return ""
+            if not acquire_ollama_gate():
+                raise RuntimeError("Ollama gate timeout")
+            try:
+                from agent.services.llm import generate
+                return generate(
+                    prompt=prompt, system=self._prompts.get("system", GENERATOR_SYSTEM),
+                    provider=provider, model=self.model,
+                    temperature=0.7, max_tokens=4096,
+                )
+            finally:
+                release_ollama_gate()
+
+        # All other providers: no gating needed
+        from agent.services.llm import generate
+        return generate(
+            prompt=prompt, system=self._prompts.get("system", GENERATOR_SYSTEM),
+            provider=provider, model=self.model,
+            temperature=0.7, max_tokens=4096,
+        )
     
     def _parse_examples(self, raw: str, module: str) -> List[Dict[str, Any]]:
         """Parse and validate LLM output into training examples."""
@@ -614,12 +601,13 @@ class TrainingGenLoop(BackgroundLoop):
         
         return 0
     
-    def _generate_all(self) -> None:
-        """Generate training examples for all modules."""
+    def _generate_all(self) -> str:
+        """Generate training examples for all modules. Returns summary."""
         self._generation_count += 1
         total = 0
 
         # Run docstring extraction first (fast, deduped)
+        ds_total = 0
         try:
             from finetune.docstring_extractor import extract_and_save
             ds_counts = extract_and_save(deduplicate=True)
@@ -632,11 +620,11 @@ class TrainingGenLoop(BackgroundLoop):
         for module in MODULES:
             count = self._generate_for_module(module)
             total += count
-            # Small delay between modules to avoid overloading
             if count > 0:
                 time.sleep(2)
         
-        # Log the generation run
+        summary = f"Run #{self._generation_count}: generated {total} examples (+{ds_total} docstrings), total lifetime: {self._total_generated}"
+        
         try:
             from agent.threads.log import log_event
             log_event(
@@ -647,7 +635,8 @@ class TrainingGenLoop(BackgroundLoop):
         except Exception:
             pass
         
-        print(f"[TrainingGen] Run #{self._generation_count}: generated {total} examples, total lifetime: {self._total_generated}")
+        print(f"[TrainingGen] {summary}")
+        return summary
 
     def generate_seeded_batch(self, questions_per_module: int = 10) -> Dict[str, int]:
         """Generate a batch of seeded examples across all modules.

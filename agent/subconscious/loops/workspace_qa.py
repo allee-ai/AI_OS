@@ -221,7 +221,9 @@ class WorkspaceQALoop(BackgroundLoop):
         )
         super().__init__(config=config, task=self._run)
 
-    def _run(self):
+    def _run(self) -> str:
         result = run_workspace_qa()
-        print(f"[workspace_qa] Generated {result['total']} training pairs "
-              f"(workspace:{result['workspace']} identity:{result['identity']} feeds:{result['feeds']})")
+        summary = (f"Generated {result['total']} training pairs "
+                   f"(workspace:{result['workspace']} identity:{result['identity']} feeds:{result['feeds']})")
+        print(f"[workspace_qa] {summary}")
+        return summary
