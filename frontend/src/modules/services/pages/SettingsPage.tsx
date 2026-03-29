@@ -227,6 +227,7 @@ export const SettingsPage = () => {
           <Link to="/subconscious" className="sidebar-item"><span className="sidebar-icon">🧠</span><span>Subconscious</span></Link>
           <Link to="/training" className="sidebar-item"><span className="sidebar-icon">🔥</span><span>Fine-tune</span></Link>
           <Link to="/eval" className="sidebar-item"><span className="sidebar-icon">🎯</span><span>Eval</span></Link>
+          <Link to="/experiments" className="sidebar-item"><span className="sidebar-icon">🧪</span><span>Experiments</span></Link>
 
           {/* ── Services ── */}
           <div className="sidebar-section-header">Services</div>

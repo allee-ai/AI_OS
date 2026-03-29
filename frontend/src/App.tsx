@@ -16,6 +16,7 @@ import { DevDashboard } from './modules/finetune/pages/DevDashboard'
 import { SectionDetailPage } from './modules/finetune/pages/SectionDetailPage'
 import { SubconsciousPage } from './modules/subconscious'
 import { EvalDashboard } from './modules/eval'
+import { ExperimentDashboard } from './modules/experiments'
 import { SetupWizard } from './components/SetupWizard'
 import './App.css'
 
@@ -97,6 +98,7 @@ function App() {
           <Route path="/training/:module/:section" element={<SectionDetailPage />} />
           <Route path="/subconscious" element={<SubconsciousPage />} />
           <Route path="/eval" element={<EvalDashboard />} />
+          <Route path="/experiments" element={<ExperimentDashboard />} />
           <Route path="/contact" element={<ContactPage />} />
           <Route path="/settings" element={<SettingsPage />} />
           <Route path="/settings/:section" element={<SettingsPage />} />

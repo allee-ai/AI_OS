@@ -57,6 +57,7 @@ from agent.threads.log import router as log_router
 from docs import router as docs_router
 from finetune import router as finetune_router
 from eval import router as eval_router
+from experiments import router as experiments_router
 
 
 # =============================================================================
@@ -164,6 +165,7 @@ app.include_router(mobile_router)
 app.include_router(docs_router)
 app.include_router(finetune_router)
 app.include_router(eval_router)
+app.include_router(experiments_router)
 
 
 # =============================================================================

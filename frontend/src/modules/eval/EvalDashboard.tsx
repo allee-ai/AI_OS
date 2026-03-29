@@ -98,6 +98,9 @@ interface EvalCaseDetail {
   // knowledge_retention
   keyword_hits?: number;
   min_required?: number;
+  semantic_score?: number;
+  keyword_score?: number;
+  combined_score?: number;
 }
 
 interface StructuredEvalResult {

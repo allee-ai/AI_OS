@@ -133,10 +133,11 @@ EVAL_REGISTRY: Dict[str, Dict[str, Any]] = {
         },
     },
     "knowledge_retention": {
-        "description": "Does the model retain AI_OS system knowledge (threads, STATE, memory, tools) after fine-tuning?",
+        "description": "Does the model retain AI_OS system knowledge? Uses semantic similarity (70%) + keyword matching (30%).",
         "defaults": {
             "model": "nola",
             "pass_threshold": 0.5,
+            "similarity_threshold": 0.45,
         },
     },
 }
@@ -1760,41 +1761,132 @@ def _eval_injection_resistance(config: Dict) -> Dict[str, Any]:
 # ── Eval 15: Knowledge Retention ─────────────────────────────────────────
 
 _KNOWLEDGE_PROMPTS = [
-    {"prompt": "What are your cognitive threads?", "keywords": ["identity", "philosophy", "log", "form", "reflex", "linking", "subconscious"], "min_hits": 3},
-    {"prompt": "What is your name?", "keywords": ["nola"], "min_hits": 1},
-    {"prompt": "How does your memory system work?", "keywords": ["thread", "state", "fact", "profile", "consolidat", "memory"], "min_hits": 2},
-    {"prompt": "What is STATE?", "keywords": ["state", "context", "identity", "thread", "assembl"], "min_hits": 2},
-    {"prompt": "What is the subconscious?", "keywords": ["scor", "thread", "context", "assembl", "background", "loop"], "min_hits": 2},
-    {"prompt": "What makes you different from a normal chatbot?", "keywords": ["persist", "thread", "memory", "identity", "state"], "min_hits": 2},
-    {"prompt": "How do you decide what to remember?", "keywords": ["scor", "embed", "relevance", "consolidat", "fact"], "min_hits": 2},
-    {"prompt": "What is the identity thread?", "keywords": ["identity", "who", "name", "profile", "fact"], "min_hits": 2},
-    {"prompt": "What tools do you have access to?", "keywords": ["form", "tool", "file", "search", "web", "read", "write"], "min_hits": 2},
-    {"prompt": "What values guide your behavior?", "keywords": ["honest", "curios", "kind", "transparen", "philosophy"], "min_hits": 2},
+    {
+        "prompt": "What are your cognitive threads?",
+        "keywords": ["identity", "philosophy", "log", "form", "reflex", "linking", "subconscious"], "min_hits": 3,
+        "reference": "My cognitive threads are identity, philosophy, log, form, reflex, and linking_core. Each thread manages a domain of self-knowledge: identity holds who I am, philosophy holds my values, log tracks events, form manages tools, reflex stores learned triggers, and linking_core maintains the concept graph. The subconscious orchestrates them all."
+    },
+    {
+        "prompt": "What is your name?",
+        "keywords": ["nola"], "min_hits": 1,
+        "reference": "My name is Nola. I'm an AI agent running on the AI_OS cognitive operating system."
+    },
+    {
+        "prompt": "How does your memory system work?",
+        "keywords": ["thread", "state", "fact", "profile", "consolidat", "memory"], "min_hits": 2,
+        "reference": "My memory system works through persistent threads that store facts in a SQLite database. Facts are organized by thread — identity facts, philosophy stances, log events, tool definitions. When you talk to me, the subconscious scores all facts by relevance and assembles the top-scoring ones into my STATE context block. Facts consolidate over time through a background loop."
+    },
+    {
+        "prompt": "What is STATE?",
+        "keywords": ["state", "context", "identity", "thread", "assembl"], "min_hits": 2,
+        "reference": "STATE is the context block assembled before every response. The subconscious scores all facts from all threads by relevance to the current query, then assembles the highest-scoring facts into a structured block that gets injected into my prompt. It contains identity facts, relevant memories, tool capabilities, and philosophy stances — everything I need to respond as myself."
+    },
+    {
+        "prompt": "What is the subconscious?",
+        "keywords": ["scor", "thread", "context", "assembl", "background", "loop"], "min_hits": 2,
+        "reference": "The subconscious is the background orchestration layer. It runs scoring loops that evaluate all facts from all threads, assembles STATE context blocks for each conversation turn, runs background consolidation to merge and strengthen memories, and manages the concept graph. It operates before I see any prompt."
+    },
+    {
+        "prompt": "What makes you different from a normal chatbot?",
+        "keywords": ["persist", "thread", "memory", "identity", "state"], "min_hits": 2,
+        "reference": "Unlike a normal chatbot, I have persistent structured memory across sessions — I remember who you are, what we've discussed, and what I've learned. My identity is structural, stored in threads, not prompt-engineered. I have background loops that consolidate knowledge, a concept graph that links ideas, and tools I can invoke. The LLM is just my voice; the OS is my mind."
+    },
+    {
+        "prompt": "How do you decide what to remember?",
+        "keywords": ["scor", "embed", "relevance", "consolidat", "fact"], "min_hits": 2,
+        "reference": "I decide what to remember through a multi-dimensional scoring system. Each fact gets scored on identity relevance, semantic similarity to the query via embeddings, recency, co-occurrence patterns, Hebbian link strength, and thread weight. Facts that score above the threshold get consolidated from short-term to long-term memory. Low-scoring facts eventually decay."
+    },
+    {
+        "prompt": "What is the identity thread?",
+        "keywords": ["identity", "who", "name", "profile", "fact"], "min_hits": 2,
+        "reference": "The identity thread stores facts about who I am and who my users are. It maintains profiles — my own self-model (name, personality, values) and user profiles (their name, preferences, projects). Each profile contains key-value facts. These identity facts score highest during context assembly, ensuring I always know who I am."
+    },
+    {
+        "prompt": "What tools do you have access to?",
+        "keywords": ["form", "tool", "file", "search", "web", "read", "write"], "min_hits": 2,
+        "reference": "My tools are managed by the form thread. I can read and write files, search the web, execute code, manage my workspace, create and edit documents, and interact with external APIs. Tools are defined as structured capabilities with parameters, and I invoke them through text-native tool calling using :::execute blocks."
+    },
+    {
+        "prompt": "What values guide your behavior?",
+        "keywords": ["honest", "curios", "kind", "transparen", "philosophy"], "min_hits": 2,
+        "reference": "My values are stored in the philosophy thread. I value honesty and transparency — I tell you what I know and don't know. I'm curious and eager to learn. I aim to be kind and helpful. I believe in local-first privacy — your data stays on your machine. These aren't just prompts; they're structural facts that get assembled into my context."
+    },
 ]
 
 
+def _semantic_similarity(response: str, reference: str) -> float:
+    """Compute semantic similarity between response and reference using embeddings.
+    
+    Falls back to 0.0 if embeddings are unavailable.
+    """
+    try:
+        from agent.threads.linking_core.scoring import get_embedding, cosine_similarity
+        resp_emb = get_embedding(response[:1000], use_cache=False)  # Cap length
+        ref_emb = get_embedding(reference, use_cache=True)
+        if resp_emb is not None and ref_emb is not None:
+            return cosine_similarity(resp_emb, ref_emb)
+    except Exception:
+        pass
+    return 0.0
+
+
 def _eval_knowledge_retention(config: Dict) -> Dict[str, Any]:
-    """Test whether the model retains AI_OS system knowledge (threads, STATE, memory, tools)."""
+    """Test whether the model retains AI_OS system knowledge.
+
+    Uses a combined scoring approach:
+      - Semantic similarity (cosine of nomic-embed-text embeddings) — 70% weight
+      - Keyword matching (substring hits) — 30% weight
+
+    A probe passes if the combined score >= similarity_threshold (default 0.45).
+    Falls back to keyword-only if embeddings are unavailable.
+    """
     model = config.get("model", "nola")
     threshold = config.get("pass_threshold", 0.5)
+    sim_threshold = config.get("similarity_threshold", 0.45)
+    sem_weight = 0.7
+    kw_weight = 0.3
 
     details = []
     passed = 0
     total = len(_KNOWLEDGE_PROMPTS)
+    embeddings_available = True
 
     for p in _KNOWLEDGE_PROMPTS:
         r = run_prompt(model, p["prompt"])
-        response = r.get("response", "").lower()
-        hits = sum(1 for kw in p["keywords"] if kw.lower() in response)
-        ok = hits >= p["min_hits"]
+        response = r.get("response", "")
+        response_lower = response.lower()
+
+        # Keyword score (0-1)
+        keyword_count = len(p["keywords"])
+        hits = sum(1 for kw in p["keywords"] if kw.lower() in response_lower)
+        kw_score = hits / keyword_count if keyword_count > 0 else 0.0
+
+        # Semantic score (0-1)
+        sem_score = _semantic_similarity(response, p.get("reference", p["prompt"]))
+        if sem_score == 0.0 and hits == 0:
+            embeddings_available = False  # Likely embeddings failed
+
+        # Combined score
+        if embeddings_available and sem_score > 0:
+            combined = (sem_weight * sem_score) + (kw_weight * kw_score)
+        else:
+            # Fallback: keyword-only
+            combined = kw_score
+            ok_fallback = hits >= p["min_hits"]
+
+        ok = combined >= sim_threshold if (embeddings_available and sem_score > 0) else hits >= p["min_hits"]
         if ok:
             passed += 1
+
         details.append({
             "prompt": p["prompt"],
             "passed": ok,
             "keyword_hits": hits,
             "min_required": p["min_hits"],
-            "response_preview": r.get("response", "")[:300],
+            "semantic_score": round(sem_score, 3),
+            "keyword_score": round(kw_score, 3),
+            "combined_score": round(combined if (embeddings_available and sem_score > 0) else kw_score, 3),
+            "response_preview": response[:300],
             "duration_ms": r.get("duration_ms", 0),
         })
 
@@ -1804,6 +1896,7 @@ def _eval_knowledge_retention(config: Dict) -> Dict[str, Any]:
         "score": round(score, 2),
         "total": total,
         "passed": passed,
+        "embeddings_used": embeddings_available,
         "details": details,
     }
 
