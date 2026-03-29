@@ -23,6 +23,22 @@ logger = logging.getLogger("finetune")
 # Finetune directory is this module's directory
 FINETUNE_DIR = Path(__file__).resolve().parent
 
+# ── Line-count cache: {path: (mtime, count)} ────────────────
+_line_count_cache: Dict[str, tuple] = {}
+
+def _count_lines_cached(path: Path) -> int:
+    """Count non-blank lines in a file, cached by mtime."""
+    if not path.exists():
+        return 0
+    key = str(path)
+    mtime = path.stat().st_mtime
+    cached = _line_count_cache.get(key)
+    if cached and cached[0] == mtime:
+        return cached[1]
+    count = sum(1 for line in open(path) if line.strip())
+    _line_count_cache[key] = (mtime, count)
+    return count
+
 
 class FinetuneConfig(BaseModel):
     base_model: Optional[str] = None       # Model ID (MLX or HF depending on backend)
@@ -131,9 +147,7 @@ def _get_curated_count(module: str) -> int:
     for filename, mod in CURATED_MAP.items():
         if mod != module:
             continue
-        fpath = CURATED_DIR / filename
-        if fpath.exists():
-            count += sum(1 for line in open(fpath) if line.strip())
+        count += _count_lines_cached(CURATED_DIR / filename)
     return count
 
 
@@ -410,7 +424,7 @@ async def list_training_data():
         files.append({
             "name": f.name,
             "size": f.stat().st_size,
-            "lines": sum(1 for _ in open(f))
+            "lines": _count_lines_cached(f)
         })
     
     # Also check auto_generated folder
@@ -420,7 +434,7 @@ async def list_training_data():
             files.append({
                 "name": f"auto_generated/{f.name}",
                 "size": f.stat().st_size,
-                "lines": sum(1 for _ in open(f))
+                "lines": _count_lines_cached(f)
             })
     
     return {"files": files}
@@ -434,16 +448,10 @@ async def get_dataset_summary():
         module_data: Dict[str, int] = {}
         # Module-exported *_train.jsonl
         train_file = FINETUNE_DIR / f"{name}_train.jsonl"
-        if train_file.exists():
-            module_data["exported"] = sum(1 for line in open(train_file) if line.strip())
-        else:
-            module_data["exported"] = 0
+        module_data["exported"] = _count_lines_cached(train_file)
         # Generated
         gen_file = FINETUNE_DIR / "generated" / f"{name}.jsonl"
-        if gen_file.exists():
-            module_data["generated"] = sum(1 for line in open(gen_file) if line.strip())
-        else:
-            module_data["generated"] = 0
+        module_data["generated"] = _count_lines_cached(gen_file)
         # Curated (readme_pairs)
         module_data["curated"] = _get_curated_count(name)
         # Reasoning
@@ -460,17 +468,13 @@ async def get_dataset_summary():
     if CURATED_DIR.exists():
         for f in CURATED_DIR.glob("*.jsonl"):
             if f.name not in CURATED_MAP:
-                unmapped += sum(1 for line in open(f) if line.strip())
+                unmapped += _count_lines_cached(f)
 
     grand_total = sum(m["total"] for m in summary.values()) + unmapped
     combined_stale = False
     combined_path = FINETUNE_DIR / "aios_combined.jsonl"
-    if combined_path.exists():
-        combined_count = sum(1 for line in open(combined_path) if line.strip())
-        combined_stale = combined_count != grand_total
-    else:
-        combined_count = 0
-        combined_stale = True
+    combined_count = _count_lines_cached(combined_path)
+    combined_stale = (combined_count != grand_total) if combined_count else True
 
     return {
         "modules": summary,
@@ -878,21 +882,23 @@ async def preview_module_data(name: str, limit: int = 5):
     if name not in ALL_MODULES:
         raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
     try:
-        mod = _import_train_module(name)
-        # Export to temp to read samples
-        result = mod.export_training_data()
-        path = Path(result.get("path", ""))
+        # Read from the already-exported *_train.jsonl instead of re-exporting
+        path = FINETUNE_DIR / f"{name}_train.jsonl"
         samples = []
+        total = 0
         if path.exists():
+            total = _count_lines_cached(path)
             with open(path) as f:
                 for i, line in enumerate(f):
                     if i >= limit:
                         break
-                    try:
-                        samples.append(json.loads(line))
-                    except json.JSONDecodeError:
-                        pass
-        return {"module": name, "samples": samples, "total": result.get("examples", 0)}
+                    line = line.strip()
+                    if line:
+                        try:
+                            samples.append(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
+        return {"module": name, "samples": samples, "total": total}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
@@ -910,20 +916,10 @@ async def get_module_sections(name: str):
         reasoning_count = get_reasoning_count_for_module(name)
         if reasoning_count > 0:
             sections["reasoning"] = {"description": "Curated, hand-crafted reasoning examples", "examples": reasoning_count}
-        # Add generated section count
+        # Add generated section count (count by type without loading full examples)
         try:
-            from agent.subconscious.loops.training_gen import get_generated_examples
-            gen_all = get_generated_examples(name)
-            # Docstring-typed examples enrich their respective sections
-            ds_by_section: Dict[str, int] = {}
-            non_docstring = 0
-            for ex in gen_all:
-                meta = ex.get("metadata", {})
-                if meta.get("type") == "docstring":
-                    sec = meta.get("section", "data")
-                    ds_by_section[sec] = ds_by_section.get(sec, 0) + 1
-                else:
-                    non_docstring += 1
+            from agent.subconscious.loops.training_gen import get_generated_counts_by_type
+            ds_by_section, non_docstring = get_generated_counts_by_type(name)
             # Bump existing section counts with docstring additions
             for sec, count in ds_by_section.items():
                 if sec in sections:
@@ -948,26 +944,26 @@ async def get_module_sections(name: str):
 # Section Detail + Approval + Unified
 # ─────────────────────────────────────────────────────────────
 
-def _get_all_examples_for_module(name: str) -> List[Dict[str, Any]]:
-    """Collect ALL examples for a module across all section sources."""
+def _get_all_examples_for_module(name: str, limit: int = 0) -> List[Dict[str, Any]]:
+    """Collect ALL examples for a module across all section sources.
+    
+    If limit > 0, stop collecting once we have enough (for paginated callers).
+    """
     examples = []
 
-    # 1. Module-exported data (data, api, cli, schema sections)
-    try:
-        mod = _import_train_module(name)
-        result = mod.export_training_data()
-        path = Path(result.get("path", ""))
-        if path.exists():
-            with open(path) as f:
-                for line in f:
-                    line = line.strip()
-                    if line:
-                        try:
-                            examples.append(json.loads(line))
-                        except json.JSONDecodeError:
-                            pass
-    except Exception:
-        pass
+    # 1. Module-exported data — read from existing *_train.jsonl
+    path = FINETUNE_DIR / f"{name}_train.jsonl"
+    if path.exists():
+        with open(path) as f:
+            for line in f:
+                line = line.strip()
+                if line:
+                    try:
+                        examples.append(json.loads(line))
+                    except json.JSONDecodeError:
+                        pass
+                    if limit and len(examples) >= limit:
+                        return examples
 
     # 2. Reasoning examples
     try:
@@ -1006,8 +1002,12 @@ def _get_all_examples_for_module(name: str) -> List[Dict[str, Any]]:
 
 
 @router.get("/modules/{name}/sections/{section}")
-async def get_section_examples(name: str, section: str, page: int = 1, per_page: int = 50):
-    """Get all training examples for a module+section pair, paginated."""
+async def get_section_examples(name: str, section: str, page: int = 1, per_page: int = 50, include_state: bool = False):
+    """Get all training examples for a module+section pair, paginated.
+    
+    STATE system prompts are stripped by default for fast card loading.
+    Use ?include_state=true to include them, or POST /build-state for on-demand.
+    """
     if name not in ALL_MODULES:
         raise HTTPException(status_code=400, detail=f"Unknown module: {name}")
 
@@ -1036,23 +1036,20 @@ async def get_section_examples(name: str, section: str, page: int = 1, per_page:
                         except json.JSONDecodeError:
                             pass
     else:
-        # data, api, cli, schema — export then filter by metadata.section
-        try:
-            mod = _import_train_module(name)
-            result = mod.export_training_data(sections=[section])
-            path = Path(result.get("path", ""))
-            if path.exists():
-                with open(path) as f:
-                    for line in f:
-                        line = line.strip()
-                        if line:
-                            try:
-                                ex = json.loads(line)
+        # data, api, cli, schema — read from exported *_train.jsonl, filter by metadata.section
+        path = FINETUNE_DIR / f"{name}_train.jsonl"
+        if path.exists():
+            with open(path) as f:
+                for line in f:
+                    line = line.strip()
+                    if line:
+                        try:
+                            ex = json.loads(line)
+                            meta = ex.get("metadata", {})
+                            if meta.get("section") == section:
                                 examples.append(ex)
-                            except json.JSONDecodeError:
-                                pass
-        except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e))
+                        except json.JSONDecodeError:
+                            pass
 
         # Also include docstring-sourced examples whose metadata.section matches
         try:
@@ -1064,14 +1061,23 @@ async def get_section_examples(name: str, section: str, page: int = 1, per_page:
         except Exception:
             pass
 
-    # Add index IDs for tracking
+    total = len(examples)
+
+    # Add index IDs for tracking (after total, before slicing)
     for i, ex in enumerate(examples):
         ex["_id"] = i
 
-    total = len(examples)
     start = (page - 1) * per_page
     end = start + per_page
     page_examples = examples[start:end]
+
+    # Strip STATE system prompts unless explicitly requested
+    if not include_state:
+        for ex in page_examples:
+            msgs = ex.get("messages", [])
+            if msgs and msgs[0].get("role") == "system":
+                ex["messages"] = [m for m in msgs if m["role"] != "system"]
+                ex["_has_state"] = True  # Signal to frontend that STATE can be loaded on demand
 
     return {
         "module": name,
@@ -1304,36 +1310,65 @@ async def get_unified_examples(
     page: int = 1,
     per_page: int = 50,
 ):
-    """Get ALL training examples across all modules, filterable."""
-    all_examples = []
-
+    """Get training examples across modules, with server-side pagination."""
     target_modules = [module] if module and module in ALL_MODULES else ALL_MODULES
 
+    # For counts, use cached line counts instead of loading all examples
+    total = 0
+    module_sizes: list[tuple[str, int]] = []
     for mod_name in target_modules:
+        count = 0
+        # Count from each source
+        train_file = FINETUNE_DIR / f"{mod_name}_train.jsonl"
+        count += _count_lines_cached(train_file)
+        try:
+            from finetune.gold_examples import get_reasoning_count_for_module
+            count += get_reasoning_count_for_module(mod_name)
+        except Exception:
+            pass
+        try:
+            from agent.subconscious.loops.training_gen import get_generated_count
+            count += get_generated_count(mod_name)
+        except Exception:
+            pass
+        count += _get_curated_count(mod_name)
+        approved_path = FINETUNE_DIR / "approved" / f"{mod_name}.jsonl"
+        count += _count_lines_cached(approved_path)
+        module_sizes.append((mod_name, count))
+        total += count
+
+    # Only load the page we need by skipping through modules
+    start = (page - 1) * per_page
+    skip = start
+    page_examples: list[dict] = []
+    needed = per_page
+
+    for mod_name, mod_count in module_sizes:
+        if needed <= 0:
+            break
+        if skip >= mod_count:
+            skip -= mod_count
+            continue
+        # We need examples from this module
         mod_examples = _get_all_examples_for_module(mod_name)
-        # Tag each with module name for unified display
+        # Tag with module name
         for ex in mod_examples:
             if not ex.get("metadata"):
                 ex["metadata"] = {}
             if "source" not in ex["metadata"]:
                 ex["metadata"]["source"] = mod_name
-        all_examples.extend(mod_examples)
-
-    # Filter by section if specified
-    if section:
-        all_examples = [
-            ex for ex in all_examples
-            if ex.get("metadata", {}).get("section") == section
-        ]
+        # Filter by section if specified
+        if section:
+            mod_examples = [ex for ex in mod_examples if ex.get("metadata", {}).get("section") == section]
+        # Slice what we need
+        chunk = mod_examples[skip:skip + needed]
+        page_examples.extend(chunk)
+        needed -= len(chunk)
+        skip = 0  # Only skip within the first module
 
     # Add IDs
-    for i, ex in enumerate(all_examples):
-        ex["_id"] = i
-
-    total = len(all_examples)
-    start = (page - 1) * per_page
-    end = start + per_page
-    page_examples = all_examples[start:end]
+    for i, ex in enumerate(page_examples):
+        ex["_id"] = start + i
 
     return {
         "examples": page_examples,
@@ -1460,3 +1495,257 @@ async def export_module_with_sections(name: str, body: ModuleExportRequest = Mod
         return {"status": "exported", "module": name, "result": result}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ─────────────────────────────────────────────────────────────
+# Training Templates — CRUD + Seed
+# ─────────────────────────────────────────────────────────────
+
+class TemplateCreate(BaseModel):
+    module: str
+    section: str
+    name: str
+    question_template: str
+    answer_template: str
+
+
+class TemplateUpdate(BaseModel):
+    question_template: Optional[str] = None
+    answer_template: Optional[str] = None
+    enabled: Optional[bool] = None
+    name: Optional[str] = None
+
+
+@router.get("/templates")
+async def list_templates(module: Optional[str] = None, section: Optional[str] = None):
+    """List training templates, optionally filtered by module/section."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    query = "SELECT id, module, section, name, question_template, answer_template, enabled, created_at, updated_at FROM training_templates WHERE 1=1"
+    params: list = []
+    if module:
+        query += " AND module = ?"
+        params.append(module)
+    if section:
+        query += " AND section = ?"
+        params.append(section)
+    query += " ORDER BY module, section, id"
+
+    with closing(get_connection(readonly=True)) as conn:
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        rows = conn.execute(query, params).fetchall()
+    return {"templates": rows}
+
+
+@router.get("/templates/{template_id}")
+async def get_template(template_id: int):
+    """Get a single template by ID."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    with closing(get_connection(readonly=True)) as conn:
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        row = conn.execute(
+            "SELECT id, module, section, name, question_template, answer_template, enabled, created_at, updated_at FROM training_templates WHERE id = ?",
+            (template_id,)
+        ).fetchone()
+    if not row:
+        raise HTTPException(status_code=404, detail="Template not found")
+    return {"template": row}
+
+
+@router.post("/templates")
+async def create_template(body: TemplateCreate):
+    """Create a new training template."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    with closing(get_connection()) as conn:
+        try:
+            cur = conn.execute(
+                """INSERT INTO training_templates (module, section, name, question_template, answer_template)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (body.module, body.section, body.name, body.question_template, body.answer_template),
+            )
+            conn.commit()
+            template_id = cur.lastrowid
+        except Exception as e:
+            if "UNIQUE constraint" in str(e):
+                raise HTTPException(status_code=409, detail=f"Template '{body.name}' already exists for {body.module}/{body.section}")
+            raise HTTPException(status_code=500, detail=str(e))
+    return {"id": template_id, "status": "created"}
+
+
+@router.put("/templates/{template_id}")
+async def update_template(template_id: int, body: TemplateUpdate):
+    """Update a training template."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    fields = []
+    params: list = []
+    if body.question_template is not None:
+        fields.append("question_template = ?")
+        params.append(body.question_template)
+    if body.answer_template is not None:
+        fields.append("answer_template = ?")
+        params.append(body.answer_template)
+    if body.enabled is not None:
+        fields.append("enabled = ?")
+        params.append(1 if body.enabled else 0)
+    if body.name is not None:
+        fields.append("name = ?")
+        params.append(body.name)
+
+    if not fields:
+        raise HTTPException(status_code=400, detail="No fields to update")
+
+    fields.append("updated_at = datetime('now')")
+    params.append(template_id)
+
+    with closing(get_connection()) as conn:
+        result = conn.execute(
+            f"UPDATE training_templates SET {', '.join(fields)} WHERE id = ?",
+            params,
+        )
+        conn.commit()
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Template not found")
+    return {"status": "updated", "id": template_id}
+
+
+@router.delete("/templates/{template_id}")
+async def delete_template(template_id: int):
+    """Delete a training template."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    with closing(get_connection()) as conn:
+        result = conn.execute("DELETE FROM training_templates WHERE id = ?", (template_id,))
+        conn.commit()
+        if result.rowcount == 0:
+            raise HTTPException(status_code=404, detail="Template not found")
+    return {"status": "deleted", "id": template_id}
+
+
+# ── Default linking_core templates (for seed) ───────────────────────
+
+_DEFAULT_TEMPLATES = [
+    {
+        "module": "linking_core",
+        "section": "data",
+        "name": "association",
+        "question_template": "What's related to {concept_a}?",
+        "answer_template": (
+            "My linking_core graph has {concept_a} ↔ {concept_b} "
+            "(strength: {strength:.2f}, fired {fire_count} times). "
+            "This is a LONG-potentiated link — it's been reinforced enough "
+            "to persist in long-term memory."
+        ),
+    },
+    {
+        "module": "linking_core",
+        "section": "data",
+        "name": "spread_activation",
+        "question_template": "What connects to {seed} in your mind?",
+        "answer_template": (
+            "Spread activation from '{seed}' reaches: {chain}. "
+            "These are the concepts that light up through my Hebbian graph — "
+            "each hop follows the strongest links first."
+        ),
+    },
+]
+
+
+@router.post("/templates/seed")
+async def seed_default_templates():
+    """Seed the database with default templates (skips existing)."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    created = 0
+    skipped = 0
+    with closing(get_connection()) as conn:
+        for tpl in _DEFAULT_TEMPLATES:
+            existing = conn.execute(
+                "SELECT id FROM training_templates WHERE module = ? AND section = ? AND name = ?",
+                (tpl["module"], tpl["section"], tpl["name"]),
+            ).fetchone()
+            if existing:
+                skipped += 1
+                continue
+            conn.execute(
+                """INSERT INTO training_templates (module, section, name, question_template, answer_template)
+                   VALUES (?, ?, ?, ?, ?)""",
+                (tpl["module"], tpl["section"], tpl["name"], tpl["question_template"], tpl["answer_template"]),
+            )
+            created += 1
+        conn.commit()
+    return {"created": created, "skipped": skipped, "total_defaults": len(_DEFAULT_TEMPLATES)}
+
+
+# ── Preview template with sample data ────────────────────────────────
+
+@router.post("/templates/{template_id}/preview")
+async def preview_template(template_id: int, limit: int = 3):
+    """Preview what a template produces with real data from the module."""
+    from data.db import get_connection
+    from contextlib import closing
+
+    with closing(get_connection(readonly=True)) as conn:
+        conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+        tpl = conn.execute(
+            "SELECT * FROM training_templates WHERE id = ?", (template_id,)
+        ).fetchone()
+
+    if not tpl:
+        raise HTTPException(status_code=404, detail="Template not found")
+
+    previews = []
+    if tpl["module"] == "linking_core" and tpl["section"] == "data":
+        if tpl["name"] == "association":
+            from agent.threads.linking_core.schema import get_long_links
+            links = get_long_links(limit=limit)
+            for link in links:
+                try:
+                    q = tpl["question_template"].format_map(link)
+                    a = tpl["answer_template"].format_map(link)
+                    previews.append({"user": q, "assistant": a, "data": link})
+                except (KeyError, ValueError) as e:
+                    previews.append({"error": str(e), "data": link})
+        elif tpl["name"] == "spread_activation":
+            from agent.threads.linking_core.schema import get_long_links, spread_activate
+            links = get_long_links(limit=30)
+            seeds = list(set([l["concept_a"] for l in links]))[:limit]
+            for seed in seeds:
+                activated = spread_activate([seed], activation_threshold=0.3, max_hops=2, limit=5)
+                if activated:
+                    row = {"seed": seed, "chain": ", ".join([a["concept"] for a in activated])}
+                    try:
+                        q = tpl["question_template"].format_map(row)
+                        a = tpl["answer_template"].format_map(row)
+                        previews.append({"user": q, "assistant": a, "data": row})
+                    except (KeyError, ValueError) as e:
+                        previews.append({"error": str(e), "data": row})
+
+    return {"template": tpl, "previews": previews}
+
+
+# ─────────────────────────────────────────────────────────────
+# On-demand STATE builder — per-example toggle
+# ─────────────────────────────────────────────────────────────
+
+class BuildStateRequest(BaseModel):
+    query: str
+
+
+@router.post("/build-state")
+async def build_state_for_example(body: BuildStateRequest):
+    """Build STATE system prompt on demand for a given query."""
+    try:
+        from agent.subconscious.orchestrator import build_state
+        state = build_state(body.query)
+        return {"state": state}
+    except Exception as e:
+        return {"state": f"== STATE ==\n[error] {e}\n== END STATE ==", "error": str(e)}

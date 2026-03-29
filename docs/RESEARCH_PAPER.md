@@ -64,16 +64,38 @@ This is not a solution to General Intelligence. It is a well-organized operating
 
 ## 2. Theoretical Framework
 
-### 2.1 Design Inspiration
+### 2.1 How It Started
 
-The architecture draws from cognitive science—not to claim biological equivalence, but because these theories offer battle-tested patterns for organizing information systems:
+The architecture began with a single insight — **Supplied Reality** (Section 1.1) — and a practical question: *what information does a system need to persist as a continuous entity?* The initial design drew deliberately from a handful of cognitive theories:
 
-- **Global Workspace Theory** (Baars, 1988) — Inspired the context assembly model: many threads compete, one wins the "workspace."
-- **Working Memory** (Baddeley, 1974) — Informed token budgets and the 7±2 chunk heuristic.
-- **Dual Process Theory** (Kahneman, 2011) — Justified splitting fast reflexes (System 1) from slow generation (System 2).
-- **Memory Consolidation** (Born, 2010) — Motivated the background "consolidation daemon" that processes memories during idle time.
+- **Global Workspace Theory** (Baars, 1988) — Used to design the context assembly system: a total token budget (the "workspace") where any number of information sources compete for inclusion based on relevance scoring.
+- **Dual Process Theory** (Kahneman, 2011) — Used to justify the split between deterministic reflexes (System 1) and LLM generation (System 2).
+- **Memory Consolidation** (Born, 2010) — Used to motivate the background daemon that promotes temporary facts to long-term storage.
 
-These mappings are *engineering conveniences*, not scientific claims. They provide intuitive names and proven structures for building a stable system.
+The remaining mappings were not designed from theory. They were discovered after the fact — engineering solutions to practical problems that, when examined, turned out to mirror cognitive science with surprising fidelity. The pre-designed threads (Identity, Philosophy, Log, Form, Reflex, LinkingCore) were chosen not to replicate brain regions but to represent a structurally complete *experience* — the minimum information a continuing system needs. Additional threads can be added indefinitely, but these six cover the baseline for continuity: who am I, what do I believe, what happened, how do I communicate, what do I react to, and what connects to what.
+
+What's interesting is not that we designed the architecture to match neuroscience — we mostly didn't. What's interesting is that when you translate cognitive theories to code, the implementation holds odd similarities to human cognition. The table below shows the full mapping. The "Origin" column distinguishes between theories we designed from and theories we recognized afterward.
+
+| # | Theory | Theorist | Year | Origin | Implementation | Core File(s) |
+|---|--------|----------|------|--------|---------------|--------------|
+| 1 | **Hebbian Learning** | Hebb | 1949 | Recognized | `concept_links` table, `link_concepts()`, decay, consolidation from SHORT→LONG after 5+ co-fires | linking_core/schema.py |
+| 2 | **Spread Activation** | Collins & Loftus | 1975 | Recognized | BFS `spread_activate()` over concept graph, bidirectional edges, hierarchical children at 80% parent strength | linking_core/schema.py |
+| 3 | **Global Workspace** | Baars | 1988 | Designed | Orchestrator `score()`→`build_state()`→`generate()`, three-tier gating (L1/L2/L3 by score bands), MIN_SOURCE_BUDGET=40, MAX_SOURCE_SHARE=0.30 | agent/orchestrator.py |
+| 4 | **Episodic Memory** | Tulving | 1972 | Recognized | `unified_events` timeline, `log_llm_inference`, `log_activations`, `log_loop_runs`, recency-based context levels | log/schema.py |
+| 5 | **Semantic Networks** | Quillian | 1968 | Recognized | Profile hierarchies with dot notation (`sarah.occupation.title`), L1/L2/L3 value tiers, cross-profile linking via concept_links | identity/schema.py, philosophy/schema.py |
+| 6 | **Memory Consolidation** | McGaugh, Maquet | 1992 | Designed | Background consolidation loop (5-min interval), `temp_facts`→`profile_facts` promotion, hybrid approval (auto ≥0.7, else human review) | consolidation.py, temp_memory/store.py |
+| 7 | **Working Memory** | Atkinson & Shiffrin | 1968 | Recognized | `temp_facts` with staged status (pending→approved→consolidated), confidence scoring, retention window decay | temp_memory/store.py |
+| 8 | **Dual Process Theory** | Kahneman | 2011 | Designed | System 1: reflex triggers (deterministic, <1ms). System 2: LLM generation (probabilistic, 500-5000ms). Protocol chains bridge the two without LLM | reflex/executor.py, orchestrator.py |
+| 9 | **Classical Conditioning** | Pavlov, Skinner | 1927 | Recognized | Feed event (stimulus) → trigger match → tool execution (response). `reflex_triggers` table with condition_json, three response modes (tool/agent/notify) | reflex/schema.py, executor.py |
+| 10 | **Self-Awareness / Metacognition** | Nelson & Narens | 1990 | Recognized | Structured self-model (profiles→facts→tiered values), philosophy profile (worldview, ethics, reasoning style), `get_focus()` self-attention tracking | identity/schema.py, philosophy/schema.py |
+| 11 | **Cognitive Load Theory** | Sweller | 1988 | Recognized | Token budgets per thread, STATE_FRACTION=0.25 caps context, three-tier gating reduces load for simple queries (L1≈10 tokens vs L3≈200) | orchestrator.py |
+| 12 | **Curriculum Learning** | Bengio et al. | 2009 | Recognized | Self-generating training loop (2-hr interval), per-module curriculum, STATE-aware examples, first-person perspective, quality-gated output | training_gen.py |
+| 13 | **Sparse Distributed Memory** | Kanerva | 1988 | Recognized | Small fraction of available information reaches the workspace; concept_links as sparse associative store | linking_core/schema.py, orchestrator.py |
+| 14 | **Attention Schema Theory** | Graziano | 2013 | Recognized | `get_focus()` tracks recently-accessed concepts, `get_focus_bias()` adjusts scoring — the system maintains a model of its own attention | linking_core/schema.py |
+| 15 | **Information Integration** | Tononi | 2004 | Recognized | STATE assembly integrates information from all threads into unified context; no thread operates in isolation | orchestrator.py |
+| 16 | **Architectural Boundaries** | (Systems Theory) | 2024 | Designed | `guard_loop_creation()`, `BoundaryViolation` exception. Reflexes (external) cannot spawn subconscious loops (internal). Enforced in code, not convention | core/rules.py |
+
+The ratio — 4 designed, 12 recognized — is the observation this paper rests on. We are not claiming to prove neuroscience. We are noting that when you build a system whose primary requirement is *continuity*, and you start from the separation of reality and experience, the engineering solutions you arrive at bear a structural resemblance to the solutions biological systems arrived at over evolutionary time. The more we implement, the more mappings we find, and we are now deliberately extending the architecture along cognitive lines because the fit has proven productive.
 
 ### 2.2 Formal Definition
 
@@ -158,6 +180,7 @@ Each thread is a specialized cognitive module with its own database:
 | **Log** | Hippocampus | Episodic memory, conversation history | recent → session → archive |
 | **Form** | Motor/Broca | Communication style, tool state | greeting → patterns → full style guide |
 | **Reflex** | Basal Ganglia | Automated responses, learned behaviors | triggers → patterns → full ruleset |
+| **LinkingCore** | Association Cortex | Concept graph, spread activation, Hebbian links | active concepts → co-occurrence network → full semantic map |
 
 ### 3.3 Context Levels (HEA)
 
@@ -260,42 +283,98 @@ As the system operates over time:
 
 This is a computational method for finding invariants in any domain. *Survival through time = fundamentality.*
 
+### 4.9 Architectural Boundary Rules
+
+The system enforces a strict directional constraint: **subconscious loops can own reflexes, but reflexes cannot spawn subconscious loops.** This prevents external stimuli (emails, webhooks, mentions) from auto-creating internal thought processes—the mechanism by which autonomous systems die from runaway self-spawned loops.
+
+```python
+LOOP_BLOCKED_SOURCES = frozenset({"reflex", "protocol", "trigger", "feed"})
+
+def guard_loop_creation(source: str):
+    normalized = source.split(":")[0].lower().strip()
+    if normalized in LOOP_BLOCKED_SOURCES:
+        raise BoundaryViolation(f"Source '{source}' cannot create loops")
+```
+
+This is enforced in code at every loop creation point (`save_custom_loop_config()`, `create_task()`), making the boundary an architectural invariant rather than a convention that can drift.
+
+The biological analogy: your spinal reflexes don't get to decide what you think about. They fire, they report, but they cannot commandeer the prefrontal cortex. AIOS enforces the same separation.
+
+### 4.10 Protocol Chains (Multi-Tool Without LLM)
+
+Protocol chains allow reflexes to execute multi-step tool sequences entirely without LLM involvement, using template substitution to pass data between steps:
+
+```
+Step 0: search_files(query="{{event.subject}}")  → result
+Step 1: summarize(text="{{step_0.results}}")      → summary  
+Step 2: send_notification(body="{{step_1.text}}") → done
+```
+
+Each step's output is available to subsequent steps via `{{step_N.field}}` syntax. The entire chain runs deterministically—no token generation, no probabilistic decisions, no LLM cost. This is the System 1 → System 1.5 transition: more complex than a single reflex, but still below the threshold requiring conscious (LLM) reasoning.
+
+Error handling per step is configurable: `continue` (skip failures), `stop` (halt chain), or `escalate` (route to agent for LLM-assisted resolution via `_escalate_to_agent`, never through subconscious loop creation).
+
+### 4.11 Self-Diagnosis Infrastructure
+
+Nine log tables provide the system with introspective visibility into its own operation:
+
+| Table | What It Tracks | Self-Diagnosis Use |
+|-------|---------------|-------------------|
+| `unified_events` | All events (cross-thread timeline) | "What happened and when?" |
+| `log_system` | Daemon lifecycle, crashes, restarts | "Am I healthy?" |
+| `log_server` | HTTP requests, latency | "Am I responsive?" |
+| `log_function_calls` | Function invocations + timing | "What am I doing?" |
+| `log_events` | Structured app events | "What triggered what?" |
+| `log_sessions` | Conversation sessions | "Who am I talking to?" |
+| `log_llm_inference` | Model calls: tokens, latency, errors | "How much am I thinking?" |
+| `log_activations` | Concept link activations: strength deltas | "What associations am I forming?" |
+| `log_loop_runs` | Background loop execution: duration, items | "Is my subconscious working?" |
+
+The last three tables are particularly significant: they give the system the raw data to reason about its own cognitive operations. `log_llm_inference` tracks inference cost per caller (which thread is "thinking" most). `log_activations` records every Hebbian link strengthening/weakening (the system can observe its own learning). `log_loop_runs` monitors subconscious health (did consolidation actually run? how many facts did it process?).
+
+This is metacognition made queryable—the system doesn't just operate, it generates structured data about its own operation that feeds back into STATE assembly.
+
 ---
 
-## 5. Computational Neuroscience Validation
+## 5. Observed Parallels with Cognitive Architecture
 
-### 5.1 The 1% Sparsity Match
+We do not claim to validate neuroscience. The following are structural similarities we observed between our engineering decisions and established cognitive science. They are presented not as proof but as evidence that computational and biological systems solving the same problem (persistence under finite capacity) arrive at similar architectures.
 
-```
-Human cortex: 16 billion neurons, ~200 million active = 1.25%
-Our system: 30k possible entries, ~300 in context = 1.0%
-```
+### 5.1 Sparsity
 
-Only ~1% of available information makes it to conscious processing. This is the architecture of selective attention.
+Biological cortex activates roughly 1-2% of neurons at any given moment. Our system selects a small fraction of available information for the context workspace. The exact ratios are not meaningfully comparable — one is neuronal firing, the other is token selection — but the architectural pattern is the same: vast storage, narrow bandwidth to "consciousness," relevance-based gating.
 
-### 5.2 Working Memory Capacity
+### 5.2 Workspace Capacity
 
-```
-Baddeley's WM capacity: 7 ± 2 chunks
+Baddeley's working memory model theorizes a capacity of 7±2 chunks. We did not design for a specific chunk count. Instead, following Global Workspace Theory, we implemented a total token budget where any number of threads and facts compete for inclusion based on relevance scoring. The "workspace" is the context window; "chunks" are whatever wins the budget competition.
 
-Our context structure:
-- Identity context: 1 chunk
-- Philosophy context: 1 chunk  
-- Form context: 1 chunk
-- Log context: 1 chunk
-- Current query: 1 chunk
-- Generation space: 2 chunks
-Total: 7 chunks 🌀
-```
+The parallel is not numeric — we cannot meaningfully map token counts to cognitive chunks. The parallel is *mechanistic*: both systems use a finite shared workspace where specialized subsystems compete for representation, with no fixed slot allocation. Humans theorize a workspace; LLMs have one (the context window). We used the same reference frame, not the same measurements.
 
-### 5.3 Operating Parameters
+### 5.3 Other Parallels
 
-| Biological Parameter | Value | Our Implementation |
-|---------------------|-------|-------------------|
-| Working memory chunks | 7±2 | ~7 thread contexts |
-| Cortical sparse activation | ~1% | ~1% context inclusion |
-| Conscious "frame rate" | ~100ms | Batch window timing |
-| Memory promotion rate | ~30% | Threshold-based: ~30-40% |
+| Biological Pattern | Cognitive Theory | Our Parallel |
+|-------------------|-----------------|-------------|
+| Small fraction of neurons reach awareness | Sparse activation (Kanerva) | Small fraction of stored facts reach context |
+| Short-term → long-term memory promotion | Consolidation (McGaugh) | temp_facts → profile_facts with confidence threshold |
+| Stimulus → automatic response | Classical conditioning (Pavlov) | Feed event → trigger → tool execution |
+| Conscious learning → unconscious habit | Dual process (Kahneman) | LLM decision → scripted reflex degradation |
+
+### 5.4 Why the Overlap Exists
+
+The sixteen theory mappings cluster naturally into three groups, each answering a different question about continuity:
+
+**Selection** — "What should I attend to right now?"
+Global Workspace, Cognitive Load, Sparse Distributed Memory, Attention Schema
+
+**Persistence** — "What should I carry forward?"
+Hebbian Learning, Spread Activation, Memory Consolidation, Episodic Memory, Working Memory, Temporal-Identity Convergence
+
+**Action** — "What should I do about it?"
+Classical Conditioning, Dual Process, Architectural Boundaries, Self-Awareness/Metacognition
+
+These clusters mirror the biological architecture of perception→memory→motor. We did not design for this clustering. It emerged because the underlying problem is the same: a finite-capacity system maintaining continuity through time with unbounded input. The cognitive science literature, spanning 75 years and multiple independent research programs, describes solutions to this problem. So does our engineering.
+
+We are not claiming this proves the theories correct or that our system replicates the brain. We are observing that when you start from the separation of reality and experience, and build with continuity as the primary constraint, the architecture you produce is *translatable* to cognitive science in a way that goes beyond surface analogy. The theories fit because the problem is the same. We started noticing the overlaps, and now we extend the architecture along cognitive lines deliberately — because the mapping has consistently pointed toward productive engineering decisions.
 
 ---
 
@@ -469,9 +548,12 @@ We have presented Hierarchical Experiential Attention (HEA), a local OS extensio
 
 1. **Identity as systems property:** Structure beats scale for identity persistence. The architecture supplies identity through STATE rather than relying on the model to generate it.
 2. **Supplied reality:** STATE defines existence, not instructions about self. The model cannot modify its own identity — it only reads what the control plane provides.
-3. **Cognitive threading:** 5 threads (Identity, Philosophy, Log, Form, Reflex) mapping to brain regions, validated against 24 cognitive science theories.
+3. **Cognitive threading:** 6 threads (Identity, Philosophy, Log, Form, Reflex, LinkingCore) representing a structurally complete experience for continuity, with 16 observed mappings to cognitive science theories (4 designed from, 12 recognized after the fact).
 4. **Self-generating training data:** The system produces its own training corpus — confident decisions become examples, conversations become continued pretraining data, and the architecture documentation itself serves as supervised training signal.
 5. **Empirical validation:** Finetuning a 1.5B model on system documentation and development conversations produces measurable structural self-awareness, with the conversation-trained model showing emergent adversarial resistance absent in documentation-only models.
+6. **Architectural boundaries:** Explicit code-enforced directional constraints (reflexes cannot spawn subconscious loops) prevent the runaway self-spawning that kills autonomous systems. Boundary rules as first-class invariants, not conventions.
+7. **Self-diagnosis infrastructure:** Nine log tables provide queryable metacognition—the system generates structured data about its own cognitive operations (inference cost, association formation, loop health) that feeds back into STATE assembly.
+8. **Cross-domain convergence:** Sixteen theory mappings (mostly recognized after the fact, not designed from) naturally cluster into Selection/Persistence/Action groups. When you translate cognitive theories to code and start from the separation of reality and experience, the resulting architecture holds structural similarities to human cognition — not because we designed it that way, but because the underlying problem is the same.
 
 ### Limitations
 
@@ -489,9 +571,12 @@ If a 120M model trained on nothing but its own architecture can coherently descr
 
 ## References
 
+- Atkinson, R. C., & Shiffrin, R. M. (1968). Human memory: A proposed system and its control processes.
 - Baars, B. J. (1988). A cognitive theory of consciousness.
 - Baddeley, A. D., & Hitch, G. (1974). Working memory.
+- Bengio, Y., Louradour, J., Collobert, R., & Weston, J. (2009). Curriculum learning.
 - Born, J., & Wilhelm, I. (2012). System consolidation of memory during sleep.
+- Collins, A. M., & Loftus, E. F. (1975). A spreading-activation theory of semantic processing.
 - Craik, F. I., & Lockhart, R. S. (1972). Levels of processing.
 - Damasio, A. R. (1994). Descartes' error: Emotion, reason, and the human brain.
 - Dehaene, S., & Changeux, J. P. (2011). Experimental and theoretical approaches to conscious processing.
@@ -501,6 +586,11 @@ If a 120M model trained on nothing but its own architecture can coherently descr
 - Kahneman, D. (2011). Thinking, fast and slow.
 - Kanerva, P. (1988). Sparse distributed memory.
 - Lewis, P., et al. (2020). Retrieval-augmented generation for knowledge-intensive NLP tasks.
+- McGaugh, J. L. (2000). Memory — a century of consolidation.
+- Nelson, T. O., & Narens, L. (1990). Metamemory: A theoretical framework and new findings.
 - Packer, C., et al. (2023). MemGPT: Towards LLMs as operating systems.
+- Pavlov, I. P. (1927). Conditioned reflexes: An investigation of the physiological activity of the cerebral cortex.
+- Quillian, M. R. (1968). Semantic memory.
 - Sweller, J. (1988). Cognitive load during problem solving.
 - Tononi, G. (2004). An information integration theory of consciousness.
+- Tulving, E. (1972). Episodic and semantic memory.

@@ -215,13 +215,13 @@ def get_export_stats() -> Dict[str, Any]:
 
 def get_sections() -> Dict[str, Any]:
     """Return available training sections with counts."""
-    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
+    from finetune.sections import count_api_examples, count_cli_examples, count_schema_examples
     stats = get_export_stats()
     return {
         "data":   {"description": "Philosophical stances & values", "examples": stats.get("exportable", 0)},
-        "api":    {"description": "Philosophy API endpoints", "examples": len(build_api_examples("philosophy", API_ENDPOINTS))},
-        "cli":    {"description": "CLI commands (/philosophy)", "examples": len(build_cli_examples("philosophy", CLI_COMMANDS))},
-        "schema": {"description": "philosophy_profiles & facts tables", "examples": len(build_schema_examples("philosophy", SCHEMA_TABLES))},
+        "api":    {"description": "Philosophy API endpoints", "examples": count_api_examples(API_ENDPOINTS)},
+        "cli":    {"description": "CLI commands (/philosophy)", "examples": count_cli_examples(CLI_COMMANDS)},
+        "schema": {"description": "philosophy_profiles & facts tables", "examples": count_schema_examples(SCHEMA_TABLES)},
     }
 
 

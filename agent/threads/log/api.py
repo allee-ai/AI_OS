@@ -427,6 +427,9 @@ async def list_log_tables():
         "log_system": {"icon": "🖥️", "label": "System / Daemon", "columns": ["id", "timestamp", "level", "source", "message"]},
         "log_server": {"icon": "🌐", "label": "Server / HTTP", "columns": ["id", "timestamp", "method", "path", "status_code", "duration_ms"]},
         "log_function_calls": {"icon": "🔍", "label": "Function Calls", "columns": ["id", "timestamp", "function_name", "module", "duration_ms", "success"]},
+        "log_llm_inference": {"icon": "🧠", "label": "LLM Inference", "columns": ["id", "timestamp", "model", "prompt_tokens", "completion_tokens", "latency_ms", "success"]},
+        "log_activations": {"icon": "⚡", "label": "Activations", "columns": ["id", "timestamp", "concept_a", "concept_b", "activation_type", "strength_delta", "trigger"]},
+        "log_loop_runs": {"icon": "🔄", "label": "Loop Runs", "columns": ["id", "timestamp", "loop_name", "status", "duration_ms", "items_processed"]},
     }
 
     with closing(get_connection(readonly=True)) as conn:
@@ -456,3 +459,177 @@ async def list_log_tables():
                 tables.append({"name": tname, "count": count, "icon": "📦", "label": label, "columns": ["key", "created_at", "weight", "metadata_json", "data_json"]})
 
     return {"tables": tables}
+
+
+# ─────────────────────────────────────────────────────────────
+# LLM Inference Log Endpoints
+# ─────────────────────────────────────────────────────────────
+
+class LLMLogCreate(BaseModel):
+    model: str
+    prompt_tokens: int = 0
+    completion_tokens: int = 0
+    latency_ms: float = 0
+    success: bool = True
+    error: Optional[str] = None
+    caller: Optional[str] = None
+    provider: str = "local"
+    session_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@router.get("/llm")
+async def list_llm_calls(
+    model: Optional[str] = None,
+    caller: Optional[str] = None,
+    success_only: bool = False,
+    since: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=1000),
+):
+    """Query LLM inference logs."""
+    from .schema import get_llm_calls
+    calls = get_llm_calls(
+        model=model, caller=caller,
+        success_only=success_only, since=since, limit=limit,
+    )
+    return {"calls": calls, "count": len(calls)}
+
+
+@router.post("/llm")
+async def create_llm_log(entry: LLMLogCreate):
+    """Log an LLM inference call."""
+    from .schema import log_llm_call
+    log_id = log_llm_call(
+        model=entry.model,
+        prompt_tokens=entry.prompt_tokens,
+        completion_tokens=entry.completion_tokens,
+        latency_ms=entry.latency_ms,
+        success=entry.success,
+        error=entry.error,
+        caller=entry.caller,
+        provider=entry.provider,
+        session_id=entry.session_id,
+        metadata=entry.metadata,
+    )
+    return {"status": "created", "log_id": log_id}
+
+
+@router.get("/llm/stats")
+async def llm_statistics(since: Optional[str] = None):
+    """
+    LLM usage statistics — calls, tokens, latency, error rate per model.
+    Use for self-diagnosis and model switching decisions.
+    """
+    from .schema import get_llm_stats
+    return get_llm_stats(since=since)
+
+
+# ─────────────────────────────────────────────────────────────
+# Activation Log Endpoints
+# ─────────────────────────────────────────────────────────────
+
+class ActivationLogCreate(BaseModel):
+    concept_a: str
+    concept_b: Optional[str] = None
+    activation_type: str = "spread"
+    strength_before: Optional[float] = None
+    strength_after: Optional[float] = None
+    trigger: Optional[str] = None
+    hops: int = 1
+    session_id: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@router.get("/activations")
+async def list_activations(
+    concept: Optional[str] = None,
+    activation_type: Optional[str] = None,
+    trigger: Optional[str] = None,
+    since: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=1000),
+):
+    """Query concept activation logs."""
+    from .schema import get_activations
+    acts = get_activations(
+        concept=concept, activation_type=activation_type,
+        trigger=trigger, since=since, limit=limit,
+    )
+    return {"activations": acts, "count": len(acts)}
+
+
+@router.post("/activations")
+async def create_activation_log(entry: ActivationLogCreate):
+    """Log a concept activation event."""
+    from .schema import log_activation
+    log_id = log_activation(
+        concept_a=entry.concept_a,
+        concept_b=entry.concept_b,
+        activation_type=entry.activation_type,
+        strength_before=entry.strength_before,
+        strength_after=entry.strength_after,
+        trigger=entry.trigger,
+        hops=entry.hops,
+        session_id=entry.session_id,
+        metadata=entry.metadata,
+    )
+    return {"status": "created", "log_id": log_id}
+
+
+@router.get("/activations/stats")
+async def activation_statistics(since: Optional[str] = None):
+    """Activation statistics — top concepts, type breakdown."""
+    from .schema import get_activation_stats
+    return get_activation_stats(since=since)
+
+
+# ─────────────────────────────────────────────────────────────
+# Loop Run Log Endpoints
+# ─────────────────────────────────────────────────────────────
+
+class LoopRunCreate(BaseModel):
+    loop_name: str
+    status: str = "completed"
+    duration_ms: float = 0
+    items_processed: int = 0
+    items_changed: int = 0
+    error: Optional[str] = None
+    metadata: Optional[Dict[str, Any]] = None
+
+
+@router.get("/loops")
+async def list_loop_runs(
+    loop_name: Optional[str] = None,
+    status: Optional[str] = None,
+    since: Optional[str] = None,
+    limit: int = Query(100, ge=1, le=1000),
+):
+    """Query subconscious loop run logs."""
+    from .schema import get_loop_runs
+    runs = get_loop_runs(
+        loop_name=loop_name, status=status,
+        since=since, limit=limit,
+    )
+    return {"runs": runs, "count": len(runs)}
+
+
+@router.post("/loops")
+async def create_loop_run(entry: LoopRunCreate):
+    """Log a subconscious loop execution."""
+    from .schema import log_loop_run
+    log_id = log_loop_run(
+        loop_name=entry.loop_name,
+        status=entry.status,
+        duration_ms=entry.duration_ms,
+        items_processed=entry.items_processed,
+        items_changed=entry.items_changed,
+        error=entry.error,
+        metadata=entry.metadata,
+    )
+    return {"status": "created", "log_id": log_id}
+
+
+@router.get("/loops/stats")
+async def loop_statistics(since: Optional[str] = None):
+    """Loop statistics — runs per loop, avg duration, error rates."""
+    from .schema import get_loop_stats
+    return get_loop_stats(since=since)

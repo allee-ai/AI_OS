@@ -85,6 +85,25 @@ def log_decision(
 
 
 # ─────────────────────────────────────────────────────────────
+# Template Loading
+# ─────────────────────────────────────────────────────────────
+
+def _load_templates(module: str, section: str) -> List[Dict[str, str]]:
+    """Load enabled training templates from the DB for a module+section."""
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            conn.row_factory = lambda c, r: dict(zip([col[0] for col in c.description], r))
+            return conn.execute(
+                "SELECT * FROM training_templates WHERE module = ? AND section = ? AND enabled = 1",
+                (module, section),
+            ).fetchall()
+    except Exception:
+        return []
+
+
+# ─────────────────────────────────────────────────────────────
 # Batch Export Functions
 # ─────────────────────────────────────────────────────────────
 
@@ -118,7 +137,7 @@ def export_training_data(
     
     examples = []
 
-    # ── Data section: concept associations ──
+    # ── Data section: template-driven from training_templates table ──
     if "data" in sections:
         def get_state(query: str) -> str:
             try:
@@ -134,55 +153,60 @@ def export_training_data(
                     "== END STATE =="
                 )
 
-        links = get_long_links(limit=1000)
-        links = [l for l in links
-                 if l["strength"] >= min_strength and l["fire_count"] >= min_fire_count]
-        links.sort(key=lambda l: l["strength"], reverse=True)
-        links = links[:max_associations]
+        # Load templates from DB
+        templates = _load_templates("linking_core", "data")
 
-        # Instead of bidirectional mechanical pairs, generate ONE example per link
-        # with conversational framing
-        for link in links:
-            concept_a = link["concept_a"]
-            concept_b = link["concept_b"]
-            strength = link["strength"]
-            fire_count = link["fire_count"]
+        # Association templates
+        assoc_templates = [t for t in templates if t["name"] == "association"]
+        if assoc_templates:
+            links = get_long_links(limit=1000)
+            links = [l for l in links
+                     if l["strength"] >= min_strength and l["fire_count"] >= min_fire_count]
+            links.sort(key=lambda l: l["strength"], reverse=True)
+            links = links[:max_associations]
 
-            state = get_state(concept_a)
-            examples.append({
-                "messages": [
-                    {"role": "system", "content": state},
-                    {"role": "user", "content": f"What's related to {concept_a}?"},
-                    {"role": "assistant", "content": (
-                        f"My linking_core graph has {concept_a} ↔ {concept_b} "
-                        f"(strength: {strength:.2f}, fired {fire_count} times). "
-                        "This is a LONG-potentiated link — it's been reinforced enough "
-                        "to persist in long-term memory."
-                    )},
-                ],
-                "metadata": {"source": "linking_core", "section": "data", "type": "association", "strength": strength},
-            })
-
-        # Spread activation (keep a few, but conversational)
-        if include_spread and links:
-            seeds = list(set([l["concept_a"] for l in links[:30]]))[:5]
-            for seed in seeds:
-                activated = spread_activate([seed], activation_threshold=0.3, max_hops=2, limit=5)
-                if activated:
-                    chain = ", ".join([a['concept'] for a in activated])
-                    state = get_state(seed)
+            for link in links:
+                state = get_state(link["concept_a"])
+                for tpl in assoc_templates:
+                    try:
+                        q = tpl["question_template"].format_map(link)
+                        a = tpl["answer_template"].format_map(link)
+                    except (KeyError, ValueError):
+                        continue
                     examples.append({
                         "messages": [
                             {"role": "system", "content": state},
-                            {"role": "user", "content": f"What connects to {seed} in your mind?"},
-                            {"role": "assistant", "content": (
-                                f"Spread activation from '{seed}' reaches: {chain}. "
-                                "These are the concepts that light up through my Hebbian graph — "
-                                "each hop follows the strongest links first."
-                            )},
+                            {"role": "user", "content": q},
+                            {"role": "assistant", "content": a},
                         ],
-                        "metadata": {"source": "linking_core", "section": "data", "type": "spread_activation", "seed": seed},
+                        "metadata": {"source": "linking_core", "section": "data", "type": "association", "template": tpl["name"], "strength": link["strength"]},
                     })
+
+        # Spread activation templates
+        spread_templates = [t for t in templates if t["name"] == "spread_activation"]
+        if include_spread and spread_templates:
+            # Get seeds from top links
+            seed_links = get_long_links(limit=30)
+            seeds = list(set([l["concept_a"] for l in seed_links]))[:5]
+            for seed in seeds:
+                activated = spread_activate([seed], activation_threshold=0.3, max_hops=2, limit=5)
+                if activated:
+                    row = {"seed": seed, "chain": ", ".join([a["concept"] for a in activated])}
+                    state = get_state(seed)
+                    for tpl in spread_templates:
+                        try:
+                            q = tpl["question_template"].format_map(row)
+                            a = tpl["answer_template"].format_map(row)
+                        except (KeyError, ValueError):
+                            continue
+                        examples.append({
+                            "messages": [
+                                {"role": "system", "content": state},
+                                {"role": "user", "content": q},
+                                {"role": "assistant", "content": a},
+                            ],
+                            "metadata": {"source": "linking_core", "section": "data", "type": "spread_activation", "template": tpl["name"], "seed": seed},
+                        })
 
         # Architectural self-knowledge — this is critical, must be in weights
         stats = get_potentiation_stats()
@@ -243,15 +267,21 @@ def export_training_data(
 
 
 def get_export_stats() -> Dict[str, Any]:
-    """Get stats about exportable linking data."""
-    from .schema import get_long_links, get_potentiation_stats
-    
-    links = get_long_links(limit=1000)
+    """Get stats about exportable linking data (count-only, no row fetch)."""
+    from .schema import get_connection, get_potentiation_stats
+    from contextlib import closing
+
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        cur.execute("SELECT COUNT(*) FROM concept_links WHERE potentiation = 'LONG'")
+        long_count = cur.fetchone()[0]
+        cur.execute("SELECT COUNT(*) FROM concept_links WHERE potentiation = 'LONG' AND strength >= 0.5 AND fire_count >= 3")
+        exportable = cur.fetchone()[0]
+
     stats = get_potentiation_stats()
-    exportable = len([l for l in links if l["strength"] >= 0.5 and l["fire_count"] >= 3])
-    
+
     return {
-        "long_links": len(links),
+        "long_links": long_count,
         "potentiation": stats,
         "exportable": exportable
     }
@@ -259,11 +289,11 @@ def get_export_stats() -> Dict[str, Any]:
 
 def get_sections() -> Dict[str, Any]:
     """Return available training sections with counts."""
-    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
+    from finetune.sections import count_api_examples, count_cli_examples, count_schema_examples
     stats = get_export_stats()
     return {
         "data":   {"description": "Concept associations & spread activation chains", "examples": stats.get("exportable", 0)},
-        "api":    {"description": "Linking core API endpoints", "examples": len(build_api_examples("linking_core", API_ENDPOINTS))},
-        "cli":    {"description": "CLI commands (/graph, /mindmap)", "examples": len(build_cli_examples("linking_core", CLI_COMMANDS))},
-        "schema": {"description": "concept_links & key_cooccurrence tables", "examples": len(build_schema_examples("linking_core", SCHEMA_TABLES))},
+        "api":    {"description": "Linking core API endpoints", "examples": count_api_examples(API_ENDPOINTS)},
+        "cli":    {"description": "CLI commands (/graph, /mindmap)", "examples": count_cli_examples(CLI_COMMANDS)},
+        "schema": {"description": "concept_links & key_cooccurrence tables", "examples": count_schema_examples(SCHEMA_TABLES)},
     }

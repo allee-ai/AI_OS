@@ -449,10 +449,11 @@ def get_export_stats() -> Dict[str, Any]:
 
 def get_sections() -> Dict[str, Any]:
     """Return available training sections with counts."""
+    from finetune.sections import count_api_examples
     stats = get_export_stats()
     return {
         "data":   {"description": "Module features, architecture knowledge, roadmap", "examples": stats["exportable"]},
-        "api":    {"description": "Docs API endpoints", "examples": len(build_api_examples("docs", API_ENDPOINTS))},
+        "api":    {"description": "Docs API endpoints", "examples": count_api_examples(API_ENDPOINTS)},
         "cli":    {"description": "No CLI commands", "examples": 0},
         "schema": {"description": "No database tables", "examples": 0},
     }

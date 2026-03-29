@@ -179,11 +179,11 @@ def get_export_stats() -> Dict[str, Any]:
 
 def get_sections() -> Dict[str, Any]:
     """Return available training sections with counts."""
-    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
+    from finetune.sections import count_api_examples, count_cli_examples, count_schema_examples
     stats = get_export_stats()
     return {
         "data":   {"description": "Conversation turns & memory events", "examples": stats.get("exportable", 0)},
-        "api":    {"description": "Log/timeline API endpoints", "examples": len(build_api_examples("log", API_ENDPOINTS))},
-        "cli":    {"description": "CLI commands (/log)", "examples": len(build_cli_examples("log", CLI_COMMANDS))},
-        "schema": {"description": "unified_events, log_system, log_server tables", "examples": len(build_schema_examples("log", SCHEMA_TABLES))},
+        "api":    {"description": "Log/timeline API endpoints", "examples": count_api_examples(API_ENDPOINTS)},
+        "cli":    {"description": "CLI commands (/log)", "examples": count_cli_examples(CLI_COMMANDS)},
+        "schema": {"description": "unified_events, log_system, log_server tables", "examples": count_schema_examples(SCHEMA_TABLES)},
     }

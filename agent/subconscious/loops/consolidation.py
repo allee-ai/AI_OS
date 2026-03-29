@@ -341,7 +341,8 @@ class ConsolidationLoop(BackgroundLoop):
 
                     try:
                         from agent.threads.linking_core.schema import index_key_in_concept_graph
-                        index_key_in_concept_graph(key, fact.text)
+                        thread_name = "philosophy" if is_philosophy else "identity"
+                        index_key_in_concept_graph(key, fact.text, thread=thread_name)
                     except Exception:
                         pass
 

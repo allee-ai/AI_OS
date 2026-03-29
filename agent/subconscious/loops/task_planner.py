@@ -91,6 +91,14 @@ def _ensure_tasks_table() -> None:
 def create_task(goal: str, source: str = "manual") -> Dict[str, Any]:
     """Create a new task. Returns the task dict with id."""
     _ensure_tasks_table()
+    
+    # System Rule: Reflexes cannot spawn subconscious tasks/loops
+    try:
+        from agent.core.rules import guard_loop_creation
+        guard_loop_creation(source)
+    except ImportError:
+        pass  # rules module not available yet
+    
     try:
         from data.db import get_connection
         from contextlib import closing

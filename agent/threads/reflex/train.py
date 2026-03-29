@@ -234,13 +234,13 @@ def get_export_stats() -> Dict[str, Any]:
 
 def get_sections() -> Dict[str, Any]:
     """Return available training sections with counts."""
-    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
+    from finetune.sections import count_api_examples, count_cli_examples, count_schema_examples
     stats = get_export_stats()
     return {
         "data":   {"description": "Feed-to-tool triggers & logged decisions", "examples": stats.get("examples", 0)},
-        "api":    {"description": "Reflex/trigger API endpoints", "examples": len(build_api_examples("reflex", API_ENDPOINTS))},
-        "cli":    {"description": "CLI commands (/triggers, /protocols)", "examples": len(build_cli_examples("reflex", CLI_COMMANDS))},
-        "schema": {"description": "reflex_triggers table", "examples": len(build_schema_examples("reflex", SCHEMA_TABLES))},
+        "api":    {"description": "Reflex/trigger API endpoints", "examples": count_api_examples(API_ENDPOINTS)},
+        "cli":    {"description": "CLI commands (/triggers, /protocols)", "examples": count_cli_examples(CLI_COMMANDS)},
+        "schema": {"description": "reflex_triggers table", "examples": count_schema_examples(SCHEMA_TABLES)},
     }
 
 

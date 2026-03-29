@@ -83,6 +83,13 @@ def save_custom_loop_config(
     """Save or update a custom loop config in the database."""
     _ensure_custom_loops_table()
     
+    # System Rule: Reflexes cannot create subconscious loops
+    try:
+        from agent.core.rules import guard_loop_creation
+        guard_loop_creation(source)
+    except ImportError:
+        pass  # rules module not available yet
+    
     if source not in CUSTOM_LOOP_SOURCES:
         raise ValueError(f"Invalid source '{source}'. Must be one of: {CUSTOM_LOOP_SOURCES}")
     if target not in CUSTOM_LOOP_TARGETS:

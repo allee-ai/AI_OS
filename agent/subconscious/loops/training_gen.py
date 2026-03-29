@@ -692,6 +692,35 @@ def get_generated_examples(module: Optional[str] = None) -> List[Dict[str, Any]]
     return examples
 
 
+def get_generated_counts_by_type(module: str) -> tuple:
+    """Count generated examples by type without loading full JSON.
+    
+    Returns (ds_by_section, non_docstring) where ds_by_section maps
+    section names to counts for docstring-typed examples.
+    """
+    ds_by_section: dict[str, int] = {}
+    non_docstring = 0
+    path = GENERATED_DIR / f"{module}.jsonl"
+    if not path.exists():
+        return ds_by_section, non_docstring
+    with open(path) as f:
+        for line in f:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                ex = json.loads(line)
+                meta = ex.get("metadata", {})
+                if meta.get("type") == "docstring":
+                    sec = meta.get("section", "data")
+                    ds_by_section[sec] = ds_by_section.get(sec, 0) + 1
+                else:
+                    non_docstring += 1
+            except json.JSONDecodeError:
+                pass
+    return ds_by_section, non_docstring
+
+
 def get_generated_count(module: Optional[str] = None) -> int:
     """Count generated examples, optionally for a specific module."""
     count = 0

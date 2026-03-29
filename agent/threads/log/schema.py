@@ -11,6 +11,10 @@ Tables:
 - log_sessions: Session metadata
 - log_system: Daemon/infrastructure logs
 - log_server: HTTP requests, errors, performance (agent-monitorable)
+- log_function_calls: Function call traces with dedup
+- log_llm_inference: LLM call metrics (model, tokens, latency, cost)
+- log_activations: LinkingCore concept activation traces
+- log_loop_runs: Subconscious loop execution records
 """
 
 import sqlite3
@@ -1219,3 +1223,480 @@ def trace_function(
             return async_wrapper
         return wrapper
     return decorator
+
+
+# ============================================================================
+# LLM Inference Logging
+# ============================================================================
+
+def init_llm_inference_table(conn: sqlite3.Connection = None) -> None:
+    """
+    Create table for LLM inference metrics.
+    Every LLM call gets logged — model, token counts, latency, cost.
+    Enables: model switching decisions, cost tracking, self-diagnosis.
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS log_llm_inference (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            model TEXT NOT NULL,
+            provider TEXT DEFAULT 'local',
+            prompt_tokens INTEGER DEFAULT 0,
+            completion_tokens INTEGER DEFAULT 0,
+            total_tokens INTEGER DEFAULT 0,
+            latency_ms REAL DEFAULT 0,
+            success INTEGER DEFAULT 1,
+            error TEXT,
+            caller TEXT,
+            session_id TEXT,
+            metadata_json TEXT DEFAULT '{}'
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_llm_model ON log_llm_inference(model)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_llm_ts ON log_llm_inference(timestamp DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_llm_caller ON log_llm_inference(caller)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_llm_success ON log_llm_inference(success)")
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def log_llm_call(
+    model: str,
+    prompt_tokens: int = 0,
+    completion_tokens: int = 0,
+    latency_ms: float = 0,
+    success: bool = True,
+    error: str = None,
+    caller: str = None,
+    provider: str = "local",
+    session_id: str = None,
+    metadata: Dict[str, Any] = None,
+) -> int:
+    """
+    Log an LLM inference call.
+
+    Returns log ID.
+    """
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_llm_inference_table(conn)
+        metadata_json = json.dumps(metadata, default=str) if metadata else None
+        cur.execute("""
+            INSERT INTO log_llm_inference
+            (model, provider, prompt_tokens, completion_tokens, total_tokens,
+             latency_ms, success, error, caller, session_id, metadata_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            model, provider, prompt_tokens, completion_tokens,
+            prompt_tokens + completion_tokens, latency_ms,
+            1 if success else 0, error, caller, session_id, metadata_json,
+        ))
+        log_id = cur.lastrowid
+        conn.commit()
+    return log_id
+
+
+def get_llm_calls(
+    model: str = None,
+    caller: str = None,
+    success_only: bool = False,
+    since: str = None,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    """Query LLM inference logs."""
+    init_llm_inference_table()
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        query = "SELECT * FROM log_llm_inference WHERE 1=1"
+        params: list = []
+        if model:
+            query += " AND model = ?"
+            params.append(model)
+        if caller:
+            query += " AND caller = ?"
+            params.append(caller)
+        if success_only:
+            query += " AND success = 1"
+        if since:
+            query += " AND timestamp > ?"
+            params.append(since)
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        try:
+            cur.execute(query, params)
+            results = []
+            for row in cur.fetchall():
+                r = dict(row)
+                if r.get("metadata_json"):
+                    try:
+                        r["metadata"] = json.loads(r["metadata_json"])
+                    except Exception:
+                        r["metadata"] = {}
+                else:
+                    r["metadata"] = {}
+                del r["metadata_json"]
+                results.append(r)
+            return results
+        except sqlite3.OperationalError:
+            return []
+
+
+def get_llm_stats(since: str = None) -> Dict[str, Any]:
+    """
+    Get LLM usage statistics — total calls, tokens, cost estimate, error rate.
+    Enables self-diagnosis: which model is failing? which caller is expensive?
+    """
+    init_llm_inference_table()
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        time_clause = ""
+        params: list = []
+        if since:
+            time_clause = " WHERE timestamp > ?"
+            params.append(since)
+        try:
+            cur.execute(f"SELECT COUNT(*) FROM log_llm_inference{time_clause}", params)
+            total = cur.fetchone()[0]
+
+            and_clause = " AND timestamp > ?" if since else ""
+            err_params = list(params)
+            cur.execute(
+                f"SELECT COUNT(*) FROM log_llm_inference WHERE success = 0{and_clause}",
+                err_params,
+            )
+            errors = cur.fetchone()[0]
+
+            cur.execute(
+                f"SELECT SUM(total_tokens), SUM(prompt_tokens), SUM(completion_tokens), "
+                f"AVG(latency_ms) FROM log_llm_inference{time_clause}",
+                params,
+            )
+            row = cur.fetchone()
+            total_tokens = row[0] or 0
+            prompt_tokens = row[1] or 0
+            completion_tokens = row[2] or 0
+            avg_latency = row[3] or 0
+
+            cur.execute(
+                f"SELECT model, COUNT(*) as cnt, SUM(total_tokens) as tok, AVG(latency_ms) as lat "
+                f"FROM log_llm_inference{time_clause} GROUP BY model ORDER BY cnt DESC",
+                params,
+            )
+            by_model = [
+                {"model": r[0], "calls": r[1], "tokens": r[2] or 0, "avg_latency_ms": round(r[3] or 0, 2)}
+                for r in cur.fetchall()
+            ]
+
+            return {
+                "total_calls": total,
+                "error_count": errors,
+                "error_rate": round((errors / total * 100) if total else 0, 2),
+                "total_tokens": total_tokens,
+                "prompt_tokens": prompt_tokens,
+                "completion_tokens": completion_tokens,
+                "avg_latency_ms": round(avg_latency, 2),
+                "by_model": by_model,
+            }
+        except sqlite3.OperationalError:
+            return {"total_calls": 0, "error_count": 0, "error_rate": 0,
+                    "total_tokens": 0, "avg_latency_ms": 0, "by_model": []}
+
+
+# ============================================================================
+# Activation Logging (LinkingCore concept activation traces)
+# ============================================================================
+
+def init_activation_log_table(conn: sqlite3.Connection = None) -> None:
+    """
+    Create table for concept activation traces.
+    Logs every spread_activate / concept link change for self-diagnosis.
+    Enables: "which concepts fired?", "why did that link strengthen?"
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS log_activations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            concept_a TEXT NOT NULL,
+            concept_b TEXT,
+            activation_type TEXT DEFAULT 'spread',
+            strength_before REAL,
+            strength_after REAL,
+            strength_delta REAL,
+            trigger TEXT,
+            hops INTEGER DEFAULT 1,
+            session_id TEXT,
+            metadata_json TEXT DEFAULT '{}'
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_act_concept ON log_activations(concept_a)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_act_ts ON log_activations(timestamp DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_act_type ON log_activations(activation_type)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_act_trigger ON log_activations(trigger)")
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def log_activation(
+    concept_a: str,
+    concept_b: str = None,
+    activation_type: str = "spread",
+    strength_before: float = None,
+    strength_after: float = None,
+    trigger: str = None,
+    hops: int = 1,
+    session_id: str = None,
+    metadata: Dict[str, Any] = None,
+) -> int:
+    """
+    Log a concept activation event.
+
+    activation_type: "spread" | "strengthen" | "weaken" | "create" | "prune"
+    trigger: what caused it — "conversation", "memory_loop", "reflex", etc.
+    """
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_activation_log_table(conn)
+        delta = None
+        if strength_before is not None and strength_after is not None:
+            delta = strength_after - strength_before
+        metadata_json = json.dumps(metadata, default=str) if metadata else None
+        cur.execute("""
+            INSERT INTO log_activations
+            (concept_a, concept_b, activation_type, strength_before, strength_after,
+             strength_delta, trigger, hops, session_id, metadata_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        """, (
+            concept_a, concept_b, activation_type,
+            strength_before, strength_after, delta,
+            trigger, hops, session_id, metadata_json,
+        ))
+        log_id = cur.lastrowid
+        conn.commit()
+    return log_id
+
+
+def get_activations(
+    concept: str = None,
+    activation_type: str = None,
+    trigger: str = None,
+    since: str = None,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    """Query activation logs."""
+    init_activation_log_table()
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        query = "SELECT * FROM log_activations WHERE 1=1"
+        params: list = []
+        if concept:
+            query += " AND (concept_a = ? OR concept_b = ?)"
+            params.extend([concept, concept])
+        if activation_type:
+            query += " AND activation_type = ?"
+            params.append(activation_type)
+        if trigger:
+            query += " AND trigger = ?"
+            params.append(trigger)
+        if since:
+            query += " AND timestamp > ?"
+            params.append(since)
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        try:
+            cur.execute(query, params)
+            results = []
+            for row in cur.fetchall():
+                r = dict(row)
+                if r.get("metadata_json"):
+                    try:
+                        r["metadata"] = json.loads(r["metadata_json"])
+                    except Exception:
+                        r["metadata"] = {}
+                else:
+                    r["metadata"] = {}
+                del r["metadata_json"]
+                results.append(r)
+            return results
+        except sqlite3.OperationalError:
+            return []
+
+
+def get_activation_stats(since: str = None) -> Dict[str, Any]:
+    """Activation statistics — top concepts, type breakdown."""
+    init_activation_log_table()
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        time_clause = ""
+        params: list = []
+        if since:
+            time_clause = " WHERE timestamp > ?"
+            params.append(since)
+        try:
+            cur.execute(f"SELECT COUNT(*) FROM log_activations{time_clause}", params)
+            total = cur.fetchone()[0]
+
+            cur.execute(
+                f"SELECT activation_type, COUNT(*) FROM log_activations{time_clause} GROUP BY activation_type",
+                params,
+            )
+            by_type = dict(cur.fetchall())
+
+            cur.execute(
+                f"SELECT concept_a, COUNT(*) as cnt FROM log_activations{time_clause} "
+                f"GROUP BY concept_a ORDER BY cnt DESC LIMIT 20",
+                params,
+            )
+            top_concepts = [{"concept": r[0], "activations": r[1]} for r in cur.fetchall()]
+
+            return {"total_activations": total, "by_type": by_type, "top_concepts": top_concepts}
+        except sqlite3.OperationalError:
+            return {"total_activations": 0, "by_type": {}, "top_concepts": []}
+
+
+# ============================================================================
+# Subconscious Loop Run Logging
+# ============================================================================
+
+def init_loop_run_table(conn: sqlite3.Connection = None) -> None:
+    """
+    Create table for subconscious loop execution records.
+    Logs every loop tick — duration, items processed, errors.
+    Enables: "is the memory loop stalling?", "which loop is slowest?"
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS log_loop_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            timestamp TEXT DEFAULT CURRENT_TIMESTAMP,
+            loop_name TEXT NOT NULL,
+            status TEXT DEFAULT 'completed',
+            duration_ms REAL DEFAULT 0,
+            items_processed INTEGER DEFAULT 0,
+            items_changed INTEGER DEFAULT 0,
+            error TEXT,
+            metadata_json TEXT DEFAULT '{}'
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_loop_name ON log_loop_runs(loop_name)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_loop_ts ON log_loop_runs(timestamp DESC)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_loop_status ON log_loop_runs(status)")
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def log_loop_run(
+    loop_name: str,
+    status: str = "completed",
+    duration_ms: float = 0,
+    items_processed: int = 0,
+    items_changed: int = 0,
+    error: str = None,
+    metadata: Dict[str, Any] = None,
+) -> int:
+    """
+    Log a subconscious loop execution.
+
+    status: "completed" | "error" | "skipped" | "timeout"
+    """
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_loop_run_table(conn)
+        metadata_json = json.dumps(metadata, default=str) if metadata else None
+        cur.execute("""
+            INSERT INTO log_loop_runs
+            (loop_name, status, duration_ms, items_processed, items_changed, error, metadata_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        """, (loop_name, status, duration_ms, items_processed, items_changed, error, metadata_json))
+        log_id = cur.lastrowid
+        conn.commit()
+    return log_id
+
+
+def get_loop_runs(
+    loop_name: str = None,
+    status: str = None,
+    since: str = None,
+    limit: int = 100,
+) -> List[Dict[str, Any]]:
+    """Query loop run logs."""
+    init_loop_run_table()
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        query = "SELECT * FROM log_loop_runs WHERE 1=1"
+        params: list = []
+        if loop_name:
+            query += " AND loop_name = ?"
+            params.append(loop_name)
+        if status:
+            query += " AND status = ?"
+            params.append(status)
+        if since:
+            query += " AND timestamp > ?"
+            params.append(since)
+        query += " ORDER BY timestamp DESC LIMIT ?"
+        params.append(limit)
+        try:
+            cur.execute(query, params)
+            results = []
+            for row in cur.fetchall():
+                r = dict(row)
+                if r.get("metadata_json"):
+                    try:
+                        r["metadata"] = json.loads(r["metadata_json"])
+                    except Exception:
+                        r["metadata"] = {}
+                else:
+                    r["metadata"] = {}
+                del r["metadata_json"]
+                results.append(r)
+            return results
+        except sqlite3.OperationalError:
+            return []
+
+
+def get_loop_stats(since: str = None) -> Dict[str, Any]:
+    """Loop statistics — runs per loop, avg duration, error rates."""
+    init_loop_run_table()
+    with closing(get_connection(readonly=True)) as conn:
+        cur = conn.cursor()
+        time_clause = ""
+        params: list = []
+        if since:
+            time_clause = " WHERE timestamp > ?"
+            params.append(since)
+        try:
+            cur.execute(f"SELECT COUNT(*) FROM log_loop_runs{time_clause}", params)
+            total = cur.fetchone()[0]
+
+            cur.execute(
+                f"SELECT loop_name, COUNT(*) as runs, AVG(duration_ms) as avg_ms, "
+                f"SUM(items_processed) as processed, SUM(items_changed) as changed, "
+                f"SUM(CASE WHEN status = 'error' THEN 1 ELSE 0 END) as errors "
+                f"FROM log_loop_runs{time_clause} GROUP BY loop_name ORDER BY runs DESC",
+                params,
+            )
+            by_loop = [
+                {
+                    "loop": r[0], "runs": r[1],
+                    "avg_duration_ms": round(r[2] or 0, 2),
+                    "items_processed": r[3] or 0,
+                    "items_changed": r[4] or 0,
+                    "errors": r[5] or 0,
+                }
+                for r in cur.fetchall()
+            ]
+
+            return {"total_runs": total, "by_loop": by_loop}
+        except sqlite3.OperationalError:
+            return {"total_runs": 0, "by_loop": []}

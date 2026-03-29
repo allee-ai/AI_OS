@@ -373,32 +373,207 @@ def _execute_protocol(
     event_payload: Dict[str, Any],
 ) -> Dict[str, Any]:
     """
-    Execute a stored task chain (protocol) via the task planner.
+    Execute a protocol chain — multiple tool calls WITHOUT the LLM.
 
-    The trigger's tool_params_json should contain a ``goal`` string.
-    The task planner decomposes and executes it like any other task.
+    Like a morning briefing: run 5-6 tools, collect their outputs,
+    format the result. Only involves the LLM if something unexpected
+    happens (API format change detected, regex mismatch, etc).
+
+    Protocol format in tool_params_json:
+    {
+        "steps": [
+            {"tool": "feed_gmail", "action": "read_inbox", "params": {"limit": 5}},
+            {"tool": "browser",    "action": "extract",    "params": {"url": "..."}},
+            {"tool": "memory",     "action": "recall",     "params": {"query": "schedule"}}
+        ],
+        "format": "briefing",        # "briefing" | "json" | "summary"
+        "on_error": "continue",      # "continue" | "stop" | "escalate"
+        "goal": "Morning briefing"   # Fallback to task planner if steps empty
+    }
+
+    If 'steps' is empty/missing, falls back to the task planner.
     """
-    try:
-        from agent.subconscious.loops import create_task, TaskPlanner
+    tool_params = trigger.get("tool_params") or {}
+    if isinstance(tool_params, str):
+        try:
+            tool_params = json.loads(tool_params)
+        except json.JSONDecodeError:
+            tool_params = {}
 
-        goal = (trigger.get("tool_params") or {}).get("goal", "")
-        if not goal:
-            goal = f"Protocol: {trigger.get('name', 'unnamed')} — {trigger.get('description', '')}"
+    steps = tool_params.get("steps", [])
+    on_error = tool_params.get("on_error", "continue")
+    output_format = tool_params.get("format", "json")
 
-        task = create_task(goal, source=f"protocol:{trigger.get('name', 'reflex')}")
-
-        planner = TaskPlanner(enabled=False)
-        result = planner.execute_task(task["id"])
-
+    # Protocols MUST have explicit steps — reflexes cannot spawn thought loops
+    if not steps:
         return {
-            "success": result.get("status") == "completed",
+            "success": False,
             "mode": "protocol",
-            "task_id": result.get("id"),
-            "status": result.get("status"),
-            "steps_completed": len([r for r in result.get("results", []) if r.get("success")]),
+            "error": "Protocol has no steps defined. Reflexes cannot delegate to the "
+                     "task planner — define explicit tool steps instead.",
         }
-    except Exception as e:
-        return {"success": False, "mode": "protocol", "error": str(e)}
+
+    # Execute each step in sequence, collecting results
+    step_results = []
+    step_outputs = {}
+    failed = False
+
+    for i, step in enumerate(steps):
+        step_tool = step.get("tool", "")
+        step_action = step.get("action", "")
+        step_params = dict(step.get("params", {}))
+        step_name = step.get("name", f"step_{i}")
+
+        # Template substitution: allow {{prev.field}} references
+        step_params = _substitute_params(step_params, step_outputs, event_payload)
+
+        try:
+            result = asyncio.get_event_loop().run_until_complete(
+                execute_tool_action(step_tool, step_action, step_params, event_payload)
+            )
+        except RuntimeError:
+            # No event loop running — execute synchronously via the tool executor
+            try:
+                from agent.threads.form.tools.executor import execute_tool
+                raw = execute_tool(step_tool, step_action, step_params)
+                result = {
+                    "success": raw.success,
+                    "output": raw.output,
+                    "error": raw.error,
+                    "duration_ms": raw.duration_ms,
+                }
+            except Exception as e:
+                result = {"success": False, "error": str(e)}
+
+        step_results.append({
+            "step": step_name,
+            "tool": step_tool,
+            "action": step_action,
+            "success": result.get("success", False),
+            "output": result.get("output"),
+            "error": result.get("error"),
+        })
+
+        # Store output for referencing in later steps
+        step_outputs[step_name] = result.get("output")
+        step_outputs[f"step_{i}"] = result.get("output")
+
+        if not result.get("success", False):
+            failed = True
+            if on_error == "stop":
+                break
+            elif on_error == "escalate":
+                # Escalate to the agent for reasoning — NOT the task planner.
+                # Reflexes cannot spawn subconscious loops.
+                try:
+                    loop = asyncio.get_event_loop()
+                    escalation = loop.run_until_complete(_escalate_to_agent(
+                        trigger, event_payload,
+                        trigger.get("feed_name", "protocol"),
+                        trigger.get("event_type", "protocol_error"),
+                    ))
+                except RuntimeError:
+                    escalation = asyncio.run(_escalate_to_agent(
+                        trigger, event_payload,
+                        trigger.get("feed_name", "protocol"),
+                        trigger.get("event_type", "protocol_error"),
+                    ))
+                escalation["partial_results"] = step_results
+                escalation["escalated_at_step"] = i
+                return escalation
+
+    # Format the collected outputs
+    formatted = _format_protocol_output(step_results, step_outputs, output_format)
+
+    # Log the protocol run
+    try:
+        from agent.threads.log.schema import log_loop_run
+        log_loop_run(
+            loop_name=f"protocol:{trigger.get('name', 'unnamed')}",
+            status="completed" if not failed else "partial",
+            items_processed=len(steps),
+            items_changed=len([r for r in step_results if r["success"]]),
+            metadata={"trigger_id": trigger.get("id"), "on_error": on_error},
+        )
+    except Exception:
+        pass
+
+    return {
+        "success": not failed or on_error == "continue",
+        "mode": "protocol",
+        "steps_completed": len([r for r in step_results if r["success"]]),
+        "steps_total": len(steps),
+        "results": step_results,
+        "output": formatted,
+    }
+
+
+def _substitute_params(
+    params: Dict[str, Any],
+    step_outputs: Dict[str, Any],
+    event_payload: Dict[str, Any],
+) -> Dict[str, Any]:
+    """
+    Replace {{prev.key}} and {{event.key}} references in param values.
+    Enables data flow between protocol steps without LLM involvement.
+    """
+    import re
+
+    def _replace(val):
+        if not isinstance(val, str):
+            return val
+        def _repl(m):
+            ref = m.group(1)
+            if ref.startswith("event."):
+                path = ref[6:]
+                parts = path.split(".")
+                current = event_payload
+                for p in parts:
+                    if isinstance(current, dict) and p in current:
+                        current = current[p]
+                    else:
+                        return m.group(0)
+                return str(current)
+            elif ref.startswith("prev.") or ref.startswith("step_"):
+                parts = ref.split(".", 1)
+                key = parts[0]
+                output = step_outputs.get(key)
+                if output is None:
+                    return m.group(0)
+                if len(parts) > 1 and isinstance(output, dict):
+                    return str(output.get(parts[1], m.group(0)))
+                return str(output)
+            return m.group(0)
+        return re.sub(r"\{\{(\w+(?:\.\w+)*)\}\}", _repl, val)
+
+    return {k: _replace(v) for k, v in params.items()}
+
+
+def _format_protocol_output(
+    step_results: list,
+    step_outputs: dict,
+    fmt: str,
+) -> Any:
+    """Format protocol chain output."""
+    if fmt == "json":
+        return step_outputs
+    elif fmt == "briefing":
+        lines = []
+        for r in step_results:
+            status = "✓" if r["success"] else "✗"
+            output_preview = str(r.get("output", ""))[:200]
+            lines.append(f"[{status}] {r['tool']}/{r['action']}: {output_preview}")
+        return "\n".join(lines)
+    elif fmt == "summary":
+        succeeded = len([r for r in step_results if r["success"]])
+        return f"{succeeded}/{len(step_results)} steps completed"
+    return step_outputs
+
+
+# _execute_protocol_via_planner — REMOVED
+# System Rule: Reflexes CANNOT spawn subconscious loops.
+# Protocols must define explicit steps. If escalation is needed,
+# use response_mode="agent" to route through the Feeds bridge.
 
 
 __all__ = [

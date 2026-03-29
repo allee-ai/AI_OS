@@ -669,14 +669,33 @@ def get_keys_for_concepts(concepts: List[Any], limit: int = 30) -> List[Dict[str
 # Graph Indexing
 # ─────────────────────────────────────────────────────────────
 
-def index_key_in_concept_graph(key: str, value: str, learning_rate: float = 0.15) -> int:
+def index_key_in_concept_graph(key: str, value: str, learning_rate: float = 0.15, thread: str = "") -> int:
     """
     Index a key:value pair into the concept graph.
     
-    1. Links parent↔child along dot notation (identity → identity.user)
-    2. Extracts concepts from value and cross-links them
+    1. If thread is provided, links thread_root → key (thread-region topology)
+    2. Links parent↔child along dot notation (identity → identity.user)
+    3. Extracts concepts from value and cross-links them
+    
+    The thread parameter creates graph topology that encodes relationship type:
+    concepts linked through "identity" answer WHO, through "log" answer WHEN,
+    through "form" answer HOW, through "philosophy" answer WHY. A concept's
+    position in the graph (which thread regions it connects to) defines its type.
+    
+    Args:
+        key: Dot-notated fact key (e.g. "name", "location.city")
+        value: The fact content
+        learning_rate: Hebbian learning rate for new links
+        thread: Source thread name ("identity", "philosophy", "form", "log").
+                When provided, creates a strong link from thread root → key,
+                placing this concept in the correct graph region.
     """
     links_created = 0
+    
+    # 0. Link thread root → key (thread-region topology)
+    if thread:
+        link_concepts(thread, key, learning_rate=0.3)
+        links_created += 1
     
     # 1. Link parent↔child along the key hierarchy
     parts = key.split('.')

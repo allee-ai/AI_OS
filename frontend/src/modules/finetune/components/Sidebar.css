@@ -118,3 +118,62 @@
     color: var(--primary, #007bff);
     font-weight: 500;
 }
+
+/* ── Nested section items ── */
+.section-list {
+    display: flex;
+    flex-direction: column;
+    gap: 1px;
+    padding: 2px 0 4px 0;
+    margin-left: 1rem;
+    border-left: 2px solid var(--border);
+}
+
+.section-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.35rem 0.6rem 0.35rem 0.75rem;
+    border-radius: 0 0.4rem 0.4rem 0;
+    border: none;
+    background: transparent;
+    color: var(--text-muted);
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 0.78rem;
+    text-align: left;
+    width: 100%;
+}
+
+.section-btn:hover {
+    background-color: var(--surface-2, rgba(255,255,255,0.06));
+    color: var(--text);
+}
+
+.section-btn.active {
+    background-color: rgba(124, 58, 237, 0.15);
+    color: var(--primary, #7c3aed);
+    border-left: 2px solid var(--primary, #7c3aed);
+    margin-left: -2px;
+    font-weight: 600;
+}
+
+.section-icon {
+    font-size: 0.85rem;
+    flex-shrink: 0;
+}
+
+.section-name {
+    flex: 1;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.section-count {
+    font-size: 0.65rem;
+    font-weight: 600;
+    color: var(--text-muted);
+    flex-shrink: 0;
+}

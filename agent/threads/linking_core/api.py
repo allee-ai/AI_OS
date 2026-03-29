@@ -345,7 +345,7 @@ async def reindex_concept_graph():
             key = fact.get('key', '')
             l3 = fact.get('l3_value', '') or fact.get('l2_value', '')
             if key and l3:
-                index_key_in_concept_graph(key, l3, learning_rate=0.15)
+                index_key_in_concept_graph(key, l3, learning_rate=0.15, thread="identity")
                 total_indexed += 1
         
         # Index philosophy facts
@@ -354,7 +354,7 @@ async def reindex_concept_graph():
             key = fact.get('key', '')
             l3 = fact.get('l3_value', '') or fact.get('l2_value', '')
             if key and l3:
-                index_key_in_concept_graph(key, l3, learning_rate=0.15)
+                index_key_in_concept_graph(key, l3, learning_rate=0.15, thread="philosophy")
                 total_indexed += 1
         
         stats = get_stats()

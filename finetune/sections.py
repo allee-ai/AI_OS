@@ -13,6 +13,21 @@ import json
 from typing import List, Dict, Any
 
 
+# ── Fast count helpers (no build_state / example construction) ──────
+
+def count_api_examples(endpoints: List[tuple]) -> int:
+    """1 listing + 1 per endpoint."""
+    return 1 + len(endpoints) if endpoints else 0
+
+def count_cli_examples(commands: List[tuple]) -> int:
+    """1 listing + 1 per command."""
+    return 1 + len(commands) if commands else 0
+
+def count_schema_examples(tables: List[Dict[str, Any]]) -> int:
+    """1 listing + 1 per table."""
+    return 1 + len(tables) if tables else 0
+
+
 def _build_state_for_module(module: str) -> str:
     """Build a realistic STATE block for self-knowledge examples."""
     try:

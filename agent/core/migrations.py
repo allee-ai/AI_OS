@@ -89,6 +89,9 @@ def ensure_schema() -> None:
     # -- Tool traces -------------------------------------------------------
     _try("tool_traces", _init_tool_traces)
 
+    # -- Training templates ------------------------------------------------
+    _try("training_templates", _init_training_templates)
+
     # -- Tables without exported init functions (inlined) ------------------
     _try("memory_loop_state", _init_memory_loop_state)
     _try("custom_loops", _init_custom_loops)
@@ -135,12 +138,17 @@ def _init_log():
     from agent.threads.log.schema import (
         init_event_log_table, init_system_log_table,
         init_server_log_table, init_log_module_table,
-        init_function_log_table
+        init_function_log_table,
+        init_llm_inference_table, init_activation_log_table,
+        init_loop_run_table,
     )
     init_event_log_table()
     init_system_log_table()
     init_server_log_table()
     init_function_log_table()
+    init_llm_inference_table()
+    init_activation_log_table()
+    init_loop_run_table()
     init_log_module_table("events")
     init_log_module_table("sessions")
 
@@ -247,5 +255,30 @@ def _init_tool_traces():
         conn.execute("""
             CREATE INDEX IF NOT EXISTS idx_tool_traces_created
             ON tool_traces(created_at DESC)
+        """)
+        conn.commit()
+
+
+def _init_training_templates():
+    """Training data format templates — edit once, regenerate all examples."""
+    from data.db import get_connection
+    with closing(get_connection()) as conn:
+        conn.execute("""
+            CREATE TABLE IF NOT EXISTS training_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                module TEXT NOT NULL,
+                section TEXT NOT NULL,
+                name TEXT NOT NULL,
+                question_template TEXT NOT NULL,
+                answer_template TEXT NOT NULL,
+                enabled INTEGER NOT NULL DEFAULT 1,
+                created_at TEXT NOT NULL DEFAULT (datetime('now')),
+                updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+                UNIQUE(module, section, name)
+            )
+        """)
+        conn.execute("""
+            CREATE INDEX IF NOT EXISTS idx_training_templates_module
+            ON training_templates(module, section)
         """)
         conn.commit()

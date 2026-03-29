@@ -187,11 +187,11 @@ def get_export_stats() -> Dict[str, Any]:
 
 def get_sections() -> Dict[str, Any]:
     """Return available training sections with counts."""
-    from finetune.sections import build_api_examples, build_cli_examples, build_schema_examples
+    from finetune.sections import count_api_examples, count_cli_examples, count_schema_examples
     stats = get_export_stats()
     return {
         "data":   {"description": "Conversation turns (all channels)", "examples": stats.get("examples", 0)},
-        "api":    {"description": "Chat & conversation API endpoints", "examples": len(build_api_examples("chat", API_ENDPOINTS))},
-        "cli":    {"description": "CLI commands (/convos)", "examples": len(build_cli_examples("chat", CLI_COMMANDS))},
-        "schema": {"description": "convos + convo_turns tables", "examples": len(build_schema_examples("chat", SCHEMA_TABLES))},
+        "api":    {"description": "Chat & conversation API endpoints", "examples": count_api_examples(API_ENDPOINTS)},
+        "cli":    {"description": "CLI commands (/convos)", "examples": count_cli_examples(CLI_COMMANDS)},
+        "schema": {"description": "convos + convo_turns tables", "examples": count_schema_examples(SCHEMA_TABLES)},
     }
