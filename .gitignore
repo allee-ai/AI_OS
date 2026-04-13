@@ -130,6 +130,13 @@ _archive/
 finetune/adapters-*/
 finetune/runs/*/adapters/*.safetensors
 finetune/aios_base.jsonl
+finetune/fused-behavioral/
+
+# Experiment runs (large model weights + training logs)
+experiments/runs/
+
+# Hebbian attention data (generated matrices)
+research/hebbian_attention/data/
 
 # Keep generated training data in git (small JSONL)
 

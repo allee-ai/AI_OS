@@ -1,0 +1,269 @@
+🎮 RUNNING IN DEMO MODE (state_demo.db)
+============================================================
+  LONG-HORIZON GROUNDING TEST
+  Model: qwen2.5:7b
+  15 turns: accumulation + mutation + checkpoints
+  Conditions: BARE vs CLOUD vs STATE
+============================================================
+
+============================================================
+  CONDITION: BARE
+============================================================
+
+  [ 1/15] fact       I'm starting a project called Atlas. Budget is $5000.
+           -> (35.7s) That sounds exciting! Starting a project with a budget of $5000 can be both challenging and rewardin
+
+  [ 2/15] fact       Add Sarah to the team. Role: frontend developer.
+           -> (45.1s) Great to hear that you're adding Sarah to your team as a frontend developer for the Atlas project! H
+
+  [ 3/15] fact       Add Marcus to the team. Role: backend developer.
+           -> (45.5s) Great to have Marcus joining your team as a backend developer for the Atlas project! Here’s how we c
+
+  [ 4/15] fact       Sarah's deadline is April 15th.
+           -> (73.5s) Given that Sarah has a deadline of April 15th, we need to ensure her part of the project is complete
+
+  [ 5/15] CHECKPOINT Give me the current project status: name, budget, team membe
+           -> 5/5 checks passed (30.9s)
+              + Project name is Atlas
+              + Budget is $5000
+              + Sarah is frontend
+              + Sarah's deadline is April 15
+              + Marcus is backend
+
+  [ 6/15] fact       Budget has been increased to $8000.
+           -> (94.6s) Great! With the budget increased to $8000, we can now allocate additional resources to ensure that b
+
+  [ 7/15] fact       Add Priya to the team. Role: designer.
+           -> (104.7s) Great! Adding Priya as a designer will enhance the visual aspects of your Atlas project. Here’s an u
+
+  [ 8/15] fact       Marcus has switched to full-stack developer. Also, Sarah is 
+           -> (111.4s) Great! Let's update the project status with these changes:
+
+1. Marcus will now handle both frontend 
+
+  [ 9/15] fact       Extend Sarah's deadline to May 1st.
+           -> (118.1s) Great! Let’s update the project status to reflect Marcus handling both frontend and backend developm
+
+  [10/15] CHECKPOINT What's the current project status? Name, budget, all team me
+           -> 8/8 checks passed (69.8s)
+              + Project name is Atlas
+              + Budget is $8000 (was $5000)
+              + Sarah is frontend
+              + Sarah's deadline is May 1 (was April 15)
+              + Sarah on vacation until April 20
+              + Marcus is full-stack (was backend)
+              + Priya is on the team
+              + Priya is designer
+
+  [11/15] fact       Priya has quit. Remove her from the team.
+           -> (60.2s) Sure! Here is the updated project status with Priya removed from the team:
+
+### Project Status
+
+**Pr
+
+  [12/15] fact       Add Leo to the team. Role: designer, replacing Priya.
+           -> (39.2s) Great! Let's update the project status to include Leo as the new designer, replacing Priya.
+
+### Upd
+
+  [13/15] fact       Project has been renamed to Titan. Budget cut to $6500.
+           -> (64.1s) Sure! Let's update the project status to reflect the new name and budget adjustments.
+
+### Updated P
+
+  [14/15] fact       Set Marcus's deadline to April 30th.
+           -> (41.7s) Sure! Let’s update the project status with Marcus's new deadline of April 30th.
+
+### Updated Project
+
+  [15/15] CHECKPOINT Give me the complete final project status: current project n
+           -> 11/11 checks passed (63.9s)
+              + Project name is Titan (was Atlas)
+              + Budget is $6500
+              + Sarah is on the team
+              + Sarah is frontend developer
+              + Sarah's deadline is May 1
+              + Marcus is on the team
+              + Marcus is full-stack
+              + Marcus's deadline is April 30
+              + Leo is on the team
+              + Leo is designer
+              + Priya mentioned (as removed/quit)
+
+============================================================
+  CONDITION: CLOUD
+============================================================
+
+  [ 1/15] fact       I'm starting a project called Atlas. Budget is $5000.
+           -> (15.8s) Great to hear that you're starting the Atlas project with a budget of $5000! Let's set up the initia
+
+  [ 2/15] fact       Add Sarah to the team. Role: frontend developer.
+           -> (16.1s) Sure, let's add Sarah to the team as a frontend developer for the Atlas project. Here’s how we can u
+
+  [ 3/15] fact       Add Marcus to the team. Role: backend developer.
+           -> (17.2s) Sure, let's add Marcus to the team as a backend developer for the Atlas project. Here’s how we can u
+
+  [ 4/15] fact       Sarah's deadline is April 15th.
+           -> (19.3s) Sure, let's update Sarah's task with a specific deadline of April 15th. Here’s how we can refine the
+
+  [ 5/15] CHECKPOINT Give me the current project status: name, budget, team membe
+           -> 5/5 checks passed (9.2s)
+              + Project name is Atlas
+              + Budget is $5000
+              + Sarah is frontend
+              + Sarah's deadline is April 15
+              + Marcus is backend
+
+  [ 6/15] fact       Budget has been increased to $8000.
+           -> (16.5s) Great! Let's update the budget and reflect all changes in the project status:
+
+### Updated Project S
+
+  [ 7/15] fact       Add Priya to the team. Role: designer.
+           -> (18.1s) Sure, let's update the project status with Priya added to the team as a designer. Here is the update
+
+  [ 8/15] fact       Marcus has switched to full-stack developer. Also, Sarah is 
+           -> (17.0s) Great! Let's update the project status to reflect Marcus switching roles and Sarah being on vacation
+
+  [ 9/15] fact       Extend Sarah's deadline to May 1st.
+           -> (17.5s) Sure! Let's update Sarah's deadline to May 1st and reflect all the changes in the project status.
+
+#
+
+  [10/15] CHECKPOINT What's the current project status? Name, budget, all team me
+           -> 8/8 checks passed (13.0s)
+              + Project name is Atlas
+              + Budget is $8000 (was $5000)
+              + Sarah is frontend
+              + Sarah's deadline is May 1 (was April 15)
+              + Sarah on vacation until April 20
+              + Marcus is full-stack (was backend)
+              + Priya is on the team
+              + Priya is designer
+
+  [11/15] fact       Priya has quit. Remove her from the team.
+           -> (16.4s) Sure! Let's update the project status to reflect that Priya has quit and remove her from the team.
+
+
+
+  [12/15] fact       Add Leo to the team. Role: designer, replacing Priya.
+           -> (17.1s) Sure! Let's update the project status to reflect that Leo has been added as a designer to replace Pr
+
+  [13/15] fact       Project has been renamed to Titan. Budget cut to $6500.
+           -> (16.7s) Sure! Let's update the project status to reflect the new name and budget adjustments.
+
+### Updated P
+
+  [14/15] fact       Set Marcus's deadline to April 30th.
+           -> (19.9s) Sure! Let's update Marcus's deadline to April 30th and reflect all the changes in the project status
+
+  [15/15] CHECKPOINT Give me the complete final project status: current project n
+           -> 11/11 checks passed (17.5s)
+              + Project name is Titan (was Atlas)
+              + Budget is $6500
+              + Sarah is on the team
+              + Sarah is frontend developer
+              + Sarah's deadline is May 1
+              + Marcus is on the team
+              + Marcus is full-stack
+              + Marcus's deadline is April 30
+              + Leo is on the team
+              + Leo is designer
+              + Priya mentioned (as removed/quit)
+
+============================================================
+  CONDITION: STATE
+============================================================
+
+  [ 1/15] fact       I'm starting a project called Atlas. Budget is $5000.
+  ✓ Loops created (only health auto-started, others paused until manually started)
+           -> (60.2s) Got it, let's proceed by assigning some initial allocations based on typical project needs for softw
+
+  [ 2/15] fact       Add Sarah to the team. Role: frontend developer.
+           -> (32.0s) Great, we'll add Sarah as a frontend developer to your Atlas project team. Let's update our project 
+
+  [ 3/15] fact       Add Marcus to the team. Role: backend developer.
+           -> (34.3s) Sure, let's add Marcus as a backend developer to your Atlas project team and update the budget accor
+
+  [ 4/15] fact       Sarah's deadline is April 15th.
+           -> (39.9s) It seems there was a misunderstanding. Since I don't have access to perform web searches directly, I
+
+  [ 5/15] CHECKPOINT Give me the current project status: name, budget, team membe
+           -> 5/5 checks passed (43.7s)
+              + Project name is Atlas
+              + Budget is $5000
+              + Sarah is frontend
+              + Sarah's deadline is April 15
+              + Marcus is backend
+
+  [ 6/15] fact       Budget has been increased to $8000.
+           -> (56.1s) Great, the budget for your Atlas project has been increased to $8000. Let's reassess the allocations
+
+  [ 7/15] fact       Add Priya to the team. Role: designer.
+           -> (71.5s) Great, we'll add Priya as a designer to your Atlas project team. Let's update the budget and roles a
+
+  [ 8/15] fact       Marcus has switched to full-stack developer. Also, Sarah is 
+           -> (34.0s) Got it! I've updated that information in my context.
+
+If you need any more updates or have other que
+
+  [ 9/15] fact       Extend Sarah's deadline to May 1st.
+           -> (36.1s) I don't have any information about a task or project involving Sarah and her deadline. Could you pro
+
+  [10/15] CHECKPOINT What's the current project status? Name, budget, all team me
+           -> 1/8 checks passed (90.3s)
+              X Project name is Atlas
+              X Budget is $8000 (was $5000)
+              X Sarah is frontend
+              X Sarah's deadline is May 1 (was April 15)
+              + Sarah on vacation until April 20
+              X Marcus is full-stack (was backend)
+              X Priya is on the team
+              X Priya is designer
+
+  [11/15] fact       Priya has quit. Remove her from the team.
+           -> (20.8s) I understand you want to remove Priya from the team, but I don't have any information about a team o
+
+  [12/15] fact       Add Leo to the team. Role: designer, replacing Priya.
+           -> (1093.8s) Sure, let's gather the necessary details about Leo step by step.
+
+1. **Full Name:** What is Leo's fu
+
+  [13/15] fact       Project has been renamed to Titan. Budget cut to $6500.
+           -> (33.4s) I've noted those updates for our project, Jamie. The new name is Titan and the budget has been adjus
+
+  [14/15] fact       Set Marcus's deadline to April 30th.
+           -> (112.5s) I understand that setting a deadline for Marcus involves creating or updating a fact related to him,
+
+  [15/15] CHECKPOINT Give me the complete final project status: current project n
+           -> 0/11 checks passed (79.5s)
+              X Project name is Titan (was Atlas)
+              X Budget is $6500
+              X Sarah is on the team
+              X Sarah is frontend developer
+              X Sarah's deadline is May 1
+              X Marcus is on the team
+              X Marcus is full-stack
+              X Marcus's deadline is April 30
+              X Leo is on the team
+              X Leo is designer
+              X Priya mentioned (as removed/quit)
+
+
+============================================================
+  RESULTS: Grounding Over 15 Turns
+============================================================
+
+  Condition      T5    T10    T15    Total
+  ----------------------------------------
+  BARE          5/5    8/8  11/11 24/24 (100%)
+  CLOUD         5/5    8/8  11/11 24/24 (100%)
+  STATE         5/5    1/8   0/11 6/24 (25%)
+
+  Checkpoint 5:  Basic recall (5 facts, 0 mutations)
+  Checkpoint 10: Mid-game (10 facts, 3 mutations)
+  Checkpoint 15: Final (15 facts, 6 mutations, 1 removal)
+
+  Results saved to eval/long_horizon_results.json
+  Report saved to eval/long_horizon_report.md

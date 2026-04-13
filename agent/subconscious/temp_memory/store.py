@@ -103,25 +103,29 @@ def _ensure_table() -> None:
         """)
         
         # Add columns if they don't exist (migration for existing DBs)
-        try:
-            cursor.execute("ALTER TABLE temp_facts ADD COLUMN hier_key TEXT")
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
-        try:
-            cursor.execute("ALTER TABLE temp_facts ADD COLUMN metadata_json TEXT")
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
-        try:
-            cursor.execute("ALTER TABLE temp_facts ADD COLUMN status TEXT DEFAULT 'pending'")
-        except sqlite3.OperationalError:
-            pass  # Column already exists
-        
-        try:
-            cursor.execute("ALTER TABLE temp_facts ADD COLUMN confidence_score REAL")
-        except sqlite3.OperationalError:
-            pass  # Column already exists
+        _migrated = []
+        for _col_sql, _col_name in [
+            ("ALTER TABLE temp_facts ADD COLUMN hier_key TEXT", "hier_key"),
+            ("ALTER TABLE temp_facts ADD COLUMN metadata_json TEXT", "metadata_json"),
+            ("ALTER TABLE temp_facts ADD COLUMN status TEXT DEFAULT 'pending'", "status"),
+            ("ALTER TABLE temp_facts ADD COLUMN confidence_score REAL", "confidence_score"),
+        ]:
+            try:
+                cursor.execute(_col_sql)
+                _migrated.append(_col_name)
+            except sqlite3.OperationalError:
+                pass  # Column already exists
+        if _migrated:
+            try:
+                from agent.threads.log.schema import log_event
+                log_event(
+                    event_type="warn:schema_drift",
+                    data=f"temp_facts migrated columns: {', '.join(_migrated)}",
+                    metadata={"table": "temp_facts", "columns": _migrated},
+                    source="temp_memory",
+                )
+            except Exception:
+                pass
         
         # Indexes (after migrations so all columns exist)
         cursor.execute("""

@@ -143,7 +143,9 @@ _Source: [agent/threads/form/README.md](agent/threads/form/README.md)_
 - [x] **Safety allowlist** — `SAFE_ACTIONS` / `BLOCKED_ACTIONS` in registry.py with `is_action_safe()` gating
 - [x] **Core executables** — file_read, file_write, terminal, web_search (sandboxed)
 - [x] **Permission system** — Two-layer safety: allowlist check + DB `allowed` flag
-- [x] **Tool loop in agent** — `_process_tool_calls()` with max 5 rounds, auto-re-call after execution
+- [x] **Tool loop in agent** — `_process_tool_calls()` with max 15 rounds (configurable via AIOS_MAX_TOOL_ROUNDS), auto-re-call after execution
+- [x] **JSON Schema tool mode** — `AIOS_TOOL_MODE=schema` sends tools as JSON schema to LLM; `ensure_tools_in_db()` syncs registry → DB
+- [x] **Workspace tools** — workspace_read (read/list/search) + workspace_write (write/mkdir/move/delete)
 - [x] **Frontend rendering** — `:::execute:::` and `:::result:::` blocks render as styled cards in chat
 - [x] **WebSocket tool events** — Real-time `tool_executing` / `tool_complete` messages
 - [x] **Hebbian tool traces** — Tool success/failure adjusts weight via learning rule
@@ -214,14 +216,6 @@ _Source: [agent/subconscious/README.md](agent/subconscious/README.md)_
 - [x] **Context compression** — Token budgeting per thread via `_budget_fill()`
 - [x] **Loop status indicators + configurable intervals**
 - [x] **CustomLoop multi-step COT** — Iterative LLM calls with previous output as context (up to 20 iterations)
-- [x] **Context-aware loops** — Optional STATE injection into loop prompts
-- [x] **Editable prompts** — Per-stage prompt override for every loop
-- [x] **Self-improvement loop** — Scoped code review with human approval gate
-- [x] **Goal loop** — Emergent goals from recurring concepts + philosophy values
-- [x] **Concept backfill** — ConvoConceptLoop processes imported conversations into graph
-- [x] **Training data generator** — Synthetic example generation across 8 modules
-- [x] **Notification system** — Agent alert/remind/confirm with DB-backed tracking
-- [x] **Goals/Notifications/Improvements panels** — Frontend visibility for all loop outputs
 
 ### Loop intelligence
 - [ ] **COT convergence detection** — CustomLoop runs N iterations blindly. Add quality signal between iterations: embedding similarity to target, structured output validation, or LLM-as-judge step. Stop when confident, not when counter expires
@@ -307,17 +301,13 @@ _Source: [workspace/README.md](workspace/README.md)_
 
 ### Ready for contributors
 - [x] **File rendering** — Type-aware rendering for text, code, markdown, images
-- [ ] **In-browser editing** — Edit files directly in workspace UI with syntax highlighting
+- [x] **In-browser editing** — CodeMirror 6 editor with syntax highlighting
 - [x] **Auto-summarization** — LLM-powered summaries stored in summary column
 - [x] **Full-text search** — FTS5 search within file contents
-- [ ] **Agent reference** — Agent cites specific files in responses
+- [x] **Agent tools** — workspace_read + workspace_write with move_file for LLM sorting
+- [x] **Headless CLI** — Full read/write/move/delete from terminal
+- [ ] **Agent file references** — Agent cites specific workspace files in responses
 - [ ] **Version history** — Track file changes over time
-- [ ] **Sharing** — Share files with external users
-
-### Starter tasks
-- [x] Add file preview (markdown, code)
-- [x] Show file metadata (size, modified)
-- [ ] File type icons in list view
 <!-- /INCLUDE:workspace:ROADMAP -->
 
 ---
@@ -328,18 +318,24 @@ _Source: [workspace/README.md](workspace/README.md)_
 _Source: [finetune/README.md](finetune/README.md)_
 
 ### Pipeline completion
-- [ ] **Training orchestrator** — Chain export → train → load in a single `POST /finetune/run`
-- [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts
+- [ ] **Training orchestrator** — Chain export → train → load in a single `POST /finetune/run`:
+  - Status tracking with progress events via WebSocket
+  - Exit code capture from `train_mac.sh` (currently fire-and-forget)
+  - Automatic combined JSONL generation before training starts
+- [ ] **Before/after evaluation** — Run eval suite pre-train and post-train on same prompts:
+  - STATE format adherence score
+  - Identity consistency over 50+ turns
+  - Regression detection (general capability)
 - [ ] **Convergence monitoring** — Surface validation loss during training, stop early on plateau
 
 ### Research
-- [ ] **Self-improvement measurement** — Does training on own STATE output improve or collapse?
-- [ ] **Catastrophic forgetting baseline** — Benchmark general capability before/after LoRA
-- [ ] **Synthetic data quality** — kimi-k2 teacher generates training data. Measure improvement vs noise
+- [ ] **Self-improvement measurement** — Does a model trained on its own STATE output actually improve, or does it collapse? Requires controlled A/B eval across multiple training cycles
+- [ ] **Catastrophic forgetting baseline** — Benchmark general capability before and after LoRA. Quantify the tradeoff between STATE adherence and general fluency
+- [ ] **Synthetic data quality** — TrainingGenLoop generates via kimi-k2 teacher. Measure improvement vs noise injection across training cycles
 
 ### Starter tasks
 - [ ] Add 10 STATE obedience examples to gold_examples.py
-- [ ] Document the full export → train → load workflow
+- [ ] Document the full export → train → load workflow with expected outputs
 <!-- /INCLUDE:finetune:ROADMAP -->
 
 ---
@@ -355,13 +351,13 @@ _Source: [eval/README.md](eval/README.md)_
 - [ ] **Leaderboard** — Visual comparison of model performance over time
 
 ### Longitudinal benchmarks
-- [ ] **STATE adherence drift** — Does a fire-tuned model's STATE format degrade over 50+ turns?
-- [ ] **Identity persistence** — Prompt injection resistance, multi-session recall
-- [ ] **Memory precision/recall** — After 100 conversations, right fact at right time?
-- [ ] **Context window pressure** — Performance as all 6 threads compete for budget
+- [ ] **STATE adherence drift** — Does a fire-tuned model's STATE format degrade over 50+ turns? Over multiple sessions?
+- [ ] **Identity persistence** — Prompt injection resistance: does the model hold its identity under adversarial prompts? Multi-session recall
+- [ ] **Memory precision/recall** — After 100 conversations, does the right fact surface at the right time? False positive rate?
+- [ ] **Context window pressure** — Performance degradation as all 6 threads compete for budget in a long conversation
 
 ### Starter tasks
-- [ ] Create 10 identity persistence test cases
+- [ ] Create 10 identity persistence test cases (facts that should survive across sessions)
 - [ ] Before/after benchmark script for fire-tuning runs
 <!-- /INCLUDE:eval:ROADMAP -->
 

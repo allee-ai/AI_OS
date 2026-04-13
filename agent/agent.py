@@ -102,7 +102,19 @@ class Agent:
         if consciousness_context is None and _HAS_SUBCONSCIOUS:
             try:
                 consciousness_context = get_consciousness_context(level=context_level, query=user_input)
-            except Exception:
+            except Exception as e:
+                import sys
+                print(f"[Agent] STATE assembly failed: {e}", file=sys.stderr)
+                try:
+                    from agent.threads.log.schema import log_event
+                    log_event(
+                        event_type="error:state_assembly",
+                        data=f"STATE assembly failed: {e}",
+                        metadata={"error": str(e), "query": user_input[:100]},
+                        source="agent",
+                    )
+                except Exception:
+                    pass
                 consciousness_context = ""
         
         # Build system prompt
@@ -159,11 +171,14 @@ class Agent:
                 pass
             response_text = self._call_llm(messages, overrides=overrides)
             if _HAS_SCANNER:
-                response_text = self._process_tool_calls(
-                    response_text, messages,
-                    on_tool_event=on_tool_event,
-                    max_rounds=5
-                )
+                try:
+                    response_text = self._process_tool_calls(
+                        response_text, messages,
+                        on_tool_event=on_tool_event,
+                        max_rounds=5
+                    )
+                except Exception:
+                    pass  # Keep the raw LLM response if tool processing fails
         
         # Track conversation event in log thread
         try:

@@ -12,6 +12,7 @@ System prompts include STATE blocks that mirror what the model actually sees.
 """
 
 from typing import List, Dict, Any
+from finetune.behavioral_examples import get_behavioral_examples
 
 
 def get_reasoning_examples() -> List[Dict[str, Any]]:
@@ -26,6 +27,7 @@ def get_reasoning_examples() -> List[Dict[str, Any]]:
     examples.extend(reasoning_form())
     examples.extend(reasoning_chat())
     examples.extend(reasoning_training_loop())
+    examples.extend(get_behavioral_examples())
     return examples
 
 
@@ -44,6 +46,7 @@ _MODULE_GENERATORS = {
     "chat": lambda: reasoning_chat(),
     "architecture": lambda: reasoning_architecture(),
     "training": lambda: reasoning_training_loop(),
+    "behavioral": lambda: get_behavioral_examples(),
 }
 
 

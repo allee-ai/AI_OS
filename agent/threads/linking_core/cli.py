@@ -15,12 +15,14 @@ def _cmd_graph(query: str):
         return
     from agent.threads.linking_core.schema import spread_activate
     seeds = [w.strip() for w in query.strip().split() if w.strip()]
-    scores = spread_activate(seeds, hops=2)
-    if not scores:
+    results = spread_activate(seeds, max_hops=2)
+    if not results:
         print("  no activations found")
         return
-    ranked = sorted(scores.items(), key=lambda x: x[1], reverse=True)[:15]
-    for concept, score in ranked:
+    ranked = sorted(results, key=lambda x: x["activation"], reverse=True)[:15]
+    for entry in ranked:
+        score = entry["activation"]
+        concept = entry["concept"]
         bar = "█" * int(score * 20)
         print(f"  {score:.2f} {bar} {concept}")
 

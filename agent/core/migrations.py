@@ -33,6 +33,17 @@ def ensure_all_schemas() -> None:
         os.environ["STATE_DB_PATH"] = str(other)
         try:
             ensure_schema()
+        except Exception as exc:
+            try:
+                from agent.threads.log.schema import log_event
+                log_event(
+                    event_type="warn:demo_db_stale",
+                    data=f"Secondary DB schema sync failed: {exc}",
+                    metadata={"db": str(other), "error": str(exc)},
+                    source="migrations",
+                )
+            except Exception:
+                pass
         finally:
             if old_env is None:
                 os.environ.pop("STATE_DB_PATH", None)
@@ -101,6 +112,18 @@ def ensure_schema() -> None:
         import sys
         for e in errors:
             print(f"[ensure_schema] {e}", file=sys.stderr)
+        # Log schema drift events
+        try:
+            from agent.threads.log.schema import log_event
+            for e in errors:
+                log_event(
+                    event_type="error:schema_drift",
+                    data=f"Migration failed: {e}",
+                    metadata={"error": e, "db": str(get_db_path())},
+                    source="migrations",
+                )
+        except Exception:
+            pass  # Log table may not exist yet during first boot
 
 
 # ── Thin wrappers (lazy imports to avoid circular deps) ──────────────────

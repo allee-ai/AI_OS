@@ -258,6 +258,13 @@ class LogThreadAdapter(BaseThreadAdapter):
         except Exception:
             return []
 
+    def get_section_rules(self) -> List[str]:
+        return [
+            "  rules:",
+            "  - Events shown are a sample. Do not fabricate events not listed here.",
+            "  - To see more history, ask the user or use search tools.",
+        ]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Log introspection with budget-aware fact packing.

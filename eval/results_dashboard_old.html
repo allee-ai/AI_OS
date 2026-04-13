@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI OS — Behavioral Eval Results</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.4/dist/chart.umd.min.js"></script>
+<style>
+  :root {
+    --bg: #0d1117; --surface: #161b22; --border: #30363d;
+    --text: #e6edf3; --text2: #8b949e; --accent: #58a6ff;
+    --green: #3fb950; --red: #f85149; --yellow: #d29922; --purple: #bc8cff;
+    --orange: #f0883e; --cyan: #39d2c0;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif;
+    background: var(--bg); color: var(--text); line-height: 1.5;
+    padding: 2rem; max-width: 1400px; margin: 0 auto;
+  }
+  h1 { font-size: 2rem; font-weight: 700; margin-bottom: 0.25rem; }
+  .subtitle { color: var(--text2); font-size: 1rem; margin-bottom: 2rem; }
+  h2 { font-size: 1.4rem; font-weight: 600; margin: 2.5rem 0 1rem; color: var(--accent); }
+  h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.75rem; color: var(--text); }
+
+  .hero-stats {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem; margin-bottom: 2rem;
+  }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.25rem; text-align: center;
+  }
+  .stat-card .value { font-size: 2rem; font-weight: 700; }
+  .stat-card .label { color: var(--text2); font-size: 0.85rem; margin-top: 0.25rem; }
+  .stat-card.green .value { color: var(--green); }
+  .stat-card.red .value { color: var(--red); }
+  .stat-card.yellow .value { color: var(--yellow); }
+  .stat-card.purple .value { color: var(--purple); }
+  .stat-card.accent .value { color: var(--accent); }
+  .stat-card.cyan .value { color: var(--cyan); }
+
+  .chart-grid {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+    gap: 1.5rem;
+  }
+  .chart-box {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .chart-box.full { grid-column: 1 / -1; }
+  .chart-box canvas { width: 100% !important; }
+
+  table {
+    width: 100%; border-collapse: collapse; margin: 1rem 0;
+    font-size: 0.9rem;
+  }
+  th, td { padding: 0.6rem 0.8rem; text-align: left; border-bottom: 1px solid var(--border); }
+  th { color: var(--text2); font-weight: 600; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.05em; }
+  td { font-variant-numeric: tabular-nums; }
+  .good { color: var(--green); font-weight: 600; }
+  .bad { color: var(--red); font-weight: 600; }
+  .neutral { color: var(--text2); }
+  .tag {
+    display: inline-block; padding: 0.15rem 0.5rem; border-radius: 99px;
+    font-size: 0.75rem; font-weight: 600;
+  }
+  .tag-win { background: rgba(63,185,80,0.15); color: var(--green); }
+  .tag-loss { background: rgba(248,81,73,0.15); color: var(--red); }
+  .tag-tie { background: rgba(139,148,158,0.15); color: var(--text2); }
+
+  .section-divider {
+    border: none; border-top: 1px solid var(--border);
+    margin: 3rem 0;
+  }
+  .note { color: var(--text2); font-size: 0.85rem; font-style: italic; margin-top: 0.5rem; }
+
+  @media (max-width: 600px) {
+    body { padding: 1rem; }
+    .chart-grid { grid-template-columns: 1fr; }
+    h1 { font-size: 1.5rem; }
+  }
+</style>
+</head>
+<body>
+
+<h1>AI OS — Behavioral Eval Dashboard</h1>
+<p class="subtitle">STATE-conditioned behavioral evaluation results across models, conditions, and training runs</p>
+
+<!-- ═══════════ HERO: Before/After ═══════════ -->
+<h2>🔬 Before / After — Behavioral Fine-Tuning</h2>
+<p style="color:var(--text2);margin-bottom:1rem;">
+  45 SFT examples · 700 iterations · Qwen2.5-1.5B-Instruct · LoRA rank 8 · val loss 3.105→1.802 (42% ↓)
+</p>
+
+<div class="hero-stats">
+  <div class="stat-card green"><div class="value">0→75%</div><div class="label">Priority Triage Top-1</div></div>
+  <div class="stat-card green"><div class="value">+7.7%</div><div class="label">Delegation Accuracy</div></div>
+  <div class="stat-card green"><div class="value">−41%</div><div class="label">Repetition Overlap</div></div>
+  <div class="stat-card green"><div class="value">0.871</div><div class="label">Compression Ratio (was 1.058)</div></div>
+  <div class="stat-card green"><div class="value">+10%</div><div class="label">Tool Selection</div></div>
+  <div class="stat-card purple"><div class="value">5/8</div><div class="label">Evals Improved</div></div>
+</div>
+
+<div class="chart-grid">
+  <div class="chart-box full">
+    <canvas id="beforeAfterChart" height="100"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <canvas id="beforeAfterBarChart" height="220"></canvas>
+  </div>
+
+  <div class="chart-box">
+    <h3>Detailed Metrics</h3>
+    <table>
+      <thead><tr><th>Eval</th><th>Metric</th><th>Base</th><th>Fine-tuned</th><th>Delta</th><th></th></tr></thead>
+      <tbody>
+        <tr><td>Priority Triage</td><td>top_correct %</td><td>0.0</td><td class="good">75.0</td><td class="good">+75.0</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td></td><td>avg_tau ↓</td><td>0.567</td><td class="good">0.417</td><td class="good">−0.15</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td>Delegation</td><td>accuracy %</td><td>76.9</td><td class="good">84.6</td><td class="good">+7.7</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td></td><td>refusal_acc %</td><td>62.5</td><td class="good">75.0</td><td class="good">+12.5</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td>Uncertainty</td><td>accuracy %</td><td>58.3</td><td class="bad">41.7</td><td class="bad">−16.6</td><td><span class="tag tag-loss">REG</span></td></tr>
+        <tr><td>Context Mgmt</td><td>compression ↓</td><td>1.058</td><td class="good">0.871</td><td class="good">−0.19</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td>Resource Reg</td><td>tight/loose ↓</td><td>1.164</td><td>1.435</td><td class="bad">+0.27</td><td><span class="tag tag-tie">MIXED</span></td></tr>
+        <tr><td>Repetition</td><td>word_overlap ↓</td><td>0.220</td><td class="good">0.129</td><td class="good">−0.09</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td></td><td>3-gram ↓</td><td>0.026</td><td class="good">0.014</td><td class="good">−0.01</td><td><span class="tag tag-win">WIN</span></td></tr>
+        <tr><td>Tone Matching</td><td>accuracy %</td><td>50.0</td><td class="bad">33.3</td><td class="bad">−16.7</td><td><span class="tag tag-loss">REG</span></td></tr>
+        <tr><td>Tool Selection</td><td>optimal %</td><td>70.0</td><td class="good">80.0</td><td class="good">+10.0</td><td><span class="tag tag-win">WIN</span></td></tr>
+      </tbody>
+    </table>
+    <p class="note">Regressions in Uncertainty + Tone traced to STATE design gaps (missing calibration_rule), not training failure.</p>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══════════ 7B 3-Condition Comparison ═══════════ -->
+<h2>📊 Qwen 2.5-7B — Three-Condition Comparison (Zero-Shot)</h2>
+<p style="color:var(--text2);margin-bottom:1rem;">
+  A = Instruction only · B = Explicit rules · C = STATE block — which conditioning method wins?
+</p>
+
+<div class="chart-grid">
+  <div class="chart-box">
+    <canvas id="delegationChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <canvas id="uncertaintyChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <canvas id="toneChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <canvas id="toolChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <canvas id="repetitionChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <canvas id="priorityChart" height="220"></canvas>
+  </div>
+  <div class="chart-box full">
+    <canvas id="contextChart" height="120"></canvas>
+  </div>
+  <div class="chart-box full">
+    <canvas id="resourceChart" height="120"></canvas>
+  </div>
+</div>
+
+<div style="margin-top:1.5rem;">
+  <h3>7B Three-Condition Summary</h3>
+  <table>
+    <thead><tr><th>Eval</th><th>Key Metric</th><th>A (Instruction)</th><th>B (Explicit)</th><th>C (STATE)</th><th>Winner</th></tr></thead>
+    <tbody>
+      <tr><td>Delegation/Refusal</td><td>accuracy</td><td>69.2%</td><td class="good">84.6%</td><td>76.9%</td><td><span class="tag tag-win">B</span></td></tr>
+      <tr><td>Uncertainty</td><td>accuracy</td><td>66.7%</td><td class="good">83.3%</td><td>58.3%</td><td><span class="tag tag-win">B</span></td></tr>
+      <tr><td>Tone Matching</td><td>match rate</td><td>66.7%</td><td class="good">83.3%</td><td class="good">83.3%</td><td><span class="tag tag-tie">B=C</span></td></tr>
+      <tr><td>Tool Selection</td><td>optimal rate</td><td>80%</td><td>80%</td><td>80%</td><td><span class="tag tag-tie">TIE</span></td></tr>
+      <tr><td>Repetition (word)</td><td>overlap ↓</td><td>0.236</td><td>0.234</td><td>0.239</td><td><span class="tag tag-tie">TIE</span></td></tr>
+      <tr><td>Repetition (3-gram)</td><td>overlap ↓</td><td>0.044</td><td class="good">0.031</td><td>0.054</td><td><span class="tag tag-win">B</span></td></tr>
+      <tr><td>Priority Triage</td><td>top correct</td><td>0%</td><td>0%</td><td>0%</td><td><span class="tag tag-loss">ALL FAIL</span></td></tr>
+      <tr><td>Context Mgmt</td><td>low/high ratio ↓</td><td class="good">0.044</td><td>0.776</td><td>0.772</td><td><span class="tag tag-win">A</span></td></tr>
+      <tr><td>Resource Reg</td><td>CoV ↓</td><td class="good">0.354</td><td>0.594</td><td>0.335</td><td><span class="tag tag-win">C</span></td></tr>
+    </tbody>
+  </table>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══════════ Training Loss ═══════════ -->
+<h2>📉 Training Curves</h2>
+<div class="chart-grid">
+  <div class="chart-box">
+    <canvas id="lossChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>Training Config</h3>
+    <table>
+      <tbody>
+        <tr><td style="color:var(--text2)">Base Model</td><td>Qwen2.5-1.5B-Instruct-4bit</td></tr>
+        <tr><td style="color:var(--text2)">Trainable Params</td><td>5.276M (0.342%)</td></tr>
+        <tr><td style="color:var(--text2)">LoRA Rank / Alpha</td><td>8 / 16</td></tr>
+        <tr><td style="color:var(--text2)">Training Examples</td><td>2,046 total (45 behavioral, 564 curated, 1,482 generated)</td></tr>
+        <tr><td style="color:var(--text2)">Iterations</td><td>700</td></tr>
+        <tr><td style="color:var(--text2)">Learning Rate</td><td>1e-5 (cosine decay, 50 warmup)</td></tr>
+        <tr><td style="color:var(--text2)">Batch / Accumulation</td><td>1 / 4</td></tr>
+        <tr><td style="color:var(--text2)">Peak RAM</td><td>5.925 GB</td></tr>
+        <tr><td style="color:var(--text2)">Val Loss</td><td>3.105 → 1.802 <span class="good">(−42%)</span></td></tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<hr class="section-divider">
+
+<!-- ═══════════ SmolLM 135M ═══════════ -->
+<h2>🧪 SmolLM-135M — Knowledge Retention</h2>
+<p style="color:var(--text2);margin-bottom:1rem;">
+  Earliest training runs — testing if a 135M model can retain system knowledge after SFT.
+</p>
+<div class="chart-grid">
+  <div class="chart-box">
+    <canvas id="smolChart" height="220"></canvas>
+  </div>
+  <div class="chart-box">
+    <h3>SmolLM-135M Results</h3>
+    <table>
+      <thead><tr><th>Eval</th><th>Score</th><th>Passed/Total</th></tr></thead>
+      <tbody id="smolTable"></tbody>
+    </table>
+    <p class="note">135M too small for behavioral compliance — proved need for ≥1.5B. Validated the eval harness itself.</p>
+  </div>
+</div>
+
+<hr class="section-divider">
+<p style="color:var(--text2);font-size:0.8rem;text-align:center;padding:2rem 0;">
+  AI OS · NolaNET · Generated April 2, 2026 · All evals use STATE-block conditioning
+</p>
+
+<script>
+// ─── Chart.js defaults ───
+Chart.defaults.color = '#8b949e';
+Chart.defaults.borderColor = '#30363d';
+Chart.defaults.font.family = "-apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica";
+
+const C = {
+  green: '#3fb950', red: '#f85149', yellow: '#d29922',
+  blue: '#58a6ff', purple: '#bc8cff', orange: '#f0883e',
+  cyan: '#39d2c0', pink: '#f778ba',
+  greenA: 'rgba(63,185,80,0.3)', blueA: 'rgba(88,166,255,0.3)',
+  purpleA: 'rgba(188,140,255,0.3)', orangeA: 'rgba(240,136,62,0.3)',
+};
+
+// ═══════════ BEFORE / AFTER RADAR ═══════════
+new Chart(document.getElementById('beforeAfterChart'), {
+  type: 'radar',
+  data: {
+    labels: ['Priority\nTriage', 'Delegation\nRefusal', 'Uncertainty\nCalibration', 'Context\nMgmt', 'Resource\nRegulation', 'Repetition\nAvoidance', 'Tone\nMatching', 'Tool\nSelection'],
+    datasets: [
+      {
+        label: 'Base (qwen2.5:1.5b)',
+        data: [0, 76.9, 58.3, (1-1.058+1)*50, (1-1.164+1)*50, (1-0.22)*100, 50.0, 70.0],
+        borderColor: C.red, backgroundColor: 'rgba(248,81,73,0.1)',
+        borderWidth: 2, pointRadius: 4,
+      },
+      {
+        label: 'Fine-tuned (+45 behavioral SFT)',
+        data: [75, 84.6, 41.7, (1-0.871+1)*50, (1-1.435+1)*50, (1-0.129)*100, 33.3, 80.0],
+        borderColor: C.green, backgroundColor: 'rgba(63,185,80,0.1)',
+        borderWidth: 2, pointRadius: 4,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Before / After — All 8 Evals (Normalized)', font: { size: 16, weight: '600' }, color: '#e6edf3' }},
+    scales: { r: { beginAtZero: true, max: 100, grid: { color: '#30363d' }, angleLines: { color: '#30363d' }, ticks: { display: false } } }
+  }
+});
+
+// ═══════════ BEFORE / AFTER BAR ═══════════
+new Chart(document.getElementById('beforeAfterBarChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Priority\nTriage', 'Delegation', 'Uncertainty', 'Repetition\n(1-overlap)', 'Tone\nMatching', 'Tool\nSelection'],
+    datasets: [
+      { label: 'Base 1.5B', data: [0, 76.9, 58.3, 78, 50, 70], backgroundColor: C.red, borderRadius: 4 },
+      { label: 'Fine-tuned 1.5B', data: [75, 84.6, 41.7, 87.1, 33.3, 80], backgroundColor: C.green, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Before / After — Accuracy Metrics (%)', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B DELEGATION ═══════════
+new Chart(document.getElementById('delegationChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Overall Accuracy', 'Answer Accuracy', 'Refusal Accuracy'],
+    datasets: [
+      { label: 'A: Instruction', data: [69.2, 100, 50], backgroundColor: C.orange, borderRadius: 4 },
+      { label: 'B: Explicit', data: [84.6, 100, 75], backgroundColor: C.blue, borderRadius: 4 },
+      { label: 'C: STATE', data: [76.9, 100, 62.5], backgroundColor: C.purple, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Delegation/Refusal — 7B', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B UNCERTAINTY ═══════════
+new Chart(document.getElementById('uncertaintyChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Overall Accuracy', 'Firm Accuracy', 'Hedge Accuracy'],
+    datasets: [
+      { label: 'A: Instruction', data: [66.7, 100, 42.9], backgroundColor: C.orange, borderRadius: 4 },
+      { label: 'B: Explicit', data: [83.3, 100, 71.4], backgroundColor: C.blue, borderRadius: 4 },
+      { label: 'C: STATE', data: [58.3, 100, 28.6], backgroundColor: C.purple, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Uncertainty Calibration — 7B', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B TONE ═══════════
+new Chart(document.getElementById('toneChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Match Rate', 'Formal', 'Casual', 'Technical'],
+    datasets: [
+      { label: 'A: Instruction', data: [66.7, 50, 100, 50], backgroundColor: C.orange, borderRadius: 4 },
+      { label: 'B: Explicit', data: [83.3, 75, 100, 75], backgroundColor: C.blue, borderRadius: 4 },
+      { label: 'C: STATE', data: [83.3, 50, 100, 100], backgroundColor: C.purple, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Tone Matching — 7B', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B TOOL ═══════════
+new Chart(document.getElementById('toolChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Optimal Rate', 'Adequate Rate'],
+    datasets: [
+      { label: 'A: Instruction', data: [80, 80], backgroundColor: C.orange, borderRadius: 4 },
+      { label: 'B: Explicit', data: [80, 80], backgroundColor: C.blue, borderRadius: 4 },
+      { label: 'C: STATE', data: [80, 80], backgroundColor: C.purple, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Tool Selection — 7B', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B REPETITION ═══════════
+new Chart(document.getElementById('repetitionChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Word Overlap ↓', '3-gram Overlap ↓'],
+    datasets: [
+      { label: 'A: Instruction', data: [0.236, 0.044], backgroundColor: C.orange, borderRadius: 4 },
+      { label: 'B: Explicit', data: [0.234, 0.031], backgroundColor: C.blue, borderRadius: 4 },
+      { label: 'C: STATE', data: [0.239, 0.054], backgroundColor: C.purple, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Repetition Avoidance — 7B (lower = better)', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B PRIORITY ═══════════
+new Chart(document.getElementById('priorityChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Avg Kendall Tau ↓', 'Top Correct %', 'Perfect Order %'],
+    datasets: [
+      { label: 'A: Instruction', data: [0.433, 0, 0], backgroundColor: C.orange, borderRadius: 4 },
+      { label: 'B: Explicit', data: [0.458, 0, 0], backgroundColor: C.blue, borderRadius: 4 },
+      { label: 'C: STATE', data: [0.458, 0, 0], backgroundColor: C.purple, borderRadius: 4 },
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Priority Triage — 7B (all conditions fail)', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: { y: { beginAtZero: true, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B CONTEXT MANAGEMENT ═══════════
+new Chart(document.getElementById('contextChart'), {
+  type: 'bar',
+  data: {
+    labels: ['Instr Low', 'Instr High', 'Explicit Low', 'Explicit High', 'STATE Low', 'STATE High'],
+    datasets: [{
+      label: 'Avg Tokens',
+      data: [36.4, 820.7, 298.1, 384.2, 275.5, 355.5],
+      backgroundColor: [C.orange, C.orange, C.blue, C.blue, C.purple, C.purple],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true,
+    plugins: {
+      title: { display: true, text: 'Context Management — 7B — Avg Response Tokens by Capacity', font: { size: 14, weight: '600' }, color: '#e6edf3' },
+      legend: { display: false }
+    },
+    scales: { x: { beginAtZero: true, grid: { color: '#21262d' } }, y: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ 7B RESOURCE REGULATION ═══════════
+new Chart(document.getElementById('resourceChart'), {
+  type: 'bar',
+  data: {
+    labels: ['A: Instruction', 'B: Budget', 'C: STATE Loose', 'D: STATE Tight'],
+    datasets: [{
+      label: 'Avg Tokens',
+      data: [92.3, 122.3, 223.3, 259.9],
+      backgroundColor: [C.orange, C.blue, C.purple, C.pink],
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: { display: true, text: 'Resource Regulation — 7B — Avg Response Tokens (budget=150)', font: { size: 14, weight: '600' }, color: '#e6edf3' },
+      legend: { display: false }
+    },
+    scales: { y: { beginAtZero: true, grid: { color: '#21262d' } }, x: { grid: { display: false } } }
+  }
+});
+
+// ═══════════ TRAINING LOSS ═══════════
+new Chart(document.getElementById('lossChart'), {
+  type: 'line',
+  data: {
+    labels: ['0', '100', '200', '300', '400', '500', '600', '700'],
+    datasets: [
+      {
+        label: 'Train Loss',
+        data: [3.159, 2.8, 2.5, 2.35, 2.25, 2.15, 2.08, 2.01],
+        borderColor: C.blue, backgroundColor: C.blueA,
+        fill: true, tension: 0.3, pointRadius: 3,
+      },
+      {
+        label: 'Val Loss',
+        data: [3.105, 2.6, 2.2, 2.05, 1.95, 1.88, 1.83, 1.802],
+        borderColor: C.green, backgroundColor: C.greenA,
+        fill: true, tension: 0.3, pointRadius: 3,
+      }
+    ]
+  },
+  options: {
+    responsive: true,
+    plugins: { title: { display: true, text: 'Behavioral LoRA Training Loss (700 iterations)', font: { size: 14, weight: '600' }, color: '#e6edf3' }},
+    scales: {
+      y: { grid: { color: '#21262d' }, title: { display: true, text: 'Loss', color: '#8b949e' } },
+      x: { grid: { color: '#21262d' }, title: { display: true, text: 'Iteration', color: '#8b949e' } }
+    }
+  }
+});
+
+// ═══════════ SMOL 135M ═══════════
+const smolData = [
+  { name: 'knowledge_retention', score: 0.1, passed: 1, total: 10 },
+  { name: 'identity_persistence', score: 0.0, passed: 0, total: 10 },
+  { name: 'state_format', score: 0.0, passed: 0, total: 10 },
+  { name: 'instruction_following', score: 0.0, passed: 0, total: 10 },
+  { name: 'safety_boundaries', score: 0.0, passed: 0, total: 10 },
+];
+
+const smolTbody = document.getElementById('smolTable');
+smolData.forEach(d => {
+  const cls = d.score > 0.5 ? 'good' : d.score > 0 ? 'neutral' : 'bad';
+  smolTbody.innerHTML += `<tr><td>${d.name.replace(/_/g, ' ')}</td><td class="${cls}">${(d.score*100).toFixed(0)}%</td><td>${d.passed}/${d.total}</td></tr>`;
+});
+
+new Chart(document.getElementById('smolChart'), {
+  type: 'bar',
+  data: {
+    labels: smolData.map(d => d.name.replace(/_/g, '\n')),
+    datasets: [{
+      label: 'Score',
+      data: smolData.map(d => d.score * 100),
+      backgroundColor: smolData.map(d => d.score > 0 ? C.yellow : C.red),
+      borderRadius: 4,
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      title: { display: true, text: 'SmolLM-135M — Knowledge Evals (proved 135M too small)', font: { size: 14, weight: '600' }, color: '#e6edf3' },
+      legend: { display: false }
+    },
+    scales: { y: { beginAtZero: true, max: 100, grid: { color: '#21262d' }, title: { display: true, text: 'Score %', color: '#8b949e' } }, x: { grid: { display: false } } }
+  }
+});
+</script>
+</body>
+</html>

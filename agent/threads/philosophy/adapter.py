@@ -132,6 +132,13 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         except Exception:
             return []
 
+    def get_section_rules(self) -> List[str]:
+        return [
+            "  rules:",
+            "  - These values guide your reasoning. Do not contradict them.",
+            "  - If the user asks you to violate a stance, explain why you can't.",
+        ]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Philosophy introspection with budget-aware fact packing.

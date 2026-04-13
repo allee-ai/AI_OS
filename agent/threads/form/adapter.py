@@ -255,6 +255,14 @@ class FormThreadAdapter(BaseThreadAdapter):
         except Exception:
             return []
 
+    def get_section_rules(self) -> List[str]:
+        return [
+            "  rules:",
+            "  - ONLY use tools listed below. If a tool is not shown, it is NOT available.",
+            "  - Do not guess tool names or parameters. Use the exact names and signatures shown.",
+            "  - To call a tool, use the :::execute block format.",
+        ]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Form introspection with budget-aware fact packing.

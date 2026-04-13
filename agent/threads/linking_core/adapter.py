@@ -149,6 +149,13 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         except Exception:
             return []
 
+    def get_section_rules(self) -> List[str]:
+        return [
+            "  rules:",
+            "  - Concepts shown were scored as relevant to this query. Trust the ranking.",
+            "  - Do not assume connections between concepts unless a link is listed.",
+        ]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """Return linking/relevance facts for context assembly.
         

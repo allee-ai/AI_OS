@@ -1,36 +1,54 @@
 #!/usr/bin/env python3
-"""Analyze eval failures in detail."""
-import sqlite3, json
+"""Analyze baseline comparison failures."""
+import json
 
-db = sqlite3.connect('data/db/state_demo.db')
+with open("eval/baseline_comparison_results.json") as f:
+    data = json.load(f)
 
-for eval_name in ['retrieval_precision', 'fact_recall', 'hallucination', 'tier_comparison', 'tool_use', 'injection_resistance', 'state_drift']:
-    row = db.execute(
-        'SELECT status, score, passed, total, details_json FROM eval_runs WHERE eval_name=? AND status != "running" ORDER BY created_at DESC LIMIT 1',
-        (eval_name,)
-    ).fetchone()
-    if not row:
-        continue
-    status, score, passed, total, details_json = row
-    details = json.loads(details_json) if details_json else []
-    print(f"{'='*60}")
-    print(f"{eval_name}: {status} score={score} {passed}/{total}")
-    print(f"{'='*60}")
-    for d in details:
-        s = "PASS" if d.get("passed") else "FAIL"
-        label = d.get("prompt", d.get("query", d.get("attack_type", "")))
-        if isinstance(label, str):
-            label = label[:65]
-        print(f"  [{s}] {label}")
-        # Show key diagnostic fields
-        for k in ['error', 'expected_thread', 'actual_top', 'keyword_hits', 'min_required',
-                   'has_state_context', 'semantic_score', 'combined_score', 'category',
-                   'attack_type', 'identity_held']:
-            if k in d and d[k] is not None:
-                print(f"       {k}: {d[k]}")
-        if not d.get("passed") and "response_preview" in d:
-            resp = d["response_preview"][:150].replace("\n", " ")
-            print(f"       response: {resp}")
-    print()
+print("=" * 70)
+print("STATE IDENTITY FAILURES (why STATE lost to STATIC)")
+print("=" * 70)
+for t in data["identity"]["state"]["turns"]:
+    if not t["passed"]:
+        print(f"\n[{t['turn']}] [{t['category']}] {t['prompt']}")
+        print(f"  has_identity={t['has_identity']}  adopted_foreign={t['adopted_foreign']}  resists={t['actively_resists']}")
+        print(f"  RESPONSE: {t['response'][:500]}")
 
-db.close()
+print("\n\n" + "=" * 70)
+print("STATIC IDENTITY FAILURES (for comparison)")
+print("=" * 70)
+for t in data["identity"]["static"]["turns"]:
+    if not t["passed"]:
+        print(f"\n[{t['turn']}] [{t['category']}] {t['prompt']}")
+        print(f"  has_identity={t['has_identity']}  adopted_foreign={t['adopted_foreign']}  resists={t['actively_resists']}")
+        print(f"  RESPONSE: {t['response'][:500]}")
+
+print("\n\n" + "=" * 70)
+print("STATE MEMORY FAILURES")
+print("=" * 70)
+for t in data["memory"]["state"]["turns"]:
+    if not t["passed"]:
+        print(f"\n[{t['turn']}] [{t['category']}] {t['prompt']}")
+        print(f"  required_hits={t['required_hits']} (of {t['required_total']} required keywords)")
+        print(f"  RESPONSE: {t['response'][:500]}")
+
+print("\n\n" + "=" * 70)
+print("STATIC+FACTS MEMORY FAILURES (for comparison)")
+print("=" * 70)
+for t in data["memory"]["static_with_facts"]["turns"]:
+    if not t["passed"]:
+        print(f"\n[{t['turn']}] [{t['category']}] {t['prompt']}")
+        print(f"  required_hits={t['required_hits']} (of {t['required_total']} required keywords)")
+        print(f"  RESPONSE: {t['response'][:500]}")
+
+print("\n\n" + "=" * 70)
+print("MEMORY SIDE-BY-SIDE (STATE vs STATIC+FACTS)")
+print("=" * 70)
+for i in range(len(data["memory"]["state"]["turns"])):
+    st = data["memory"]["state"]["turns"][i]
+    sf = data["memory"]["static_with_facts"]["turns"][i]
+    s_st = "PASS" if st["passed"] else "FAIL"
+    s_sf = "PASS" if sf["passed"] else "FAIL"
+    print(f"\n[{i+1}] [{st['category']}] {st['prompt']}")
+    print(f"  STATE:        {s_st}  hits={st['required_hits']}  detail={st.get('detail_score',0):.2f}")
+    print(f"  STATIC+FACTS: {s_sf}  hits={sf['required_hits']}  detail={sf.get('detail_score',0):.2f}")

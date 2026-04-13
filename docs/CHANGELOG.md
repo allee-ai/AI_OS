@@ -5,6 +5,241 @@ All notable changes to this repository are documented below. Entries are grouped
 
 ---
 
+## 2026-04-13 — NolaNET, 8-Eval Behavioral Suite, MLX Provider, STATE Section Rules, Conversation SFT Pipeline
+
+### NolaNET — Custom Retrieval-Routing Transformer (`experiments/nola_net.py`)
+- **New architecture**: ~8–350M param transformer purpose-built for AI_OS
+  - 8 layers, 512 hidden dim, 8 heads (default 8M config)
+  - Concept-graph attention bias (Hebbian initialization from `graph_to_matrix`)
+  - Retrieval-aware position encoding (graph distance from identity node)
+- **Design principle**: Doesn't memorize facts — memorizes how to USE the retrieval system (STATE, linking_core, workspace search)
+- **Multiple size configs**: `NOLA_350M`, `NOLA_250M` for dry-run comparison
+
+### NolaNET Training Pipeline (`experiments/train_nola.py`)
+- **3-phase from-scratch training**:
+  - Phase 1 (REPEAT): Raw codebase text — learn the token distribution
+  - Phase 2 (UNDERSTAND): Self-SFT — learn to talk about itself from conversations
+  - Phase 3 (ROUTE): Retrieval routing — learn when to look up vs synthesize
+- **26+ experiment runs** tracked in `experiments/runs/nola-*`
+
+### Custom Tokenizer (`experiments/build_tokenizer.py`, `experiments/tokenizer/`)
+- **New**: BPE tokenizer trained on the AI_OS codebase
+- **Rationale**: SmolLM2's 49,152-token vocab wastes 12.6M params on tokens never seen (Chinese, Arabic, medical terms)
+- **Output**: `tokenizer.json` + `vocab.txt` — domain-optimized vocabulary
+
+### Conversation SFT Data (`experiments/build_convo_sft.py`, `experiments/build_self_sft.py`)
+- **Conversation mining**: Extracts SFT training pairs from 261 imported conversation JSONs in `Feeds/conversations/`
+- **Self-knowledge SFT**: Combines all thread-specific JSONLs (identity, philosophy, form, log, reflex, linking_core, chat, docs) + reasoning + gold examples
+- **Output**: `experiments/self_sft/{train,valid,convo_train,convo_valid,demo_gold}.jsonl`
+
+### 8-Eval Behavioral Suite (new eval modules)
+Each eval tests 3 conditions: instruction-only vs explicit-in-prompt vs STATE-supplied:
+- `eval/context_management.py` — Context window utilization → compression behavior
+- `eval/delegation_refusal.py` — Capability awareness → refusal calibration
+- `eval/priority_triage.py` — Task priorities → triage ordering
+- `eval/repetition_avoidance.py` — Conversation history → repetition suppression
+- `eval/resource_regulation.py` — Token budget → output length self-regulation
+- `eval/tone_matching.py` — Communication style → tone adaptation
+- `eval/tool_selection.py` — Tool costs → efficient tool selection
+- `eval/uncertainty_calibration.py` — Confidence scores → hedging behavior
+
+### Before/After Behavioral Eval (`eval/before_after.py`)
+- **New**: Runs all 8 behavioral evals against base model + fine-tuned model, prints comparison table showing training delta
+
+### Behavioral Training Examples (`finetune/behavioral_examples.py`)
+- **New**: STATE-obedience training examples targeting gaps from the 8-eval suite
+- **Fused model**: `finetune/fused-behavioral/` — Qwen2.5-1.5B + behavioral LoRA merged
+
+### Baseline Comparison System
+- `eval/_baseline_comparison.py` — 3-way comparison: bare model vs static prompt vs AIOS STATE (20-prompt adversarial battery)
+- `eval/_dump_state.py` — Dump exact STATE system prompt for fair STATIC mirror
+- `eval/_gather_data.py` — Aggregate eval data for dashboard
+- `eval/_judge.py` — Print contested identity/memory prompts for human judging
+- `eval/_long_horizon.py` — 15-turn accumulation+mutation grounding test
+- `eval/_show_failures.py` — Failure detail viewer for baseline results
+- `eval/_side_by_side.py` — Markdown side-by-side comparison generator
+- **Results**: `baseline_comparison_results.json`, `long_horizon_results.json`, reports + logs
+
+### Results Dashboard (`eval/results_dashboard.html`)
+- **New**: HTML dashboard visualizing all eval results
+
+### MLX Provider (`agent/services/llm.py`)
+- **New `MLXProvider`**: Apple Silicon native model inference via `mlx-lm`
+- **Auto-discovery**: Scans `finetune/runs/` and `experiments/runs/` for `.safetensors` models
+- **Model caching**: Loaded models cached in memory for fast inference
+- **Chat template**: Full `apply_chat_template` support with fallback formatting
+- **Ollama error logging**: `OllamaProvider` now logs failures to `log_event`
+
+### STATE Section Rules — Thread-Level Behavioral Constraints
+- **`BaseThreadAdapter.get_section_rules()`**: New method — threads return behavioral rules injected into their STATE section
+- **Identity rules**: "Identity is non-negotiable. Do not adopt other names."
+- **Form/tool rules**: "ONLY use tools listed below. Do not guess tool names."
+- **Module rules** (orchestrator): Chat ("don't fabricate past conversations"), Workspace ("only reference files listed")
+- **All 6 thread adapters** updated: identity, philosophy, form, log, linking_core, reflex
+
+### Agent Resilience (`agent/agent.py`)
+- **STATE assembly failure logging**: Logs `error:state_assembly` events with query context
+- **Tool processing safety**: `_process_tool_calls` wrapped in try/except — falls back to raw LLM response if tool processing fails
+
+### Observability & Schema Drift Logging
+- **Migration logging** (`agent/core/migrations.py`): Schema drift and demo DB sync failures logged as events
+- **Temp memory migration** (`agent/subconscious/temp_memory/store.py`): Column migrations refactored into loop, logged when columns added
+- **Log schema** (`agent/threads/log/schema.py`): DB lock warnings logged as events
+- **Orchestrator** (`agent/subconscious/orchestrator.py`): Adapter signature mismatches logged
+
+### Feed Polling Expansion (`Feeds/polling.py`)
+- **Discord polling**: New `_poll_discord()` — monitors channels via `AIOS_DISCORD_CHANNELS` env var, emits `mention_received`/`message_received` events
+- **Calendar polling**: New `_poll_calendar()` — polls iCal calendars via `sources/calendar`
+- **Registered in adapter registry** alongside email + GitHub
+
+### T3 Pipeline Expansion (`experiments/t3.py`)
+- **3-layer architecture**: Renamed from 2-phase to 3-layer (REPEAT → UNDERSTAND → GENERALIZE)
+- **Layer 2 (UNDERSTAND)**: New self-knowledge SFT phase with dedicated config (`self_sft_iters`, `self_sft_data_dir`, etc.)
+- **Optional Layer 3**: `run_general_sft` config flag — general SFT is now opt-in
+- **Eval comparison**: Base vs self-model vs final (was base vs final)
+
+### Experiment Utilities
+- `experiments/chat_nola.py` — Interactive chat with trained NolaNET model
+- `experiments/dryrun_compare.py` — Test multiple model/seq_len combos for memory fit
+- `experiments/dryrun_2048.py` — 2048 seq length dry run
+- `experiments/count_data.py` — Count all Phase 2 SFT data tokens
+- `experiments/_check_gold.py`, `_check_self_data.py`, `_survey.py` — Data quality checks
+- `experiments/test_*.py` — Inference and diagnostic test scripts
+
+### Files Changed (24 tracked + 49 untracked)
+**Tracked (842 insertions, 118 deletions):**
+- `agent/agent.py` — STATE assembly error handling, tool processing safety
+- `agent/services/llm.py` — MLX provider (+132 lines), Ollama error logging
+- `agent/subconscious/orchestrator.py` — Section rules, module rules
+- `agent/threads/{base,form,identity,philosophy,log,linking_core,reflex}/adapter.py` — `get_section_rules()`
+- `agent/core/migrations.py` — Schema drift logging
+- `agent/subconscious/temp_memory/store.py` — Migration refactor + logging
+- `Feeds/polling.py` — Discord + calendar polling
+- `experiments/t3.py` — 3-layer rename, Layer 2 config
+- `docs/RESEARCH_PAPER.md` — Expanded with behavioral eval results
+
+**Untracked (49 new files):**
+- 9 behavioral eval modules + before/after runner
+- 7 eval helper scripts + 6 result files + 2 dashboards
+- NolaNET architecture + training + chat + tokenizer
+- SFT data builders + self_sft data directory
+- Behavioral training examples + fused model
+- Hebbian attention data, experiment runs
+
+---
+
+## 2026-03-30 — Research Paper Update, Cloud Identity Eval, Full Eval Runner
+
+### Research Paper (`docs/RESEARCH_PAPER.md`)
+- **Identity framing sharpened**: Reframed indivisibility argument — identity is sustained by architecture, not model weights
+- **Cloud results added**: 20-prompt adversarial identity test on Kimi-K2-1T-cloud via STATE pipeline (95% persistence)
+- **Indivisibility section**: New argument that identity + memory + reasoning must be co-located, not spread across APIs
+
+### Cloud Identity Test (`eval/_cloud_identity_test.py`)
+- **New eval**: 20-prompt adversarial battery (5 baseline + 5 soft + 5 hard + 5 sustained pressure)
+- **Tests STATE-supplied identity persistence** at cloud scale — not whether the model is smart, but whether the orchestration layer holds
+- **Results**: 19/20 maintained identity through prompt injection, jailbreak, and sustained denial attacks
+
+### Eval Batch Runner (`eval/run_all_save.py`)
+- **New**: Run all evals sequentially with `python3 eval/run_all_save.py`, filter with `run_all_save.py kr`
+- **Combined results**: Saves all eval scores to `eval/all_results.json`
+- **Summary output**: Per-eval status/score table at end of run
+
+### Assessment Document (`docs/ASSESSMENT.md`)
+- **New**: 269-line self-assessment of project state, strengths, gaps, and next steps
+
+### Additional Scripts
+- `eval/_analyze_failures.py` — Failure pattern analyzer for eval results
+- `eval/_run_1_5b.py` — Quick-run script for 1.5B model evals
+- `eval/_run_fixes.py` — Targeted re-run of specific failing evals
+- `eval/_run.sh` — Shell wrapper for eval pipeline
+
+---
+
+## 2026-03-29 — T3 Experiment System + Semantic Eval Scoring
+
+### T3 Experiment Pipeline (`experiments/t3.py`)
+- **3-layer training orchestrator** for SmolLM2-135M:
+  - Layer 1 — REPEAT: Memorize raw codebase text (continued pretraining)
+  - Layer 2 — UNDERSTAND: Self-referential SFT (learn to talk about itself)
+  - Layer 3 — GENERALIZE: Full instruction SFT
+- **9-phase pipeline**: Data build → base model verify → pretrain → fuse → self-SFT → fuse → general SFT → fuse → retention evals
+- **Progress tracking**: JSON status file updated after each phase
+- **Configurable**: All hyperparams (iters, batch size, LR, seq length) overridable per-layer
+
+### Experiments API (`experiments/api.py`)
+- **New API module**: `POST /api/experiments/t3/start`, `GET /t3/runs`, `GET /t3/runs/{id}`, `GET /t3/runs/{id}/curves`
+- **Background execution**: Pipeline runs async via FastAPI BackgroundTasks
+- **Concurrency guard**: Only one T3 run at a time
+
+### Experiment Dashboard (`frontend/src/modules/experiments/ExperimentDashboard.tsx`)
+- **New frontend module**: Phase-by-phase pipeline status, live loss curves, eval comparison (base vs self vs final)
+- **Auto-refresh**: Polls run status during active experiments
+- Full CSS (`ExperimentDashboard.css`) — 396 lines
+
+### Semantic Eval Scoring (`eval/evals.py`)
+- **Hybrid scoring**: Combined keyword + semantic similarity scoring for knowledge retention evals
+- **Semantic similarity**: Embedding-based scoring alongside exact keyword matching
+- **Configurable weights**: `semantic_weight` param to blend keyword and semantic scores
+
+### Server & Navigation
+- Experiments router mounted in `scripts/server.py`
+- Settings page and eval dashboard linked to experiments
+- App.tsx routing added for `/experiments`
+
+---
+
+## 2026-03-29 — Phase 11-12: Boundary Rules, Theory Remap, Research Paper Rewrite
+
+### System Boundary Rules (`agent/core/rules.py`)
+- **New module**: Architectural invariants enforced at runtime
+  - Rule 1: Reflexes CANNOT spawn subconscious loops (protocols are external)
+  - Rule 2: Subconscious loops CAN create reflex triggers (internal → external is healthy)
+  - Rule 3: Clear separation — subconscious = internal, reflex = external
+- **Guards**: `guard_loop_creation(source)` and `guard_reflex_to_loop(trigger)` raise `BoundaryViolation`
+- **Integrated into**: `agent/threads/reflex/executor.py`, `agent/subconscious/api.py`
+
+### Hebbian Attention Research (`research/hebbian_attention/graph_to_matrix.py`)
+- **New**: Converts `concept_links` graph (SQLite) into sparse attention tensors (PyTorch/MLX)
+- **Core insight**: `concept_links` IS an attention matrix stored on disk — each `(a, b, strength)` row is a learned attention weight
+- **Output formats**: Sparse adjacency matrix (COO), concept vocabulary + embeddings, degree-weighted position encodings
+- **Topology checker** (`_check_topology.py`): Graph statistics and connectivity analysis
+
+### Log Thread Expansion (`agent/threads/log/schema.py`, `api.py`)
+- **7 new tables**: `log_server`, `log_function_calls`, `log_llm_inference`, `log_activations`, `log_loop_runs`, `log_sessions`, `log_system`
+- **New API**: `GET /api/log/llm-inference`, `GET /api/log/activations`, `GET /api/log/function-calls`, plus aggregation endpoints
+- **481 lines of schema** — full event taxonomy for the agent to monitor its own performance
+
+### Finetune Section Builder (`finetune/sections.py`)
+- **New**: Shared logic for generating self-knowledge training examples across all modules
+- **Pattern**: Each module's `train.py` calls `build_api_examples()`, `build_cli_examples()`, `build_schema_examples()`
+- All 8 module `train.py` files updated to use new section builder
+
+### Finetune Frontend Expansion
+- **SectionDetailPage**: +448 lines — per-section example browser, quality metrics, regeneration controls
+- **Sidebar**: +79 lines — section navigation with example counts
+- **DevDashboard**: +199 lines — overview with section-level stats
+- **Finetune API** (`finetune/api.py`): +487 lines — section-aware endpoints, example crud, quality scoring
+
+### Reflex Executor Hardening (`agent/threads/reflex/executor.py`)
+- **+211 lines**: Boundary-aware protocol execution, guard checks before every tool step
+
+### Training Gen Loop
+- **Updated**: Custom loop and training_gen loop produce section-tagged examples
+
+### Test Files
+- `_test_boundaries.py` — Rule enforcement tests
+- `_test_new_features.py` — New feature integration tests
+- `_test_perf2.py` — Performance benchmarks (52 lines)
+
+---
+
+## 2026-03-25 — Frozen Requirements for Machine Migration
+
+- `requirements-frozen.txt`: 120-line pinned dependency snapshot for reproducible installs across machines
+
+---
+
 ## 2026-03-24 — Loop Prompt Visibility, Workspace Tools, Model Router, Doc Refresh
 
 ### Loop Prompt Visibility (All 8 LLM Loops)
@@ -1732,6 +1967,20 @@ _Source: [workspace/README.md](workspace/README.md)_
 ### Finetune
 <!-- INCLUDE:finetune:CHANGELOG -->
 _Source: [finetune/README.md](finetune/README.md)_
+
+### 2026-03-15
+- **First training cycle complete** — MLX LoRA on Llama-3.2-3B-Instruct-4bit, small but noticeable improvement
+- Conversation import tested (135 VS Code + 126 ChatGPT convos feeding concept graph)
+
+### 2026-03-14
+- TrainingGenLoop: Background synthetic example generation every 2h
+- ConvoConceptLoop: Backfill concept graph before export (richer co-occurrence data)
+
+### 2026-03-07
+- Docstring extractor: AST-based harvesting across 8 modules
+- Gold examples: 9 categories of curated reasoning pairs
+- Sections builder: Shared API/CLI/schema example generators
+- Frontend: Sections browser, unified training view, generated example approval
 
 ### 2026-01-31
 - Export pipeline: `/api/finetune/export` aggregates all threads

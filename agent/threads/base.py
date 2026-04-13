@@ -184,6 +184,15 @@ class BaseThreadAdapter:
         The base implementation returns an empty list.
         """
         return []
+
+    def get_section_rules(self) -> List[str]:
+        """Return behavioral rules for this thread's STATE section.
+
+        These appear after metadata and before facts.  They tell the
+        model what it can and cannot do with the information in this
+        section.  Subclasses SHOULD override with thread-specific rules.
+        """
+        return []
     
     # =========================================================================
     # BUDGET-AWARE FACT PACKING

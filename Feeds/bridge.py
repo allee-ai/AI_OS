@@ -142,7 +142,7 @@ def _generate_response(event: FeedEvent, template: ResponseTemplate) -> Response
         try:
             from agent.subconscious.orchestrator import get_subconscious
             sub = get_subconscious()
-            consciousness = sub.get_state(query=prompt).get("state_block", "")
+            consciousness = sub.get_state(query=prompt)
         except Exception:
             pass
 

@@ -141,12 +141,87 @@ async def _poll_github() -> List[Dict[str, Any]]:
 
 
 # ---------------------------------------------------------------------------
+# Discord polling
+# ---------------------------------------------------------------------------
+
+async def _poll_discord() -> List[Dict[str, Any]]:
+    """Poll monitored Discord channels for new messages."""
+    try:
+        from .sources.discord import get_adapter
+        adapter = get_adapter()
+        if not adapter.token:
+            return []
+
+        # Get monitored channel IDs from env (comma-separated)
+        import os
+        channel_ids = [c.strip() for c in os.getenv("AIOS_DISCORD_CHANNELS", "").split(",") if c.strip()]
+        if not channel_ids:
+            return []
+
+        events_emitted = []
+        for channel_id in channel_ids:
+            try:
+                messages = await adapter.get_messages(channel_id, limit=10)
+                for msg in messages:
+                    msg_id = str(msg.get("id", ""))
+                    if not msg_id or not _is_new("discord", msg_id):
+                        continue
+                    author = msg.get("author", {})
+                    # Skip bot's own messages
+                    if author.get("bot", False):
+                        continue
+                    content = msg.get("content", "")
+                    event_type = "mention_received" if adapter.token and f"<@" in content else "message_received"
+                    event = emit_event(
+                        feed_name="discord",
+                        event_type=event_type,
+                        payload={
+                            "message_id": msg_id,
+                            "channel_id": channel_id,
+                            "guild_id": msg.get("guild_id", ""),
+                            "author_id": str(author.get("id", "")),
+                            "author_name": author.get("username", "unknown"),
+                            "content": content,
+                            "timestamp": msg.get("timestamp", ""),
+                        },
+                        priority=EventPriority.NORMAL,
+                        event_id=msg_id,
+                    )
+                    events_emitted.append(event.to_dict())
+            except Exception as e:
+                print(f"[POLLING] Discord/{channel_id} error: {e}")
+        return events_emitted
+    except Exception as e:
+        print(f"[POLLING] Discord error: {e}")
+        return []
+
+
+# ---------------------------------------------------------------------------
+# Calendar polling
+# ---------------------------------------------------------------------------
+
+async def _poll_calendar() -> List[Dict[str, Any]]:
+    """Poll iCal calendars for upcoming events."""
+    try:
+        from .sources.calendar import poll_calendars
+        count = poll_calendars()
+        # poll_calendars() emits events directly via emit_event;
+        # return empty list since events are already emitted
+        return [{}] * count if count else []
+    except Exception as e:
+        print(f"[POLLING] Calendar error: {e}")
+        return []
+
+
+# ---------------------------------------------------------------------------
 # Adapter registry  — maps feed_name → async poll function
 # ---------------------------------------------------------------------------
 
 _POLL_FUNCTIONS: Dict[str, Any] = {
     "email": _poll_email,
     "github": _poll_github,
+    "discord": _poll_discord,
+    "calendar": _poll_calendar,
 }
 
 

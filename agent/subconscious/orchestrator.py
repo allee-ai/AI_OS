@@ -308,8 +308,18 @@ class Subconscious:
             )
             result_dict = result.to_dict()
             facts = result_dict.get("facts", [])
-        except TypeError:
-            # Adapter doesn't support threshold yet
+        except TypeError as te:
+            # Adapter doesn't support threshold yet — signature mismatch
+            try:
+                from agent.threads.log.schema import log_event
+                log_event(
+                    event_type="warn:signature_mismatch",
+                    data=f"{thread_name} adapter missing 'threshold' param",
+                    metadata={"thread": thread_name, "error": str(te)},
+                    source="orchestrator",
+                )
+            except Exception:
+                pass
             try:
                 result = adapter.introspect(context_level=level, query=query)
                 result_dict = result.to_dict()
@@ -337,6 +347,13 @@ class Subconscious:
             pass
         section.append(f"  context_level: {level}")
         section.append(f"  fact_count: {len(facts)}")
+        # Behavioral rules for this section
+        try:
+            rules = adapter.get_section_rules()
+            if rules:
+                section.extend(rules)
+        except Exception:
+            pass
         section.extend(facts)
         return section
     
@@ -386,6 +403,22 @@ class Subconscious:
             pass
         section.append(f"  context_level: {level}")
         section.append(f"  fact_count: {len(budget_facts)}")
+        # Behavioral rules for modules
+        module_rules = {
+            "chat": [
+                "  rules:",
+                "  - Conversation history shown is a summary. Do not fabricate details from past chats.",
+                "  - If the user asks about a past conversation not shown, say you'd need to search.",
+            ],
+            "workspace": [
+                "  rules:",
+                "  - Only reference files listed here. Do not assume other files exist.",
+                "  - To find other files, use file search tools.",
+            ],
+        }
+        rules = module_rules.get(module_name, [])
+        if rules:
+            section.extend(rules)
         section.extend(budget_facts)
         return section
     

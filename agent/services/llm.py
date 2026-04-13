@@ -140,12 +140,25 @@ class OllamaProvider(LLMProvider):
         except ImportError:
             raise RuntimeError("ollama not installed. Run: pip install ollama")
 
-        response = _ollama.chat(
-            model=model,
-            messages=messages,
-            options={"temperature": temperature, "num_predict": max_tokens},
-        )
-        return response["message"]["content"].strip()
+        try:
+            response = _ollama.chat(
+                model=model,
+                messages=messages,
+                options={"temperature": temperature, "num_predict": max_tokens},
+            )
+            return response["message"]["content"].strip()
+        except Exception as e:
+            try:
+                from agent.threads.log.schema import log_event
+                log_event(
+                    event_type="error:model_routing",
+                    data=f"Ollama generate failed: {e}",
+                    metadata={"model": model, "provider": "ollama", "error": str(e)},
+                    source="llm.ollama",
+                )
+            except Exception:
+                pass
+            raise
 
 
 # ── Gemini ──────────────────────────────────────────────────
@@ -389,9 +402,132 @@ def _openai_compat_call(url: str, api_key: str, model: str,
     return str(body)
 
 
+# ── MLX (Apple Silicon local models) ────────────────────────
+
+class MLXProvider(LLMProvider):
+    name = "mlx"
+    key_env = ""
+    default_model = ""
+    rpm = 999
+    style = "mlx"
+    catalog = []
+
+    _model_cache: Dict[str, Any] = {}
+
+    def _scan_models(self) -> List[Dict[str, Any]]:
+        """Scan for trained models in finetune/runs/ and experiments/runs/."""
+        from pathlib import Path
+        root = Path(__file__).resolve().parent.parent.parent
+        models = []
+        scan_dirs = [
+            root / "finetune" / "runs",
+            root / "experiments" / "runs",
+        ]
+        for scan_dir in scan_dirs:
+            if not scan_dir.exists():
+                continue
+            for run_dir in sorted(scan_dir.iterdir()):
+                if not run_dir.is_dir():
+                    continue
+                # Check for model directories
+                for model_name in ["self_model", "final_model", "pretrained_model"]:
+                    model_dir = run_dir / model_name
+                    safetensors = model_dir / "model.safetensors"
+                    if safetensors.exists():
+                        model_id = str(model_dir)
+                        label = f"{run_dir.parent.parent.name}/{run_dir.name}/{model_name}"
+                        size_mb = safetensors.stat().st_size / 1e6
+                        models.append({
+                            "id": model_id,
+                            "display": label,
+                            "context": 2048,
+                            "description": f"Local MLX {size_mb:.0f}MB",
+                        })
+                # Also check root-level model.safetensors (fused models like 3b-v1-final)
+                if (run_dir / "model.safetensors").exists():
+                    model_id = str(run_dir)
+                    label = f"{run_dir.parent.parent.name}/{run_dir.name}"
+                    size_mb = (run_dir / "model.safetensors").stat().st_size / 1e6
+                    models.append({
+                        "id": model_id,
+                        "display": label,
+                        "context": 2048,
+                        "description": f"Local MLX {size_mb:.0f}MB",
+                    })
+        return models
+
+    def is_available(self) -> bool:
+        try:
+            import mlx_lm  # noqa: F401
+            return True
+        except ImportError:
+            return False
+
+    def list_models(self) -> List[Dict[str, Any]]:
+        if not self.is_available():
+            return []
+        return [{**m, "provider": self.name} for m in self._scan_models()]
+
+    def generate(self, messages, model=None, temperature=0.7, max_tokens=2048):
+        try:
+            from mlx_lm import load, generate as mlx_generate
+        except ImportError:
+            raise RuntimeError("mlx-lm not installed. Run: pip install mlx-lm")
+
+        model_path = model or self.default_model
+        if not model_path:
+            raise ValueError("No MLX model specified. Provide a model path.")
+
+        # Cache loaded models
+        if model_path not in self._model_cache:
+            try:
+                loaded_model, tokenizer = load(path_or_hf_repo=model_path)
+            except Exception as e:
+                try:
+                    from agent.threads.log.schema import log_event
+                    log_event(
+                        event_type="error:model_routing",
+                        data=f"MLX model load failed: {e}",
+                        metadata={"model": model_path, "provider": "mlx", "error": str(e)},
+                        source="llm.mlx",
+                    )
+                except Exception:
+                    pass
+                raise
+            self._model_cache[model_path] = (loaded_model, tokenizer)
+        loaded_model, tokenizer = self._model_cache[model_path]
+
+        # Format with chat template
+        if hasattr(tokenizer, "apply_chat_template"):
+            formatted = tokenizer.apply_chat_template(
+                messages, tokenize=False, add_generation_prompt=True
+            )
+        else:
+            # Fallback
+            parts = []
+            for m in messages:
+                if m["role"] == "system":
+                    parts.append(m["content"])
+                elif m["role"] == "user":
+                    parts.append(f"User: {m['content']}")
+                elif m["role"] == "assistant":
+                    parts.append(f"Assistant: {m['content']}")
+            parts.append("Assistant:")
+            formatted = "\n".join(parts)
+
+        response = mlx_generate(
+            loaded_model, tokenizer,
+            prompt=formatted,
+            max_tokens=max_tokens,
+            verbose=False,
+        )
+        return response.strip()
+
+
 # ── Provider Registry ───────────────────────────────────────
 
 PROVIDER_CLASSES: Dict[str, type] = {
+    "mlx": MLXProvider,
     "ollama": OllamaProvider,
     "gemini": GeminiProvider,
     "claude": ClaudeProvider,

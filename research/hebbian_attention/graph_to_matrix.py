@@ -1,4 +1,4 @@
-tation handled that"""
+"""
 graph_to_matrix.py — Convert concept_links into sparse attention tensors.
 
 This is the bridge between AI_OS's Hebbian concept graph (SQLite)

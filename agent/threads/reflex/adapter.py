@@ -194,6 +194,13 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         except Exception:
             return []
 
+    def get_section_rules(self) -> List[str]:
+        return [
+            "  rules:",
+            "  - Apply matching patterns when relevant. These are learned shortcuts.",
+            "  - Do not invent patterns not listed here.",
+        ]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Reflex introspection with budget-aware fact packing.

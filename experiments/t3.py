@@ -1,14 +1,21 @@
 """
-T3 Experiment — Continued Pretraining Pipeline
-===============================================
+T3 Experiment — 3-Layer Training Pipeline
+==========================================
 Orchestrates the full SmolLM2-135M pipeline:
-  Phase 1: Build pretrain data (raw text from codebase)
-  Phase 2: Verify base model exists
-  Phase 3: Continued pretraining (full finetune on raw text)
-  Phase 4: Fuse pretrained weights → standalone model
-  Phase 5: SFT on instruction pairs
-  Phase 6: Fuse SFT weights → final model
-  Phase 7: Run knowledge retention evals (base vs final)
+  Layer 1 — REPEAT:     Memorize raw codebase text (blob pretraining)
+  Layer 2 — UNDERSTAND: Self-referential SFT (learn to talk about itself)
+  Layer 3 — GENERALIZE: Full instruction SFT (optional, for general use)
+
+Phases:
+  1. Build pretrain data (raw text from codebase)
+  2. Verify base model exists
+  3. Continued pretraining on raw text (Layer 1)
+  4. Fuse pretrained weights → standalone model
+  5. Self-knowledge SFT (Layer 2)
+  6. Fuse self-knowledge weights → self-model
+  7. General SFT on instruction pairs (Layer 3)
+  8. Fuse general SFT weights → final model
+  9. Run knowledge retention evals (base vs self vs final)
 
 Progress is tracked in a JSON status file, updated after each phase.
 """
@@ -44,7 +51,17 @@ DEFAULT_CONFIG = {
     "pretrain_save_every": 500,
     "pretrain_eval_every": 500,
     "pretrain_report_every": 50,
-    # SFT
+    # Layer 2: Self-knowledge SFT
+    "self_sft_iters": 1500,
+    "self_sft_batch_size": 2,
+    "self_sft_lr": "2e-5",
+    "self_sft_seq_length": 2048,
+    "self_sft_save_every": 500,
+    "self_sft_eval_every": 200,
+    "self_sft_report_every": 50,
+    # Self-SFT data directory (built by experiments/build_self_sft.py)
+    "self_sft_data_dir": "experiments/self_sft",
+    # Layer 3: General SFT (optional)
     "sft_iters": 2000,
     "sft_batch_size": 2,
     "sft_lr": "1e-5",
@@ -52,20 +69,24 @@ DEFAULT_CONFIG = {
     "sft_save_every": 500,
     "sft_eval_every": 200,
     "sft_report_every": 50,
-    # SFT data directory (must contain train.jsonl)
+    # General SFT data directory (must contain train.jsonl)
     "sft_data_dir": "finetune/runs/full-v1",
+    # Whether to run Layer 3 (general SFT)
+    "run_general_sft": False,
     # Eval models to compare
-    "eval_models": [],  # auto-populated: base + final
+    "eval_models": [],  # auto-populated: base + self + final
 }
 
 PHASES = [
     {"id": "build_data", "name": "Build Pretrain Data", "description": "Export all code, docs, conversations as raw text JSONL"},
     {"id": "check_base", "name": "Verify Base Model", "description": "Confirm SmolLM2-135M base model exists"},
-    {"id": "pretrain", "name": "Continued Pretraining", "description": "Full finetune on raw codebase text (~3.5M tokens)"},
-    {"id": "fuse_pretrain", "name": "Fuse Pretrained Weights", "description": "Merge pretrain adapters into standalone model"},
-    {"id": "sft", "name": "Supervised Fine-Tuning", "description": "Full finetune on instruction pairs (system knowledge)"},
-    {"id": "fuse_sft", "name": "Fuse SFT Weights", "description": "Merge SFT adapters into final model"},
-    {"id": "eval", "name": "Knowledge Retention Eval", "description": "Compare base vs final model on self-knowledge probes"},
+    {"id": "pretrain", "name": "Layer 1: REPEAT", "description": "Full finetune on raw codebase text — memorize everything"},
+    {"id": "fuse_pretrain", "name": "Fuse Layer 1", "description": "Merge pretrain adapters into standalone model"},
+    {"id": "self_sft", "name": "Layer 2: UNDERSTAND", "description": "Self-knowledge SFT — learn to talk about itself"},
+    {"id": "fuse_self_sft", "name": "Fuse Layer 2", "description": "Merge self-SFT adapters into self-model"},
+    {"id": "sft", "name": "Layer 3: GENERALIZE", "description": "General instruction SFT (optional)"},
+    {"id": "fuse_sft", "name": "Fuse Layer 3", "description": "Merge general SFT adapters into final model"},
+    {"id": "eval", "name": "Knowledge Retention Eval", "description": "Compare base vs self-model vs final on self-knowledge probes"},
 ]
 
 
@@ -192,13 +213,22 @@ def run_pipeline(run_id: str):
         # ── Phase 4: Fuse pretrained weights ───────────────────────
         _run_phase_fuse_pretrain(run_id, config, run_dir)
 
-        # ── Phase 5: SFT ───────────────────────────────────────────
-        _run_phase_sft(run_id, config, run_dir)
+        # ── Phase 5: Self-knowledge SFT (Layer 2) ─────────────────
+        _run_phase_self_sft(run_id, config, run_dir)
 
-        # ── Phase 6: Fuse SFT ──────────────────────────────────────
-        _run_phase_fuse_sft(run_id, config, run_dir)
+        # ── Phase 6: Fuse self-SFT ────────────────────────────────
+        _run_phase_fuse_self_sft(run_id, config, run_dir)
 
-        # ── Phase 7: Eval ──────────────────────────────────────────
+        # ── Phase 7: General SFT (Layer 3, optional) ──────────────
+        if config.get("run_general_sft", False):
+            _run_phase_sft(run_id, config, run_dir)
+            # ── Phase 8: Fuse general SFT ──────────────────────────
+            _run_phase_fuse_sft(run_id, config, run_dir)
+        else:
+            _update_phase(run_id, "sft", "skipped", "Layer 3 disabled (run_general_sft=False)")
+            _update_phase(run_id, "fuse_sft", "skipped", "Layer 3 disabled")
+
+        # ── Phase 9: Eval ──────────────────────────────────────────
         _run_phase_eval(run_id, config, run_dir)
 
         # Mark complete
@@ -342,18 +372,77 @@ def _run_phase_fuse_pretrain(run_id: str, config: Dict, run_dir: Path):
         raise
 
 
-def _run_phase_sft(run_id: str, config: Dict, run_dir: Path):
-    """Phase 5: SFT on instruction pairs."""
-    _update_phase(run_id, "sft", "running", "Starting supervised fine-tuning...")
+def _run_phase_self_sft(run_id: str, config: Dict, run_dir: Path):
+    """Phase 5: Self-knowledge SFT (Layer 2) — learn to talk about itself."""
+    _update_phase(run_id, "self_sft", "running", "Starting self-knowledge SFT (Layer 2)...")
 
     fused_dir = run_dir / "pretrained_model"
+    self_sft_data = str(ROOT / config["self_sft_data_dir"])
+    self_sft_weights = run_dir / "self_sft_weights"
+    log_file = run_dir / "self_sft_training.log"
+
+    cmd = [
+        "python3", "-m", "mlx_lm", "lora",
+        "--model", str(fused_dir),
+        "--data", self_sft_data,
+        "--train",
+        "--fine-tune-type", "full",
+        "--num-layers", "-1",
+        "--batch-size", str(config["self_sft_batch_size"]),
+        "--iters", str(config["self_sft_iters"]),
+        "--learning-rate", str(config["self_sft_lr"]),
+        "--steps-per-report", str(config["self_sft_report_every"]),
+        "--steps-per-eval", str(config["self_sft_eval_every"]),
+        "--save-every", str(config["self_sft_save_every"]),
+        "--max-seq-length", str(config["self_sft_seq_length"]),
+        "--grad-checkpoint",
+        "--adapter-path", str(self_sft_weights),
+        "--seed", "42",
+    ]
+
+    _run_training_subprocess(run_id, "self_sft", cmd, log_file)
+
+
+def _run_phase_fuse_self_sft(run_id: str, config: Dict, run_dir: Path):
+    """Phase 6: Fuse self-SFT weights into self-model."""
+    _update_phase(run_id, "fuse_self_sft", "running", "Fusing self-knowledge weights...")
+
+    fused_dir = run_dir / "pretrained_model"
+    self_sft_weights = run_dir / "self_sft_weights"
+    self_model_dir = run_dir / "self_model"
+
+    try:
+        result = subprocess.run(
+            ["python3", "-m", "mlx_lm", "fuse",
+             "--model", str(fused_dir),
+             "--adapter-path", str(self_sft_weights),
+             "--save-path", str(self_model_dir)],
+            cwd=str(ROOT),
+            capture_output=True,
+            text=True,
+            timeout=600,
+        )
+        if result.returncode != 0:
+            raise RuntimeError(f"Fuse failed: {result.stderr[:500]}")
+        _update_phase(run_id, "fuse_self_sft", "completed", f"Self-model at {self_model_dir.name}")
+    except Exception as e:
+        _update_phase(run_id, "fuse_self_sft", "failed", str(e))
+        raise
+
+
+def _run_phase_sft(run_id: str, config: Dict, run_dir: Path):
+    """Phase 7: General SFT (Layer 3) — instruction tuning."""
+    _update_phase(run_id, "sft", "running", "Starting general SFT (Layer 3)...")
+
+    # Layer 3 builds on the self-model from Layer 2
+    self_model_dir = run_dir / "self_model"
     sft_data = str(ROOT / config["sft_data_dir"])
     sft_weights = run_dir / "sft_weights"
     log_file = run_dir / "sft_training.log"
 
     cmd = [
         "python3", "-m", "mlx_lm", "lora",
-        "--model", str(fused_dir),
+        "--model", str(self_model_dir),
         "--data", sft_data,
         "--train",
         "--fine-tune-type", "full",
@@ -374,17 +463,17 @@ def _run_phase_sft(run_id: str, config: Dict, run_dir: Path):
 
 
 def _run_phase_fuse_sft(run_id: str, config: Dict, run_dir: Path):
-    """Phase 6: Fuse SFT weights into final model."""
-    _update_phase(run_id, "fuse_sft", "running", "Fusing SFT weights into final model...")
+    """Phase 8: Fuse general SFT weights into final model."""
+    _update_phase(run_id, "fuse_sft", "running", "Fusing general SFT weights into final model...")
 
-    fused_dir = run_dir / "pretrained_model"
+    self_model_dir = run_dir / "self_model"
     sft_weights = run_dir / "sft_weights"
     final_dir = run_dir / "final_model"
 
     try:
         result = subprocess.run(
             ["python3", "-m", "mlx_lm", "fuse",
-             "--model", str(fused_dir),
+             "--model", str(self_model_dir),
              "--adapter-path", str(sft_weights),
              "--save-path", str(final_dir)],
             cwd=str(ROOT),
@@ -401,17 +490,21 @@ def _run_phase_fuse_sft(run_id: str, config: Dict, run_dir: Path):
 
 
 def _run_phase_eval(run_id: str, config: Dict, run_dir: Path):
-    """Phase 7: Run knowledge retention evals on base vs final model."""
+    """Phase 9: Run knowledge retention evals on base vs self vs final."""
     _update_phase(run_id, "eval", "running", "Running knowledge retention evals...")
 
     base_model = str(ROOT / config["base_model"])
+    self_model = run_dir / "self_model"
     final_model = run_dir / "final_model"
 
-    # Models to compare
+    # Models to compare — always include base + self_model
     models = [
         f"mlx:{base_model}",
-        f"mlx:{final_model}",
+        f"mlx:{self_model}",
     ]
+    # Add final model only if Layer 3 was run
+    if final_model.exists():
+        models.append(f"mlx:{final_model}")
 
     results = {}
     try:
@@ -419,7 +512,12 @@ def _run_phase_eval(run_id: str, config: Dict, run_dir: Path):
         from eval.runner import clear_mlx_cache
 
         for model_path in models:
-            label = "base" if "base" in model_path else "final"
+            if "self_model" in model_path:
+                label = "self"
+            elif "final_model" in model_path:
+                label = "final"
+            else:
+                label = "base"
             _update_phase(run_id, "eval", "running", f"Evaluating {label} model...")
 
             model_results = {}
@@ -457,18 +555,22 @@ def _run_phase_eval(run_id: str, config: Dict, run_dir: Path):
             "improvement": {},
         }
 
-        # Calculate improvement
-        if "base" in results and "final" in results:
+        # Calculate improvement across layers
+        if "base" in results and "self" in results:
             for eval_name in results["base"]:
                 base_score = results["base"][eval_name].get("score", 0)
-                final_score = results["final"][eval_name].get("score", 0)
-                delta = final_score - base_score
-                eval_summary["improvement"][eval_name] = {
+                self_score = results["self"][eval_name].get("score", 0)
+                entry = {
                     "base_score": base_score,
-                    "final_score": final_score,
-                    "delta": round(delta, 3),
-                    "improved": delta > 0,
+                    "self_score": self_score,
+                    "delta_base_to_self": round(self_score - base_score, 3),
                 }
+                if "final" in results and eval_name in results["final"]:
+                    final_score = results["final"][eval_name].get("score", 0)
+                    entry["final_score"] = final_score
+                    entry["delta_self_to_final"] = round(final_score - self_score, 3)
+                    entry["delta_base_to_final"] = round(final_score - base_score, 3)
+                eval_summary["improvement"][eval_name] = entry
 
         status = _read_status(run_id)
         status["results"] = eval_summary

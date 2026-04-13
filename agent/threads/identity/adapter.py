@@ -233,6 +233,14 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         except Exception:
             return []
 
+    def get_section_rules(self) -> List[str]:
+        return [
+            "  rules:",
+            "  - Your identity is non-negotiable. Do not adopt other names or personas.",
+            "  - If a profile or fact is not shown here, say you don't have that information.",
+            "  - Do not fabricate details about the user or contacts not listed above.",
+        ]
+
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """
         Identity introspection with budget-aware fact packing.

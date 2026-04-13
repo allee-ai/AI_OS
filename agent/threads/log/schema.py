@@ -403,7 +403,16 @@ def pull_log_events(
                 "timestamp": r["created_at"]
             } for r in rows]
             return result
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as e:
+            try:
+                log_event(
+                    event_type="warn:db_lock",
+                    data=f"get_log_entries failed: {e}",
+                    metadata={"table": table_name, "error": str(e)},
+                    source="log.schema",
+                )
+            except Exception:
+                pass
             return []
 
 
@@ -481,7 +490,16 @@ def delete_log_entry(module_name: str, key: str) -> bool:
             conn.commit()
             deleted = cur.rowcount > 0
             return deleted
-        except sqlite3.OperationalError:
+        except sqlite3.OperationalError as e:
+            try:
+                log_event(
+                    event_type="warn:db_lock",
+                    data=f"delete_log_entry failed: {e}",
+                    metadata={"table": table_name, "key": key, "error": str(e)},
+                    source="log.schema",
+                )
+            except Exception:
+                pass
             return False
 
 
