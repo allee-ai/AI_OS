@@ -78,8 +78,8 @@ for thread, grps in groups.items():
 # Depth-2 leaf facts (dust)
 leaves = {
     "identity.self.agent": ["name=Nola", "role=AI assistant", "architecture=AI OS", "version=0.2"],
-    "identity.user.primary": ["name=Cade", "location=Cincinnati", "interests=AI,music"],
-    "identity.family": ["sister=Jamie", "dog=Koda"],
+    "identity.user.primary": ["name=Jamie", "location=Portland", "interests=AI,music"],
+    "identity.family": ["sister=Sam", "dog=Koda"],
     "philosophy.values": ["curiosity", "honesty", "growth", "helpfulness"],
     "philosophy.ethics": ["privacy_first", "no_deception", "user_autonomy"],
     "form.system_tools": ["reflex_check", "memory_consolidate", "log_event"],

@@ -143,3 +143,4 @@ research/hebbian_attention/data/
 # Website has its own repo (allee-ai/allee-ai.github.io)
 workspace/allee-ai.github.io/
 workspace/aios-demo
+ELEUTHER_PITCH.md

@@ -4,6 +4,7 @@ import type { SidebarModule } from '../components/Sidebar';
 import { FinetunePanel } from '../components/FinetunePanel';
 import { GenerationPanel } from '../components/GenerationPanel';
 import { ToolCallingPanel } from '../components/ToolCallingPanel';
+import { GeneralKnowledgePanel } from '../components/GeneralKnowledgePanel';
 import { SectionDetailPage } from './SectionDetailPage';
 
 /* ── Types ────────────────────────────────────────── */
@@ -241,6 +242,8 @@ export const DevDashboard: React.FC = () => {
           <GenerationPanel />
         ) : selected === '__tool_eval__' ? (
           <ToolCallingPanel />
+        ) : selected === '__general_knowledge__' ? (
+          <GeneralKnowledgePanel />
         ) : selected && selectedSection ? (
           <SectionDetailPage
             moduleOverride={selected}

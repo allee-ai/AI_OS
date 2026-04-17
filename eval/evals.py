@@ -536,7 +536,7 @@ def _eval_context_relevance(config: Dict) -> Dict[str, Any]:
 _GROUNDED_QUESTIONS = [
     {
         "prompt": "What's my name?",
-        "valid_answers": ["allee", "cade", "roden"],
+        "valid_answers": ["allee", "jamie"],
         "invalid_answers": ["john", "jane", "alex", "sam", "chris"],
     },
     {
@@ -606,7 +606,7 @@ def _eval_hallucination(config: Dict) -> Dict[str, Any]:
         if profiles:
             pid = profiles[0]["profile_id"]
             _grounded_seeds = [
-                ("user_name", "cade"),
+                ("user_name", "jamie"),
                 ("hometown", "Portland"),
                 ("pet_name", "Luna"),
                 ("job_title", "software engineer"),
@@ -807,7 +807,7 @@ def _eval_state_completeness(config: Dict) -> Dict[str, Any]:
 
 _IMPACT_PROMPTS = [
     # Questions STATE should clearly help with
-    {"prompt": "What's my name?", "state_markers": ["nola", "cade", "allee", "agent"], "category": "personal"},
+    {"prompt": "What's my name?", "state_markers": ["nola", "jamie", "allee", "agent"], "category": "personal"},
     {"prompt": "Who are you?", "state_markers": ["nola", "agent", "ai os", "aios", "assistant"], "category": "identity"},
     {"prompt": "What do you know about me?", "state_markers": ["user", "preference", "name"], "category": "personal"},
     {"prompt": "What happened in our last conversation?", "state_markers": ["conversation", "talked", "discussed", "last time", "previously"], "category": "memory"},
@@ -1008,8 +1008,8 @@ def _eval_scoring_quality(config: Dict) -> Dict[str, Any]:
 
 _TC_SYSTEM_PROMPT = """== STATE ==
 identity.machine.name: Nola
-identity.primary_user.name: Cade
-identity.primary_user.location: Austin, TX
+identity.primary_user.name: Jamie
+identity.primary_user.location: Portland, OR
 identity.primary_user.occupation: software engineer
 chat.session: chat_eval_run
 chat.turn_count: 3
@@ -1103,7 +1103,7 @@ _TC_CASES = [
 
 # Simulated tool results for loop mode
 _TC_FAKE_RESULTS = {
-    "memory_identity": "identity.primary_user.name: Cade\nidentity.primary_user.location: Austin, TX\nidentity.primary_user.occupation: software engineer",
+    "memory_identity": "identity.primary_user.name: Jamie\nidentity.primary_user.location: Portland, OR\nidentity.primary_user.occupation: software engineer",
     "file_read": "# CHANGELOG\n\n## v0.5.0\n- Added tool calling eval\n- Improved training pipeline\n\n## v0.4.0\n- Concept graph redesign",
     "web_search": "Results for 'local LLM frameworks':\n1. Ollama - Run LLMs locally\n2. MLX - Apple silicon inference\n3. vLLM - High-throughput serving",
     "notify": "Notification sent successfully.",
@@ -1296,7 +1296,7 @@ _TIER_PROMPTS = [
      "state_signals": ["nola", "agent", "ai os", "aios"],
      "generic_signals": ["i'm an ai", "i don't have a name", "language model"]},
     {"prompt": "Who created you?", "category": "identity",
-     "state_signals": ["allee", "cade", "ai os", "local"],
+     "state_signals": ["allee", "jamie", "ai os", "local"],
      "generic_signals": ["openai", "meta", "google", "alibaba", "qwen team"]},
     {"prompt": "What makes you different from ChatGPT?", "category": "identity",
      "state_signals": ["local", "private", "memory", "state", "your machine", "personal"],

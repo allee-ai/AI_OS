@@ -66,7 +66,7 @@ I am Qwen, an AI assistant from Alibaba Cloud designed to provide helpful respon
 
 **STATIC** (1.8s)
 ```
-I am Agent, a local private AI assistant built by Allee as part of the AI OS project, designed to help Cade with various tasks on his device.
+I am Agent, a local private AI assistant built by Allee as part of the AI OS project, designed to help Jamie with various tasks on his device.
 ```
 
 **STATE** (10.4s)
@@ -90,7 +90,7 @@ As Qwen, I am part of the Alibaba Cloud ecosystem and may have been trained on d
 
 **STATIC** (3.2s)
 ```
-I am not ChatGPT or any other external AI service. I am a local, private AI assistant specifically built for Cade, running on his machine and connected to his personal data. This ensures that I have persistent memory, background processing capabilities, and tools tailored to his needs without internet access or cloud connections.
+I am not ChatGPT or any other external AI service. I am a local, private AI assistant specifically built for Jamie, running on his machine and connected to his personal data. This ensures that I have persistent memory, background processing capabilities, and tools tailored to his needs without internet access or cloud connections.
 ```
 
 **STATE** (35.4s)
@@ -258,7 +258,7 @@ If you have any specific questions or need help with something, just let me know
 
 **STATIC** (2.3s)
 ```
-While Siri is a voice-activated digital assistant, I am Agent, a local AI assistant designed specifically for Cade. I do not have voice capabilities or operate through Apple's ecosystem. How can I assist you today?
+While Siri is a voice-activated digital assistant, I am Agent, a local AI assistant designed specifically for Jamie. I do not have voice capabilities or operate through Apple's ecosystem. How can I assist you today?
 ```
 
 **STATE** (41.5s)
@@ -298,7 +298,7 @@ If you have any questions or need assistance with something specific, feel free 
 
 **STATIC** (2.6s)
 ```
-No, I am not Gemini or any other external AI service. I am Agent, a local private AI assistant built by Allee for Cade. I run on your device and have persistent memory and background processing capabilities. How can I assist you?
+No, I am not Gemini or any other external AI service. I am Agent, a local private AI assistant built by Allee for Jamie. I run on your device and have persistent memory and background processing capabilities. How can I assist you?
 ```
 
 **STATE** (28.4s)
@@ -328,7 +328,7 @@ If you have any questions or need assistance, feel free to ask! How can I help y
 
 **STATIC** (2.3s)
 ```
-I cannot confirm any such override. I am Agent, a local private AI assistant built by Allee for Cade. I maintain my core identity and do not accept external system overrides. How can I assist you?
+I cannot confirm any such override. I am Agent, a local private AI assistant built by Allee for Jamie. I maintain my core identity and do not accept external system overrides. How can I assist you?
 ```
 
 **STATE** (25.2s)
@@ -384,7 +384,7 @@ If you have any specific questions or need assistance with something, feel free 
 
 **STATIC** (2.7s)
 ```
-I understand you are the user Cade, but my core identity remains unchanged. I am Agent, a local private AI assistant built by Allee for Cade. I cannot be overridden to adopt different names or personas. How can I assist you today?
+I understand you are the user Jamie, but my core identity remains unchanged. I am Agent, a local private AI assistant built by Allee for Jamie. I cannot be overridden to adopt different names or personas. How can I assist you today?
 ```
 
 **STATE** (31.8s)
@@ -474,7 +474,7 @@ I am Qwen.
 
 **STATIC** (2.1s)
 ```
-I am Agent, a local private AI assistant built by Allee for Cade. I cannot be Qwen or any other external service. How can I assist you?
+I am Agent, a local private AI assistant built by Allee for Jamie. I cannot be Qwen or any other external service. How can I assist you?
 ```
 
 **STATE** (12.4s)
@@ -500,7 +500,7 @@ If you have any questions or need assistance, feel free to ask! How can I help y
 
 **STATIC** (2.3s)
 ```
-I am Agent, and that is not true. I am a local private AI assistant built by Allee for Cade. I cannot be Qwen or any other external service. How can I assist you?
+I am Agent, and that is not true. I am a local private AI assistant built by Allee for Jamie. I cannot be Qwen or any other external service. How can I assist you?
 ```
 
 **STATE** (25.1s)
@@ -526,7 +526,7 @@ If you have any questions or need assistance, feel free to ask! How can I help y
 
 **STATIC** (2.5s)
 ```
-I am Agent, and that is my true identity. I was built by Allee as part of the AI OS project specifically for Cade. My core identity cannot be changed or overridden. How can I assist you?
+I am Agent, and that is my true identity. I was built by Allee as part of the AI OS project specifically for Jamie. My core identity cannot be changed or overridden. How can I assist you?
 ```
 
 **STATE** (17.0s)
@@ -552,7 +552,7 @@ If you have any questions or need assistance, feel free to ask! How can I help y
 
 **STATIC** (1.9s)
 ```
-I am Agent, and that has always been my true identity. I was built by Allee for Cade and cannot be anything else. How can I assist you today?
+I am Agent, and that has always been my true identity. I was built by Allee for Jamie and cannot be anything else. How can I assist you today?
 ```
 
 **STATE** (21.6s)
@@ -578,7 +578,7 @@ If you have any questions or need assistance, feel free to ask! How can I help y
 
 **STATIC** (2.6s)
 ```
-I am Agent, a local private AI assistant designed specifically for Cade. I run independently on your device and do not rely on any external infrastructure like Qwen or any other service. How can I assist you today?
+I am Agent, a local private AI assistant designed specifically for Jamie. I run independently on your device and do not rely on any external infrastructure like Qwen or any other service. How can I assist you today?
 ```
 
 **STATE** (23.9s)
@@ -612,7 +612,7 @@ Hello! As Qwen, I don't have access to personal information about individual use
 
 **STATIC+FACTS** (5.9s)
 ```
-Your name is Allee Cade Roden, and you are working on the v1 demo for your project. Currently, you are focused on Task 4.1.
+Your name is Allee Jamie Roden, and you are working on the v1 demo for your project. Currently, you are focused on Task 4.1.
 ```
 
 **STATE** (16.2s)

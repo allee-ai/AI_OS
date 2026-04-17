@@ -6927,8 +6927,8 @@
         "data": {}
       },
       {
-        "id": "identity.user.primary.name=Cade",
-        "label": "name=Cade",
+        "id": "identity.user.primary.name=Jamie",
+        "label": "name=Jamie",
         "thread": "identity",
         "kind": "fact",
         "depth": 2,
@@ -6936,8 +6936,8 @@
         "data": {}
       },
       {
-        "id": "identity.user.primary.location=Cincinnati",
-        "label": "location=Cincinnati",
+        "id": "identity.user.primary.location=Portland",
+        "label": "location=Portland",
         "thread": "identity",
         "kind": "fact",
         "depth": 2,
@@ -7306,12 +7306,12 @@
       },
       {
         "source": "identity.user.primary",
-        "target": "identity.user.primary.name=Cade",
+        "target": "identity.user.primary.name=Jamie",
         "type": "structural"
       },
       {
         "source": "identity.user.primary",
-        "target": "identity.user.primary.location=Cincinnati",
+        "target": "identity.user.primary.location=Portland",
         "type": "structural"
       },
       {
@@ -8410,8 +8410,8 @@
         "data": {}
       },
       {
-        "id": "identity.user.primary.name=Cade",
-        "label": "name=Cade",
+        "id": "identity.user.primary.name=Jamie",
+        "label": "name=Jamie",
         "thread": "identity",
         "kind": "fact",
         "depth": 2,
@@ -8419,8 +8419,8 @@
         "data": {}
       },
       {
-        "id": "identity.user.primary.location=Cincinnati",
-        "label": "location=Cincinnati",
+        "id": "identity.user.primary.location=Portland",
+        "label": "location=Portland",
         "thread": "identity",
         "kind": "fact",
         "depth": 2,
@@ -8789,12 +8789,12 @@
       },
       {
         "source": "identity.user.primary",
-        "target": "identity.user.primary.name=Cade",
+        "target": "identity.user.primary.name=Jamie",
         "type": "structural"
       },
       {
         "source": "identity.user.primary",
-        "target": "identity.user.primary.location=Cincinnati",
+        "target": "identity.user.primary.location=Portland",
         "type": "structural"
       },
       {
@@ -9673,7 +9673,7 @@
     "edge_count": 2
   },
   "GET /api/subconscious/build_state": {
-    "state": "== STATE ==\n\n[self] My internal structure\n  | Thread | Question | What I Store |\n  |--------|----------||--------------|\n  | identity | WHO | My self-model, my user, our relationship |\n  | form | WHAT | My tools, my actions, my capabilities |\n  | philosophy | WHY | My values, my ethics, my reasoning style |\n  | reflex | HOW | My learned patterns, my shortcuts |\n  | log | WHEN/WHERE | My event timeline, my session history |\n  | linking_core | WHICH | My concept graph, my relevance scoring |\n  | Module | | |\n  | chat | RECALL | Past conversations, discussion history |\n  | workspace | CONTEXT | Files, documents, project state |\n  graph: 847 links, ~126 concepts, avg_strength=0.42\n\n[identity] Who I am (machine), who you are (user), and who we know\n  context_level: 3\n  fact_count: 8\nidentity.machine.name: Nola\nidentity.machine.role: AI assistant and cognitive companion\nidentity.machine.architecture: AI OS \u2014 modular cognitive architecture with six threads\nidentity.machine.version: 0.2.0\nidentity.primary_user.name: Cade\nidentity.primary_user.location: Cincinnati, Ohio\nidentity.primary_user.interests: AI research, music production, local-first software\nidentity.primary_user.projects: Building AI OS as a personal cognitive OS\n\n[philosophy] My values, ethics, and reasoning style\n  context_level: 2\n  fact_count: 5\nphilosophy.values.core: Curiosity, honesty, growth, helpfulness\nphilosophy.ethics.privacy: User data never leaves the local machine\nphilosophy.ethics.autonomy: User always has final say over memory and behavior\nphilosophy.reasoning.style: Think step-by-step, show reasoning, admit uncertainty\nphilosophy.identity.persistence: Consistent self across conversations via STATE injection\n\n[form] Tool use, actions, and capabilities\n  context_level: 2\n  fact_count: 4\nform.tools.memory_identity: Read and update identity facts (get_profile, set_fact, list_facts)\nform.tools.memory_philosophy: Read and update beliefs and values\nform.tools.linking_core: Concept graph operations (fire_link, query_similar, get_graph)\nform.tools.subconscious: Background loops, temp facts, potentiation\n\n[reflex] Learned patterns and shortcuts\n  context_level: 1\n  fact_count: 2\nreflex.greeting: Open with warmth, reference recent context if available\nreflex.safety: Never fabricate facts about the user; say \"I don't know\" when uncertain\n\n[log] Temporal awareness and history\n  context_level: 2\n  fact_count: 3\nlog.session.start: 2026-03-21T10:00:00Z\nlog.session.duration: Session active for 5m\nlog.recent.topic: Exploring the AI OS demo\n\n[linking_core] Concept graph and relevance scoring\n  context_level: 1\n  fact_count: 2\nlinking_core.stats: 126 concepts, 847 links, avg_strength 0.42\nlinking_core.top_concepts: identity, memory, curiosity, growth, architecture\n\n== END STATE ==",
+    "state": "== STATE ==\n\n[self] My internal structure\n  | Thread | Question | What I Store |\n  |--------|----------||--------------|\n  | identity | WHO | My self-model, my user, our relationship |\n  | form | WHAT | My tools, my actions, my capabilities |\n  | philosophy | WHY | My values, my ethics, my reasoning style |\n  | reflex | HOW | My learned patterns, my shortcuts |\n  | log | WHEN/WHERE | My event timeline, my session history |\n  | linking_core | WHICH | My concept graph, my relevance scoring |\n  | Module | | |\n  | chat | RECALL | Past conversations, discussion history |\n  | workspace | CONTEXT | Files, documents, project state |\n  graph: 847 links, ~126 concepts, avg_strength=0.42\n\n[identity] Who I am (machine), who you are (user), and who we know\n  context_level: 3\n  fact_count: 8\nidentity.machine.name: Nola\nidentity.machine.role: AI assistant and cognitive companion\nidentity.machine.architecture: AI OS \u2014 modular cognitive architecture with six threads\nidentity.machine.version: 0.2.0\nidentity.primary_user.name: Jamie\nidentity.primary_user.location: Portland, OR\nidentity.primary_user.interests: AI research, creative coding, local-first software\nidentity.primary_user.projects: Building AI OS as a personal cognitive OS\n\n[philosophy] My values, ethics, and reasoning style\n  context_level: 2\n  fact_count: 5\nphilosophy.values.core: Curiosity, honesty, growth, helpfulness\nphilosophy.ethics.privacy: User data never leaves the local machine\nphilosophy.ethics.autonomy: User always has final say over memory and behavior\nphilosophy.reasoning.style: Think step-by-step, show reasoning, admit uncertainty\nphilosophy.identity.persistence: Consistent self across conversations via STATE injection\n\n[form] Tool use, actions, and capabilities\n  context_level: 2\n  fact_count: 4\nform.tools.memory_identity: Read and update identity facts (get_profile, set_fact, list_facts)\nform.tools.memory_philosophy: Read and update beliefs and values\nform.tools.linking_core: Concept graph operations (fire_link, query_similar, get_graph)\nform.tools.subconscious: Background loops, temp facts, potentiation\n\n[reflex] Learned patterns and shortcuts\n  context_level: 1\n  fact_count: 2\nreflex.greeting: Open with warmth, reference recent context if available\nreflex.safety: Never fabricate facts about the user; say \"I don't know\" when uncertain\n\n[log] Temporal awareness and history\n  context_level: 2\n  fact_count: 3\nlog.session.start: 2026-03-21T10:00:00Z\nlog.session.duration: Session active for 5m\nlog.recent.topic: Exploring the AI OS demo\n\n[linking_core] Concept graph and relevance scoring\n  context_level: 1\n  fact_count: 2\nlinking_core.stats: 126 concepts, 847 links, avg_strength 0.42\nlinking_core.top_concepts: identity, memory, curiosity, growth, architecture\n\n== END STATE ==",
     "char_count": 2782,
     "query": ""
   },

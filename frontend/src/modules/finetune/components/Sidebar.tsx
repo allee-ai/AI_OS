@@ -70,11 +70,20 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <button
           className={`module-btn ${selected === '__tool_eval__' ? 'active' : ''}`}
           onClick={() => onSelect('__tool_eval__')}
-          style={{ borderBottom: '1px solid var(--border)', marginBottom: 6 }}
+          style={{ borderBottom: '1px solid var(--border)', marginBottom: 2 }}
         >
           <span className="module-icon">🔧</span>
           <span className="module-name">Tool Eval</span>
           <span className="module-count">eval</span>
+        </button>
+        <button
+          className={`module-btn ${selected === '__general_knowledge__' ? 'active' : ''}`}
+          onClick={() => onSelect('__general_knowledge__')}
+          style={{ borderBottom: '1px solid var(--border)', marginBottom: 6 }}
+        >
+          <span className="module-icon">🌍</span>
+          <span className="module-name">General Knowledge</span>
+          <span className="module-count">topics</span>
         </button>
 
         {/* Module list with expandable sections */}

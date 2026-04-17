@@ -1,5 +1,6 @@
 """Sanitize demo-data.json — scrub local paths and PII, keep real structure."""
 import json
+import os
 import re
 
 with open("frontend/public/demo-data.json") as f:
@@ -8,7 +9,9 @@ with open("frontend/public/demo-data.json") as f:
 # ── Helper: recursively scrub local paths from any value ──
 def scrub_paths(obj):
     if isinstance(obj, str):
-        return obj.replace("/Users/cade/Desktop/AI_OS/", "").replace("/Users/cade/", "~/")
+        _root = os.path.dirname(os.path.dirname(os.path.abspath(__file__))) + "/"
+        _home = os.path.expanduser("~") + "/"
+        return obj.replace(_root, "").replace(_home, "~/")
     if isinstance(obj, dict):
         return {k: scrub_paths(v) for k, v in obj.items()}
     if isinstance(obj, list):

@@ -96,7 +96,7 @@ def copy_table(src_conn, dst_conn, table, limit=None):
 
 def sanitize_paths(conn):
     """Replace local file paths in text columns."""
-    path_replace = "/Users/cade/Desktop/AI_OS"
+    path_replace = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
     generic_path = "/home/user/AI_OS"
 
     for table in ["thought_log", "tasks", "tool_traces", "log_server"]:

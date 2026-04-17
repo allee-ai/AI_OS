@@ -1749,3 +1749,71 @@ async def build_state_for_example(body: BuildStateRequest):
         return {"state": state}
     except Exception as e:
         return {"state": f"== STATE ==\n[error] {e}\n== END STATE ==", "error": str(e)}
+
+
+# ─────────────────────────────────────────────────────────────
+# General Knowledge — topic scanner + training data CRUD
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/general-knowledge/topics")
+async def gk_list_topics():
+    """Fast list of all topics with example counts (no codebase scan)."""
+    from finetune.general_knowledge import get_all_topics_summary
+    return {"topics": get_all_topics_summary()}
+
+
+@router.get("/general-knowledge/scan")
+async def gk_scan_codebase():
+    """Full codebase scan — returns topics with file match counts."""
+    from finetune.general_knowledge import scan_codebase
+    topics = scan_codebase()
+    return {"topics": topics}
+
+
+@router.get("/general-knowledge/topics/{topic_id}/examples")
+async def gk_get_examples(topic_id: str):
+    """Get all training examples for a topic."""
+    from finetune.general_knowledge import get_topic_examples, TOPIC_MAP
+    if topic_id not in TOPIC_MAP:
+        raise HTTPException(status_code=404, detail=f"Unknown topic: {topic_id}")
+    return {"topic": topic_id, "examples": get_topic_examples(topic_id)}
+
+
+class GKExampleBody(BaseModel):
+    messages: list
+
+
+@router.post("/general-knowledge/topics/{topic_id}/examples")
+async def gk_add_example(topic_id: str, body: GKExampleBody):
+    """Add a training example to a topic."""
+    from finetune.general_knowledge import save_topic_example, TOPIC_MAP
+    if topic_id not in TOPIC_MAP:
+        raise HTTPException(status_code=404, detail=f"Unknown topic: {topic_id}")
+    result = save_topic_example(topic_id, {"messages": body.messages})
+    return result
+
+
+@router.put("/general-knowledge/topics/{topic_id}/examples/{index}")
+async def gk_update_example(topic_id: str, index: int, body: GKExampleBody):
+    """Update a training example by index."""
+    from finetune.general_knowledge import update_topic_example, TOPIC_MAP
+    if topic_id not in TOPIC_MAP:
+        raise HTTPException(status_code=404, detail=f"Unknown topic: {topic_id}")
+    try:
+        result = update_topic_example(topic_id, index, {"messages": body.messages})
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
+
+
+@router.delete("/general-knowledge/topics/{topic_id}/examples/{index}")
+async def gk_delete_example(topic_id: str, index: int):
+    """Delete a training example by index."""
+    from finetune.general_knowledge import delete_topic_example, TOPIC_MAP
+    if topic_id not in TOPIC_MAP:
+        raise HTTPException(status_code=404, detail=f"Unknown topic: {topic_id}")
+    try:
+        result = delete_topic_example(topic_id, index)
+        return result
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=str(e))
