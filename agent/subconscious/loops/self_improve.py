@@ -296,8 +296,8 @@ def _generate_improvements(prompt_template: str = IMPROVE_PROMPT) -> str:
     )
 
     try:
-        from agent.services.llm import call_llm
-        response = call_llm(prompt, max_tokens=2048)
+        from agent.services.llm import generate
+        response = generate(prompt=prompt, max_tokens=2048)
     except Exception as e:
         print(f"[SelfImprove] LLM call failed: {e}")
         return f"LLM call failed: {e}"

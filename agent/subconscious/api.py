@@ -1364,3 +1364,80 @@ async def delete_note(note_id: int):
         if cur.rowcount == 0:
             raise HTTPException(status_code=404, detail="Note not found")
         return {"id": note_id, "status": "deleted"}
+
+
+# ─────────────────────────────────────────────────────────────
+# Evolution — autonomous self-improvement showdown
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/evolution")
+async def get_evolution_log_endpoint(limit: int = 50):
+    """Get the evolution log (all cycles, most recent first)."""
+    from .loops.evolve import get_evolution_log
+    return {"log": get_evolution_log(limit=limit)}
+
+
+@router.post("/evolution/trigger")
+async def trigger_evolution_cycle():
+    """Manually trigger one evolution cycle (for testing)."""
+    from .loops.evolve import _run_evolution_cycle
+    import os
+    provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama")
+    model = os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+    result = _run_evolution_cycle(cycle=0, provider=provider, model=model)
+    return {"result": result}
+
+
+# ─────────────────────────────────────────────────────────────
+# Redeploy — pull latest code and restart the service
+# ─────────────────────────────────────────────────────────────
+
+@router.post("/redeploy")
+async def redeploy():
+    """Pull latest git changes and restart the systemd service.
+
+    This is used by the evolution loop's optional auto-restart,
+    and can be called manually from the mobile dashboard.
+    """
+    import subprocess
+    from pathlib import Path
+
+    workspace = Path(__file__).resolve().parents[2]  # → AI_OS/
+
+    steps = []
+
+    # 1. Git pull
+    try:
+        result = subprocess.run(
+            ["git", "pull", "--ff-only"],
+            cwd=str(workspace), capture_output=True, text=True, timeout=30,
+        )
+        steps.append({"step": "git_pull", "ok": result.returncode == 0,
+                       "output": (result.stdout + result.stderr).strip()[:500]})
+    except Exception as e:
+        steps.append({"step": "git_pull", "ok": False, "output": str(e)})
+
+    # 2. Sync dependencies
+    try:
+        result = subprocess.run(
+            ["uv", "sync", "--frozen", "--no-dev"],
+            cwd=str(workspace), capture_output=True, text=True, timeout=120,
+        )
+        steps.append({"step": "uv_sync", "ok": result.returncode == 0,
+                       "output": (result.stdout + result.stderr).strip()[:500]})
+    except Exception as e:
+        steps.append({"step": "uv_sync", "ok": False, "output": str(e)})
+
+    # 3. Restart service (systemd)
+    try:
+        result = subprocess.run(
+            ["sudo", "systemctl", "restart", "aios"],
+            capture_output=True, text=True, timeout=10,
+        )
+        steps.append({"step": "restart", "ok": result.returncode == 0,
+                       "output": (result.stdout + result.stderr).strip()[:500]})
+    except Exception as e:
+        steps.append({"step": "restart", "ok": False, "output": str(e)})
+
+    all_ok = all(s["ok"] for s in steps)
+    return {"status": "ok" if all_ok else "partial_failure", "steps": steps}

@@ -88,6 +88,12 @@ from .convo_concepts import (
     reset_backfill,
 )
 
+# Evolution (autonomous 3-model showdown)
+from .evolve import (
+    EvolutionLoop,
+    get_evolution_log,
+)
+
 # Manager + factory
 from .manager import (
     LoopManager,
@@ -147,4 +153,7 @@ __all__ = [
     "ConvoConceptLoop",
     "get_backfill_status",
     "reset_backfill",
+    # Evolution
+    "EvolutionLoop",
+    "get_evolution_log",
 ]

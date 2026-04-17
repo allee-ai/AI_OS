@@ -21,6 +21,7 @@ from .self_improve import SelfImprovementLoop
 from .convo_concepts import ConvoConceptLoop
 from .demo_audit import DemoAuditLoop
 from .workspace_qa import WorkspaceQALoop
+from .evolve import EvolutionLoop
 
 
 class LoopManager:
@@ -202,6 +203,14 @@ def create_default_loops() -> LoopManager:
     )
     tgen.config.initial_delay = 6600  # +110 min
     manager.add(tgen)
+
+    # ── Evolution loop (off by default — enable for showdown) ──────
+    evolve = EvolutionLoop(
+        interval=float(os.getenv("AIOS_EVOLVE_INTERVAL", "1800")),  # 30 min
+        enabled=os.getenv("AIOS_EVOLVE", "0") == "1",
+    )
+    evolve.config.initial_delay = 60  # start quickly
+    manager.add(evolve)
 
     # Load user-defined custom loops from DB
     try:
