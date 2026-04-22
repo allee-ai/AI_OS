@@ -61,7 +61,17 @@ class ConsolidationLoop(BackgroundLoop):
             convo_summary = self._summarize_unsummarized_conversations()
             scored = self._score_and_triage_pending()
             promoted = self._promote_approved_facts()
-            
+
+            # Phase 7: contradiction scan (gated off by default).
+            contradictions_summary = ""
+            try:
+                from agent.subconscious.contradiction import find_contradictions
+                emitted = find_contradictions()
+                if emitted:
+                    contradictions_summary = f"Surfaced {len(emitted)} contradiction(s) as <unknown>"
+            except Exception:
+                pass
+
             parts = []
             if convo_summary:
                 parts.append(convo_summary)
@@ -69,6 +79,8 @@ class ConsolidationLoop(BackgroundLoop):
                 parts.append(scored)
             if promoted:
                 parts.append(promoted)
+            if contradictions_summary:
+                parts.append(contradictions_summary)
             return "\n".join(parts) if parts else "No pending facts to process"
         finally:
             release_ollama_gate()

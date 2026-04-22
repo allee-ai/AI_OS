@@ -173,7 +173,22 @@ def wake(start_loops: bool = True) -> None:
         health_loop = _loop_manager.get_loop("health")
         if health_loop:
             health_loop.start()
-        
+
+        # Heartbeat: single 60s conductor, auto-started alongside health.
+        # Gated by AIOS_HEARTBEAT (default on); respects pause like any
+        # other loop.
+        import os as _os
+        if _os.getenv("AIOS_HEARTBEAT", "1") == "1":
+            try:
+                from .heartbeat import HeartbeatLoop
+                hb = HeartbeatLoop()
+                _loop_manager.add(hb)
+                hb.start()
+                print("  ✓ Heartbeat started "
+                      f"(interval={hb.config.interval_seconds}s)")
+            except Exception as e:
+                print(f"  ⚠️ Heartbeat failed to start: {e}")
+
         # Log custom loops loaded
         custom_count = sum(1 for l in _loop_manager._loops if isinstance(l, CustomLoop))
         if custom_count:

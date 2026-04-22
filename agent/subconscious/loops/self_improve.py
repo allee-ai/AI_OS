@@ -71,7 +71,22 @@ def propose_improvement(file_path: str, description: str, diff: str,
                 (file_path, description, diff, rationale, source_thought_id)
             )
             conn.commit()
-            return cur.lastrowid or 0
+            new_id = cur.lastrowid or 0
+        # Mirror → shared meta bus.
+        try:
+            from agent.subconscious.meta_mirror import mirror_to_meta
+            content = f"{description} ({file_path})"
+            if rationale:
+                content = f"{content} — {rationale}"
+            mirror_to_meta(
+                kind_hint="improve",
+                content=content,
+                weight=0.6,
+                confidence=0.6,
+            )
+        except Exception:
+            pass
+        return new_id
     except Exception as e:
         print(f"[SelfImprove] Failed to propose: {e}")
         return 0
@@ -297,7 +312,7 @@ def _generate_improvements(prompt_template: str = IMPROVE_PROMPT) -> str:
 
     try:
         from agent.services.llm import generate
-        response = generate(prompt=prompt, max_tokens=2048)
+        response = generate(prompt=prompt, role="SELF_IMPROVE", max_tokens=2048)
     except Exception as e:
         print(f"[SelfImprove] LLM call failed: {e}")
         return f"LLM call failed: {e}"

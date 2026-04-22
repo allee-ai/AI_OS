@@ -406,4 +406,215 @@ __all__ = [
     'delete_trigger',
     'toggle_trigger',
     'record_trigger_execution',
+    # Meta-thoughts (cognitive residue surfaced in STATE)
+    'init_meta_thoughts_table',
+    'add_meta_thought',
+    'get_recent_meta_thoughts',
+    'grade_expectation',
+    'META_THOUGHT_KINDS',
+    'META_THOUGHT_SOURCES',
 ]
+
+
+# ============================================================================
+# Meta-thoughts (cognitive residue)
+# ============================================================================
+#
+# Meta-thoughts are what the agent thought ABOUT a turn — hypotheses it
+# rejected, effects it expected, things it noticed it didn't know, and
+# compressions of what actually happened.  They are written (Phase 1: by
+# a seed path; Phase 2: by the model via response tags) and READ back
+# into STATE on later turns so the agent can see its own prior cognition.
+#
+# Schema is strict: the set of kinds and sources is closed.  Unknown
+# kinds/sources are silent-dropped at write time.  This is the "schema
+# is the fence" rule — callers cannot create new categories.
+#
+# NOTE: All writes are best-effort.  A failed meta-thought write MUST
+# NOT fail the turn that produced it.  All callers wrap writes in
+# try/except and log silently on failure.
+
+META_THOUGHT_KINDS = ("rejected", "expected", "unknown", "compression")
+META_THOUGHT_SOURCES = ("model", "user_correction", "seed", "system")
+
+
+def init_meta_thoughts_table(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Create the reflex_meta_thoughts table if it doesn't exist.
+
+    Columns:
+      id               - PK
+      turn_id          - FK to convo_turns.id (nullable; some thoughts aren't tied to a turn)
+      session_id       - denormalised session for cheap filtering
+      kind             - one of META_THOUGHT_KINDS
+      content          - the thought itself (short text)
+      source           - one of META_THOUGHT_SOURCES
+      confidence       - 0.0..1.0 model-reported confidence (default 0.5)
+      weight           - 0.0..1.0 for STATE-inclusion filtering (default 0.5)
+      first_asserted_at
+      last_confirmed_at
+      graded           - 0/1, true once an 'expected' has been compared to reality
+      grade_delta      - JSON text: {"actual": "...", "match": bool, "notes": "..."}
+      created_at
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    try:
+        cur = conn.cursor()
+        cur.execute("""
+            CREATE TABLE IF NOT EXISTS reflex_meta_thoughts (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                turn_id INTEGER,
+                session_id TEXT,
+                kind TEXT NOT NULL,
+                content TEXT NOT NULL,
+                source TEXT NOT NULL DEFAULT 'seed',
+                confidence REAL NOT NULL DEFAULT 0.5,
+                weight REAL NOT NULL DEFAULT 0.5,
+                first_asserted_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                last_confirmed_at TEXT DEFAULT CURRENT_TIMESTAMP,
+                graded INTEGER NOT NULL DEFAULT 0,
+                grade_delta TEXT,
+                created_at TEXT DEFAULT CURRENT_TIMESTAMP
+            )
+        """)
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_meta_thoughts_session "
+            "ON reflex_meta_thoughts(session_id, created_at DESC)"
+        )
+        cur.execute(
+            "CREATE INDEX IF NOT EXISTS idx_meta_thoughts_kind "
+            "ON reflex_meta_thoughts(kind, created_at DESC)"
+        )
+        if own_conn:
+            conn.commit()
+    finally:
+        if own_conn:
+            conn.close()
+
+
+def add_meta_thought(
+    kind: str,
+    content: str,
+    *,
+    turn_id: Optional[int] = None,
+    session_id: Optional[str] = None,
+    source: str = "seed",
+    confidence: float = 0.5,
+    weight: float = 0.5,
+) -> Optional[int]:
+    """Insert a meta-thought.  Returns row id, or None on any failure.
+
+    Silent-drop semantics:
+      - Unknown `kind` → drop (return None).
+      - Unknown `source` → drop.
+      - Empty/whitespace `content` → drop.
+      - DB failure → log and return None; never raises.
+    """
+    if kind not in META_THOUGHT_KINDS:
+        return None
+    if source not in META_THOUGHT_SOURCES:
+        return None
+    if not content or not content.strip():
+        return None
+
+    content = content.strip()
+    # Clamp numerics defensively
+    try:
+        confidence = max(0.0, min(1.0, float(confidence)))
+    except Exception:
+        confidence = 0.5
+    try:
+        weight = max(0.0, min(1.0, float(weight)))
+    except Exception:
+        weight = 0.5
+
+    # Cap content length so a runaway model can't flood the table
+    if len(content) > 500:
+        content = content[:500]
+
+    try:
+        with closing(get_connection()) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                """
+                INSERT INTO reflex_meta_thoughts
+                    (turn_id, session_id, kind, content, source, confidence, weight)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+                """,
+                (turn_id, session_id, kind, content, source, confidence, weight),
+            )
+            conn.commit()
+            return cur.lastrowid
+    except Exception:
+        # Never fail the turn.
+        return None
+
+
+def get_recent_meta_thoughts(
+    session_id: Optional[str] = None,
+    kinds: Optional[List[str]] = None,
+    min_weight: float = 0.0,
+    limit: int = 20,
+) -> List[Dict[str, Any]]:
+    """Return recent meta-thoughts, newest first.
+
+    If session_id is given, scoped to that session.
+    If kinds is given, filtered to those kinds.
+    Returns [] on any failure (never raises).
+    """
+    try:
+        with closing(get_connection()) as conn:
+            conn.row_factory = sqlite3.Row
+            cur = conn.cursor()
+            where = ["weight >= ?"]
+            params: List[Any] = [min_weight]
+            if session_id:
+                where.append("session_id = ?")
+                params.append(session_id)
+            if kinds:
+                # Validate against allowlist before interpolating
+                safe_kinds = [k for k in kinds if k in META_THOUGHT_KINDS]
+                if safe_kinds:
+                    where.append(
+                        "kind IN (" + ",".join(["?"] * len(safe_kinds)) + ")"
+                    )
+                    params.extend(safe_kinds)
+            sql = (
+                "SELECT id, turn_id, session_id, kind, content, source, "
+                "confidence, weight, first_asserted_at, last_confirmed_at, "
+                "graded, grade_delta, created_at "
+                "FROM reflex_meta_thoughts "
+                "WHERE " + " AND ".join(where) + " "
+                "ORDER BY created_at DESC LIMIT ?"
+            )
+            params.append(int(max(1, limit)))
+            rows = cur.execute(sql, params).fetchall()
+            return [dict(r) for r in rows]
+    except Exception:
+        return []
+
+
+def grade_expectation(
+    thought_id: int,
+    actual: str,
+    match: bool,
+    notes: str = "",
+) -> bool:
+    """Grade an 'expected' meta-thought against what actually happened.
+
+    Returns True on success, False on any failure.  Never raises.
+    """
+    try:
+        delta = json.dumps({"actual": actual[:500], "match": bool(match), "notes": notes[:500]})
+        with closing(get_connection()) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE reflex_meta_thoughts "
+                "SET graded = 1, grade_delta = ?, last_confirmed_at = CURRENT_TIMESTAMP "
+                "WHERE id = ? AND kind = 'expected'",
+                (delta, int(thought_id)),
+            )
+            conn.commit()
+            return cur.rowcount > 0
+    except Exception:
+        return False

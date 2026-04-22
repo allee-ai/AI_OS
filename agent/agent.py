@@ -180,6 +180,19 @@ class Agent:
                 except Exception:
                     pass  # Keep the raw LLM response if tool processing fails
         
+        # Parse meta-thought tags from the response (Phase 2).
+        # Always strip recognized tags from what the user sees.  Committing
+        # happens in the caller (agent_service) where session_id is known.
+        # This is best-effort — a failure here never fails the turn.
+        self._last_thoughts = []
+        try:
+            from agent.services.response_tags import parse_response_tags
+            stripped, thoughts = parse_response_tags(response_text, user_message=user_input)
+            response_text = stripped
+            self._last_thoughts = thoughts
+        except Exception:
+            pass
+
         # Track conversation event in log thread
         try:
             from agent.threads import get_thread
@@ -223,6 +236,36 @@ class Agent:
         except Exception:
             pass
 
+        # Optional: meta-thought tags.  Opt-in via env.  Teaches the model
+        # how to write cognitive residue back into state for future turns.
+        meta_block = ""
+        try:
+            if os.getenv("AIOS_META_TAGS_ENABLED", "0") == "1":
+                meta_block = (
+                    "\n\n== META-THOUGHTS (optional) ==\n"
+                    "You may optionally include up to 6 meta-thought tags at the END of your response.\n"
+                    "The user does NOT see these; they are written to your own state for future turns.\n"
+                    "Use them to leave useful residue for your future self.\n"
+                    "\n"
+                    "Available tags — use exactly these names:\n"
+                    "  <rejected>one idea I considered and ruled out, with brief reason</rejected>\n"
+                    "  <expected>a prediction about what will happen next (so I can grade it later)</expected>\n"
+                    "  <unknown>something I notice I don't actually know that I was assuming</unknown>\n"
+                    "  <compression>a one-line summary of what this turn was really about</compression>\n"
+                    "\n"
+                    "Rules:\n"
+                    "- All four are OPTIONAL. Skip any you have nothing useful for.\n"
+                    "- Keep each under 300 characters.\n"
+                    "- Max 2 per kind, 6 total. Extra tags are silently dropped.\n"
+                    "- Unknown tags are silently ignored. Do not invent new tag names.\n"
+                    "- Do not echo the user's message here.\n"
+                    "- Put them AT THE END of your response, not in the middle.\n"
+                    "- Prior thoughts in your state may be prefixed with `[user]`, `[model]`, or `[system]` "
+                    "showing who wrote them. Do NOT emit these prefixes in your tags — the system adds them."
+                )
+        except Exception:
+            pass
+
         return f"""You are {name}, a personal AI assistant.
 
 {preamble}== INSTRUCTIONS ==
@@ -235,7 +278,7 @@ class Agent:
 - The context above is your COMPLETE reality.
 - Never fabricate data you cannot see.
 - If asked about something not in your context, use your tools to find it. Only say "I don't have that information" if no tool can help.
-- Your identity, your user, your facts - these are in your context. Everything else is unverifiable.{tool_block}"""
+- Your identity, your user, your facts - these are in your context. Everything else is unverifiable.{tool_block}{meta_block}"""
     
     def _process_tool_calls(
         self, 
@@ -648,6 +691,21 @@ class Agent:
         provider = (ov.get("provider") or os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
         model_name = ov.get("model") or os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
         endpoint = ov.get("endpoint") or os.getenv("AIOS_MODEL_ENDPOINT", "")
+
+        # Per-role override for main chat (AIOS_CHAT_PROVIDER / AIOS_CHAT_MODEL
+        # / AIOS_CHAT_ENDPOINT).  Explicit call-site overrides still win.
+        if not ov.get("provider") or not ov.get("model"):
+            try:
+                from agent.services.role_model import resolve_role
+                cfg = resolve_role("CHAT")
+                if not ov.get("provider"):
+                    provider = cfg.provider
+                if not ov.get("model"):
+                    model_name = cfg.model
+                if not ov.get("endpoint") and cfg.endpoint:
+                    endpoint = cfg.endpoint
+            except Exception:
+                pass
 
         if provider == "mock":
             return "[Mock Agent] Placeholder response."

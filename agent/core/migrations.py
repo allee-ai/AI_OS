@@ -202,8 +202,12 @@ def _init_secrets():
 
 
 def _init_reflex():
-    from agent.threads.reflex.schema import init_triggers_table
+    from agent.threads.reflex.schema import (
+        init_triggers_table,
+        init_meta_thoughts_table,
+    )
     init_triggers_table()
+    init_meta_thoughts_table()
 
 
 # ── Inlined for tables with no exported init function ────────────────────

@@ -46,7 +46,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
     }
   }, [input]);
 
-  const isDisabled = isLoading || !isConnected || input.length > CHAT_CONFIG.MAX_MESSAGE_LENGTH;
+  const isDisabled = isLoading || input.length > CHAT_CONFIG.MAX_MESSAGE_LENGTH;
   const remainingChars = CHAT_CONFIG.MAX_MESSAGE_LENGTH - input.length;
 
   return (
@@ -59,8 +59,8 @@ export const MessageInput: React.FC<MessageInputProps> = ({
             onChange={handleInputChange}
             onKeyDown={handleKeyDown}
             placeholder={
-              !isConnected 
-                ? 'Connecting...' 
+              !isConnected
+                ? 'Type your message... (HTTP fallback active)'
                 : 'Type your message... (Press Enter to send, Shift+Enter for new line)'
             }
             disabled={isDisabled}
@@ -89,7 +89,7 @@ export const MessageInput: React.FC<MessageInputProps> = ({
           <div className="connection-status">
             <div className={`status-indicator ${isConnected ? 'connected' : 'disconnected'}`} />
             <span className="status-text">
-              {isConnected ? 'Connected' : 'Disconnected'}
+              {isConnected ? 'Connected' : 'Realtime disconnected (HTTP fallback)'}
             </span>
           </div>
           

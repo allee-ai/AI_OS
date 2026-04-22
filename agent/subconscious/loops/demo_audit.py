@@ -122,14 +122,13 @@ DEMO DATA ({len(data)} endpoints):
     # ------------------------------------------------------------------
 
     def _call_model(self, prompt: str) -> str:
-        provider = os.getenv(
-            "AIOS_EXTRACT_PROVIDER",
-            os.getenv("AIOS_MODEL_PROVIDER", "ollama"),
-        )
+        from agent.services.role_model import resolve_role
+        cfg = resolve_role("DEMO_AUDIT")
+        provider = cfg.provider
 
         if provider == "openai":
-            base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-            api_key = os.getenv("OPENAI_API_KEY", "")
+            base_url = cfg.endpoint or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+            api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
             import requests
 
             resp = requests.post(
@@ -264,6 +263,19 @@ DEMO DATA ({len(data)} endpoints):
                 conn.commit()
         except Exception as exc:
             print(f"[DemoAuditLoop] Failed to create notification: {exc}")
+        # Mirror warn+ severity into shared meta bus so the model hears it.
+        try:
+            if (priority or "").lower() in ("high", "urgent", "warn", "warning"):
+                from agent.subconscious.meta_mirror import mirror_to_meta
+                w = 0.85 if (priority or "").lower() in ("urgent", "high") else 0.7
+                mirror_to_meta(
+                    kind_hint="alert",
+                    content=message,
+                    weight=w,
+                    confidence=0.7,
+                )
+        except Exception:
+            pass
 
     # ------------------------------------------------------------------
     # stats override

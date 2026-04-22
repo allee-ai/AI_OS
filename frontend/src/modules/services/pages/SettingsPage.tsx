@@ -144,7 +144,7 @@ export const SettingsPage = () => {
 
   const renderContent = () => {
     // Config-driven sections
-    if (['server', 'provider', 'kernel', 'chat', 'workspace'].includes(activeSection)) {
+    if (['server', 'provider', 'kernel', 'chat', 'workspace', 'models'].includes(activeSection)) {
       return <ConfigSection group={activeSection} onDirty={() => setHasUnsavedChanges(true)} onClean={() => setHasUnsavedChanges(false)} />;
     }
     if (activeSection === 'mcp') {
@@ -199,6 +199,11 @@ export const SettingsPage = () => {
           <button className={`sidebar-item ${activeSection === 'provider' ? 'active' : ''}`}
             onClick={() => handleNavigation('/settings/provider')}>
             <span className="sidebar-icon">🤖</span><span>Provider & Models</span>
+          </button>
+
+          <button className={`sidebar-item ${activeSection === 'models' ? 'active' : ''}`}
+            onClick={() => handleNavigation('/settings/models')}>
+            <span className="sidebar-icon">🎛️</span><span>Per-Role Models</span>
           </button>
 
           <button className={`sidebar-item ${activeSection === 'chat' ? 'active' : ''}`}
@@ -319,6 +324,7 @@ const ChatContextInfo = () => {
 const GROUP_META: Record<string, { icon: string; title: string; desc: string }> = {
   server: { icon: '🖥️', title: 'Server Configuration', desc: 'Host, port, CORS, and public URL settings.' },
   provider: { icon: '🤖', title: 'Provider & Models', desc: 'LLM provider, model, API keys, and extraction overrides.' },
+  models: { icon: '🎛️', title: 'Per-Role Model Routing', desc: 'Pick a provider + model for each subsystem (chat, naming, summarizer, and every background loop). Empty = inherit the global provider/model above.' },
   chat: { icon: '💬', title: 'Chat & Summarization', desc: 'Context window budgets, auto-summarization thresholds, and conversation limits.' },
   kernel: { icon: '🌐', title: 'Kernel Browser Automation', desc: 'API key, browser profile, stealth & headless settings.' },
   workspace: { icon: '📂', title: 'Workspace', desc: 'Control which workspace operations the LLM/agent can perform and file size limits.' },
@@ -328,6 +334,7 @@ const ConfigSection = ({ group, onDirty, onClean }: { group: string; onDirty: ()
   const [items, setItems] = useState<SettingItem[]>([]);
   const [edits, setEdits] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [safeApplying, setSafeApplying] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
 
   useEffect(() => {
@@ -364,6 +371,37 @@ const ConfigSection = ({ group, onDirty, onClean }: { group: string; onDirty: ()
       }
     } catch { setMessage('Save failed'); }
     finally { setSaving(false); }
+  };
+
+  const handleSafeApply = async () => {
+    setSafeApplying(true);
+    setMessage(null);
+    try {
+      const res = await fetch(`${BASE_URL}/api/settings/safe-apply`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ updates: edits, restart: true, verify: true }),
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessage(`Safely applied and restarted. Backup: ${data.backup_path}`);
+        setEdits({});
+        onClean();
+        const r2 = await fetch(`${BASE_URL}/api/settings`);
+        if (r2.ok) {
+          const d = await r2.json();
+          setItems(d.groups?.[group] || []);
+        }
+      } else {
+        const err = await res.json();
+        const detail = typeof err.detail === 'string' ? err.detail : err.detail?.message || 'Safe apply failed';
+        setMessage(`Error: ${detail}`);
+      }
+    } catch {
+      setMessage('Safe apply failed');
+    } finally {
+      setSafeApplying(false);
+    }
   };
 
   const meta = GROUP_META[group] || { icon: '⚙️', title: group, desc: '' };
@@ -416,6 +454,9 @@ const ConfigSection = ({ group, onDirty, onClean }: { group: string; onDirty: ()
       <div className="settings-actions">
         <button className="btn-primary" onClick={handleSave} disabled={saving || !dirty}>
           {saving ? 'Saving...' : 'Save Changes'}
+        </button>
+        <button className="btn-secondary" onClick={handleSafeApply} disabled={safeApplying || !dirty}>
+          {safeApplying ? 'Applying...' : 'Safe Apply + Restart'}
         </button>
       </div>
     </div>

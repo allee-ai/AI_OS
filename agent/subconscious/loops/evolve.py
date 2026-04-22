@@ -446,11 +446,13 @@ class EvolutionLoop(BackgroundLoop):
 
     @property
     def provider(self) -> str:
-        return os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
+        from agent.services.role_model import resolve_role
+        return resolve_role("EVOLVE").provider
 
     @property
     def model(self) -> str:
-        return os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+        from agent.services.role_model import resolve_role
+        return resolve_role("EVOLVE").model
 
     def _run(self) -> str:
         self._cycle += 1

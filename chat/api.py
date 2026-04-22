@@ -202,9 +202,24 @@ async def send_message(request: SendMessageRequest):
         agent_service = _get_agent_service()
         response_message = await agent_service.send_message(request.content, request.session_id)
         agent_status_data = await agent_service.get_agent_status()
+
+        # agent_service returns its own ChatMessage model class; coerce to this module's model.
+        if isinstance(response_message, ChatMessage):
+            message_obj = response_message
+        elif hasattr(response_message, "model_dump"):
+            message_obj = ChatMessage(**response_message.model_dump())
+        elif isinstance(response_message, dict):
+            message_obj = ChatMessage(**response_message)
+        else:
+            message_obj = ChatMessage(
+                id=getattr(response_message, "id", f"assistant_{datetime.now().timestamp()}"),
+                role=getattr(response_message, "role", "assistant"),
+                content=getattr(response_message, "content", str(response_message)),
+                timestamp=getattr(response_message, "timestamp", datetime.now()),
+            )
         
         return SendMessageResponse(
-            message=response_message,
+            message=message_obj,
             agent_status=agent_status_data.get("status", "ready")
         )
     except Exception as e:
@@ -282,14 +297,19 @@ Assistant: {first_assistant_msg[:200]}
 
 Title:"""
     messages = [{"role": "user", "content": prompt_text}]
-    provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
+
+    # Role-specific override (AIOS_NAMING_PROVIDER/MODEL/ENDPOINT) with
+    # fallback to the global model.  Keeps naming cheap by default.
+    from agent.services.role_model import resolve_role
+    cfg = resolve_role("NAMING")
+    provider = cfg.provider
 
     try:
         if provider == "openai":
             import urllib.request, json as _json
-            api_key = os.getenv("OPENAI_API_KEY", "")
-            base_url = os.getenv("AIOS_MODEL_ENDPOINT", "").rstrip("/") or "https://api.openai.com/v1"
-            model = os.getenv("AIOS_MODEL_NAME", "gpt-4o-mini")
+            api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
+            base_url = (cfg.endpoint or "").rstrip("/") or "https://api.openai.com/v1"
+            model = cfg.model or os.getenv("AIOS_NAMING_MODEL", "gpt-4o-mini")
             payload = {"model": model, "messages": messages, "max_tokens": 30}
             req = urllib.request.Request(
                 f"{base_url}/chat/completions",
@@ -302,7 +322,7 @@ Title:"""
                 name = body.get("choices", [{}])[0].get("message", {}).get("content", "").strip()
         elif provider == "http":
             import urllib.request, json as _json
-            endpoint = os.getenv("AIOS_MODEL_ENDPOINT", "")
+            endpoint = cfg.endpoint or os.getenv("AIOS_MODEL_ENDPOINT", "")
             req = urllib.request.Request(
                 endpoint,
                 data=_json.dumps({"messages": messages}).encode("utf-8"),
@@ -315,7 +335,8 @@ Title:"""
         else:
             # ollama (default)
             import ollama
-            response = ollama.generate(model=NAMING_MODEL, prompt=prompt_text)
+            model = cfg.model or NAMING_MODEL
+            response = ollama.generate(model=model, prompt=prompt_text)
             name = response.get('response', '').strip()
 
         name = name.strip('"\'')
@@ -647,6 +668,32 @@ async def rate_message(request: RatingRequest):
         
         with open(NEGATIVE_FEEDBACK_FILE, "a") as f:
             f.write(json.dumps(feedback) + "\n")
+        
+        # Mirror thumbs-down into the shared meta-thought bus so the
+        # model reads it next turn as a weight=1.0 user correction.
+        # Best-effort: a failure here must never break the rate endpoint.
+        try:
+            import os as _os
+            if _os.getenv("AIOS_HUMAN_META", "1") == "1":
+                from agent.threads.reflex.schema import add_meta_thought
+                reason_txt = (request.reason or "").strip()
+                if reason_txt:
+                    content = reason_txt[:500]
+                else:
+                    # Even reason-less thumbs-down carries signal: the
+                    # FACT of rejection at weight=1.0.
+                    preview = (request.assistant_message or "")[:160].replace("\n", " ")
+                    content = f"[user rejected assistant turn] {preview}"
+                add_meta_thought(
+                    kind="rejected",
+                    content=content,
+                    source="user_correction",
+                    weight=1.0,
+                    confidence=1.0,
+                    session_id=request.conversation_id,
+                )
+        except Exception:
+            pass
         
         message = "Feedback recorded - thank you!"
     

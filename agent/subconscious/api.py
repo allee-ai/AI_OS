@@ -1441,3 +1441,202 @@ async def redeploy():
 
     all_ok = all(s["ok"] for s in steps)
     return {"status": "ok" if all_ok else "partial_failure", "steps": steps}
+
+
+# ─────────────────────────────────────────────────────────────
+# Heartbeat (dashboard visibility for the 60s conductor)
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/heartbeat")
+async def heartbeat_latest():
+    """Latest heartbeat snapshot + tick summary.
+
+    Returns an object the dashboard can render as a single card:
+        {
+          "enabled": bool,
+          "interval_seconds": float | None,
+          "last_tick": {"id", "ts", "snapshot", "actions", "duration_ms"} | None,
+          "stats": {...}  # BackgroundLoop stats for "heartbeat"
+        }
+    """
+    try:
+        from .heartbeat import get_recent_ticks
+        from . import _loop_manager
+        ticks = get_recent_ticks(limit=1)
+        last = ticks[0] if ticks else None
+        stats = {}
+        interval = None
+        enabled = False
+        if _loop_manager is not None:
+            loop = _loop_manager.get_loop("heartbeat")
+            if loop is not None:
+                stats = loop.stats
+                interval = stats.get("interval")
+                enabled = stats.get("status") == "running"
+        return {
+            "enabled": enabled,
+            "interval_seconds": interval,
+            "last_tick": last,
+            "stats": stats,
+        }
+    except Exception as e:
+        return {"enabled": False, "error": str(e)}
+
+
+@router.get("/heartbeat/ticks")
+async def heartbeat_ticks(limit: int = Query(50, ge=1, le=500)):
+    """Recent heartbeat ticks for the dashboard timeline."""
+    try:
+        from .heartbeat import get_recent_ticks
+        ticks = get_recent_ticks(limit=limit)
+        return {"ticks": ticks, "count": len(ticks)}
+    except Exception as e:
+        return {"ticks": [], "error": str(e)}
+
+
+@router.get("/heartbeat/snapshot")
+async def heartbeat_snapshot_now():
+    """Compute and return a fresh snapshot without writing a tick.
+    Useful for the dashboard 'peek' button.
+    """
+    try:
+        from .heartbeat import build_snapshot
+        return {"snapshot": build_snapshot()}
+    except Exception as e:
+        return {"snapshot": {}, "error": str(e)}
+
+
+@router.post("/heartbeat/tick")
+async def heartbeat_tick_now():
+    """Force a heartbeat tick right now (bypasses the 60s timer).
+    Useful for testing faculties from the dashboard.
+    """
+    try:
+        from . import _loop_manager
+        if _loop_manager is None:
+            return {"status": "no_manager"}
+        loop = _loop_manager.get_loop("heartbeat")
+        if loop is None:
+            return {"status": "not_running"}
+        # Call the task directly (bypasses pool, runs on caller thread)
+        summary = loop.task()  # type: ignore[attr-defined]
+        return {"status": "ok", "summary": summary}
+    except Exception as e:
+        return {"status": "error", "error": str(e)}
+
+
+# ─────────────────────────────────────────────────────────────
+# Goals — risk + manual promotion
+# ─────────────────────────────────────────────────────────────
+
+@router.get("/goals/full")
+async def goals_full(status: Optional[str] = None, limit: int = 50):
+    """Goals with risk + auto_promoted + timestamps for dashboard."""
+    from data.db import get_connection
+    from contextlib import closing
+    try:
+        from .faculties import _ensure_risk_column
+        _ensure_risk_column()
+    except Exception:
+        pass
+    try:
+        with closing(get_connection(readonly=True)) as conn:
+            if status:
+                rows = conn.execute(
+                    "SELECT id, goal, rationale, priority, status, "
+                    "       COALESCE(risk,'medium'), COALESCE(auto_promoted,0), "
+                    "       created_at, resolved_at "
+                    "FROM proposed_goals WHERE status=? "
+                    "ORDER BY id DESC LIMIT ?",
+                    (status, int(limit)),
+                ).fetchall()
+            else:
+                rows = conn.execute(
+                    "SELECT id, goal, rationale, priority, status, "
+                    "       COALESCE(risk,'medium'), COALESCE(auto_promoted,0), "
+                    "       created_at, resolved_at "
+                    "FROM proposed_goals ORDER BY id DESC LIMIT ?",
+                    (int(limit),),
+                ).fetchall()
+            return [
+                {"id": r[0], "goal": r[1], "rationale": r[2],
+                 "priority": r[3], "status": r[4], "risk": r[5],
+                 "auto_promoted": bool(r[6]),
+                 "created_at": r[7], "resolved_at": r[8]}
+                for r in rows
+            ]
+    except Exception as e:
+        return {"error": str(e), "goals": []}
+
+
+@router.post("/goals/{goal_id}/risk")
+async def set_goal_risk(goal_id: int, body: Dict[str, Any]):
+    """Set or override a goal's risk tier (low|medium|high)."""
+    risk = (body or {}).get("risk", "").lower().strip()
+    from .faculties import RISK_TIERS, _ensure_risk_column
+    if risk not in RISK_TIERS:
+        from fastapi import HTTPException
+        raise HTTPException(
+            status_code=400,
+            detail=f"risk must be one of {RISK_TIERS}",
+        )
+    _ensure_risk_column()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE proposed_goals SET risk=? WHERE id=?",
+                (risk, goal_id),
+            )
+            conn.commit()
+            if cur.rowcount == 0:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=404, detail="Goal not found")
+        return {"status": "ok", "goal_id": goal_id, "risk": risk}
+    except Exception as e:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/goals/{goal_id}/promote")
+async def promote_goal_now(goal_id: int):
+    """Manually promote an approved goal to a task, bypassing faculty."""
+    from data.db import get_connection
+    from contextlib import closing
+    from .loops.task_planner import create_task
+    try:
+        with closing(get_connection()) as conn:
+            row = conn.execute(
+                "SELECT goal, status, COALESCE(risk,'medium'), "
+                "       COALESCE(auto_promoted,0) "
+                "FROM proposed_goals WHERE id=?",
+                (goal_id,),
+            ).fetchone()
+            if not row:
+                from fastapi import HTTPException
+                raise HTTPException(status_code=404, detail="Goal not found")
+            goal, status, risk, promoted = row
+            if status != "approved":
+                from fastapi import HTTPException
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Goal must be approved (current: {status})",
+                )
+            t = create_task(goal=goal or "(unnamed)",
+                            source=f"manual_promote:{risk}")
+            conn.execute(
+                "UPDATE proposed_goals SET auto_promoted=1 WHERE id=?",
+                (goal_id,),
+            )
+            conn.commit()
+        return {"status": "promoted",
+                "goal_id": goal_id,
+                "task_id": t.get("id") if isinstance(t, dict) else None,
+                "risk": risk}
+    except Exception as e:
+        from fastapi import HTTPException
+        if hasattr(e, "status_code"):
+            raise
+        raise HTTPException(status_code=500, detail=str(e))

@@ -26,6 +26,7 @@ build/
 # VM deployment scripts (local-only)
 scripts/connect_vm_aios.sh
 scripts/install-vm.sh
+scripts/sync_local
 connect_vm_nola.sh
 
 # *.command
@@ -53,6 +54,7 @@ yarn-error.log*
 pids/
 *.pid
 *.seed
+data/.last_state_read
 
 # Database files
 *.db

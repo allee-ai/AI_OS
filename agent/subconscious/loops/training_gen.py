@@ -146,8 +146,11 @@ class TrainingGenLoop(BackgroundLoop):
     @property
     def model(self) -> str:
         """Model for generation — defaults to kimi-k2 (biggest available)."""
-        return os.getenv("AIOS_TRAINING_GEN_MODEL",
-                         os.getenv("AIOS_MODEL_NAME", "kimi-k2:1t-cloud"))
+        from agent.services.role_model import resolve_role
+        # TRAINING_GEN override wins; else legacy AIOS_TRAINING_GEN_MODEL; else global.
+        return (os.getenv("AIOS_TRAINING_GEN_MODEL", "").strip()
+                or resolve_role("TRAINING_GEN").model
+                or "kimi-k2:1t-cloud")
     
     @property
     def stats(self) -> Dict[str, Any]:
@@ -412,7 +415,8 @@ class TrainingGenLoop(BackgroundLoop):
     
     def _call_model(self, prompt: str) -> str:
         """Call the LLM to generate examples. Uses shared provider layer."""
-        provider = os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama"))
+        from agent.services.role_model import resolve_role
+        provider = resolve_role("TRAINING_GEN").provider
 
         # Gate Ollama access to avoid contention with main agent
         if provider == "ollama":

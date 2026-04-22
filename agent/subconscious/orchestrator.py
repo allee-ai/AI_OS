@@ -273,6 +273,17 @@ class Subconscious:
                 lines.append("")
                 lines.extend(section)
         
+        # Subconscious operational rollup (Phase 3a).
+        # Gated internally; returns '' when disabled or empty.
+        try:
+            from agent.subconscious.state_rollup import build_subconscious_section
+            sub_block = build_subconscious_section(budget=400)
+            if sub_block:
+                lines.append("")
+                lines.append(sub_block)
+        except Exception:
+            pass
+
         lines.append("")
         lines.append("== END STATE ==")
         
@@ -480,7 +491,7 @@ class Subconscious:
             "  | identity | WHO | My self-model, my user, our relationship |",
             "  | form | WHAT | My tools, my actions, my capabilities |",
             "  | philosophy | WHY | My values, my ethics, my reasoning style |",
-            "  | reflex | HOW | My learned patterns, my shortcuts |",
+            "  | reflex | HOW | My learned patterns, my shortcuts, my recent meta-thoughts |",
             "  | log | WHEN/WHERE | My event timeline, my session history |",
             "  | linking_core | WHICH | My concept graph, my relevance scoring |",
             "  | Module | | |",

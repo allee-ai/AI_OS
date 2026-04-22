@@ -15,6 +15,7 @@ Modules:
 from typing import List, Dict, Any, Optional, Tuple
 from datetime import datetime, timezone
 import re
+import json
 
 try:
     from agent.threads.base import BaseThreadAdapter, HealthReport, IntrospectionResult
@@ -190,6 +191,35 @@ class ReflexThreadAdapter(BaseThreadAdapter):
                     lines.append(f"  triggers: {total} ({active} active)")
             except Exception:
                 pass
+            # Meta-thoughts stats (cognitive residue)
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                row = conn.execute(
+                    "SELECT COUNT(*) as total, "
+                    "SUM(CASE WHEN kind='expected' AND graded=1 THEN 1 ELSE 0 END) as graded_expected, "
+                    "SUM(CASE WHEN kind='expected' THEN 1 ELSE 0 END) as total_expected "
+                    "FROM reflex_meta_thoughts"
+                ).fetchone()
+                if row and row["total"]:
+                    total = row["total"]
+                    ge = row["graded_expected"] or 0
+                    te = row["total_expected"] or 0
+                    if te > 0:
+                        lines.append(f"  meta_thoughts: {total} (graded: {ge}/{te} expectations)")
+                    else:
+                        lines.append(f"  meta_thoughts: {total}")
+                # Pending expectations that are aging — prompts self-grading
+                pending = conn.execute("""
+                    SELECT COUNT(*) as cnt FROM reflex_meta_thoughts
+                    WHERE kind = 'expected'
+                      AND graded = 0
+                      AND created_at <= datetime('now', '-5 minutes')
+                """).fetchone()
+                if pending and pending["cnt"]:
+                    lines.append(f"  pending_expectations: {pending['cnt']}")
+            except Exception:
+                pass
             return lines
         except Exception:
             return []
@@ -199,6 +229,7 @@ class ReflexThreadAdapter(BaseThreadAdapter):
             "  rules:",
             "  - Apply matching patterns when relevant. These are learned shortcuts.",
             "  - Do not invent patterns not listed here.",
+            "  - reflex.meta.* entries are my own prior thoughts about earlier turns. Read them; do not treat them as user statements.",
         ]
 
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
@@ -295,6 +326,76 @@ class ReflexThreadAdapter(BaseThreadAdapter):
                 "l3_value": f"{key}: {action}" if action else key,
                 "weight": weight,
             })
+
+        # Meta-thoughts (cognitive residue from prior turns)
+        # Best-effort read: if the table is missing or DB fails, we just
+        # contribute nothing. Meta-thoughts never break the STATE read.
+        try:
+            import os as _os_prov
+            provenance_on = _os_prov.getenv("AIOS_META_PROVENANCE", "1") == "1"
+            from agent.threads.reflex.schema import get_recent_meta_thoughts
+            meta = get_recent_meta_thoughts(
+                min_weight=min_weight,
+                limit=20,
+            )
+            # Sort so user_correction floats to top (always audible);
+            # then model; then system; then seed. Within a group the
+            # original ordering (newest-first) is preserved.
+            _SRC_PRI = {"user_correction": 0, "model": 1, "system": 2, "seed": 3}
+            try:
+                meta = sorted(
+                    meta,
+                    key=lambda m: (_SRC_PRI.get(m.get("source", ""), 9), )
+                )
+            except Exception:
+                pass
+            # Reserve at least 1 slot for user_correction entries from
+            # the last 24h so they survive budget truncation downstream.
+            # (Implemented simply via the sort above; reflex adapter's
+            # caller honours list order.)
+            # Newest first; oldest (end of list) gets a mild weight decay
+            # so stale thoughts are more easily filtered by threshold.
+            for i, m in enumerate(meta):
+                kind = m.get("kind", "")
+                content = m.get("content", "")
+                if not content or kind not in ("rejected", "expected", "unknown", "compression"):
+                    continue
+                base_weight = float(m.get("weight", 0.5) or 0.5)
+                # user_correction entries get a weight floor so they
+                # aren't decayed out by the window position.
+                src = m.get("source", "")
+                if src == "user_correction":
+                    base_weight = max(base_weight, 0.9)
+                # Simple linear decay across the returned window
+                decayed = max(0.1, base_weight * (1.0 - 0.03 * i))
+                if decayed < min_weight and src != "user_correction":
+                    continue
+                tid = m.get("id", 0)
+                short = content if len(content) <= 100 else content[:97] + "..."
+                # For 'expected' that has been graded, suffix with match signal
+                if kind == "expected" and m.get("graded"):
+                    try:
+                        delta = json.loads(m.get("grade_delta") or "{}")
+                        suffix = " [hit]" if delta.get("match") else " [miss]"
+                    except Exception:
+                        suffix = ""
+                    short = short + suffix
+                # Provenance prefix — seeds get no prefix (keep the
+                # teaching example clean); all other sources get [source].
+                if provenance_on and src and src != "seed":
+                    prov = f"[{src}] "
+                else:
+                    prov = ""
+                raw.append({
+                    "path": f"reflex.meta.{kind}.{tid}",
+                    "l1_value": f"{prov}{kind}: {short[:60]}",
+                    "l2_value": f"{prov}{kind}: {short}",
+                    "l3_value": f"{prov}{kind}: {content}",
+                    "weight": decayed,
+                })
+        except Exception:
+            # Silent: meta-thoughts are an enhancement, never required.
+            pass
 
         return raw[:limit]
     

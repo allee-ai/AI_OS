@@ -233,8 +233,21 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
                     if concepts:
                         activated = spread_activate(concepts, activation_threshold=0.3, max_hops=1, limit=5)
                         if activated:
-                            top = [a['concept'] for a in activated[:5]]
-                            facts.append(f"linking_core.activated: {', '.join(top)}")
+                            # Show concept AND activation strength — this is
+                            # the "why was this retrieved?" signal.
+                            parts = []
+                            for a in activated[:5]:
+                                c = a.get("concept", "")
+                                s = a.get("strength", a.get("activation", 0.0))
+                                try:
+                                    parts.append(f"{c}({float(s):.2f})")
+                                except Exception:
+                                    parts.append(c)
+                            facts.append(f"linking_core.activated: {', '.join(parts)}")
+                            # Also surface the source concepts (the seed from query)
+                            seed = concepts[:3] if isinstance(concepts, list) else []
+                            if seed:
+                                facts.append(f"linking_core.query_concepts: {', '.join(seed)}")
                 except Exception:
                     pass
         

@@ -69,6 +69,80 @@ body {
   background: var(--bg);
 }
 
+.login-shell {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--bg-primary);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  padding: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.login-card h1 {
+  font-size: 1.1rem;
+  margin: 0;
+}
+
+.login-card p {
+  margin: 0 0 6px;
+  color: var(--text-muted);
+  font-size: 0.9rem;
+}
+
+.login-card .login-hint {
+  margin-top: -2px;
+  margin-bottom: 8px;
+  font-size: 0.82rem;
+}
+
+.login-card .login-error {
+  margin: 0;
+  color: var(--error);
+  font-size: 0.82rem;
+}
+
+.login-card input {
+  width: 100%;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px 12px;
+  background: var(--bg);
+  color: var(--text);
+}
+
+.login-card button {
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 10px 12px;
+  cursor: pointer;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 600;
+}
+
+.login-card button:disabled {
+  opacity: 0.65;
+  cursor: not-allowed;
+}
+
+.login-card button.ghost {
+  background: transparent;
+  border-color: var(--border);
+  color: var(--text-muted);
+  font-weight: 500;
+}
+
 /* Ensure app uses full width so chat can expand edge-to-edge */
 .app {
   width: 100%;

@@ -267,10 +267,10 @@ class TaskPlanner(BackgroundLoop):
     
     @property
     def model(self) -> str:
-        import os
         if self._model:
             return self._model
-        return os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+        from agent.services.role_model import resolve_role
+        return resolve_role("TASK_PLANNER").model
     
     @model.setter
     def model(self, value: str) -> None:
@@ -690,8 +690,8 @@ STEP RESULTS:
     
     def _call_model(self, prompt: str) -> str:
         """Call the LLM."""
-        import os
-        provider = os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama"))
+        from agent.services.role_model import resolve_role
+        provider = resolve_role("TASK_PLANNER").provider
         
         if provider == "openai":
             return self._call_openai(prompt)
@@ -716,8 +716,10 @@ STEP RESULTS:
     
     def _call_openai(self, prompt: str) -> str:
         import os, requests
-        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        api_key = os.getenv("OPENAI_API_KEY", "")
+        from agent.services.role_model import resolve_role
+        cfg = resolve_role("TASK_PLANNER")
+        base_url = cfg.endpoint or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
         resp = requests.post(
             f"{base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},

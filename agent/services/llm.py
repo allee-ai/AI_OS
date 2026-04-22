@@ -593,6 +593,7 @@ def generate(prompt: Optional[str] = None,
              system: Optional[str] = None,
              provider: Optional[str] = None,
              model: Optional[str] = None,
+             role: Optional[str] = None,
              temperature: float = 0.7,
              max_tokens: int = 2048) -> str:
     """Generate text from an LLM.
@@ -603,6 +604,10 @@ def generate(prompt: Optional[str] = None,
         system:      System prompt (prepended if using prompt= style)
         provider:    Provider name, "aggregate" for round-robin, or None for env default
         model:       Override model name (optional)
+        role:        Role tag (e.g. "GOAL", "SELF_IMPROVE", "EVOLVE") used to
+                     look up per-role provider/model overrides via
+                     agent.services.role_model.resolve_role().  Only used
+                     when *provider* and *model* are not explicitly passed.
         temperature: Sampling temperature
         max_tokens:  Max output tokens
 
@@ -617,6 +622,18 @@ def generate(prompt: Optional[str] = None,
         if system:
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
+
+    # Apply per-role overrides when caller didn't pin provider/model.
+    if role and (provider is None or model is None):
+        try:
+            from agent.services.role_model import resolve_role
+            cfg = resolve_role(role)
+            if provider is None:
+                provider = cfg.provider
+            if model is None:
+                model = cfg.model
+        except Exception:
+            pass
 
     # Resolve provider
     if provider == "aggregate":

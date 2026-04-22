@@ -10,6 +10,7 @@ from pydantic import BaseModel
 from typing import Optional, Dict, Any
 from pathlib import Path
 import os
+from datetime import datetime
 
 router = APIRouter(prefix="/api/settings", tags=["settings"])
 
@@ -96,6 +97,83 @@ _CONFIG_SCHEMA: list[dict] = [
 ]
 
 
+# ─────────────────────────────────────────────────────────────
+# Per-role model overrides (chat / naming / summary / loops)
+#
+# Every entry below produces two settings keys:
+#   AIOS_<ROLE>_PROVIDER   (select: inherit|ollama|openai|http)
+#   AIOS_<ROLE>_MODEL      (text)
+# Plus an optional AIOS_<ROLE>_ENDPOINT for advanced routing.
+#
+# "inherit" (empty string) falls back to AIOS_MODEL_PROVIDER /
+# AIOS_MODEL_NAME.  Each call site uses
+# agent.services.role_model.resolve_role() which applies the fallback.
+# ─────────────────────────────────────────────────────────────
+
+_ROLES: list[tuple[str, str, str]] = [
+    # (env_prefix,        label,                 hint)
+    ("CHAT",              "Chat (main agent)",   "Every user turn — the main response."),
+    ("NAMING",            "Conversation Naming", "Short title generated after first turn."),
+    ("SUMMARY",           "Chat Summarizer",     "Fires at turns 5, 15, 30 with full history."),
+    ("MEMORY",            "Memory Loop",         "Extracts personal facts from past conversations."),
+    ("CONSOLIDATION",     "Consolidation Loop",  "Promotes temp_facts into identity."),
+    ("THOUGHT",           "Thought Loop",        "Proactive insights + reminders."),
+    ("CONVO_CONCEPTS",    "Convo Concepts",      "Extracts concepts/entities from conversations."),
+    ("GOAL",              "Goal Generation",     "Proposes new user goals from recent activity."),
+    ("TASK_PLANNER",      "Task Planner",        "Decomposes approved goals into tool calls."),
+    ("SELF_IMPROVE",      "Self-Improvement",    "Proposes small, safe code patches."),
+    ("DEMO_AUDIT",        "Demo Audit",          "Audits demo-data.json for shape/PII issues."),
+    ("WORKSPACE_QA",      "Workspace QA",        "QA passes over the workspace files."),
+    ("TRAINING_GEN",      "Training Data Gen",   "Synthesizes fine-tune examples."),
+    ("EVOLVE",            "Evolution Loop",      "Self-modification proposals."),
+    ("SYNC",              "Sync Loop",           "External data syncs."),
+]
+
+for _prefix, _label, _hint in _ROLES:
+    _CONFIG_SCHEMA.extend([
+        {
+            "key": f"AIOS_{_prefix}_PROVIDER",
+            "default": "",
+            "group": "models",
+            "label": f"{_label} — Provider",
+            "type": "select",
+            "options": ["", "ollama", "openai", "http"],
+            "hint": f"{_hint}  Leave empty to inherit AIOS_MODEL_PROVIDER.",
+        },
+        {
+            "key": f"AIOS_{_prefix}_MODEL",
+            "default": "",
+            "group": "models",
+            "label": f"{_label} — Model",
+            "type": "text",
+            "hint": "Model name (e.g. gpt-4o-mini, qwen2.5:7b). Empty = inherit AIOS_MODEL_NAME.",
+        },
+        {
+            "key": f"AIOS_{_prefix}_ENDPOINT",
+            "default": "",
+            "group": "models",
+            "label": f"{_label} — Endpoint",
+            "type": "text",
+            "hint": "Optional custom base URL. Empty = provider default.",
+        },
+    ])
+
+# Chat-specific cost knobs (tool rounds cap is the single biggest
+# per-turn cost multiplier when using OpenAI).
+_CONFIG_SCHEMA.extend([
+    {"key": "AIOS_MAX_TOOL_ROUNDS", "default": "15", "group": "chat",
+     "label": "Max Tool Rounds (per turn)", "type": "number",
+     "hint": "Cap on LLM↔tool back-and-forth per chat turn. Lower = cheaper, less agentic. Default 15."},
+    {"key": "AIOS_LLM_ENABLED", "default": "true", "group": "provider",
+     "label": "LLM Enabled", "type": "select", "options": ["true", "false"],
+     "hint": "Hard kill-switch. When false, chat returns a stub and no loop hits any provider."},
+    {"key": "AIOS_HEARTBEAT", "default": "1", "group": "provider",
+     "label": "Heartbeat Loop", "type": "select", "options": ["0", "1"],
+     "hint": "60s coordinator that builds the global snapshot. Free (no LLM)."},
+])
+
+
+
 def _read_env() -> Dict[str, str]:
     """Read the project .env file into a dict."""
     env_path = Path(__file__).resolve().parents[2] / ".env"
@@ -135,6 +213,62 @@ def _write_env(updates: Dict[str, str]):
     env_path.write_text("\n".join(new_lines) + "\n")
 
 
+def _env_path() -> Path:
+    return Path(__file__).resolve().parents[2] / ".env"
+
+
+def _backup_env() -> str:
+    """Create timestamped backup of .env and return backup path."""
+    env_path = _env_path()
+    stamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    backup_path = env_path.with_name(f".env.safe.{stamp}.bak")
+    if env_path.exists():
+        backup_path.write_text(env_path.read_text())
+    else:
+        backup_path.write_text("")
+    return str(backup_path)
+
+
+def _restore_env(raw: str) -> None:
+    env_path = _env_path()
+    env_path.write_text(raw)
+
+
+def _restart_services() -> None:
+    """Restart in-process services by cycling subconscious core."""
+    from agent.subconscious import get_core
+    core = get_core()
+    core.sleep()
+    core.wake()
+
+
+def _verify_settings(updates: Dict[str, str]) -> Dict[str, Any]:
+    """Basic post-apply verification checks."""
+    merged = _read_env()
+    checks: list[Dict[str, Any]] = []
+
+    provider = updates.get("AIOS_MODEL_PROVIDER", merged.get("AIOS_MODEL_PROVIDER", ""))
+    if provider == "openai":
+        checks.append({
+            "name": "OPENAI_API_KEY present",
+            "ok": bool(merged.get("OPENAI_API_KEY", "").strip()),
+        })
+
+    if provider == "ollama":
+        checks.append({
+            "name": "OLLAMA_HOST set",
+            "ok": bool(merged.get("OLLAMA_HOST", "").strip()),
+        })
+
+    checks.append({
+        "name": "AIOS_MODEL_NAME set",
+        "ok": bool(merged.get("AIOS_MODEL_NAME", "").strip()),
+    })
+
+    all_ok = all(c["ok"] for c in checks)
+    return {"ok": all_ok, "checks": checks}
+
+
 # ─────────────────────────────────────────────────────────────
 # Endpoints
 # ─────────────────────────────────────────────────────────────
@@ -165,6 +299,12 @@ class SettingsUpdate(BaseModel):
     updates: Dict[str, str]
 
 
+class SafeApplyRequest(BaseModel):
+    updates: Dict[str, str]
+    restart: bool = True
+    verify: bool = True
+
+
 @router.put("")
 async def update_settings(body: SettingsUpdate):
     """Update one or more settings. Writes to .env and sets runtime env vars."""
@@ -187,3 +327,72 @@ async def update_settings(body: SettingsUpdate):
 async def get_settings_schema():
     """Return the configuration schema (for dynamic form rendering)."""
     return {"schema": _CONFIG_SCHEMA}
+
+
+@router.get("/roles")
+async def get_role_resolutions():
+    """Return the effective provider/model for every LLM role.
+
+    Frontend uses this to show "inherited from global" vs "overridden"
+    in the Models settings page.
+    """
+    from agent.services.role_model import resolve_debug
+    return resolve_debug()
+
+
+@router.post("/safe-apply")
+async def safe_apply_settings(body: SafeApplyRequest):
+    """Safely apply settings with backup, restart, verify, and rollback on failure."""
+    allowed_keys = {item["key"] for item in _CONFIG_SCHEMA}
+    invalid = set(body.updates.keys()) - allowed_keys
+    if invalid:
+        raise HTTPException(status_code=400, detail=f"Unknown settings: {sorted(invalid)}")
+
+    env_path = _env_path()
+    previous_env = env_path.read_text() if env_path.exists() else ""
+    previous_values = {k: os.environ.get(k) for k in body.updates.keys()}
+    backup_path = _backup_env()
+
+    try:
+        for key, val in body.updates.items():
+            os.environ[key] = val
+        _write_env(body.updates)
+
+        if body.restart:
+            _restart_services()
+
+        verification = {"ok": True, "checks": []}
+        if body.verify:
+            verification = _verify_settings(body.updates)
+            if not verification["ok"]:
+                raise RuntimeError("Verification failed after applying settings")
+
+        return {
+            "success": True,
+            "message": "Settings safely applied",
+            "updated": list(body.updates.keys()),
+            "backup_path": backup_path,
+            "restarted": body.restart,
+            "verification": verification,
+        }
+    except Exception as e:
+        _restore_env(previous_env)
+        for key, old_val in previous_values.items():
+            if old_val is None:
+                os.environ.pop(key, None)
+            else:
+                os.environ[key] = old_val
+        try:
+            if body.restart:
+                _restart_services()
+        except Exception:
+            pass
+
+        raise HTTPException(
+            status_code=500,
+            detail={
+                "message": f"Safe apply failed and rollback executed: {e}",
+                "rolled_back": True,
+                "backup_path": backup_path,
+            },
+        )

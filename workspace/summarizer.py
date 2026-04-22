@@ -72,8 +72,12 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
         return None
 
     prompt = prompt or get_summary_prompt()
-    provider = os.environ.get("AIOS_MODEL_PROVIDER", "ollama").lower()
-    model = os.environ.get(
+    # Role-specific override (AIOS_SUMMARY_PROVIDER/MODEL/ENDPOINT) with
+    # fallback to global AIOS_MODEL_* and the legacy AIOS_SUMMARY_MODEL.
+    from agent.services.role_model import resolve_role
+    cfg = resolve_role("SUMMARY")
+    provider = cfg.provider
+    model = cfg.model or os.environ.get(
         "AIOS_SUMMARY_MODEL",
         os.environ.get("AIOS_MODEL_NAME", "qwen2.5:7b"),
     )
@@ -88,8 +92,8 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
     try:
         if provider == "openai":
             import urllib.request, json
-            api_key = os.environ.get("OPENAI_API_KEY", "")
-            base_url = os.environ.get("AIOS_MODEL_ENDPOINT", "").rstrip("/") or "https://api.openai.com/v1"
+            api_key = cfg.api_key or os.environ.get("OPENAI_API_KEY", "")
+            base_url = (cfg.endpoint or "").rstrip("/") or "https://api.openai.com/v1"
             payload = {"model": model, "messages": messages, "max_tokens": 500, "temperature": 0.3}
             req = urllib.request.Request(
                 f"{base_url}/chat/completions",
@@ -103,7 +107,7 @@ def summarize_text(text: str, prompt: Optional[str] = None) -> Optional[str]:
 
         elif provider == "http":
             import urllib.request, json
-            endpoint = os.environ.get("AIOS_MODEL_ENDPOINT", "")
+            endpoint = cfg.endpoint or os.environ.get("AIOS_MODEL_ENDPOINT", "")
             req = urllib.request.Request(
                 endpoint,
                 data=json.dumps({"messages": messages}).encode("utf-8"),

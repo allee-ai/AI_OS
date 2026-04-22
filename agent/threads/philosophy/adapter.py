@@ -128,6 +128,27 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
                 f"  profiles: {len(profiles)} ({', '.join(profile_names)})",
                 f"  stances: {total_stances}",
             ]
+            # Recently-invoked stances (access_count + last_accessed)
+            # Shows which values are *live* vs dormant.
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                rows = conn.execute("""
+                    SELECT profile_id, key, access_count
+                    FROM philosophy_profile_facts
+                    WHERE last_accessed IS NOT NULL
+                      AND last_accessed >= datetime('now', '-7 days')
+                    ORDER BY last_accessed DESC
+                    LIMIT 5
+                """).fetchall()
+                if rows:
+                    parts = [
+                        f"{r['profile_id']}.{r['key']}"
+                        for r in rows
+                    ]
+                    lines.append(f"  recently_invoked: {', '.join(parts)}")
+            except Exception:
+                pass
             return lines
         except Exception:
             return []

@@ -1,0 +1,71 @@
+# Shadow Executor — two-container sandbox for self-modification
+#
+# Runs an isolated second AIOS instance in Docker with a COPY of the
+# live DB.  Use it to:
+#   1. Apply an evolve/self-improve proposal on the copy first.
+#   2. Run the verification suite against the shadow.
+#   3. Promote to production only if shadow stays green.
+#
+# Usage:
+#   cd shadow/
+#   docker compose up --build shadow
+#   # in another terminal:
+#   curl http://localhost:8001/api/subconscious/heartbeat
+#
+# The live AIOS listens on :8000, the shadow on :8001.  They share
+# the image but mount separate DB files.
+
+version: "3.9"
+
+services:
+  aios_prod:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: aios:local
+    container_name: aios_prod
+    environment:
+      - AIOS_PORT=8000
+      - AIOS_DB_PATH=/data/state.db
+      - AIOS_HEARTBEAT=1
+      - AIOS_SUBCONSCIOUS_SECTION=1
+      - AIOS_META_TAGS_ENABLED=1
+      - AIOS_HUMAN_META=1
+      - AIOS_META_PROVENANCE=1
+      - AIOS_AUTO_GRADE=1
+      - AIOS_GOAL_PROMOTER=1
+      - AIOS_GOAL_AUTO_APPROVE=1
+      - AIOS_INSTANCE_ROLE=prod
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../data/db:/data:rw
+      - ..:/app:ro
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
+
+  aios_shadow:
+    build:
+      context: ..
+      dockerfile: Dockerfile
+    image: aios:local
+    container_name: aios_shadow
+    depends_on:
+      - aios_prod
+    environment:
+      - AIOS_PORT=8001
+      - AIOS_DB_PATH=/data/state.shadow.db
+      - AIOS_HEARTBEAT=1
+      - AIOS_SUBCONSCIOUS_SECTION=1
+      # Shadow disables writes that could contaminate real user flow
+      - AIOS_META_TAGS_ENABLED=1
+      - AIOS_HUMAN_META=0
+      - AIOS_GOAL_PROMOTER=0
+      - AIOS_GOAL_AUTO_APPROVE=0
+      - AIOS_EVOLVE=0
+      - AIOS_INSTANCE_ROLE=shadow
+    ports:
+      - "8001:8001"
+    volumes:
+      - ../data/db:/data:rw
+      - ..:/app:rw  # shadow may modify files as part of the test
+    command: ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8001"]

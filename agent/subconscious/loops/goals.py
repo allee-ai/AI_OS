@@ -46,17 +46,52 @@ def propose_goal(goal: str, rationale: str = "", priority: str = "medium",
                  sources: Optional[List[str]] = None) -> int:
     """Store a proposed goal for human review. Returns goal ID."""
     _ensure_goals_table()
+    # Compute risk tier up front so faculties / UI see it immediately.
+    try:
+        from agent.subconscious.faculties import (
+            classify_goal_risk, _ensure_risk_column,
+        )
+        _ensure_risk_column()
+        risk = classify_goal_risk(goal, rationale)
+    except Exception:
+        risk = "medium"
     try:
         from data.db import get_connection
         from contextlib import closing
         with closing(get_connection()) as conn:
             cur = conn.cursor()
-            cur.execute(
-                "INSERT INTO proposed_goals (goal, rationale, priority, sources) VALUES (?, ?, ?, ?)",
-                (goal, rationale, priority, json.dumps(sources or []))
-            )
+            try:
+                cur.execute(
+                    "INSERT INTO proposed_goals "
+                    "(goal, rationale, priority, sources, risk) "
+                    "VALUES (?, ?, ?, ?, ?)",
+                    (goal, rationale, priority,
+                     json.dumps(sources or []), risk)
+                )
+            except Exception:
+                # Column may not exist yet in older DBs
+                cur.execute(
+                    "INSERT INTO proposed_goals (goal, rationale, priority, sources) VALUES (?, ?, ?, ?)",
+                    (goal, rationale, priority, json.dumps(sources or []))
+                )
             conn.commit()
-            return cur.lastrowid or 0
+            new_id = cur.lastrowid or 0
+        # Mirror → shared meta bus (source='system', kind='expected').
+        try:
+            from agent.subconscious.meta_mirror import mirror_to_meta
+            w = {"urgent": 0.9, "high": 0.8, "medium": 0.7, "low": 0.5}.get(
+                (priority or "medium").lower(), 0.7
+            )
+            content = goal if not rationale else f"{goal} — {rationale}"
+            mirror_to_meta(
+                kind_hint="goal",
+                content=content,
+                weight=w,
+                confidence=0.6,
+            )
+        except Exception:
+            pass
+        return new_id
     except Exception as e:
         print(f"[GoalLoop] Failed to propose goal: {e}")
         return 0
@@ -223,8 +258,8 @@ def _generate_goals(prompt_template: str = GOAL_PROMPT) -> str:
     )
 
     try:
-        from agent.services.llm import call_llm
-        response = call_llm(prompt, max_tokens=1024)
+        from agent.services.llm import generate
+        response = generate(prompt, role="GOAL", max_tokens=1024)
     except Exception as e:
         print(f"[GoalLoop] LLM call failed: {e}")
         return f"LLM call failed: {e}"

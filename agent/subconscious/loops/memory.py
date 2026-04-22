@@ -57,10 +57,10 @@ class MemoryLoop(BackgroundLoop):
     @property
     def model(self) -> str:
         """Get the model used for fact extraction."""
-        import os
         if self._model:
             return self._model
-        return os.getenv("AIOS_EXTRACT_MODEL", os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b"))
+        from agent.services.role_model import resolve_role
+        return resolve_role("MEMORY").model
     
     @model.setter
     def model(self, value: str) -> None:
@@ -69,8 +69,8 @@ class MemoryLoop(BackgroundLoop):
     @property
     def provider(self) -> str:
         """Get the provider for the extraction model (ollama | openai)."""
-        import os
-        return os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama")).lower()
+        from agent.services.role_model import resolve_role
+        return resolve_role("MEMORY").provider
 
     def _call_model(self, messages: list, temperature: float = 0.1) -> str:
         """Route extraction call to the configured provider."""
@@ -103,12 +103,11 @@ class MemoryLoop(BackgroundLoop):
     def _call_openai(self, model: str, messages: list, temperature: float) -> str:
         """Call an OpenAI-compatible endpoint for extraction."""
         import os, json, urllib.request
+        from agent.services.role_model import resolve_role
 
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        base_url = os.getenv(
-            "AIOS_EXTRACT_ENDPOINT",
-            os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-        ).rstrip("/")
+        cfg = resolve_role("MEMORY")
+        api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
+        base_url = (cfg.endpoint or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")).rstrip("/")
 
         url = f"{base_url}/chat/completions"
         headers = {"Content-Type": "application/json"}

@@ -234,6 +234,20 @@ class FormThreadAdapter(BaseThreadAdapter):
                 lines = [
                     f"  tools: {len(available)} ({len(runnable)} runnable)",
                 ]
+                # Disabled tools (enabled=False or weight=0) — the model
+                # shouldn't propose these; showing them in the header
+                # stops wasted suggestions.
+                try:
+                    disabled_names = [
+                        t.name for t in available
+                        if (not getattr(t, "enabled", True)) or getattr(t, "weight", 1.0) <= 0
+                    ]
+                    if disabled_names:
+                        preview = ", ".join(disabled_names[:5])
+                        suffix = f" (+{len(disabled_names) - 5})" if len(disabled_names) > 5 else ""
+                        lines.append(f"  disabled: {preview}{suffix}")
+                except Exception:
+                    pass
             else:
                 tools = self.get_tools(1)
                 lines = [f"  tools: {len(tools)}"]
@@ -249,6 +263,48 @@ class FormThreadAdapter(BaseThreadAdapter):
                 rate = row["rate"] if row and row["rate"] is not None else 0
                 if cnt > 0:
                     lines.append(f"  executions: {cnt} (success_rate: {rate:.0%})")
+
+                # Per-tool success rates for the 5 most-recently used tools
+                # (last 100 executions).  Shows WHICH tool is failing.
+                try:
+                    rows = conn.execute("""
+                        SELECT tool,
+                               COUNT(*) as cnt,
+                               AVG(CASE WHEN success THEN 1.0 ELSE 0.0 END) as rate
+                        FROM (
+                            SELECT tool, success FROM tool_traces
+                            ORDER BY id DESC LIMIT 100
+                        )
+                        GROUP BY tool
+                        ORDER BY cnt DESC
+                        LIMIT 5
+                    """).fetchall()
+                    if rows and len(rows) > 0:
+                        parts = [
+                            f"{r['tool']}={r['rate']:.0%}({r['cnt']})"
+                            for r in rows
+                        ]
+                        lines.append(f"  per_tool_recent: {', '.join(parts)}")
+                except Exception:
+                    pass
+
+                # Last tool call — immediate "did that just work?" signal
+                try:
+                    last = conn.execute("""
+                        SELECT tool, action, success, duration_ms, output, created_at
+                        FROM tool_traces
+                        ORDER BY id DESC LIMIT 1
+                    """).fetchone()
+                    if last:
+                        status = "ok" if last["success"] else "FAIL"
+                        dur = last["duration_ms"] or 0
+                        out = (last["output"] or "")[:60].replace("\n", " ").strip()
+                        lines.append(
+                            f"  last_call: {last['tool']}.{last['action']} "
+                            f"[{status}] {dur}ms → {out}"
+                        )
+                except Exception:
+                    pass
             except Exception:
                 pass
             return lines

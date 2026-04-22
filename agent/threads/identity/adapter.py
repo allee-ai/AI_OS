@@ -229,6 +229,49 @@ class IdentityThreadAdapter(BaseThreadAdapter):
                 f"  facts: {total_facts}",
                 f"  protected: {', '.join(protected)}",
             ]
+            # Active profile (the one we're addressing this turn) — for now
+            # the primary_user profile, fall back to 'user' or first non-machine.
+            try:
+                active = None
+                for candidate in ("primary_user", "user"):
+                    if candidate in profile_names:
+                        active = candidate
+                        break
+                if active is None:
+                    non_machine = [n for n in profile_names if n != "machine"]
+                    if non_machine:
+                        active = non_machine[0]
+                if active:
+                    lines.append(f"  active_profile: {active}")
+            except Exception:
+                pass
+            # Staleness — oldest un-updated fact (detects rotten identity data)
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                row = conn.execute("""
+                    SELECT profile_id, key, updated_at
+                    FROM profile_facts
+                    WHERE protected = 0
+                    ORDER BY updated_at ASC
+                    LIMIT 1
+                """).fetchone()
+                if row and row["updated_at"]:
+                    from datetime import datetime as _dt, timezone as _tz
+                    try:
+                        ts = str(row["updated_at"]).replace("T", " ").split(".")[0]
+                        dt = _dt.fromisoformat(ts.replace("Z", "+00:00"))
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=_tz.utc)
+                        age_days = (_dt.now(_tz.utc) - dt).total_seconds() / 86400
+                        if age_days >= 30:
+                            lines.append(
+                                f"  oldest_fact: {row['profile_id']}.{row['key']} ({int(age_days)}d old)"
+                            )
+                    except Exception:
+                        pass
+            except Exception:
+                pass
             return lines
         except Exception:
             return []

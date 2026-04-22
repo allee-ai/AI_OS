@@ -84,7 +84,24 @@ def save_thought(thought: str, category: str = "insight", priority: str = "low",
                 (thought, category, priority, source_summary)
             )
             conn.commit()
-            return cur.lastrowid or 0
+            new_id = cur.lastrowid or 0
+        # Mirror into shared meta-thought bus so the model reads it
+        # in STATE next turn.  Best-effort; mirror failure never
+        # impacts the original thought write.
+        try:
+            from agent.subconscious.meta_mirror import mirror_to_meta
+            # Map priority → weight so the model can prioritise.
+            p = (priority or "low").lower()
+            w = {"urgent": 0.9, "high": 0.8, "medium": 0.6, "low": 0.4}.get(p, 0.5)
+            mirror_to_meta(
+                kind_hint=category,
+                content=thought,
+                weight=w,
+                confidence=0.6,
+            )
+        except Exception:
+            pass
+        return new_id
     except Exception as e:
         print(f"[ThoughtLoop] Failed to save thought: {e}")
         return 0
@@ -164,10 +181,10 @@ class ThoughtLoop(BackgroundLoop):
     
     @property
     def model(self) -> str:
-        import os
         if self._model:
             return self._model
-        return os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b")
+        from agent.services.role_model import resolve_role
+        return resolve_role("THOUGHT").model
     
     @model.setter
     def model(self, value: str) -> None:
@@ -378,8 +395,8 @@ Python list:"""
     
     def _call_model(self, prompt: str) -> str:
         """Call the LLM for thinking."""
-        import os
-        provider = os.getenv("AIOS_EXTRACT_PROVIDER", os.getenv("AIOS_MODEL_PROVIDER", "ollama"))
+        from agent.services.role_model import resolve_role
+        provider = resolve_role("THOUGHT").provider
         
         if provider == "openai":
             return self._call_openai(prompt)
@@ -404,8 +421,10 @@ Python list:"""
     
     def _call_openai(self, prompt: str) -> str:
         import os, requests
-        base_url = os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        api_key = os.getenv("OPENAI_API_KEY", "")
+        from agent.services.role_model import resolve_role
+        cfg = resolve_role("THOUGHT")
+        base_url = cfg.endpoint or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
+        api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
         resp = requests.post(
             f"{base_url}/chat/completions",
             headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},

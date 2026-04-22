@@ -292,6 +292,158 @@ async def delete_all_feed_secrets(feed_name: str):
 
 
 # ============================================================================
+# Plug-and-Play Secret Schema (paste-based, no OAuth)
+# ============================================================================
+
+class BulkSecrets(BaseModel):
+    """Bulk write: {key: value} map for a single feed."""
+    values: Dict[str, str]
+
+
+@router.get("/{feed_name}/secret-schema")
+async def get_feed_secret_schema(feed_name: str):
+    """Return the list of credential fields this feed expects, plus
+    which ones currently have a stored value (without exposing the
+    value itself).  The frontend renders a form from this.
+    """
+    from .sources._secret_schema import get_schema
+    from agent.core.secrets import get_secrets_for_feed
+
+    schema = get_schema(feed_name)
+    if not schema:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No secret schema registered for feed '{feed_name}'.",
+        )
+
+    stored = get_secrets_for_feed(feed_name) or {}
+    out = []
+    for field in schema:
+        f = dict(field)  # shallow copy so we don't mutate the module constant
+        f["has_value"] = bool(stored.get(field["key"]))
+        # Never echo values back; only booleans + metadata.
+        out.append(f)
+
+    required_missing = [
+        f["key"] for f in out if f.get("required") and not f["has_value"]
+    ]
+    return {
+        "feed": feed_name,
+        "fields": out,
+        "configured": not required_missing,
+        "missing_required": required_missing,
+    }
+
+
+@router.post("/{feed_name}/secrets/bulk")
+async def bulk_store_feed_secrets(feed_name: str, body: BulkSecrets):
+    """Store many secrets for a feed in one call.
+
+    Only keys that appear in the feed's secret schema are accepted.
+    Empty-string values trigger deletion of that key (so a user can
+    blank a field to remove it).
+    """
+    from .sources._secret_schema import get_schema
+    from agent.core.secrets import store_secret, delete_secret
+
+    schema = get_schema(feed_name)
+    if not schema:
+        raise HTTPException(
+            status_code=404,
+            detail=f"No secret schema registered for feed '{feed_name}'.",
+        )
+
+    allowed = {f["key"]: f for f in schema}
+    unknown = [k for k in body.values if k not in allowed]
+    if unknown:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Unknown keys for '{feed_name}': {unknown}",
+        )
+
+    written, cleared = [], []
+    for key, val in body.values.items():
+        val = (val or "").strip()
+        if not val:
+            if delete_secret(key, feed_name):
+                cleared.append(key)
+            continue
+        field = allowed[key]
+        store_secret(
+            key=key,
+            value=val,
+            feed_name=feed_name,
+            secret_type=("password" if field["type"] == "password" else "config"),
+        )
+        written.append(key)
+
+    # Log, but never echo values.
+    try:
+        from agent.threads.log.schema import log_event
+        log_event(
+            event_type="feed",
+            data=f"Updated secrets for {feed_name}",
+            metadata={"feed": feed_name, "written": written, "cleared": cleared},
+            source=f"feed.{feed_name}",
+        )
+    except Exception:
+        pass
+
+    return {"status": "ok", "written": written, "cleared": cleared}
+
+
+@router.get("/{feed_name}/status")
+async def get_feed_status(feed_name: str):
+    """Cheap, never-touches-network status: configured? enabled?
+    Last event timestamp + count in last 24h from unified_events.
+
+    For a live connectivity probe, call `POST /sources/{name}/test`
+    (which hits the actual adapter).
+    """
+    from .sources._secret_schema import get_schema, required_keys
+    from agent.core.secrets import get_secrets_for_feed
+
+    schema = get_schema(feed_name)
+    stored = get_secrets_for_feed(feed_name) or {}
+    missing = [k for k in required_keys(feed_name) if not stored.get(k)]
+
+    enabled_map = _load_enabled()
+    enabled = enabled_map.get(feed_name, False)
+
+    last_event_ts: Optional[str] = None
+    events_24h = 0
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection(readonly=True)) as conn:
+            row = conn.execute(
+                "SELECT ts FROM unified_events "
+                "WHERE source LIKE ? ORDER BY id DESC LIMIT 1",
+                (f"feed.{feed_name}%",),
+            ).fetchone()
+            if row:
+                last_event_ts = row[0]
+            events_24h = conn.execute(
+                "SELECT COUNT(*) FROM unified_events "
+                "WHERE source LIKE ? AND ts >= datetime('now','-1 day')",
+                (f"feed.{feed_name}%",),
+            ).fetchone()[0]
+    except Exception:
+        # unified_events may not exist in some deployments — fine.
+        pass
+
+    return {
+        "feed": feed_name,
+        "has_schema": bool(schema),
+        "configured": bool(schema) and not missing,
+        "missing_required": missing,
+        "enabled": enabled,
+        "last_event_ts": last_event_ts,
+        "events_24h": events_24h,
+    }
+
+
+# ============================================================================
 # OAuth Flows
 # ============================================================================
 

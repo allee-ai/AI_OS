@@ -20,18 +20,81 @@ import { ExperimentDashboard } from './modules/experiments'
 import { SetupWizard } from './components/SetupWizard'
 import './App.css'
 
+function LoginGate() {
+  const [token, setToken] = useState('')
+  const [error, setError] = useState('')
+  const [checking, setChecking] = useState(false)
+
+  const onSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    const trimmed = token.trim()
+    if (!trimmed) return
+    setError('')
+    setChecking(true)
+    try {
+      const res = await fetch('/api/db-mode/mode', {
+        headers: { Authorization: `Bearer ${trimmed}` },
+      })
+      if (!res.ok) {
+        setError('Invalid API token. Use AIOS_API_TOKEN from your droplet .env file.')
+        return
+      }
+      localStorage.setItem('aios_api_token', trimmed)
+      window.location.reload()
+    } catch {
+      setError('Unable to reach server. Check connection and try again.')
+    } finally {
+      setChecking(false)
+    }
+  }
+
+  const onClear = () => {
+    localStorage.removeItem('aios_api_token')
+    setToken('')
+  }
+
+  return (
+    <div className="login-shell">
+      <form className="login-card" onSubmit={onSubmit}>
+        <h1>Nola Login</h1>
+        <p>Enter your API token to access this dashboard.</p>
+        <p className="login-hint">Use <strong>AIOS_API_TOKEN</strong> (not mobile token).</p>
+        <input
+          type="password"
+          value={token}
+          onChange={(e) => setToken(e.target.value)}
+          placeholder="AIOS_API_TOKEN"
+          autoFocus
+        />
+        {error && <p className="login-error">{error}</p>}
+        <button type="submit" disabled={checking}>{checking ? 'Checking…' : 'Sign In'}</button>
+        <button type="button" className="ghost" onClick={onClear}>Clear Saved Token</button>
+      </form>
+    </div>
+  )
+}
+
 // App mode hook - inlined for simplicity
 const useAppMode = () => {
   const [modeInfo, setModeInfo] = useState({ mode: 'personal' as const, is_demo: IS_DEMO });
   const [setupDone, setSetupDone] = useState<boolean | null>(IS_DEMO ? true : null);
   const [loading, setLoading] = useState(!IS_DEMO);
+  const [needsAuth, setNeedsAuth] = useState(false);
   
   useEffect(() => {
     if (IS_DEMO) return; // SW handles API responses in demo mode
     Promise.all([
-      fetch('/api/db-mode/mode').then(res => res.ok ? res.json() : null).catch(() => null),
-      fetch('/api/models/setup/status').then(res => res.ok ? res.json() : null).catch(() => null),
-    ]).then(([modeData, setupData]) => {
+      fetch('/api/db-mode/mode').catch(() => null),
+      fetch('/api/models/setup/status').catch(() => null),
+    ]).then(async ([modeRes, setupRes]) => {
+      if ((modeRes && modeRes.status === 401) || (setupRes && setupRes.status === 401)) {
+        setNeedsAuth(true);
+        return;
+      }
+
+      const modeData = modeRes && modeRes.ok ? await modeRes.json() : null;
+      const setupData = setupRes && setupRes.ok ? await setupRes.json() : null;
+
       if (modeData) setModeInfo({ mode: modeData.mode, is_demo: modeData.mode === 'demo' });
       setSetupDone(setupData ? setupData.configured : true);
     }).finally(() => setLoading(false));
@@ -39,16 +102,22 @@ const useAppMode = () => {
 
   const recheckSetup = () => {
     fetch('/api/models/setup/status')
-      .then(res => res.ok ? res.json() : null)
+      .then(res => {
+        if (res.status === 401) {
+          setNeedsAuth(true);
+          return null;
+        }
+        return res.ok ? res.json() : null;
+      })
       .then(data => data && setSetupDone(data.configured))
       .catch(() => setSetupDone(true));
   };
   
-  return { ...modeInfo, loading, setupDone, recheckSetup };
+  return { ...modeInfo, loading, setupDone, needsAuth, recheckSetup };
 };
 
 function App() {
-  const { loading, is_demo, setupDone, recheckSetup } = useAppMode();
+  const { loading, is_demo, setupDone, needsAuth, recheckSetup } = useAppMode();
   
   if (loading) {
     return (
@@ -63,6 +132,10 @@ function App() {
 
   if (setupDone === false) {
     return <SetupWizard onComplete={recheckSetup} />;
+  }
+
+  if (needsAuth) {
+    return <LoginGate />;
   }
 
   return (

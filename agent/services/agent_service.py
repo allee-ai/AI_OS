@@ -470,7 +470,58 @@ class AgentService:
                 feed_type=feed_type,
                 context_level=self.context_manager.current_level
             )
-            
+
+            # Commit model-authored meta-thoughts, if any (Phase 2).
+            # The agent stashes parsed thoughts on `_last_thoughts` during
+            # generate().  We commit here where session_id is available.
+            # Best-effort — a failure never fails the turn.
+            model_thoughts: list = []
+            try:
+                if self.agent and getattr(self.agent, "_last_thoughts", None):
+                    from agent.services.response_tags import commit_thoughts
+                    model_thoughts = list(self.agent._last_thoughts)
+                    commit_thoughts(
+                        model_thoughts,
+                        session_id=self.session_id,
+                    )
+                    # Clear the stash so a subsequent turn starts clean.
+                    self.agent._last_thoughts = []
+            except Exception:
+                pass
+
+            # Seed a compression meta-thought for this turn — ONLY if the
+            # model did not author one.  Model-authored compression is
+            # strictly preferred; seed is a fallback so the read path is
+            # always fed something.  Best-effort.
+            try:
+                has_model_compression = any(
+                    (t.get("kind") == "compression") for t in model_thoughts
+                )
+                if not has_model_compression:
+                    from agent.threads.reflex.schema import add_meta_thought
+                    u = (user_msg or "").strip().replace("\n", " ")
+                    a = (assistant_msg or "").strip().replace("\n", " ")
+                    if u and a:
+                        compression = f"user: {u[:120]} | me: {a[:160]}"
+                        add_meta_thought(
+                            kind="compression",
+                            content=compression,
+                            session_id=self.session_id,
+                            source="seed",
+                            weight=0.5,
+                        )
+            except Exception:
+                pass
+
+            # Auto-grade pending <expected> from the previous turn
+            # against the freshly-committed turn (Phase 6).
+            # Best-effort; never fails the turn.
+            try:
+                from agent.services.grading import grade_pending_for_session
+                grade_pending_for_session(self.session_id)
+            except Exception:
+                pass
+
             # Auto-name conversation after first turn (background task)
             if is_first_turn:
                 asyncio.create_task(self._auto_name_conversation(user_msg, assistant_msg))

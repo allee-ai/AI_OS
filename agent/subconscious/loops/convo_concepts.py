@@ -82,17 +82,13 @@ class ConvoConceptLoop(BackgroundLoop):
 
     @property
     def model(self) -> str:
-        return os.getenv(
-            "AIOS_EXTRACT_MODEL",
-            os.getenv("AIOS_MODEL_NAME", "qwen2.5:7b"),
-        )
+        from agent.services.role_model import resolve_role
+        return resolve_role("CONVO_CONCEPTS").model
 
     @property
     def provider(self) -> str:
-        return os.getenv(
-            "AIOS_EXTRACT_PROVIDER",
-            os.getenv("AIOS_MODEL_PROVIDER", "ollama"),
-        ).lower()
+        from agent.services.role_model import resolve_role
+        return resolve_role("CONVO_CONCEPTS").provider
 
     @property
     def stats(self) -> Dict[str, Any]:
@@ -295,12 +291,11 @@ class ConvoConceptLoop(BackgroundLoop):
 
     def _call_openai(self, model: str, messages: list, temperature: float) -> str:
         import urllib.request
+        from agent.services.role_model import resolve_role
 
-        api_key = os.getenv("OPENAI_API_KEY", "")
-        base_url = os.getenv(
-            "AIOS_EXTRACT_ENDPOINT",
-            os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1"),
-        ).rstrip("/")
+        cfg = resolve_role("CONVO_CONCEPTS")
+        api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
+        base_url = (cfg.endpoint or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")).rstrip("/")
 
         url = f"{base_url}/chat/completions"
         headers = {"Content-Type": "application/json"}

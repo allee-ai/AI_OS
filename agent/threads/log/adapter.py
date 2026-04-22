@@ -35,8 +35,12 @@ LOG_LIMITS = {1: 10, 2: 100, 3: 1000}
 # Event type relevance scores for sparse activation (0-10 scale)
 # Used with score_thread_relevance() for three-tier gating
 EVENT_TYPE_RELEVANCE = {
+    "agent_turn": 9,  # Highest: deliberate coder/agent turn boundaries
+    "turn_outcome": 9,# Highest: did the prior turn's work survive?
     "convo": 8,       # High: Conversation events (direct interaction)
     "memory": 7,      # High: Memory/reflection events (cognitive)
+    "tool_call": 7,   # High: explicit tool invocations
+    "code_change": 7, # High: files written by the coder/agent
     "user_action": 6, # Medium-High: User actions (significant)
     "file": 4,        # Medium: File operations (context dependent)
     "system": 2,      # Low: System events (background)
@@ -141,8 +145,53 @@ class LogThreadAdapter(BaseThreadAdapter):
         return None
     
     def get_recent_events(self, limit: int = 10) -> List[Dict]:
-        """Get recent events by timestamp/weight."""
-        return pull_log_events(module_name="events", limit=limit)
+        """Get recent events from the unified log.
+
+        Returns events shaped for downstream consumers:
+            - event_type (str)
+            - source (str)
+            - timestamp (str)
+            - data (dict with 'message' / 'timestamp' keys)
+            - metadata (dict)
+            - weight (float)
+        """
+        try:
+            from .schema import get_events
+        except ImportError:
+            from agent.threads.log.schema import get_events
+        rows = get_events(limit=limit)
+        shaped: List[Dict] = []
+        for r in rows:
+            raw_data = r.get("data")
+            if isinstance(raw_data, dict):
+                data = raw_data
+            elif isinstance(raw_data, str) and raw_data:
+                # unified_events stores a plain string in data;
+                # present it as the event's 'message' so the existing
+                # _get_raw_facts formatter works.
+                data = {"message": raw_data, "timestamp": r.get("timestamp", "")}
+            else:
+                data = {"message": "", "timestamp": r.get("timestamp", "")}
+            meta = r.get("metadata") or {}
+            if isinstance(meta, str):
+                import json as _json
+                try:
+                    meta = _json.loads(meta) or {}
+                except Exception:
+                    meta = {}
+            if not isinstance(meta, dict):
+                meta = {}
+            meta.setdefault("type", r.get("event_type", "system"))
+            meta.setdefault("source", r.get("source", ""))
+            shaped.append({
+                "event_type": r.get("event_type", ""),
+                "source": r.get("source", ""),
+                "timestamp": r.get("timestamp", ""),
+                "data": data,
+                "metadata": meta,
+                "weight": 0.5,
+            })
+        return shaped
     
     def get_recent_sessions(self, limit: int = 10) -> List[Dict]:
         """Get recent sessions."""
@@ -252,6 +301,166 @@ class LogThreadAdapter(BaseThreadAdapter):
                 from agent.threads.log.schema import get_log_stats
                 stats = get_log_stats()
                 lines.append(f"  total_events: {stats.get('total_events', 0)}")
+            except Exception:
+                pass
+            # Idle time since last event (answers "is the world still moving?")
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                row = conn.execute(
+                    "SELECT timestamp FROM unified_events ORDER BY id DESC LIMIT 1"
+                ).fetchone()
+                if row and row["timestamp"]:
+                    last_ts = str(row["timestamp"]).replace("T", " ").split(".")[0]
+                    try:
+                        # Robust parse — handle 'YYYY-MM-DD HH:MM:SS' or ISO
+                        dt = datetime.fromisoformat(last_ts.replace("Z", "+00:00"))
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=timezone.utc)
+                        idle = (datetime.now(timezone.utc) - dt).total_seconds()
+                        if idle < 60:
+                            idle_str = f"{int(idle)}s"
+                        elif idle < 3600:
+                            idle_str = f"{int(idle // 60)}m"
+                        else:
+                            idle_str = f"{idle / 3600:.1f}h"
+                        lines.append(f"  idle_since_last_event: {idle_str}")
+                    except Exception:
+                        pass
+            except Exception:
+                pass
+            # Event type distribution last hour (triage signal)
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                rows = conn.execute("""
+                    SELECT event_type, COUNT(*) as cnt
+                    FROM unified_events
+                    WHERE timestamp >= datetime('now', '-1 hour')
+                    GROUP BY event_type
+                    ORDER BY cnt DESC
+                    LIMIT 5
+                """).fetchall()
+                if rows:
+                    parts = [f"{r['event_type']}={r['cnt']}" for r in rows]
+                    lines.append(f"  last_hour: {', '.join(parts)}")
+            except Exception:
+                pass
+            # Recent agent turns — "where was I" trail for the coding
+            # agent (VS Code / future-me).  Answers: what did my prior
+            # selves work on, before this turn?
+            try:
+                from data.db import get_connection
+                import json as _json
+                conn = get_connection(readonly=True)
+                rows = conn.execute("""
+                    SELECT data, metadata_json, timestamp
+                    FROM unified_events
+                    WHERE event_type = 'agent_turn'
+                    ORDER BY id DESC
+                    LIMIT 5
+                """).fetchall()
+                if rows:
+                    lines.append("  recent_agent_turns:")
+                    for r in rows:
+                        txt = (r["data"] or "").strip()
+                        if txt.startswith("VS Code coding turn: "):
+                            txt = txt[len("VS Code coding turn: "):]
+                        txt = txt[:80]
+                        fcount = ""
+                        if r["metadata_json"]:
+                            try:
+                                md = _json.loads(r["metadata_json"]) or {}
+                                # New rows carry the exact count; old rows
+                                # only have a capped list.  Prefer the count.
+                                n = md.get("files_touched_count")
+                                if n is None:
+                                    files = md.get("files_touched") or []
+                                    n = len(files) if files else 0
+                                if n:
+                                    fcount = f" ({n} files)"
+                                # Grade tag (written by turn_start's
+                                # _grade_prior_turn on the NEXT turn).
+                                g = md.get("graded_status")
+                                if g:
+                                    fcount += f" [{g}]"
+                            except Exception:
+                                pass
+                        ts = str(r["timestamp"] or "").split(".")[0]
+                        lines.append(f"    - {ts}  {txt}{fcount}")
+            except Exception:
+                pass
+            # [consequences] — working-tree state surfaced inside STATE so
+            # the reader (agent or coder) sees *right now* whether the
+            # system is in a clean, dirty, or stop-and-commit state.
+            try:
+                import subprocess as _sp
+                import time as _t
+                import os as _os
+                proj_root = _os.path.abspath(
+                    _os.path.join(_os.path.dirname(__file__), "..", "..", "..")
+                )
+                SOFT, HARD, STALE_H = 10, 25, 4.0  # match scripts/turn_start.py
+                uncommitted: List[str] = []
+                r = _sp.run(
+                    ["git", "status", "--porcelain"],
+                    cwd=proj_root, capture_output=True, text=True, timeout=2,
+                )
+                if r.returncode == 0:
+                    for ln in r.stdout.splitlines():
+                        p = ln[3:].strip()
+                        if p:
+                            uncommitted.append(p)
+                last_commit_age_s: Optional[int] = None
+                r = _sp.run(
+                    ["git", "log", "-1", "--format=%ct", "HEAD"],
+                    cwd=proj_root, capture_output=True, text=True, timeout=2,
+                )
+                if r.returncode == 0 and r.stdout.strip():
+                    try:
+                        last_commit_age_s = int(_t.time() - int(r.stdout.strip()))
+                    except Exception:
+                        last_commit_age_s = None
+                if uncommitted or last_commit_age_s is not None:
+                    lines.append("  consequences:")
+                    lines.append(f"    uncommitted: {len(uncommitted)} file(s)")
+                    if last_commit_age_s is not None:
+                        if last_commit_age_s < 3600:
+                            age_s = f"{last_commit_age_s // 60}m"
+                        elif last_commit_age_s < 86400:
+                            age_s = f"{last_commit_age_s / 3600:.1f}h"
+                        else:
+                            age_s = f"{last_commit_age_s / 86400:.1f}d"
+                        lines.append(f"    last_commit: {age_s} ago")
+                    n = len(uncommitted)
+                    if n >= HARD:
+                        lines.append(
+                            f"    status: HARD_LIMIT  ({n} >= {HARD}) — commit before next change"
+                        )
+                    elif n >= SOFT:
+                        lines.append(
+                            f"    status: soft_limit  ({n} >= {SOFT}) — consider a checkpoint commit"
+                        )
+                    else:
+                        lines.append("    status: ok")
+            except Exception:
+                pass
+            # Session topic — rolling compression from reflex_meta_thoughts
+            # (no new table; we reuse the Phase 1 meta store)
+            try:
+                from agent.threads.reflex.schema import get_recent_meta_thoughts
+                sess = getattr(self, "_session_id", None)
+                if sess:
+                    recent = get_recent_meta_thoughts(
+                        session_id=sess,
+                        kinds=["compression"],
+                        limit=3,
+                    )
+                    if recent:
+                        topic = recent[0].get("content", "")
+                        if topic:
+                            topic = topic[:120].replace("\n", " ").strip()
+                            lines.append(f"  topic: {topic}")
             except Exception:
                 pass
             return lines
