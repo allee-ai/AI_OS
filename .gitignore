@@ -55,6 +55,7 @@ pids/
 *.pid
 *.seed
 data/.last_state_read
+data/.commit_msg_tmp
 
 # Database files
 *.db
