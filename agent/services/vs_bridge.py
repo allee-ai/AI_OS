@@ -91,6 +91,9 @@ def forward(text: str, source: str = "unknown", submit: bool = True) -> bool:
     cmd = [sys.executable, str(_SEND_SCRIPT), text, "--idle-seconds", "0"]
     if not submit:
         cmd.append("--no-submit")
+    shortcut = os.getenv("AIOS_CHAT_SHORTCUT")
+    if shortcut:
+        cmd.extend(["--chat-shortcut", shortcut])
 
     try:
         proc = subprocess.run(cmd, capture_output=True, text=True, timeout=30)

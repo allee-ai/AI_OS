@@ -84,13 +84,17 @@ _CHAT_SHORTCUT_APPLESCRIPT = {
     # Newer VS Code: "Chat: Focus Chat Input" often bound to
     # cmd+alt+b for side bar or custom; expose as override.
     "cmd+alt+i": 'keystroke "i" using {command down, option down}',
+    # "palette" is special — handled below by opening Cmd+Shift+P and
+    # typing the command name. This is toggle-proof: the palette always
+    # opens, the named command always focuses chat (never closes it).
+    "palette": "__PALETTE__",
 }
 
 
 def send_to_vs(
     message: str,
     submit: bool = True,
-    chat_shortcut: str = "ctrl+cmd+i",
+    chat_shortcut: str = "palette",
     settle_ms: int = 250,
 ) -> int:
     if platform.system() != "Darwin":
@@ -101,7 +105,7 @@ def send_to_vs(
         return 0
 
     shortcut_cmd = _CHAT_SHORTCUT_APPLESCRIPT.get(
-        chat_shortcut, _CHAT_SHORTCUT_APPLESCRIPT["ctrl+cmd+i"]
+        chat_shortcut, _CHAT_SHORTCUT_APPLESCRIPT["palette"]
     )
 
     _copy_to_clipboard(message)
@@ -109,14 +113,34 @@ def send_to_vs(
     delay_s = max(settle_ms, 50) / 1000.0
     submit_line = 'key code 36' if submit else '-- no-submit'
 
+    if shortcut_cmd == "__PALETTE__":
+        # Toggle-proof focus: open Command Palette, type the focus
+        # command, press Enter. Always lands in the chat input whether
+        # the panel was already open, closed, or hidden.
+        focus_block = (
+            '        -- Open Command Palette\n'
+            '        keystroke "p" using {command down, shift down}\n'
+            f'        delay {delay_s}\n'
+            '        -- Type the focus command (not toggle)\n'
+            '        keystroke "Chat: Focus Chat Input"\n'
+            f'        delay {delay_s}\n'
+            '        -- Run it\n'
+            '        key code 36\n'
+            f'        delay {delay_s}\n'
+        )
+    else:
+        focus_block = (
+            '        -- Focus the Copilot Chat input\n'
+            f'        {shortcut_cmd}\n'
+            f'        delay {delay_s}\n'
+        )
+
     script = f'''
 tell application "Visual Studio Code" to activate
 delay {delay_s}
 tell application "System Events"
     tell process "Code"
-        -- Focus the Copilot Chat input
-        {shortcut_cmd}
-        delay {delay_s}
+{focus_block}
         -- Paste clipboard
         keystroke "v" using command down
         delay {delay_s}
@@ -155,8 +179,10 @@ def main() -> int:
     )
     ap.add_argument(
         "--chat-shortcut", choices=sorted(_CHAT_SHORTCUT_APPLESCRIPT.keys()),
-        default="ctrl+cmd+i",
-        help="Keyboard shortcut that focuses the Copilot Chat input in VS Code.",
+        default="palette",
+        help="How to focus the Copilot Chat input. 'palette' (default) "
+             "opens the Command Palette and runs 'Chat: Focus Chat Input' — "
+             "toggle-proof, works whether the panel is open or closed.",
     )
     ap.add_argument(
         "--settle-ms", type=int, default=250,
