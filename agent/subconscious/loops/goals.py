@@ -113,13 +113,22 @@ def propose_goal(goal: str, rationale: str = "", priority: str = "medium",
         # Forward to the active VS Code Copilot chat (Mac only; silent no-op
         # on VM / non-macOS). Wrapped so a keyboard hiccup can't block the
         # goal insert or ripple into callers.
+        #
+        # Format as an action prompt, not a notification — Copilot reads the
+        # paste as the next user turn and should ACT on the goal, not just
+        # acknowledge it. "Act" can mean: do the work, ask one clarifying
+        # question, or respond if the goal is purely conversational
+        # ("ping me a letter" → actually ping a letter).
         try:
             from agent.services.vs_bridge import forward as _vs_forward
-            summary = goal if not rationale else f"{goal}\n\nRationale: {rationale}"
-            _vs_forward(
-                f"NEW GOAL #{new_id} [{priority}]\n{summary}",
-                source="goal_add",
+            rat_line = f"\nRationale: {rationale}" if rationale else ""
+            prompt = (
+                f"[goal #{new_id} · {priority}] {goal}{rat_line}\n\n"
+                "^ new goal from phone. act on it now: do the work, "
+                "ask one clarifying question, or just respond if it's "
+                "conversational. pick your own interpretation when ambiguous."
             )
+            _vs_forward(prompt, source="goal_add")
         except Exception:
             pass
         return new_id
