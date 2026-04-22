@@ -445,6 +445,30 @@ class LogThreadAdapter(BaseThreadAdapter):
                         lines.append("    status: ok")
             except Exception:
                 pass
+            # Unread pings — dashboard notes the user may have left for us.
+            try:
+                from data.db import get_connection
+                from contextlib import closing as _closing
+                with _closing(get_connection(readonly=True)) as _conn:
+                    row = _conn.execute(
+                        "SELECT COUNT(*) FROM notifications "
+                        "WHERE read = 0 AND dismissed = 0"
+                    ).fetchone()
+                    unread = (row[0] if row else 0) or 0
+                    recent_preview = ""
+                    if unread:
+                        pr = _conn.execute(
+                            "SELECT substr(message, 1, 120) FROM notifications "
+                            "WHERE read = 0 AND dismissed = 0 "
+                            "ORDER BY id DESC LIMIT 1"
+                        ).fetchone()
+                        recent_preview = pr[0] if pr else ""
+                if unread:
+                    lines.append(f"  pings_unread: {unread}")
+                    if recent_preview:
+                        lines.append(f"  pings_latest: {recent_preview}")
+            except Exception:
+                pass
             # Session topic — rolling compression from reflex_meta_thoughts
             # (no new table; we reuse the Phase 1 meta store)
             try:

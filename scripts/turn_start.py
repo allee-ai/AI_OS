@@ -691,6 +691,25 @@ def main() -> int:
         errs = (chat_out.get("errors") or []) + (fill_out.get("errors") or [])
         print(f"!! chat-sync errors: {errs}")
 
+    # Unread pings from the user — surface at top-of-turn.
+    try:
+        from contextlib import closing as _closing
+        from data.db import get_connection as _get_conn
+        with _closing(_get_conn(readonly=True)) as _c:
+            row = _c.execute(
+                "SELECT COUNT(*), COALESCE(MAX(id), 0) FROM notifications "
+                "WHERE read = 0 AND dismissed = 0"
+            ).fetchone()
+            unread = (row[0] if row else 0) or 0
+            if unread:
+                latest = _c.execute(
+                    "SELECT id, priority, substr(message, 1, 100) FROM notifications "
+                    "WHERE read = 0 AND dismissed = 0 ORDER BY id DESC LIMIT 1"
+                ).fetchone()
+                print(f"pings: {unread} unread (latest #{latest[0]} [{latest[1]}]: {latest[2]})")
+    except Exception:
+        pass
+
     print(banner)
     print(state)
     print(banner)
