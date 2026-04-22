@@ -63,11 +63,24 @@ header .dot.err{background:var(--red)}
 .btn.secondary{background:transparent;border:1px solid var(--border);color:var(--text)}
 
 /* Chat */
-.chat-messages{max-height:50vh;overflow-y:auto;margin-bottom:12px}
-.chat-bubble{max-width:85%;padding:10px 14px;border-radius:16px;margin-bottom:8px;font-size:.9em;line-height:1.4;word-wrap:break-word;white-space:pre-wrap}
-.chat-bubble.user{background:var(--accent);color:#fff;margin-left:auto;border-bottom-right-radius:4px}
-.chat-bubble.assistant{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:4px}
-.chat-typing{color:var(--dim);font-size:.8em;font-style:italic;padding:4px 0}
+.chat-messages{max-height:60vh;min-height:45vh;overflow-y:auto;margin-bottom:12px;padding:4px 2px;display:flex;flex-direction:column;gap:4px;scroll-behavior:smooth}
+.chat-row{display:flex;flex-direction:column;margin-bottom:6px;animation:bubble .22s ease-out}
+.chat-row.user{align-items:flex-end}
+.chat-row.assistant{align-items:flex-start}
+.chat-meta{font-size:.65em;color:var(--dim);padding:0 8px;margin-bottom:2px;letter-spacing:.02em;text-transform:lowercase}
+.chat-bubble{max-width:86%;padding:10px 14px;border-radius:18px;font-size:.92em;line-height:1.45;word-wrap:break-word;overflow-wrap:anywhere;white-space:pre-wrap}
+.chat-bubble.user{background:linear-gradient(135deg,var(--accent) 0%,#5a52e0 100%);color:#fff;border-bottom-right-radius:6px;box-shadow:0 1px 2px rgba(0,0,0,.25)}
+.chat-bubble.assistant{background:var(--card);border:1px solid var(--border);border-bottom-left-radius:6px;color:var(--text)}
+.chat-bubble.assistant.copilot{border-left:3px solid #4f9df7}
+.chat-bubble.assistant.aios{border-left:3px solid #8b5cf6}
+.chat-bubble code{background:rgba(255,255,255,.08);padding:1px 5px;border-radius:4px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:.85em}
+.chat-bubble pre{background:rgba(0,0,0,.35);padding:10px 12px;border-radius:8px;overflow-x:auto;margin:8px 0 0;font-size:.8em;line-height:1.35;max-width:100%}
+.chat-bubble pre code{background:none;padding:0}
+.chat-bubble a{color:#4f9df7;text-decoration:underline}
+.chat-typing{color:var(--dim);font-size:.8em;font-style:italic;padding:6px 10px;display:flex;align-items:center;gap:8px}
+.chat-typing::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.25;transform:scale(.8)}50%{opacity:1;transform:scale(1.2)}}
+@keyframes bubble{from{opacity:0;transform:translateY(4px)}to{opacity:1;transform:translateY(0)}}
 
 /* Toast */
 .toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--card);border:1px solid var(--border);color:var(--text);padding:10px 20px;border-radius:12px;font-size:.85em;opacity:0;transition:opacity .3s;z-index:100;pointer-events:none}
@@ -361,15 +374,50 @@ async function toggleLoop(name, action) {
 // ── Chat ──
 const chatMsgs = [];
 
+// Minimal safe markdown: escape everything, then re-enable a small set
+// of patterns. No HTML from the reply ever reaches the DOM raw.
+function renderMarkdown(raw) {
+  let s = esc(raw || '');
+  // fenced code blocks ```...```
+  s = s.replace(/```([\w-]*)\n([\s\S]*?)```/g, (_, lang, body) =>
+    '<pre><code>' + body.replace(/\n$/, '') + '</code></pre>');
+  // inline code `...`
+  s = s.replace(/`([^`\n]+)`/g, '<code>$1</code>');
+  // bold **...**
+  s = s.replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>');
+  // italic *...*  (careful: after bold)
+  s = s.replace(/(^|[^*])\*([^*\n]+)\*(?!\*)/g, '$1<em>$2</em>');
+  // links [text](url) — only http(s)
+  s = s.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/g,
+    '<a href="$2" target="_blank" rel="noopener">$1</a>');
+  return s;
+}
+
+function fmtTime(ts) {
+  const d = ts ? new Date(ts) : new Date();
+  const h = String(d.getHours()).padStart(2,'0');
+  const m = String(d.getMinutes()).padStart(2,'0');
+  return h + ':' + m;
+}
+
 function renderChat() {
   const el = document.getElementById('chatMessages');
   if (!chatMsgs.length) {
     el.innerHTML = '<div class="empty">Send a message to start chatting</div>';
     return;
   }
-  el.innerHTML = chatMsgs.map(m =>
-    '<div class="chat-bubble ' + m.role + '">' + esc(m.text) + '</div>'
-  ).join('');
+  el.innerHTML = chatMsgs.map(m => {
+    const meta = m.role === 'user'
+      ? 'you · ' + fmtTime(m.ts)
+      : (m.agent || 'aios') + ' · ' + fmtTime(m.ts);
+    const bubbleCls = 'chat-bubble ' + m.role +
+      (m.role === 'assistant' ? ' ' + (m.agent || 'aios') : '');
+    const body = m.role === 'assistant' ? renderMarkdown(m.text) : esc(m.text);
+    return '<div class="chat-row ' + m.role + '">' +
+             '<div class="chat-meta">' + esc(meta) + '</div>' +
+             '<div class="' + bubbleCls + '">' + body + '</div>' +
+           '</div>';
+  }).join('');
   el.scrollTop = el.scrollHeight;
 }
 
@@ -379,7 +427,8 @@ async function sendChat() {
   if (!text) return;
   input.value = '';
 
-  chatMsgs.push({role: 'user', text});
+  const agent = (document.getElementById('chatAgent')||{}).value || 'aios';
+  chatMsgs.push({role: 'user', text, ts: Date.now(), agent});
   renderChat();
 
   const btn = document.getElementById('chatSend');
@@ -387,26 +436,22 @@ async function sendChat() {
   btn.textContent = '…';
 
   const msgEl = document.getElementById('chatMessages');
-  msgEl.insertAdjacentHTML('beforeend', '<div class="chat-typing">Thinking…</div>');
+  const typingLabel = agent === 'copilot' ? 'waiting on Copilot…' : 'thinking…';
+  msgEl.insertAdjacentHTML('beforeend',
+    '<div class="chat-typing" id="chatTyping">' + typingLabel + '</div>');
   msgEl.scrollTop = msgEl.scrollHeight;
 
   try {
-    const agent = (document.getElementById('chatAgent')||{}).value || 'aios';
-    // copilot round-trip (keystroke + reply-file poll) is slow; nudge
-    // the UI so user knows we're waiting.
-    if (agent === 'copilot') {
-      const t = msgEl.querySelector('.chat-typing');
-      if (t) t.textContent = 'waiting on Copilot…';
-    }
     const d = await api(API + '/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
       body: JSON.stringify({text, agent})
     });
-    chatMsgs.push({role: 'assistant', text: d.reply});
+    chatMsgs.push({role: 'assistant', text: d.reply, ts: Date.now(), agent: d.agent || agent});
   } catch(e) {
-    chatMsgs.push({role: 'assistant', text: '(Error: ' + e.message + ')'});
+    chatMsgs.push({role: 'assistant', text: '(error: ' + e.message + ')', ts: Date.now(), agent});
   }
+  const t = document.getElementById('chatTyping'); if (t) t.remove();
   btn.disabled = false;
   btn.textContent = 'Send';
   renderChat();
