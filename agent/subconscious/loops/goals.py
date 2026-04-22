@@ -20,7 +20,11 @@ from .base import BackgroundLoop, LoopConfig
 # ─────────────────────────────────────────────────────────────
 
 def _ensure_goals_table() -> None:
-    """Create proposed_goals table if it doesn't exist."""
+    """Create proposed_goals table if it doesn't exist.
+
+    Also runs idempotent migrations for columns added after initial schema:
+      - urgency INTEGER (0-100, NULL = unrated)
+    """
     try:
         from data.db import get_connection
         from contextlib import closing
@@ -37,9 +41,24 @@ def _ensure_goals_table() -> None:
                     resolved_at TEXT
                 )
             """)
+            # Idempotent migration: urgency score (0-100). NULL = unrated.
+            cols = {row[1] for row in conn.execute("PRAGMA table_info(proposed_goals)").fetchall()}
+            if "urgency" not in cols:
+                conn.execute("ALTER TABLE proposed_goals ADD COLUMN urgency INTEGER")
             conn.commit()
     except Exception as e:
         print(f"[GoalLoop] Failed to create table: {e}")
+
+
+# Canonical status taxonomy. `pending` = not yet triaged; `approved` = greenlit
+# but not started; `in_progress` = actively worked; `paused` = intentionally on
+# hold; `blocked` = waiting on an external dependency; `completed` = done;
+# `rejected` / `dismissed` = won't do. Old rows use the subset
+# {pending, approved, rejected, dismissed}.
+VALID_STATUSES = {
+    "pending", "approved", "in_progress", "paused", "blocked",
+    "completed", "rejected", "dismissed",
+}
 
 
 def propose_goal(goal: str, rationale: str = "", priority: str = "medium",
@@ -123,17 +142,46 @@ def get_proposed_goals(status: str = "pending", limit: int = 20) -> List[Dict[st
 
 
 def resolve_goal(goal_id: int, status: str = "approved") -> bool:
-    """Approve, reject, or dismiss a proposed goal."""
-    if status not in ("approved", "rejected", "dismissed"):
+    """Set a goal's lifecycle status. See VALID_STATUSES for the taxonomy.
+
+    Terminal statuses stamp resolved_at; non-terminal ones leave it NULL so
+    the goal still appears as 'live' in STATE.
+    """
+    if status not in VALID_STATUSES:
         return False
+    terminal = status in ("completed", "rejected", "dismissed")
+    _ensure_goals_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            if terminal:
+                conn.execute(
+                    "UPDATE proposed_goals SET status = ?, resolved_at = datetime('now') WHERE id = ?",
+                    (status, goal_id),
+                )
+            else:
+                conn.execute(
+                    "UPDATE proposed_goals SET status = ?, resolved_at = NULL WHERE id = ?",
+                    (status, goal_id),
+                )
+            conn.commit()
+            return True
+    except Exception:
+        return False
+
+
+def set_goal_urgency(goal_id: int, urgency: int) -> bool:
+    """Set urgency score 0-100 on a goal. Clamps out-of-range."""
+    urgency = max(0, min(100, int(urgency)))
     _ensure_goals_table()
     try:
         from data.db import get_connection
         from contextlib import closing
         with closing(get_connection()) as conn:
             conn.execute(
-                "UPDATE proposed_goals SET status = ?, resolved_at = datetime('now') WHERE id = ?",
-                (status, goal_id)
+                "UPDATE proposed_goals SET urgency = ? WHERE id = ?",
+                (urgency, goal_id),
             )
             conn.commit()
             return True
