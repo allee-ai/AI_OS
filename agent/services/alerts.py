@@ -143,13 +143,37 @@ def _fire_phone(message: str, priority: str, nid, source: str) -> None:
         }
         if nid is not None:
             headers["X-Nid"] = str(nid)
+
+        # Primary path: urllib with certifi CA bundle. Python.org macOS
+        # Python ships without system CAs, so default urllib fails SSL
+        # handshake to ntfy.sh silently. certifi is in requirements.
         try:
+            import ssl
             import urllib.request as _urlreq
+            try:
+                import certifi
+                ctx = ssl.create_default_context(cafile=certifi.where())
+            except Exception:
+                ctx = ssl.create_default_context()
             req = _urlreq.Request(
                 url, data=message.encode("utf-8"),
                 method="POST", headers=headers,
             )
-            _urlreq.urlopen(req, timeout=4).read()
+            _urlreq.urlopen(req, timeout=4, context=ctx).read()
+            return
+        except Exception:
+            pass
+
+        # Fallback: shell out to curl which uses macOS system CAs.
+        try:
+            curl_args = ["curl", "-sS", "--max-time", "4", "-X", "POST"]
+            for k, v in headers.items():
+                curl_args += ["-H", f"{k}: {v}"]
+            curl_args += ["--data-binary", message, url]
+            subprocess.Popen(
+                curl_args,
+                stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+            )
         except Exception:
             pass
     except Exception:
