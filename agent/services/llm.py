@@ -566,7 +566,20 @@ class VSCodeKeyboardProvider(LLMProvider):
         return os.path.exists("/Applications/Visual Studio Code.app")
 
     def generate(self, messages, model=None, temperature=0.7, max_tokens=2048):
-        import socket
+        """Forward the last user message to VS Code Copilot and wait for reply.
+
+        Protocol: we tag the forwarded prompt with a unique turn_id and
+        instruct Copilot (me, in the chat) to write its reply to
+        data/mobile_replies/<turn_id>.md via the create_file tool. We
+        poll that file until it appears or we time out, then return
+        the contents as the provider's generation.
+
+        Timeout is AIOS_VSCODE_REPLY_TIMEOUT seconds (default 180).
+        A timeout returns a short apology string so upstream callers
+        don't hang the whole request chain.
+        """
+        import socket, secrets, time
+        from pathlib import Path
 
         text = ""
         for m in reversed(messages):
@@ -581,11 +594,47 @@ class VSCodeKeyboardProvider(LLMProvider):
         except Exception as e:
             return f"[vscode-keyboard: vs_bridge import failed — {e}]"
 
-        ok = _vs_forward(text, source="chat_provider")
         host = socket.gethostname().split(".")[0]
+        repo_root = Path(__file__).resolve().parents[2]
+        reply_dir = repo_root / "data" / "mobile_replies"
+        reply_dir.mkdir(parents=True, exist_ok=True)
+        turn_id = secrets.token_hex(6)
+        reply_path = reply_dir / f"{turn_id}.md"
+
+        # Build the prompt with the reply-file directive. Explicit and
+        # short — Copilot follows it reliably.
+        prompt = (
+            f"[chat turn={turn_id}]\n"
+            f"{text}\n\n"
+            f"^ message from an aios chat surface (phone / web / cli).\n"
+            f"respond naturally here, AND write the same reply (markdown ok) to:\n"
+            f"  {reply_path}\n"
+            f"use the create_file tool. the caller is polling that file; if it "
+            f"never appears the caller sees a timeout. keep the in-chat response "
+            f"brief and put the full answer in the file."
+        )
+
+        ok = _vs_forward(prompt, source="chat_provider")
         if not ok:
             return f"[vscode-keyboard: forward failed on {host} — check accessibility permissions]"
-        return f"[forwarded to VS Code Copilot @ {host} — reply will appear in the chat window]"
+
+        timeout_s = float(os.getenv("AIOS_VSCODE_REPLY_TIMEOUT", "180"))
+        poll_ms = float(os.getenv("AIOS_VSCODE_REPLY_POLL_MS", "500"))
+        deadline = time.time() + timeout_s
+        while time.time() < deadline:
+            if reply_path.exists():
+                try:
+                    content = reply_path.read_text(encoding="utf-8", errors="replace").strip()
+                    if content:
+                        return content
+                except Exception:
+                    pass
+            time.sleep(poll_ms / 1000.0)
+        return (
+            f"[vscode-keyboard: Copilot @ {host} did not produce a reply within "
+            f"{int(timeout_s)}s. the paste was delivered (turn={turn_id}); the reply "
+            f"may still appear in VS Code but the polling caller has timed out.]"
+        )
 
 
 # ── Provider Registry ───────────────────────────────────────

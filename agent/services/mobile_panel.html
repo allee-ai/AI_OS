@@ -117,6 +117,13 @@ header .dot.err{background:var(--red)}
 <!-- ── Chat Panel ── -->
 <div class="panel" id="p-chat">
   <div class="card" style="padding:12px">
+    <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+      <label style="color:var(--dim);font-size:.8em">agent</label>
+      <select id="chatAgent" style="flex:1;padding:6px;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:6px">
+        <option value="aios">aios (local)</option>
+        <option value="copilot">copilot (mirror this Mac's VS Code chat)</option>
+      </select>
+    </div>
     <div class="chat-messages" id="chatMessages">
       <div class="empty">Send a message to start chatting</div>
     </div>
@@ -384,10 +391,17 @@ async function sendChat() {
   msgEl.scrollTop = msgEl.scrollHeight;
 
   try {
+    const agent = (document.getElementById('chatAgent')||{}).value || 'aios';
+    // copilot round-trip (keystroke + reply-file poll) is slow; nudge
+    // the UI so user knows we're waiting.
+    if (agent === 'copilot') {
+      const t = msgEl.querySelector('.chat-typing');
+      if (t) t.textContent = 'waiting on Copilot…';
+    }
     const d = await api(API + '/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text})
+      body: JSON.stringify({text, agent})
     });
     chatMsgs.push({role: 'assistant', text: d.reply});
   } catch(e) {
