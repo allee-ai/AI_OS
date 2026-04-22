@@ -71,6 +71,12 @@ PUBLIC_PATHS = {
     "/docs",
     "/redoc",
     "/openapi.json",
+    # Mobile panel HTML itself is public so the phone's first hit with
+    # ?key=TOKEN can load the page. The JS then captures the token and
+    # sends it as Authorization: Bearer on every subsequent API call.
+    # No data is exposed here — the HTML is a static shell.
+    "/api/mobile/",
+    "/api/mobile",
 }
 
 PUBLIC_PREFIXES = (

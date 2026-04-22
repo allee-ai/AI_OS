@@ -566,7 +566,7 @@ class VSCodeKeyboardProvider(LLMProvider):
         return os.path.exists("/Applications/Visual Studio Code.app")
 
     def generate(self, messages, model=None, temperature=0.7, max_tokens=2048):
-        import subprocess, socket, sys as _sys
+        import socket
 
         text = ""
         for m in reversed(messages):
@@ -576,32 +576,15 @@ class VSCodeKeyboardProvider(LLMProvider):
         if not text:
             return "[vscode-keyboard: empty message, nothing forwarded]"
 
-        # Cap to avoid pasting multi-MB payloads into the chat input
-        max_chars = int(os.getenv("AIOS_KEYBOARD_MAX_CHARS", "8000"))
-        if len(text) > max_chars:
-            text = text[:max_chars] + f"\n\n[truncated at {max_chars} chars]"
-
-        # scripts/send_to_vs.py lives at repo_root/scripts/send_to_vs.py
-        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
-        script = os.path.join(repo_root, "scripts", "send_to_vs.py")
-        if not os.path.exists(script):
-            return f"[vscode-keyboard: send_to_vs.py not found at {script}]"
-
         try:
-            proc = subprocess.run(
-                [_sys.executable, script, text, "--idle-seconds", "0"],
-                capture_output=True,
-                text=True,
-                timeout=30,
-            )
-        except subprocess.TimeoutExpired:
-            return "[vscode-keyboard: send timed out after 30s]"
-        if proc.returncode != 0:
-            err = (proc.stderr or "").strip().splitlines()
-            tail = err[-1] if err else f"rc={proc.returncode}"
-            return f"[vscode-keyboard: failed — {tail}]"
+            from agent.services.vs_bridge import forward as _vs_forward
+        except Exception as e:
+            return f"[vscode-keyboard: vs_bridge import failed — {e}]"
 
+        ok = _vs_forward(text, source="chat_provider")
         host = socket.gethostname().split(".")[0]
+        if not ok:
+            return f"[vscode-keyboard: forward failed on {host} — check accessibility permissions]"
         return f"[forwarded to VS Code Copilot @ {host} — reply will appear in the chat window]"
 
 

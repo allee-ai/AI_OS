@@ -8,6 +8,7 @@ Endpoints:
   GET  /api/mobile/status        — Dashboard: loops, tasks, agent status
   POST /api/mobile/chat          — Quick send message, get reply
   POST /api/mobile/task          — Add a task (background or immediate)
+  POST /api/mobile/goal          — Propose a new goal (pings phone + pushes to Copilot)
   POST /api/mobile/note          — Quick-add a note
   POST /api/mobile/loops/{name}  — Pause / resume a loop
   GET  /api/mobile/loops         — All loop statuses (compact)
@@ -55,6 +56,12 @@ class QuickChat(BaseModel):
 class QuickTask(BaseModel):
     goal: str
     execute_now: bool = False
+
+class QuickGoal(BaseModel):
+    goal: str
+    rationale: Optional[str] = ""
+    priority: Optional[str] = "medium"   # urgent | high | medium | low
+    urgency: Optional[int] = None        # 0-100
 
 class QuickNote(BaseModel):
     text: str
@@ -142,6 +149,46 @@ async def mobile_task(t: QuickTask, _=Depends(_check_token)):
             pass
 
     return {"id": task["id"], "goal": task["goal"], "status": task["status"]}
+
+
+@router.post("/goal")
+async def mobile_goal(g: QuickGoal, _=Depends(_check_token)):
+    """Propose a new goal from the phone. Fires phone ping + forwards to VS Code Copilot."""
+    text = (g.goal or "").strip()
+    if not text:
+        raise HTTPException(status_code=400, detail="Goal cannot be empty")
+    priority = (g.priority or "medium").lower()
+    if priority not in ("urgent", "high", "medium", "low"):
+        raise HTTPException(status_code=400, detail="priority must be urgent/high/medium/low")
+
+    from agent.subconscious.loops.goals import propose_goal, set_goal_urgency
+    gid = propose_goal(
+        goal=text,
+        rationale=(g.rationale or ""),
+        priority=priority,
+        sources=["mobile"],
+    )
+    if not gid:
+        raise HTTPException(status_code=500, detail="Failed to create goal")
+    if g.urgency is not None:
+        try:
+            set_goal_urgency(gid, int(g.urgency))
+        except Exception:
+            pass
+
+    # Fire phone ping immediately (propose_goal's vs_bridge hook already
+    # handles the Copilot push — don't duplicate that here).
+    try:
+        from agent.services.alerts import fire_alerts
+        fire_alerts(
+            message=f"new goal #{gid} [{priority}]: {text[:80]}",
+            priority="high" if priority in ("urgent", "high") else "default",
+            source="mobile_goal",
+        )
+    except Exception:
+        pass
+
+    return {"id": gid, "goal": text, "priority": priority, "urgency": g.urgency}
 
 
 @router.post("/note")

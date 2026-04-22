@@ -110,6 +110,18 @@ def propose_goal(goal: str, rationale: str = "", priority: str = "medium",
             )
         except Exception:
             pass
+        # Forward to the active VS Code Copilot chat (Mac only; silent no-op
+        # on VM / non-macOS). Wrapped so a keyboard hiccup can't block the
+        # goal insert or ripple into callers.
+        try:
+            from agent.services.vs_bridge import forward as _vs_forward
+            summary = goal if not rationale else f"{goal}\n\nRationale: {rationale}"
+            _vs_forward(
+                f"NEW GOAL #{new_id} [{priority}]\n{summary}",
+                source="goal_add",
+            )
+        except Exception:
+            pass
         return new_id
     except Exception as e:
         print(f"[GoalLoop] Failed to propose goal: {e}")

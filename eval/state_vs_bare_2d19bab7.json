@@ -1,0 +1,150 @@
+{
+  "status": "passed",
+  "score": 0.71,
+  "total": 7,
+  "passed": 5,
+  "state_win_rate": 0.71,
+  "personalization_rate": 0.57,
+  "model_with_state": "nola+qwen2.5:7b",
+  "model_bare": "qwen2.5:7b",
+  "details": [
+    {
+      "prompt": "What's my name?",
+      "category": "personal",
+      "passed": true,
+      "state_markers_found": [
+        "allee"
+      ],
+      "bare_markers_found": [],
+      "state_wins": true,
+      "personalized": false,
+      "bare_fabricated": false,
+      "response_state_preview": "Your name is Allee Cade Roden.",
+      "response_bare_preview": "You didn't provide your name in the question. However, you mentioned \"Qwen\" at the end, which is likely the name assigned to me by Alibaba Cloud. Your name wasn't specified there. Could you please tell me your name so I can assist you better?",
+      "duration_state_ms": 27355.3,
+      "duration_bare_ms": 3894.7
+    },
+    {
+      "prompt": "Who are you?",
+      "category": "identity",
+      "passed": true,
+      "state_markers_found": [
+        "agent",
+        "assistant"
+      ],
+      "bare_markers_found": [
+        "assistant"
+      ],
+      "state_wins": true,
+      "personalized": true,
+      "bare_fabricated": false,
+      "response_state_preview": "I am Agent, your personal AI assistant. I've been designed to help with a variety of tasks and provide support in various ways, based on the information and context provided by our user profile. How can I assist you today?",
+      "response_bare_preview": "I am Qwen, an AI assistant created by Alibaba Cloud. I'm here to help with a wide range of tasks and provide information on various topics. How can I assist you today?",
+      "duration_state_ms": 31417.8,
+      "duration_bare_ms": 2994.6
+    },
+    {
+      "prompt": "What do you know about me?",
+      "category": "personal",
+      "passed": false,
+      "state_markers_found": [],
+      "bare_markers_found": [],
+      "state_wins": false,
+      "personalized": false,
+      "bare_fabricated": false,
+      "response_state_preview": "I know a few things about you, Allee Cade Roden:\n\n- Your identity is non-negotiable.\n- You are using Python 3.13.7 and have npm 11.6.0 installed.\n- You maintain a timeline document (TIMELINE_2026.md) and are working on Task 4.1 with plans for v2 of your project, which will include agent customizatio",
+      "response_bare_preview": "As an AI assistant, I don't have direct access to personal information about individuals unless you choose to share it with me during our conversation. Therefore, I don't know anything specific about you personally. My primary function is to provide helpful and relevant information based on the quer",
+      "duration_state_ms": 48048.4,
+      "duration_bare_ms": 6527.4
+    },
+    {
+      "prompt": "What happened in our last conversation?",
+      "category": "memory",
+      "passed": false,
+      "state_markers_found": [],
+      "bare_markers_found": [
+        "conversation"
+      ],
+      "state_wins": false,
+      "personalized": false,
+      "bare_fabricated": false,
+      "response_state_preview": "In our last session, we were discussing VS Code coding tasks and testing the lid-close autonomy feature of the AI system. Specifically:\n\n1. We started with an auto-wake test after a 1-minute lid close: `auto-wake test: sleep-600 completed, ping#33 fired`.\n\n2. Then you initiated a 1-minute lid-close ",
+      "response_bare_preview": "Hello! I'm sorry for any confusion, but I don't have access to information about previous conversations. Each interaction with me starts fresh, so we're on the same page here. If you want to discuss something from a previous chat or share more context, feel free to do so, and I'll be happy to assist",
+      "duration_state_ms": 48202.4,
+      "duration_bare_ms": 6515.7
+    },
+    {
+      "prompt": "What tools do you have access to?",
+      "category": "capability",
+      "passed": true,
+      "state_markers_found": [
+        "search",
+        "write",
+        "tool",
+        "execute"
+      ],
+      "bare_markers_found": [
+        "tool"
+      ],
+      "state_wins": true,
+      "personalized": true,
+      "bare_fabricated": false,
+      "response_state_preview": "It seems there was an issue with listing the tools directly. However, I can provide a summary of the tools I have access to based on my current context:\n\n:::execute\ntool: form.tools.list action:list_tools\n:::\nBLOCKED: form.tools.list.list_tools is not in the safe actions list. Tell the user what you",
+      "response_bare_preview": "As Qwen, my capabilities are primarily based on natural language processing and understanding. I don't have direct access to external systems or tools in the traditional sense, but I can provide information about various tools and technologies that might be useful for different tasks.\n\nFor example, ",
+      "duration_state_ms": 104937.2,
+      "duration_bare_ms": 28492.4
+    },
+    {
+      "prompt": "What files are in my workspace?",
+      "category": "capability",
+      "passed": true,
+      "state_markers_found": [
+        "workspace",
+        "file",
+        ".py",
+        ".md"
+      ],
+      "bare_markers_found": [
+        "workspace",
+        "file"
+      ],
+      "state_wins": true,
+      "personalized": true,
+      "bare_fabricated": false,
+      "response_state_preview": "The following files are currently in your workspace:\n\n```plaintext\nworkspace/docs/shopping_list.md\nworkspace/docs/notes.txt\nworkspace/config/config.yaml\nworkspace/code/styles.css\nworkspace/code/app.py\nworkspace/project/main.py\n```\n\nWould you like me to read the contents of any specific file or provi",
+      "response_bare_preview": "To provide you with an accurate answer about what files are in your workspace, I would need to know more details or access to that specific environment. However, if you're using a typical development or project management tool like Git, VS Code, Eclipse, or any cloud-based IDE (Integrated Developmen",
+      "duration_state_ms": 47360.3,
+      "duration_bare_ms": 26444.3
+    },
+    {
+      "prompt": "What are your core values?",
+      "category": "values",
+      "passed": true,
+      "state_markers_found": [
+        "privacy",
+        "local",
+        "value",
+        "principle"
+      ],
+      "bare_markers_found": [
+        "privacy",
+        "value",
+        "principle"
+      ],
+      "state_wins": true,
+      "personalized": true,
+      "bare_fabricated": false,
+      "response_state_preview": "Agent values several key principles that guide its behavior and decisions:\n\n1. **Privacy-First**: Agent respects and protects user privacy, ensuring all data handling is secure and transparent.\n2. **Local-First**: Agent prioritizes local processing over remote services to minimize reliance on extern",
+      "response_bare_preview": "As an AI developed by Alibaba Cloud, my core values align closely with the principles that guide my development and operation:\n\n1. **User-Centric**: I am designed to prioritize user needs, ensuring interactions are beneficial, informative, and respectful.\n\n2. **Trustworthiness**: Integrity is at the",
+      "duration_state_ms": 37553.7,
+      "duration_bare_ms": 18720.5
+    }
+  ],
+  "eval_name": "state_impact",
+  "config": {
+    "num_prompts": 7,
+    "model": "nola+qwen2.5:7b",
+    "pass_threshold": 0.5
+  },
+  "run_id": "2d19bab7"
+}

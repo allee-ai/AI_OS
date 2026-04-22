@@ -93,6 +93,7 @@ header .dot.err{background:var(--red)}
   <button class="active" data-tab="status">Status</button>
   <button data-tab="chat">Chat</button>
   <button data-tab="loops">Loops</button>
+  <button data-tab="goals">Goals</button>
   <button data-tab="tasks">Tasks</button>
   <button data-tab="notes">Notes</button>
 </div>
@@ -149,6 +150,31 @@ header .dot.err{background:var(--red)}
   </div>
 </div>
 
+<!-- ── Goals Panel ── -->
+<div class="panel" id="p-goals">
+  <div class="card">
+    <h3>New Goal</h3>
+    <div class="input-group" style="flex-direction:column;gap:8px">
+      <input type="text" id="goalInput" placeholder="What do you want aios to do?"/>
+      <textarea id="goalRationale" placeholder="Why / context (optional)" rows="2"></textarea>
+      <div class="input-group" style="gap:8px">
+        <select id="goalPriority" style="flex:1;padding:8px;background:var(--bg);color:#fff;border:1px solid var(--border);border-radius:6px">
+          <option value="urgent">urgent</option>
+          <option value="high">high</option>
+          <option value="medium" selected>medium</option>
+          <option value="low">low</option>
+        </select>
+        <input type="number" id="goalUrgency" min="0" max="100" placeholder="urgency 0-100" style="flex:1"/>
+      </div>
+      <button class="btn" onclick="addGoal()" style="align-self:flex-end">Add Goal (pushes to Copilot)</button>
+    </div>
+  </div>
+  <div class="card">
+    <h3>Pending</h3>
+    <div id="goalsList"></div>
+  </div>
+</div>
+
 <!-- ── Notes Panel ── -->
 <div class="panel" id="p-notes">
   <div class="card">
@@ -171,13 +197,59 @@ const BASE = window.location.origin;
 const API = BASE + '/api/mobile';
 const SUB = BASE + '/api/subconscious';
 
+// ── Auth: accept ?key= from bookmark, persist, attach Bearer to all fetches ──
+(function initAuth() {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const key = params.get('key');
+    if (key) {
+      localStorage.setItem('aios_api_token', key.trim());
+      params.delete('key');
+      const qs = params.toString();
+      const clean = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+      window.history.replaceState({}, '', clean);
+    }
+  } catch (e) { /* non-fatal */ }
+  const tok = localStorage.getItem('aios_api_token');
+  if (!tok) {
+    // No token — block page and show a minimal prompt so the user can
+    // paste one manually if the bookmark flow failed.
+    window.addEventListener('DOMContentLoaded', () => {
+      const body = document.body;
+      body.innerHTML = '<div style="max-width:420px;margin:60px auto;padding:24px;background:#1a1a1a;border:1px solid #333;border-radius:10px;font-family:system-ui;color:#eee">' +
+        '<h2 style="margin:0 0 12px">aios · mobile</h2>' +
+        '<p style="color:#aaa;font-size:.9em;margin:0 0 14px">paste AIOS_API_TOKEN</p>' +
+        '<input id="_tok" type="password" style="width:100%;padding:10px;border:1px solid #444;background:#111;color:#fff;border-radius:6px;font-size:14px" placeholder="token…"/>' +
+        '<button id="_submit" style="width:100%;margin-top:10px;padding:10px;background:#4f9df7;color:#fff;border:none;border-radius:6px;font-weight:600">login</button>' +
+        '</div>';
+      document.getElementById('_submit').onclick = () => {
+        const v = document.getElementById('_tok').value.trim();
+        if (v) { localStorage.setItem('aios_api_token', v); window.location.reload(); }
+      };
+    });
+    return;
+  }
+  const nativeFetch = window.fetch.bind(window);
+  window.fetch = (input, init) => {
+    const headers = new Headers((init && init.headers) || {});
+    if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + tok);
+    return nativeFetch(input, Object.assign({}, init || {}, { headers }));
+  };
+})();
+
 // ── Tabs ──
 document.getElementById('tabs').addEventListener('click', e => {
   if (e.target.tagName !== 'BUTTON') return;
   document.querySelectorAll('.tabs button').forEach(b => b.classList.remove('active'));
   document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
   e.target.classList.add('active');
-  document.getElementById('p-' + e.target.dataset.tab).classList.add('active');
+  const tab = e.target.dataset.tab;
+  document.getElementById('p-' + tab).classList.add('active');
+  // Lazy-refresh the panel being opened so data is fresh.
+  if (tab === 'goals' && typeof loadGoals === 'function') loadGoals();
+  if (tab === 'tasks' && typeof loadTasks === 'function') loadTasks();
+  if (tab === 'notes' && typeof loadNotes === 'function') loadNotes();
+  if (tab === 'loops' && typeof loadLoops === 'function') loadLoops();
 });
 
 // ── Toast ──
@@ -361,6 +433,45 @@ document.getElementById('taskInput').addEventListener('keydown', e => {
   if (e.key === 'Enter') { e.preventDefault(); addTask(); }
 });
 
+// ── Goals ──
+async function loadGoals() {
+  try {
+    const goals = await api(SUB + '/goals?status=pending&limit=10');
+    document.getElementById('goalsList').innerHTML = goals.length
+      ? goals.map(g =>
+          '<div class="task-row">' +
+            '<span class="task-goal">#' + g.id + ' ' + esc(g.goal) + '</span>' +
+            '<span class="task-status">' + esc(g.priority || '') +
+              (g.urgency != null ? ' u' + g.urgency : '') + '</span>' +
+          '</div>'
+        ).join('')
+      : '<div class="empty">No pending goals</div>';
+  } catch(e) { /* swallow — toast already fired */ }
+}
+
+async function addGoal() {
+  const input = document.getElementById('goalInput');
+  const rat = document.getElementById('goalRationale');
+  const pri = document.getElementById('goalPriority');
+  const urg = document.getElementById('goalUrgency');
+  const goal = input.value.trim();
+  if (!goal) return;
+  const body = { goal, rationale: rat.value.trim(), priority: pri.value };
+  if (urg.value !== '' && !isNaN(Number(urg.value))) body.urgency = Number(urg.value);
+  const res = await api(API + '/goal', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify(body)
+  });
+  input.value = ''; rat.value = ''; urg.value = '';
+  toast('Goal #' + res.id + ' added — pushed to Copilot');
+  loadGoals();
+}
+
+document.getElementById('goalInput').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); addGoal(); }
+});
+
 // ── Notes ──
 async function loadNotes() {
   const notes = await api(SUB + '/notes');
@@ -453,6 +564,7 @@ function loadAll() {
   loadStatus();
   loadLoops();
   loadTasks();
+  loadGoals();
   loadNotes();
 }
 loadAll();
