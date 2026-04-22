@@ -38,7 +38,7 @@ THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
 # Top-level modules — scored for relevance alongside threads.
 # Each module provides summarised context (conversations, files, etc.)
 # and goes through the same score → level → threshold pipeline.
-MODULES = ["chat", "workspace", "docs"]
+MODULES = ["chat", "workspace", "docs", "goals"]
 
 # Score thresholds for context levels
 # Score determines: (1) block order, (2) L1/L2/L3 level, (3) fact weight threshold
@@ -218,6 +218,16 @@ class Subconscious:
         else:
             scores["docs"] = 3.5
 
+        # Goals — always relatively hot; user-logged priorities should almost always
+        # appear in STATE so the agent doesn't lose track of what we agreed to build.
+        if any(kw in q for kw in [
+            'goal', 'priority', 'todo', 'objective', 'plan',
+            'working on', 'next', 'compete', 'compound',
+        ]):
+            scores["goals"] = 9.0
+        else:
+            scores["goals"] = 6.0
+
         return scores
     
     def build_state(self, scores: Dict[str, float], query: str = "") -> str:
@@ -390,6 +400,7 @@ class Subconscious:
             "chat": self._get_chat_context,
             "workspace": self._get_workspace_context,
             "docs": self._get_docs_context,
+            "goals": self._get_goals_context,
         }
         provider = providers.get(module_name)
         if not provider:
@@ -444,6 +455,11 @@ class Subconscious:
                 "  rules:",
                 "  - Module READMEs are the source of truth; root docs are generated via scripts/sync_docs.py.",
                 "  - Before claiming docs say X, verify by reading the listed file.",
+            ],
+            "goals": [
+                "  rules:",
+                "  - These are user-logged or loop-proposed goals. Treat them as live priorities.",
+                "  - If you complete a goal, resolve it: .venv/bin/python scripts/goal.py --done <id>.",
             ],
         }
         rules = module_rules.get(module_name, [])
@@ -555,6 +571,7 @@ class Subconscious:
             "  | chat | RECALL | Past conversations, discussion history |",
             "  | workspace | CONTEXT | Files, documents, project state |",
             "  | docs | REFERENCE | Module READMEs + root architecture/roadmap/changelog |",
+            "  | goals | PRIORITY | Open + recently resolved goals (user + loop proposed) |",
         ]
         
         # Graph stats (cheap read from DB)
@@ -800,6 +817,42 @@ class Subconscious:
                     except Exception:
                         pass
 
+            return facts
+        except Exception:
+            return []
+
+    def _get_goals_context(
+        self, query: str = "", level: int = 1, threshold: float = 5.0,
+        max_results: int = 10,
+    ) -> List[str]:
+        """Surface open + recently resolved goals so the agent sees priorities.
+
+        L1: open goals only.
+        L2: + last 3 resolved.
+        L3: + rationales.
+        """
+        try:
+            from agent.subconscious.loops.goals import get_proposed_goals
+            open_goals = get_proposed_goals(status="pending", limit=max_results)
+            facts: List[str] = []
+            for g in open_goals:
+                gid = g.get("id")
+                pri = (g.get("priority") or "medium")[:1].upper()
+                gt = (g.get("goal") or "").strip().replace("\n", " ")[:140]
+                facts.append(f"  goals.open.#{gid} [{pri}]: {gt}")
+                if level >= 3:
+                    rat = (g.get("rationale") or "").strip().replace("\n", " ")[:140]
+                    if rat:
+                        facts.append(f"  goals.open.#{gid}.why: {rat}")
+            if level >= 2:
+                for status in ("approved", "rejected", "dismissed"):
+                    resolved = get_proposed_goals(status=status, limit=3)
+                    for g in resolved:
+                        gid = g.get("id")
+                        gt = (g.get("goal") or "").strip().replace("\n", " ")[:100]
+                        facts.append(f"  goals.{status}.#{gid}: {gt}")
+            if not facts:
+                facts.append("  (no pending goals — add one with: python scripts/goal.py \"...\")")
             return facts
         except Exception:
             return []
