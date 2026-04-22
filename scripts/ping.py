@@ -2,6 +2,12 @@
 """
 scripts/ping.py — Send a low-overhead notification to the user's dashboard.
 
+Programmatic-only path (no LLM involved). Use this for deterministic event
+completions — eval done, commit pushed, loop crashed, cron finished. For
+LLM-judged "I think this matters to you" interrupts, use the `notify` tool
+instead (agent/threads/form/tools/executables/notify.py), which calls the
+same alert layers via agent/services/alerts.fire_alerts().
+
 Writes into the existing `notifications` table used by the notify tool and
 served by /api/subconscious/notifications, so the existing dashboard panel
 picks it up with zero new infrastructure.

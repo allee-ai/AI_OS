@@ -368,7 +368,7 @@ TOOLS: List[ToolDefinition] = [
     ),
     ToolDefinition(
         name="notify",
-        description="Send notifications to the user",
+        description="Interrupt the user with a notification (LLM-judged importance; chimes mac, pushes to phone on high/urgent). Use when you think something requires the user's attention mid-session.",
         category=ToolCategory.INTERNAL,
         actions=["alert", "remind", "confirm"],
         run_file="notify.py",
