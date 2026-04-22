@@ -47,6 +47,21 @@ def cmd_add(text: str, priority: str, rationale: str) -> int:
         )
     except Exception:
         pass
+    # Wake channel: fire an alert so a closed-lid laptop / phone / VS Code
+    # terminal-completion autowake all notice the new goal. Urgent goals
+    # escalate to phone push; medium/low stay local. Swallow errors — a
+    # failed notify must never break goal capture.
+    try:
+        from agent.services.alerts import fire_alerts
+        alert_prio = {"urgent": "urgent", "high": "high"}.get(priority, "high")
+        fire_alerts(
+            message=f"new goal#{gid} [{priority}] {text.strip()[:120]}",
+            priority=alert_prio,
+            nid=gid,
+            source="goal_added",
+        )
+    except Exception:
+        pass
     return 0
 
 

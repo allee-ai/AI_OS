@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!--
+  AIOS persistent caffeinate LaunchAgent.
+
+  What it does:
+    Runs `caffeinate -dimsu` forever. Flags:
+      -d  display on
+      -i  idle sleep prevented
+      -m  disk sleep prevented
+      -s  system sleep prevented (only active on AC)
+      -u  treat as if user is active (1s bump, harmless)
+
+  Install:
+    cp scripts/launchagents/com.aios.caffeinate.plist ~/Library/LaunchAgents/
+    launchctl load  ~/Library/LaunchAgents/com.aios.caffeinate.plist
+    launchctl start com.aios.caffeinate
+
+  Uninstall:
+    launchctl unload ~/Library/LaunchAgents/com.aios.caffeinate.plist
+    rm ~/Library/LaunchAgents/com.aios.caffeinate.plist
+
+  Verify:
+    pgrep -fl caffeinate      # should show the persistent one
+    launchctl list | grep aios
+
+  Note:
+    This prevents idle / system sleep. Lid-close clamshell sleep on battery
+    still applies on some Macs. For TRUE lid-close-does-nothing, also run:
+      sudo pmset -a disablesleep 1     (see scripts/sleep_off.sh)
+-->
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.aios.caffeinate</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/usr/bin/caffeinate</string>
+        <string>-dimsu</string>
+    </array>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>KeepAlive</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/tmp/aios.caffeinate.out</string>
+
+    <key>StandardErrorPath</key>
+    <string>/tmp/aios.caffeinate.err</string>
+</dict>
+</plist>
