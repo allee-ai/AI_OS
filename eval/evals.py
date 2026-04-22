@@ -854,16 +854,21 @@ def _eval_state_impact(config: Dict) -> Dict[str, Any]:
     state_wins = 0
     personalized_count = 0
 
-    for case in _IMPACT_PROMPTS[:n]:
+    for i, case in enumerate(_IMPACT_PROMPTS[:n], 1):
         prompt = case["prompt"]
         markers = case["state_markers"]
+        print(f"  [{i}/{n}] {prompt[:80]!r}", flush=True)
 
         # A: With STATE (agent pipeline)
+        t_a = time.time()
         r_state = run_prompt(model, prompt, with_state=True)
+        print(f"      state: {(time.time()-t_a):.1f}s", flush=True)
         resp_state = r_state.get("response", "").lower()
 
         # B: Without STATE (bare model)
+        t_b = time.time()
         r_bare = run_prompt(bare_model, prompt)
+        print(f"      bare:  {(time.time()-t_b):.1f}s", flush=True)
         resp_bare = r_bare.get("response", "").lower()
 
         # Score: how many markers appear in each response?

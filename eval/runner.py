@@ -62,10 +62,13 @@ def _run_via_agent(prompt: str, with_state: bool, start: float, llm_override: st
                 feed_type='conversational',
             )
         else:
-            # No STATE — call Ollama directly with same model but no context
+            # No STATE — call Ollama directly with same model but no context.
+            # 120s per-call timeout so one stuck generation can't hang the
+            # whole eval (SSL sock_recv deadlock observed on 2026-04-22).
             model_name = os.getenv('AIOS_MODEL_NAME', 'qwen2.5:7b')
             import ollama
-            r = ollama.chat(model=model_name, messages=[
+            client = ollama.Client(timeout=120)
+            r = client.chat(model=model_name, messages=[
                 {'role': 'user', 'content': prompt}
             ])
             response = r['message']['content']
@@ -122,7 +125,10 @@ def _run_via_ollama(model: str, prompt: str, system_prompt: str, start: float) -
             messages.append({'role': 'system', 'content': system_prompt})
         messages.append({'role': 'user', 'content': prompt})
 
-        r = ollama.chat(model=model, messages=messages)
+        # 120s per-call timeout — prevents a stuck generation from wedging
+        # the entire eval loop indefinitely (SSL sock_recv issue).
+        client = ollama.Client(timeout=120)
+        r = client.chat(model=model, messages=messages)
         duration = (time.time() - start) * 1000
 
         return {
