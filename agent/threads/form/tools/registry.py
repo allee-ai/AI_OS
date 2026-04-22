@@ -252,10 +252,20 @@ TOOLS: List[ToolDefinition] = [
     # --- Automation Tools ---
     ToolDefinition(
         name="terminal",
-        description="Execute shell commands",
+        description="Execute shell commands LOCALLY (on this machine — macOS laptop)",
         category=ToolCategory.AUTOMATION,
         actions=["run_command", "get_output", "kill_process"],
         run_file="terminal.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.5,
+    ),
+    ToolDefinition(
+        name="terminal_vm",
+        description="Execute shell commands on the AIOS VM over SSH (ssh host 'AIOS')",
+        category=ToolCategory.AUTOMATION,
+        actions=["run_command", "get_output", "probe"],
+        run_file="terminal_vm.py",
         run_type=RunType.PYTHON,
         requires_env=[],
         weight=0.5,
@@ -420,6 +430,7 @@ SAFE_ACTIONS: Dict[str, List[str]] = {
     "file_read": ["read_file", "list_directory", "search_files"],
     "web_search": ["search", "get_results"],
     "terminal": ["get_output"],
+    "terminal_vm": ["get_output", "probe"],
     "file_write": ["create_directory"],
     "workspace_read": ["read_file", "list_directory", "search_files"],
     "workspace_write": ["write_file", "create_directory", "move_file"],
@@ -437,6 +448,7 @@ SAFE_ACTIONS: Dict[str, List[str]] = {
 # Actions that are blocked by default (require user to toggle allowed)
 BLOCKED_ACTIONS: Dict[str, List[str]] = {
     "terminal": ["run_command", "kill_process"],
+    "terminal_vm": ["run_command"],
     "file_write": ["write_file", "append_file"],
     "code_edit": ["edit_file"],
     "workspace_write": ["delete_file"],
@@ -475,9 +487,14 @@ _ACTION_PARAM_SCHEMAS: Dict[str, Dict[str, str]] = {
     "file_write__append_file":     {"path": "File path to append to",
                                     "content": "Content to append"},
     "file_write__create_directory":{"path": "Directory path to create"},
-    # terminal
-    "terminal__run_command":       {"command": "Shell command to execute"},
+    # terminal (local / mac)
+    "terminal__run_command":       {"command": "Shell command to execute LOCALLY"},
     "terminal__get_output":        {},
+    # terminal_vm (remote AIOS host over ssh)
+    "terminal_vm__run_command":    {"command": "Shell command to execute on the AIOS VM",
+                                    "cwd": "Remote working directory (default /opt/aios)"},
+    "terminal_vm__get_output":     {},
+    "terminal_vm__probe":          {},
     # web_search
     "web_search__search":          {"query": "Search query string"},
     "web_search__get_results":     {},

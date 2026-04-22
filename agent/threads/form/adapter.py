@@ -18,6 +18,7 @@ Modules:
 
 from typing import List, Dict, Any, Optional
 from datetime import datetime, timezone
+from pathlib import Path
 import os
 
 try:
@@ -251,6 +252,43 @@ class FormThreadAdapter(BaseThreadAdapter):
             else:
                 tools = self.get_tools(1)
                 lines = [f"  tools: {len(tools)}"]
+
+            # Operating environment — where commands will actually run.
+            # This is the "terminal tool takes two flavours" truth: the
+            # agent should know which host a command lands on before it
+            # runs one. Cheap (socket + os.uname), no network.
+            try:
+                import socket
+                import platform as _plat
+                hostname = socket.gethostname()
+                system = _plat.system()  # Darwin / Linux
+                release = _plat.release()
+                mach = _plat.machine()
+                lines.append(
+                    f"  env.local: host={hostname} os={system} {release} arch={mach}"
+                )
+                # terminal_vm is only useful if the 'AIOS' ssh host resolves.
+                # We do NOT probe over network here (too slow for every
+                # STATE build); we just report whether the ssh alias is
+                # configured. The `terminal_vm.probe` action is the
+                # on-demand reachability check.
+                try:
+                    ssh_cfg = Path.home() / ".ssh" / "config"
+                    vm_configured = False
+                    if ssh_cfg.exists():
+                        text = ssh_cfg.read_text(errors="ignore")
+                        vm_configured = any(
+                            line.strip().lower() == "host aios"
+                            for line in text.splitlines()
+                        )
+                    lines.append(
+                        f"  env.vm: ssh_host=AIOS configured={'yes' if vm_configured else 'no'}"
+                    )
+                except Exception:
+                    pass
+            except Exception:
+                pass
+
             # Trace stats
             try:
                 from data.db import get_connection
