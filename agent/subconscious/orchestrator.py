@@ -38,7 +38,7 @@ THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
 # Top-level modules — scored for relevance alongside threads.
 # Each module provides summarised context (conversations, files, etc.)
 # and goes through the same score → level → threshold pipeline.
-MODULES = ["chat", "workspace"]
+MODULES = ["chat", "workspace", "docs"]
 
 # Score thresholds for context levels
 # Score determines: (1) block order, (2) L1/L2/L3 level, (3) fact weight threshold
@@ -204,7 +204,20 @@ class Subconscious:
             scores["workspace"] = 7.0
         else:
             scores["workspace"] = 3.0
-        
+
+        # Docs — READMEs, architecture, roadmap, changelog, docs/ tree
+        if any(kw in q for kw in [
+            'docs', 'documentation', 'readme', 'architecture',
+            'roadmap', 'changelog', 'spec', 'reference',
+        ]):
+            scores["docs"] = 8.5
+        elif any(kw in q for kw in [
+            'explain', 'describe', 'how does', 'what is', 'overview',
+        ]):
+            scores["docs"] = 6.0
+        else:
+            scores["docs"] = 3.5
+
         return scores
     
     def build_state(self, scores: Dict[str, float], query: str = "") -> str:
@@ -376,6 +389,7 @@ class Subconscious:
         providers = {
             "chat": self._get_chat_context,
             "workspace": self._get_workspace_context,
+            "docs": self._get_docs_context,
         }
         provider = providers.get(module_name)
         if not provider:
@@ -426,6 +440,11 @@ class Subconscious:
                 "  - Only reference files listed here. Do not assume other files exist.",
                 "  - To find other files, use file search tools.",
             ],
+            "docs": [
+                "  rules:",
+                "  - Module READMEs are the source of truth; root docs are generated via scripts/sync_docs.py.",
+                "  - Before claiming docs say X, verify by reading the listed file.",
+            ],
         }
         rules = module_rules.get(module_name, [])
         if rules:
@@ -475,6 +494,44 @@ class Subconscious:
             except Exception:
                 return []
 
+        elif module_name == "docs":
+            try:
+                import os as _os
+                from pathlib import Path as _Path
+                root = _Path(__file__).resolve().parents[2]
+                total = 0
+                module_readmes = 0
+                last_mtime = 0
+                last_path = ""
+                for dp, dns, fns in _os.walk(root):
+                    # Prune noisy dirs
+                    dns[:] = [d for d in dns if d not in ("_archive", "__pycache__", ".git", "node_modules", ".venv", "venv", "dist", "build", ".next")]
+                    for fn in fns:
+                        if fn.lower().endswith(".md"):
+                            total += 1
+                            if fn == "README.md":
+                                module_readmes += 1
+                            fp = _os.path.join(dp, fn)
+                            try:
+                                mt = _os.path.getmtime(fp)
+                                if mt > last_mtime:
+                                    last_mtime = mt
+                                    last_path = _os.path.relpath(fp, root)
+                            except Exception:
+                                pass
+                # Sync freshness: root docs mtime vs newest module README mtime
+                from datetime import datetime as _dt
+                age_s = int((_dt.now().timestamp() - last_mtime)) if last_mtime else -1
+                lines = [
+                    f"  markdown_files: {total}",
+                    f"  module_readmes: {module_readmes}",
+                ]
+                if last_path:
+                    lines.append(f"  last_edit: {last_path} ({age_s//60}m ago)" if age_s >= 0 else f"  last_edit: {last_path}")
+                return lines
+            except Exception:
+                return []
+
         return []
 
     def _build_self_awareness_block(self) -> List[str]:
@@ -497,6 +554,7 @@ class Subconscious:
             "  | Module | | |",
             "  | chat | RECALL | Past conversations, discussion history |",
             "  | workspace | CONTEXT | Files, documents, project state |",
+            "  | docs | REFERENCE | Module READMEs + root architecture/roadmap/changelog |",
         ]
         
         # Graph stats (cheap read from DB)
@@ -675,6 +733,73 @@ class Subconscious:
                     weight = c.get("weight", 0.5)
                     facts.append(f"  chat.{sid}: \"{name}\" ({turns} turns, w={weight:.1f})")
             
+            return facts
+        except Exception:
+            return []
+
+    def _get_docs_context(
+        self, query: str = "", level: int = 1, threshold: float = 5.0,
+        max_results: int = 8,
+    ) -> List[str]:
+        """Build docs context for STATE.
+
+        L1: recent doc edits (name + age).
+        L2: + query-matched docs (filename or headings).
+        L3: + first-heading preview.
+        """
+        try:
+            import os as _os
+            from pathlib import Path as _Path
+            from datetime import datetime as _dt
+
+            root = _Path(__file__).resolve().parents[2]
+            md_files: List[tuple] = []  # (rel_path, mtime, size)
+            for dp, dns, fns in _os.walk(root):
+                dns[:] = [d for d in dns if d not in ("_archive", "__pycache__", ".git", "node_modules", ".venv", "venv", "dist", "build", ".next")]
+                for fn in fns:
+                    if fn.lower().endswith(".md"):
+                        fp = _os.path.join(dp, fn)
+                        try:
+                            st = _os.stat(fp)
+                            md_files.append((_os.path.relpath(fp, root), st.st_mtime, st.st_size))
+                        except Exception:
+                            pass
+
+            if not md_files:
+                return []
+
+            facts: List[str] = []
+            now_ts = _dt.now().timestamp()
+
+            q_terms = [t.lower() for t in (query or "").split() if len(t) > 2]
+
+            # Score each doc: recency + query-name hit
+            def _score(item):
+                rel, mt, _sz = item
+                recency = max(0.0, 1.0 - (now_ts - mt) / (60 * 60 * 24 * 30))  # 30-day half-window
+                hit = 0.0
+                low = rel.lower()
+                for t in q_terms:
+                    if t in low:
+                        hit += 1.0
+                return recency + hit * 2.0 if q_terms else recency
+
+            md_files.sort(key=_score, reverse=True)
+
+            for rel, mt, sz in md_files[:max_results]:
+                age_min = int((now_ts - mt) // 60)
+                age_s = f"{age_min}m" if age_min < 90 else f"{age_min // 60}h" if age_min < 60 * 48 else f"{age_min // (60 * 24)}d"
+                facts.append(f"  docs.{rel}: {sz}B ({age_s} ago)")
+                if level >= 3:
+                    try:
+                        with open(root / rel, "r", encoding="utf-8", errors="ignore") as fh:
+                            head = fh.read(400).strip().splitlines()
+                            first = next((ln.strip("# ").strip() for ln in head if ln.strip().startswith("#")), "")
+                            if first:
+                                facts.append(f"  docs.{rel}.title: {first[:120]}")
+                    except Exception:
+                        pass
+
             return facts
         except Exception:
             return []
