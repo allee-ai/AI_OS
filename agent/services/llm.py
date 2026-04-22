@@ -524,6 +524,87 @@ class MLXProvider(LLMProvider):
         return response.strip()
 
 
+# ── VS Code Keyboard (pipe, not an LLM) ─────────────────────
+
+class VSCodeKeyboardProvider(LLMProvider):
+    """Route `generate` into this Mac's VS Code Copilot Chat window.
+
+    This is not a model — the "reply" is an acknowledgement. The real
+    response is whatever Copilot types back in the VS Code chat UI.
+    Use it to turn any aios chat surface (web UI, phone via /chat API,
+    CLI) into a remote into the active Copilot window.
+
+    Availability is gated to macOS hosts whose short hostname matches
+    AIOS_KEYBOARD_HOSTNAME (if set) so the VM never selects a provider
+    it cannot actually invoke. When unset, any macOS host with VS Code
+    installed is eligible.
+    """
+
+    name = "vscode"
+    key_env = ""
+    default_model = "copilot"
+    rpm = 60
+    style = "keyboard"
+    catalog = [
+        {
+            "id": "copilot",
+            "display": "VS Code Copilot (Keyboard)",
+            "context": 0,
+            "description": "Forwards the message into VS Code Copilot Chat on this Mac.",
+        },
+    ]
+
+    def is_available(self) -> bool:
+        import platform, socket
+        if platform.system() != "Darwin":
+            return False
+        pin = os.getenv("AIOS_KEYBOARD_HOSTNAME", "").strip()
+        if pin:
+            host = socket.gethostname().split(".")[0].lower()
+            if host != pin.split(".")[0].lower():
+                return False
+        return os.path.exists("/Applications/Visual Studio Code.app")
+
+    def generate(self, messages, model=None, temperature=0.7, max_tokens=2048):
+        import subprocess, socket, sys as _sys
+
+        text = ""
+        for m in reversed(messages):
+            if m.get("role") == "user":
+                text = (m.get("content") or "").strip()
+                break
+        if not text:
+            return "[vscode-keyboard: empty message, nothing forwarded]"
+
+        # Cap to avoid pasting multi-MB payloads into the chat input
+        max_chars = int(os.getenv("AIOS_KEYBOARD_MAX_CHARS", "8000"))
+        if len(text) > max_chars:
+            text = text[:max_chars] + f"\n\n[truncated at {max_chars} chars]"
+
+        # scripts/send_to_vs.py lives at repo_root/scripts/send_to_vs.py
+        repo_root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+        script = os.path.join(repo_root, "scripts", "send_to_vs.py")
+        if not os.path.exists(script):
+            return f"[vscode-keyboard: send_to_vs.py not found at {script}]"
+
+        try:
+            proc = subprocess.run(
+                [_sys.executable, script, text, "--idle-seconds", "0"],
+                capture_output=True,
+                text=True,
+                timeout=30,
+            )
+        except subprocess.TimeoutExpired:
+            return "[vscode-keyboard: send timed out after 30s]"
+        if proc.returncode != 0:
+            err = (proc.stderr or "").strip().splitlines()
+            tail = err[-1] if err else f"rc={proc.returncode}"
+            return f"[vscode-keyboard: failed — {tail}]"
+
+        host = socket.gethostname().split(".")[0]
+        return f"[forwarded to VS Code Copilot @ {host} — reply will appear in the chat window]"
+
+
 # ── Provider Registry ───────────────────────────────────────
 
 PROVIDER_CLASSES: Dict[str, type] = {
@@ -534,6 +615,7 @@ PROVIDER_CLASSES: Dict[str, type] = {
     "openai": OpenAIProvider,
     "openrouter": OpenRouterProvider,
     "http": HTTPProvider,
+    "vscode": VSCodeKeyboardProvider,
 }
 
 # Singletons — instantiated on first access
