@@ -28,6 +28,30 @@ if str(ROOT) not in sys.path:
     sys.path.insert(0, str(ROOT))
 
 
+def _load_env_file() -> None:
+    """Best-effort load of .env → os.environ (only KEY=VAL lines, no shell)."""
+    import os
+    env_path = ROOT / ".env"
+    if not env_path.exists():
+        return
+    try:
+        for line in env_path.read_text().splitlines():
+            line = line.strip()
+            if not line or line.startswith("#") or "=" not in line:
+                continue
+            k, _, v = line.partition("=")
+            k = k.strip()
+            v = v.strip().strip('"').strip("'")
+            # Don't overwrite something explicitly set in the shell.
+            if k and k not in os.environ:
+                os.environ[k] = v
+    except Exception:
+        pass
+
+
+_load_env_file()
+
+
 def _ensure_table() -> None:
     from data.db import get_connection
     from contextlib import closing
@@ -99,6 +123,14 @@ def cmd_send(message: str, priority: str, source: str, mirror: bool) -> int:
         except Exception:
             pass
 
+    # macOS + phone alerts — single place that handles osascript banner,
+    # afplay audio, say fallback, terminal bell, and ntfy.sh phone push.
+    try:
+        from agent.services.alerts import fire_alerts
+        fire_alerts(message, priority, nid=nid, source=source)
+    except Exception:
+        pass
+
     print(f"ping#{nid} [{priority}] {message}")
     return 0
 
@@ -134,6 +166,45 @@ def cmd_read(nid: int) -> int:
     return 0
 
 
+def cmd_setup_phone() -> int:
+    """Generate a private ntfy.sh topic and write it to .env so pings
+    route to the phone. Prints phone-side instructions."""
+    import os
+    import secrets
+
+    env_path = ROOT / ".env"
+    existing = ""
+    if env_path.exists():
+        existing = env_path.read_text()
+
+    # Reuse existing topic if one is already set.
+    topic = os.environ.get("AIOS_NTFY_TOPIC", "").strip()
+    if not topic:
+        topic = f"aios-cade-{secrets.token_urlsafe(12).replace('_', '').replace('-', '').lower()[:16]}"
+        # Append to .env
+        with env_path.open("a") as f:
+            if existing and not existing.endswith("\n"):
+                f.write("\n")
+            f.write(f"\n# Phone notification via ntfy.sh (private topic)\n")
+            f.write(f"AIOS_NTFY_TOPIC={topic}\n")
+            f.write(f"AIOS_NTFY_SERVER=https://ntfy.sh\n")
+        print(f"Wrote AIOS_NTFY_TOPIC={topic} to .env")
+    else:
+        print(f"Existing topic in env: {topic}")
+
+    url = f"https://ntfy.sh/{topic}"
+    print()
+    print("Phone setup (iOS/Android):")
+    print("  1. Install 'ntfy' app from App Store / Google Play")
+    print("  2. Open app → 'Subscribe to topic'")
+    print(f"  3. Server: https://ntfy.sh   Topic: {topic}")
+    print(f"  4. Or scan the URL: {url}")
+    print()
+    print("After subscribing, run:  .venv/bin/python scripts/ping.py 'phone test' --priority high")
+    print("(ntfy only fires on high/urgent priority by design)")
+    return 0
+
+
 def main(argv: list[str] | None = None) -> int:
     p = argparse.ArgumentParser(description="Low-overhead ping to the AIOS dashboard.")
     p.add_argument("message", nargs="?", help="Message text.")
@@ -144,8 +215,12 @@ def main(argv: list[str] | None = None) -> int:
     p.add_argument("--unread", action="store_true")
     p.add_argument("--limit", type=int, default=15)
     p.add_argument("--read", type=int, help="Mark notification N as read.")
+    p.add_argument("--setup-phone", action="store_true",
+                   help="Generate a private ntfy.sh topic and print phone instructions.")
     args = p.parse_args(argv)
 
+    if args.setup_phone:
+        return cmd_setup_phone()
     if args.read is not None:
         return cmd_read(args.read)
     if args.list or args.unread:

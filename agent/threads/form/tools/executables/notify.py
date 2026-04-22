@@ -83,6 +83,14 @@ def _alert(params: dict) -> str:
         conn.commit()
         nid = cur.lastrowid
 
+    # Fire the same mac + phone alert layers scripts/ping.py uses.
+    # High/urgent pings chime on mac and (if configured) push to phone.
+    try:
+        from agent.services.alerts import fire_alerts
+        fire_alerts(message, priority, nid=nid, source="notify_tool")
+    except Exception:
+        pass
+
     return f"Alert sent (id={nid}, priority={priority}): {message}"
 
 
