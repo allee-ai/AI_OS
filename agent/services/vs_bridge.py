@@ -84,6 +84,16 @@ def forward(text: str, source: str = "unknown", submit: bool = True) -> bool:
         banner = _build_rollover_banner(today, last)
         text = banner + text
 
+    # Always prepend a one-line ritual reminder. Autopilot turns do NOT
+    # re-inject copilot-instructions.md, so this is the only reliable
+    # signal telling next-turn-me to run the ritual before acting. Tiny
+    # footprint (~80 chars) so it doesn't eat the real message.
+    ritual_line = (
+        "« ritual first: .venv/bin/python scripts/turn_start.py "
+        f'"{source}" — then act »\n\n'
+    )
+    text = ritual_line + text
+
     max_chars = int(os.getenv("AIOS_KEYBOARD_MAX_CHARS", "8000"))
     if len(text) > max_chars:
         text = text[:max_chars] + f"\n\n[truncated at {max_chars} chars]"
