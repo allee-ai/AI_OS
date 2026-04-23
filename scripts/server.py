@@ -47,6 +47,7 @@ from Feeds import api_router as feeds_router
 from agent.subconscious import subconscious_router
 from voice import router as voice_router
 from sensory import router as sensory_router, init_sensory_tables, init_salience_tables, init_consent_tables, seed_consent_from_taxonomy
+from agent.threads.field import router as field_router, init_field_tables
 
 # Thread routers
 from agent.threads.philosophy import router as philosophy_router
@@ -209,6 +210,9 @@ app.include_router(subconscious_router)
 # Sensory bus
 app.include_router(sensory_router)
 
+# Field thread (situational awareness)
+app.include_router(field_router)
+
 # Mobile remote-control API
 app.include_router(mobile_router)
 
@@ -319,6 +323,13 @@ async def startup_event():
             print(f"[Startup] Sensory bus initialized (consent: +{added} seeded, all disabled)")
         except Exception as e:
             print(f"[Startup] Sensory init skipped: {e}")
+
+        # Field thread tables (situational awareness)
+        try:
+            init_field_tables()
+            print("[Startup] Field thread initialized")
+        except Exception as e:
+            print(f"[Startup] Field init skipped: {e}")
 
         # Check Ollama connectivity
         import os

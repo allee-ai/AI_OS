@@ -66,6 +66,7 @@ from .log.adapter import LogThreadAdapter
 from .form.adapter import FormThreadAdapter
 from .philosophy.adapter import PhilosophyThreadAdapter
 from .reflex.adapter import ReflexThreadAdapter
+from .field.adapter import FieldThreadAdapter
 
 # LinkingCore is a utility, not a data thread
 from .linking_core.adapter import LinkingCoreThreadAdapter
@@ -84,6 +85,7 @@ def _register_threads():
         "form": FormThreadAdapter(),
         "philosophy": PhilosophyThreadAdapter(),
         "reflex": ReflexThreadAdapter(),
+        "field": FieldThreadAdapter(),
     }
 
 
