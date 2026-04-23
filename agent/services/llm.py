@@ -737,6 +737,32 @@ def generate(prompt: Optional[str] = None,
             messages.append({"role": "system", "content": system})
         messages.append({"role": "user", "content": prompt})
 
+    # ── Demo-mode kill-switch ─────────────────────────────────────────
+    # Two ways to disable real LLM calls:
+    #   1. AIOS_NO_LLM=1            (explicit override, any DB)
+    #   2. running on state_demo.db AND AIOS_DEMO_ALLOW_LLM is NOT set
+    # Visitors browsing the public iframe must not burn tokens; they get
+    # a canned reply explaining what they're looking at and how to run it.
+    _no_llm = os.getenv("AIOS_NO_LLM", "").lower() in ("1", "true", "yes")
+    if not _no_llm:
+        try:
+            from data.db import is_demo_mode
+            if is_demo_mode() and os.getenv("AIOS_DEMO_ALLOW_LLM", "").lower() not in ("1", "true", "yes"):
+                _no_llm = True
+        except Exception:
+            pass
+    if _no_llm:
+        return (
+            "[demo mode — LLM calls disabled]\n\n"
+            "You're looking at the real AI_OS interface in read-only demo mode. "
+            "All the threads, memory, and tools are wired to a sample database, "
+            "but generation is turned off so visitors don't burn tokens on the "
+            "owner's account.\n\n"
+            "To talk to the real one, run AI_OS locally:\n"
+            "  https://github.com/allee-ai/AI_OS"
+        )
+    # ──────────────────────────────────────────────────────────────────
+
     # Apply per-role overrides when caller didn't pin provider/model.
     if role and (provider is None or model is None):
         try:

@@ -179,9 +179,22 @@ db_mode_router = APIRouter(prefix="/api/db-mode", tags=["db-mode"])
 
 @db_mode_router.get("/mode")
 async def get_mode():
-    """Get current database mode."""
-    mode = "demo" if is_demo_mode() else "personal"
-    return {"mode": mode, "database": str(get_db_path().name)}
+    """Get current database mode + whether LLM calls are blocked."""
+    import os
+    no_llm = os.getenv("AIOS_NO_LLM", "").lower() in ("1", "true", "yes")
+    allow = os.getenv("AIOS_DEMO_ALLOW_LLM", "").lower() in ("1", "true", "yes")
+    demo = is_demo_mode()
+    llm_blocked = no_llm or (demo and not allow)
+    return {
+        "mode": "demo" if demo else "personal",
+        "database": str(get_db_path().name),
+        "llm_blocked": llm_blocked,
+        "reason": (
+            "AIOS_NO_LLM env override" if no_llm
+            else "demo DB + AIOS_DEMO_ALLOW_LLM not set" if llm_blocked
+            else None
+        ),
+    }
 
 @db_mode_router.post("/mode/{new_mode}")
 async def switch_mode(new_mode: str):
