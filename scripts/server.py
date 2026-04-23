@@ -45,7 +45,7 @@ from agent.services.mobile_api import router as mobile_router
 from Feeds import api_router as feeds_router
 from agent.subconscious import subconscious_router
 from voice import router as voice_router
-from sensory import router as sensory_router, init_sensory_tables, init_salience_tables
+from sensory import router as sensory_router, init_sensory_tables, init_salience_tables, init_consent_tables, seed_consent_from_taxonomy
 
 # Thread routers
 from agent.threads.philosophy import router as philosophy_router
@@ -253,7 +253,9 @@ async def startup_event():
         try:
             init_sensory_tables()
             init_salience_tables()
-            print("[Startup] Sensory bus initialized")
+            init_consent_tables()
+            added = seed_consent_from_taxonomy()
+            print(f"[Startup] Sensory bus initialized (consent: +{added} seeded, all disabled)")
         except Exception as e:
             print(f"[Startup] Sensory init skipped: {e}")
 

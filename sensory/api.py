@@ -18,6 +18,13 @@ from sensory.salience import (
     recent_dropped,
     score_event,
 )
+from sensory.consent import (
+    list_consent,
+    set_consent,
+    recent_blocked,
+    recent_consent_log,
+    seed_consent_from_taxonomy,
+)
 
 router = APIRouter(prefix="/api/sensory", tags=["sensory"])
 
@@ -76,6 +83,47 @@ async def salience_config() -> dict:
 async def update_salience_config(cfg: Dict[str, Any]) -> dict:
     save_salience_config(cfg)
     return {"saved": True, "config": get_salience_config()}
+
+# ---- Consent endpoints (mechanism enforcing trust.mechanisms_must_match_trust)
+
+class ConsentRequest(BaseModel):
+    source: str
+    kind: str
+    enabled: bool
+    notes: str = ""
+
+
+@router.get("/consent")
+async def consent_list(source: Optional[str] = None) -> dict:
+    rows = list_consent(source=source)
+    enabled = sum(1 for r in rows if r["enabled"])
+    return {"count": len(rows), "enabled": enabled, "consent": rows}
+
+
+@router.post("/consent")
+async def consent_set(req: ConsentRequest) -> dict:
+    result = set_consent(req.source, req.kind, req.enabled, actor="http", notes=req.notes)
+    return {"ok": True, **result}
+
+
+@router.post("/consent/seed")
+async def consent_seed() -> dict:
+    """Seed consent rows for all taxonomy kinds (all disabled). Idempotent."""
+    added = seed_consent_from_taxonomy()
+    return {"ok": True, "added": added}
+
+
+@router.get("/consent/log")
+async def consent_log(limit: int = 100) -> dict:
+    rows = recent_consent_log(limit=limit)
+    return {"count": len(rows), "log": rows}
+
+
+@router.get("/blocked")
+async def blocked(limit: int = 50, source: Optional[str] = None) -> dict:
+    rows = recent_blocked(limit=limit, source=source)
+    return {"count": len(rows), "blocked": rows}
+
 
 
 @router.get("/dropped")

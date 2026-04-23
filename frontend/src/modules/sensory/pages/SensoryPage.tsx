@@ -34,7 +34,37 @@ interface SalienceConfig {
   always_drop_contains: string[]
 }
 
-type Tab = 'events' | 'dropped' | 'config'
+interface ConsentRow {
+  source: string
+  kind: string
+  enabled: number
+  enabled_at?: string
+  enabled_by?: string
+  notes?: string
+  updated_at: string
+}
+
+interface ConsentLogRow {
+  id: number
+  source: string
+  kind: string
+  action: string
+  actor?: string
+  notes?: string
+  created_at: string
+}
+
+interface BlockedRow {
+  id: number
+  source: string
+  kind: string
+  text: string
+  confidence: number
+  reason: string
+  created_at: string
+}
+
+type Tab = 'events' | 'dropped' | 'consent' | 'config'
 
 /* ── API ── */
 async function fetchEvents(source?: string): Promise<SensoryEvent[]> {
@@ -49,6 +79,31 @@ async function fetchStats(): Promise<Record<string, number>> {
   const r = await fetch('/api/sensory/stats')
   const d = await r.json()
   return d.counts_by_source || {}
+}
+
+async function fetchConsent(): Promise<{ consent: ConsentRow[]; enabled: number; count: number }> {
+  const r = await fetch('/api/sensory/consent')
+  return await r.json()
+}
+
+async function setConsent(source: string, kind: string, enabled: boolean, notes = ''): Promise<void> {
+  await fetch('/api/sensory/consent', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ source, kind, enabled, notes }),
+  })
+}
+
+async function fetchConsentLog(): Promise<ConsentLogRow[]> {
+  const r = await fetch('/api/sensory/consent/log?limit=50')
+  const d = await r.json()
+  return d.log || []
+}
+
+async function fetchBlocked(): Promise<BlockedRow[]> {
+  const r = await fetch('/api/sensory/blocked?limit=50')
+  const d = await r.json()
+  return d.blocked || []
 }
 
 async function fetchDropped(source?: string): Promise<DroppedEvent[]> {
@@ -82,7 +137,10 @@ async function scoreTest(source: string, kind: string, text: string, confidence:
 }
 
 /* ── Helpers ── */
-function timeAgo(iso: string): string {
+function consent, setConsentRows] = useState<ConsentRow[]>([])
+  const [consentLog, setConsentLog] = useState<ConsentLogRow[]>([])
+  const [blocked, setBlocked] = useState<BlockedRow[]>([])
+  const [timeAgo(iso: string): string {
   const then = new Date(iso).getTime()
   const diff = (Date.now() - then) / 1000
   if (diff < 60) return `${Math.floor(diff)}s ago`
@@ -99,7 +157,12 @@ const SOURCE_COLORS: Record<string, string> = {
   system: '#94a3b8',
   ambient: '#2dd4bf',
 }
-
+sent') {
+        const [c, log, bl] = await Promise.all([fetchConsent(), fetchConsentLog(), fetchBlocked()])
+        setConsentRows(c.consent)
+        setConsentLog(log)
+        setBlocked(bl)
+      } else if (tab === 'con
 /* ── Page ── */
 export function SensoryPage() {
   const [tab, setTab] = useState<Tab>('events')
@@ -184,21 +247,21 @@ export function SensoryPage() {
           >
             {src}: {n}
           </button>
-        ))}
-        {sourceFilter && (
-          <button onClick={() => setSourceFilter('')} style={{ background: 'transparent', color: '#94a3b8', border: 'none', cursor: 'pointer' }}>clear filter</button>
-        )}
-      </div>
-
-      {/* Tabs */}
-      <div style={{ display: 'flex', gap: 4, borderBottom: '1px solid #1f2937', marginBottom: 16 }}>
-        {(['events', 'dropped', 'config'] as Tab[]).map(t => (
+        ))}sent', 'config'] as Tab[]).map(t => (
           <button
             key={t}
             onClick={() => setTab(t)}
             style={{
               background: tab === t ? '#1f2937' : 'transparent',
               color: tab === t ? '#fff' : '#94a3b8',
+              border: 'none',
+              borderBottom: tab === t ? '2px solid #60a5fa' : '2px solid transparent',
+              padding: '8px 16px',
+              cursor: 'pointer',
+              fontSize: 14,
+            }}
+          >
+            {t === 'events' ? 'Events' : t === 'dropped' ? 'Dropped (salience)' : t === 'consent' ? 'Consent 🔒
               border: 'none',
               borderBottom: tab === t ? '2px solid #60a5fa' : '2px solid transparent',
               padding: '8px 16px',
@@ -281,6 +344,90 @@ export function SensoryPage() {
               </tbody>
             </table>
           )}
+        </div>
+      )}
+
+      {/* Consent tab */}
+      {tab === 'consent' && (
+        <div>
+          <p style={{ color: '#94a3b8', fontSize: 13, marginBottom: 12 }}>
+            Every (source, kind) is <strong style={{ color: '#f87171' }}>OFF by default</strong>. Writes without consent never touch <code>sensory_events</code> — they go to the blocked log below with reason <code>no_consent</code>. Flips are audit-logged.
+          </p>
+
+          {/* Grid of toggles grouped by source */}
+          {Object.entries(
+            consent.reduce<Record<string, ConsentRow[]>>((acc, r) => {
+              (acc[r.source] ||= []).push(r)
+              return acc
+            }, {})
+          ).map(([src, rows]) => (
+            <div key={src} style={{ marginBottom: 16 }}>
+              <h3 style={{ color: SOURCE_COLORS[src] || '#e5e7eb', marginBottom: 8, fontSize: 15 }}>
+                {src} <span style={{ color: '#64748b', fontSize: 12, fontWeight: 400 }}>
+                  ({rows.filter(r => r.enabled).length}/{rows.length} enabled)
+                </span>
+              </h3>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 8 }}>
+                {rows.map(r => (
+                  <label
+                    key={`${r.source}.${r.kind}`}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 8,
+                      padding: 10,
+                      background: r.enabled ? '#064e3b' : '#111827',
+                      border: `1px solid ${r.enabled ? '#10b981' : '#1f2937'}`,
+                      borderRadius: 6,
+                      cursor: 'pointer',
+                      fontSize: 13,
+                    }}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={!!r.enabled}
+                      onChange={async (e) => {
+                        await setConsent(r.source, r.kind, e.target.checked, 'toggled from dashboard')
+                        await refresh()
+                      }}
+                    />
+                    <span style={{ flex: 1, fontFamily: 'monospace' }}>{r.kind}</span>
+                    {r.enabled_at && r.enabled ? (
+                      <span style={{ fontSize: 10, color: '#6ee7b7' }}>on since {timeAgo(r.enabled_at)}</span>
+                    ) : null}
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16, marginTop: 24 }}>
+            <div>
+              <h3 style={{ marginTop: 0, fontSize: 14 }}>Audit log (last 50)</h3>
+              <div style={{ maxHeight: 300, overflowY: 'auto', background: '#0f172a', borderRadius: 6, padding: 8, fontSize: 11, fontFamily: 'monospace' }}>
+                {consentLog.map(l => (
+                  <div key={l.id} style={{ padding: '2px 0', color: l.action === 'enable' ? '#6ee7b7' : l.action === 'disable' ? '#fca5a5' : '#64748b' }}>
+                    {timeAgo(l.created_at).padEnd(10)} {l.action.toUpperCase().padEnd(8)} {l.source}/{l.kind} by {l.actor || '?'}
+                  </div>
+                ))}
+              </div>
+            </div>
+            <div>
+              <h3 style={{ marginTop: 0, fontSize: 14 }}>Blocked (no_consent, last 50)</h3>
+              <div style={{ maxHeight: 300, overflowY: 'auto', background: '#0f172a', borderRadius: 6, padding: 8, fontSize: 11 }}>
+                {blocked.length === 0 ? (
+                  <div style={{ color: '#64748b', padding: 8 }}>Nothing tried to write without consent. Good.</div>
+                ) : blocked.map(b => (
+                  <div key={b.id} style={{ padding: '4px 0', borderBottom: '1px solid #1f2937' }}>
+                    <span style={{ color: SOURCE_COLORS[b.source] || '#fff' }}>{b.source}</span>
+                    <span style={{ color: '#94a3b8' }}>/{b.kind}</span>
+                    <span style={{ color: '#64748b', marginLeft: 8 }}>{timeAgo(b.created_at)}</span>
+                    <div style={{ color: '#e5e7eb', marginTop: 2, fontFamily: 'monospace' }}>{b.text}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       )}
 

@@ -70,6 +70,17 @@ def record_event(
     kind = (kind or "unknown").strip().lower()[:40]
     confidence = max(0.0, min(1.0, float(confidence)))
 
+    # Consent gate FIRST (unless force=True). No consent → never touches sensory_events.
+    if not force:
+        try:
+            from sensory.consent import is_allowed, record_blocked
+            if not is_allowed(source, kind):
+                record_blocked(source, kind, text, confidence, "no_consent", meta)
+                return None
+        except Exception:
+            # Consent module failing is a closed-fail: block rather than leak.
+            return None
+
     # Salience gate (unless force=True)
     if not force:
         try:
