@@ -77,6 +77,9 @@ PUBLIC_PATHS = {
     # No data is exposed here — the HTML is a static shell.
     "/api/mobile/",
     "/api/mobile",
+    "/api/mobile/voice/",
+    "/api/mobile/voice",
+    "/api/mobile/voice/health",
 }
 
 PUBLIC_PREFIXES = (

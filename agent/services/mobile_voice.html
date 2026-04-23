@@ -1,0 +1,370 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<title>AI_OS · Voice</title>
+<style>
+  :root {
+    --bg: #0b0d10;
+    --fg: #e6e8eb;
+    --dim: #7a828b;
+    --accent: #5eead4;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --card: #14171c;
+    --border: #1f242b;
+  }
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    margin: 0; padding: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.45 -apple-system, system-ui, sans-serif;
+    min-height: 100vh;
+  }
+  .wrap { max-width: 520px; margin: 0 auto; padding: 16px 14px 120px; }
+  header {
+    display: flex; align-items: baseline; gap: 10px; padding-bottom: 10px;
+    border-bottom: 1px solid var(--border); margin-bottom: 14px;
+  }
+  header h1 {
+    margin: 0; font-size: 18px; font-weight: 600; letter-spacing: 0.01em;
+  }
+  header .sub { color: var(--dim); font-size: 12px; }
+  .card {
+    background: var(--card); border: 1px solid var(--border); border-radius: 12px;
+    padding: 14px; margin-bottom: 12px;
+  }
+  .row { display: flex; gap: 8px; align-items: center; }
+  .muted { color: var(--dim); font-size: 12px; }
+  .transcript {
+    min-height: 60px; white-space: pre-wrap; font-size: 15px;
+    padding: 10px; border-radius: 8px; background: #0f1318; border: 1px solid var(--border);
+  }
+  .transcript.empty { color: var(--dim); font-style: italic; }
+  button {
+    font: inherit; color: var(--fg); background: #1c2229; border: 1px solid var(--border);
+    border-radius: 10px; padding: 12px 14px; min-height: 44px; cursor: pointer;
+  }
+  button:active { background: #252c34; }
+  button.primary { background: var(--accent); color: #07211b; border-color: var(--accent); font-weight: 600; }
+  button.primary:disabled { background: #2a3238; color: var(--dim); border-color: var(--border); }
+  button.ghost { background: transparent; }
+  button.warn { background: var(--warn); color: #1a1206; border-color: var(--warn); font-weight: 600; }
+  .big-mic {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    width: 100%; aspect-ratio: 1.4 / 1; max-height: 220px;
+    border-radius: 18px; font-size: 18px; gap: 8px;
+    background: #1c2229; border: 1px solid var(--border);
+    transition: all .15s;
+  }
+  .big-mic.recording { background: #2a1212; border-color: var(--err); color: #fecaca; }
+  .big-mic .dot {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--dim);
+  }
+  .big-mic.recording .dot {
+    background: var(--err); animation: pulse 1s infinite;
+  }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.4; } }
+  .status { color: var(--dim); font-size: 12px; min-height: 18px; }
+  .messages { display: flex; flex-direction: column; gap: 8px; }
+  .msg {
+    padding: 10px 12px; border-radius: 10px; background: #0f1318;
+    border: 1px solid var(--border);
+  }
+  .msg .ts { color: var(--dim); font-size: 11px; margin-top: 4px; }
+  .msg.playing { border-color: var(--accent); }
+  .settings { font-size: 13px; color: var(--dim); }
+  .settings input {
+    width: 100%; padding: 8px 10px; font: inherit; color: var(--fg);
+    background: #0f1318; border: 1px solid var(--border); border-radius: 8px;
+    margin-top: 4px;
+  }
+  .actions { display: flex; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+  .actions button { flex: 1 1 auto; }
+  label { color: var(--dim); font-size: 12px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>AI_OS · voice</h1>
+    <span class="sub" id="health">—</span>
+  </header>
+
+  <div class="card">
+    <div id="micBtn" class="big-mic">
+      <div class="dot"></div>
+      <div id="micLabel">tap &amp; hold to talk</div>
+      <div class="muted" id="micSub">or tap to start / stop</div>
+    </div>
+    <div class="status" id="status"></div>
+  </div>
+
+  <div class="card">
+    <label>transcript</label>
+    <div id="transcript" class="transcript empty">nothing yet</div>
+    <div class="actions">
+      <button class="primary" id="sendBtn" disabled>send → vs code</button>
+      <button class="ghost" id="clearBtn">clear</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="justify-content: space-between;">
+      <label>inbox (replies from mac)</label>
+      <span class="muted" id="inboxCount">0</span>
+    </div>
+    <div id="messages" class="messages" style="margin-top: 8px;"></div>
+  </div>
+
+  <details class="card settings">
+    <summary style="cursor: pointer;">settings</summary>
+    <div style="margin-top: 10px;">
+      <label>X-Device-Token (if required)</label>
+      <input id="tokenIn" placeholder="leave blank if AIOS_MOBILE_TOKEN is unset">
+    </div>
+    <div style="margin-top: 10px;">
+      <label>poll interval (ms)</label>
+      <input id="pollIn" type="number" value="2500">
+    </div>
+    <div class="actions">
+      <button id="saveBtn">save</button>
+    </div>
+  </details>
+</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const LS = {
+    get: k => localStorage.getItem(k),
+    set: (k,v) => localStorage.setItem(k,v),
+  };
+
+  // ── Auth: accept ?key= from bookmark, persist, attach Bearer to all fetches
+  (function initAuth() {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const key = params.get('key');
+      if (key) {
+        LS.set('aios_api_token', key.trim());
+        params.delete('key');
+        const qs = params.toString();
+        const clean = window.location.pathname + (qs ? '?' + qs : '') + window.location.hash;
+        window.history.replaceState({}, '', clean);
+      }
+    } catch (e) {}
+    const tok = LS.get('aios_api_token');
+    if (tok) {
+      const nativeFetch = window.fetch.bind(window);
+      window.fetch = (input, init) => {
+        const headers = new Headers((init && init.headers) || {});
+        if (!headers.has('Authorization')) headers.set('Authorization', 'Bearer ' + tok);
+        return nativeFetch(input, Object.assign({}, init || {}, { headers }));
+      };
+    }
+  })();
+
+  let token = LS.get('aios_token') || '';
+  let pollMs = parseInt(LS.get('aios_poll') || '2500', 10);
+  $('tokenIn').value = token;
+  $('pollIn').value = pollMs;
+
+  $('saveBtn').onclick = () => {
+    token = $('tokenIn').value.trim();
+    pollMs = Math.max(1000, parseInt($('pollIn').value, 10) || 2500);
+    LS.set('aios_token', token);
+    LS.set('aios_poll', String(pollMs));
+    setStatus('settings saved');
+  };
+
+  function headers(extra={}) {
+    const h = { ...extra };
+    if (token) h['X-Device-Token'] = token;
+    return h;
+  }
+  function setStatus(s) { $('status').textContent = s; }
+
+  // ── Health check ─────────────────────────────────────────────────────────
+  fetch('/api/mobile/voice/health').then(r => r.json()).then(j => {
+    $('health').textContent = 'whisper=' + j.whisper_model + (j.token_required ? ' · token required' : '');
+  }).catch(() => $('health').textContent = 'offline');
+
+  // ── Recording ────────────────────────────────────────────────────────────
+  let mediaRec = null;
+  let chunks = [];
+  let recording = false;
+
+  async function startRec() {
+    if (recording) return;
+    setStatus('requesting mic…');
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mime = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+        ? 'audio/webm;codecs=opus'
+        : (MediaRecorder.isTypeSupported('audio/mp4') ? 'audio/mp4' : '');
+      mediaRec = mime ? new MediaRecorder(stream, { mimeType: mime })
+                      : new MediaRecorder(stream);
+      chunks = [];
+      mediaRec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); };
+      mediaRec.onstop = async () => {
+        stream.getTracks().forEach(t => t.stop());
+        const blob = new Blob(chunks, { type: mediaRec.mimeType || 'audio/webm' });
+        await transcribe(blob);
+      };
+      mediaRec.start();
+      recording = true;
+      $('micBtn').classList.add('recording');
+      $('micLabel').textContent = 'recording… tap to stop';
+      setStatus('recording');
+    } catch (e) {
+      setStatus('mic permission denied: ' + e.message);
+    }
+  }
+
+  function stopRec() {
+    if (!recording || !mediaRec) return;
+    recording = false;
+    $('micBtn').classList.remove('recording');
+    $('micLabel').textContent = 'transcribing…';
+    setStatus('transcribing');
+    try { mediaRec.stop(); } catch {}
+  }
+
+  async function transcribe(blob) {
+    const ext = (blob.type.includes('mp4') ? 'm4a'
+              : blob.type.includes('webm') ? 'webm' : 'ogg');
+    const fd = new FormData();
+    fd.append('audio', blob, 'rec.' + ext);
+    try {
+      const r = await fetch('/api/mobile/voice/transcribe', {
+        method: 'POST', body: fd, headers: headers(),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        setStatus('transcribe error: ' + (j.detail || r.status));
+        $('micLabel').textContent = 'tap to talk again';
+        return;
+      }
+      const t = (j.transcript || '').trim();
+      if (!t) {
+        setStatus('empty transcript');
+        $('transcript').textContent = 'nothing heard';
+        $('transcript').classList.add('empty');
+      } else {
+        $('transcript').textContent = t;
+        $('transcript').classList.remove('empty');
+        $('sendBtn').disabled = false;
+        setStatus('ready — tap send');
+      }
+    } catch (e) {
+      setStatus('transcribe failed: ' + e.message);
+    } finally {
+      $('micLabel').textContent = 'tap to talk';
+    }
+  }
+
+  // toggle on tap
+  $('micBtn').addEventListener('click', () => {
+    if (recording) stopRec(); else startRec();
+  });
+
+  $('clearBtn').onclick = () => {
+    $('transcript').textContent = 'nothing yet';
+    $('transcript').classList.add('empty');
+    $('sendBtn').disabled = true;
+    setStatus('');
+  };
+
+  // ── Send to VS Code ──────────────────────────────────────────────────────
+  $('sendBtn').onclick = async () => {
+    const text = $('transcript').textContent.trim();
+    if (!text) return;
+    $('sendBtn').disabled = true;
+    setStatus('forwarding to vs code…');
+    try {
+      const r = await fetch('/api/mobile/voice/send-to-vscode', {
+        method: 'POST',
+        headers: headers({ 'Content-Type': 'application/json' }),
+        body: JSON.stringify({ text, also_ping: false }),
+      });
+      const j = await r.json();
+      if (!r.ok) {
+        setStatus('send error: ' + (j.detail || r.status));
+        $('sendBtn').disabled = false;
+      } else {
+        setStatus(j.forwarded ? 'sent ✓ waiting for reply…' : 'sent (keyboard bridge down)');
+      }
+    } catch (e) {
+      setStatus('send failed: ' + e.message);
+      $('sendBtn').disabled = false;
+    }
+  };
+
+  // ── Inbox polling ────────────────────────────────────────────────────────
+  let lastTs = 0;
+  const seen = new Set();
+  const msgsEl = $('messages');
+
+  async function pollInbox() {
+    try {
+      const r = await fetch('/api/mobile/voice/inbox?after=' + lastTs, {
+        headers: headers(),
+      });
+      if (!r.ok) return;
+      const j = await r.json();
+      lastTs = j.latest_ts || lastTs;
+      $('inboxCount').textContent = j.count || 0;
+      for (const m of (j.messages || [])) {
+        if (seen.has(m.id)) continue;
+        seen.add(m.id);
+        renderMsg(m);
+        if (m.audio_url) playAudio(m);
+      }
+    } catch {}
+  }
+
+  function renderMsg(m) {
+    const el = document.createElement('div');
+    el.className = 'msg';
+    el.id = 'msg-' + m.id;
+    const when = new Date(m.created_at * 1000).toLocaleTimeString();
+    el.innerHTML = '<div></div><div class="ts"></div>';
+    el.children[0].textContent = m.text;
+    el.children[1].textContent = when + (m.audio_url ? ' · audio' : '');
+    if (m.audio_url) {
+      const btn = document.createElement('button');
+      btn.className = 'ghost';
+      btn.textContent = 'replay';
+      btn.style.marginTop = '8px';
+      btn.onclick = () => playAudio(m);
+      el.appendChild(btn);
+    }
+    msgsEl.prepend(el);
+  }
+
+  let currentAudio = null;
+  function playAudio(m) {
+    try {
+      if (currentAudio) { currentAudio.pause(); }
+      const a = new Audio(m.audio_url);
+      currentAudio = a;
+      const el = document.getElementById('msg-' + m.id);
+      if (el) el.classList.add('playing');
+      a.onended = () => { if (el) el.classList.remove('playing'); };
+      a.play().catch(e => {
+        // iOS requires user gesture; audio will be available via replay button
+        setStatus('tap replay on the message to play audio');
+        if (el) el.classList.remove('playing');
+      });
+    } catch {}
+  }
+
+  setInterval(pollInbox, pollMs);
+  pollInbox();
+})();
+</script>
+</body>
+</html>
