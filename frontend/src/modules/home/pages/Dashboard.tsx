@@ -87,6 +87,7 @@ export const Dashboard = () => {
 
       <section className="dashboard-section">
         <Link to="/subconscious" className="dev-link">🧠 subconscious</Link>
+        <Link to="/sensory" className="dev-link">👁 sensory</Link>
         <Link to="/training" className="dev-link">🔥 training</Link>
         <Link to="/eval" className="dev-link">🎯 eval</Link>
         <Link to="/experiments" className="dev-link">🧪 experiments</Link>
