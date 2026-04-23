@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { BASE_URL } from '../../../config/api';
 import './FeedViewer.css';
+import ConnectPanel from './ConnectPanel';
 
 const API_BASE = BASE_URL;
 
@@ -308,6 +309,7 @@ export default function GithubViewer() {
 
   return (
     <div className="feed-viewer github-viewer">
+      <ConnectPanel feed="github" onChanged={checkConnection} />
       {/* User badge */}
       {username && (
         <div className="github-user-badge">

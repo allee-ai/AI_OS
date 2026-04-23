@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import './FeedViewer.css';
+import ConnectPanel from './ConnectPanel';
 
 interface Message {
   id: string;
@@ -98,6 +99,7 @@ export default function DiscordViewer() {
 
   return (
     <div className="feed-viewer discord-viewer">
+      <ConnectPanel feed="discord" />
       <div className="viewer-tabs">
         <button 
           className={`tab ${viewMode === 'messages' ? 'active' : ''}`}

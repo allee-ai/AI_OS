@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { BASE_URL } from '../../../config/api';
 import './FeedViewer.css';
+import ConnectPanel from './ConnectPanel';
 
 const API_BASE = BASE_URL;
 
@@ -287,6 +288,7 @@ export default function EmailViewer() {
 
   return (
     <div className="feed-viewer email-viewer">
+      <ConnectPanel feed="email" />
       {/* Provider Tabs */}
       <div className="provider-tabs">
         {PROVIDERS.map((provider) => (

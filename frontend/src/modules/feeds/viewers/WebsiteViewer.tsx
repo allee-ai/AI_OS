@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { BASE_URL } from '../../../config/api';
 import './FeedViewer.css';
+import ConnectPanel from './ConnectPanel';
 
 const API_BASE = BASE_URL;
 
@@ -59,6 +60,7 @@ export default function WebsiteViewer() {
 
   return (
     <div className="feed-viewer website-viewer">
+      <ConnectPanel feed="website" />
       <div className="website-toolbar">
         <button className="website-btn" onClick={reload} title="Reload">↻</button>
         <input
