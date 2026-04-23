@@ -1640,3 +1640,85 @@ async def promote_goal_now(goal_id: int):
         if hasattr(e, "status_code"):
             raise
         raise HTTPException(status_code=500, detail=str(e))
+
+
+# ═════════════════════════════════════════════════════════════
+# Trace stream — watch the subconscious think (goal #26)
+# ═════════════════════════════════════════════════════════════
+
+import json as _json
+import time as _time
+from typing import Iterator as _Iterator
+from fastapi.responses import StreamingResponse as _StreamingResponse
+from . import trace_bus as _trace_bus
+
+
+def _sse_pack(event: dict) -> str:
+    """Render one dict as a Server-Sent Event frame."""
+    return (
+        f"id: {event['seq']}\n"
+        f"event: {event.get('type', 'event')}\n"
+        f"data: {_json.dumps(event, default=str)}\n\n"
+    )
+
+
+@router.get("/stream")
+def trace_stream(since: int = Query(0, ge=0), idle_ping_s: float = 15.0) -> _StreamingResponse:
+    """
+    Server-Sent Events stream of every subconscious trace event.
+
+    Clients can pass ?since=<seq> on reconnect to resume without losing
+    anything still in the ring buffer.
+    """
+    def gen() -> _Iterator[str]:
+        cursor = since
+        for ev in _trace_bus.events_since(cursor):
+            cursor = ev["seq"]
+            yield _sse_pack(ev)
+        yield f": caught-up-at-seq-{cursor}\n\n"
+        last_activity = _time.time()
+        while True:
+            new = _trace_bus.events_since(cursor, limit=200)
+            if new:
+                for ev in new:
+                    cursor = ev["seq"]
+                    yield _sse_pack(ev)
+                last_activity = _time.time()
+            else:
+                if _time.time() - last_activity >= idle_ping_s:
+                    yield f": idle-at-seq-{cursor}\n\n"
+                    last_activity = _time.time()
+                _time.sleep(0.25)
+
+    return _StreamingResponse(
+        gen(),
+        media_type="text/event-stream",
+        headers={
+            "Cache-Control": "no-cache",
+            "X-Accel-Buffering": "no",
+            "Connection": "keep-alive",
+        },
+    )
+
+
+@router.get("/events")
+def trace_events(since: int = Query(0, ge=0), limit: int = Query(500, ge=1, le=2000)):
+    """One-shot JSON fetch of trace events since a given seq."""
+    evs = _trace_bus.events_since(since, limit=limit)
+    return {
+        "count": len(evs),
+        "latest_seq": _trace_bus.latest_seq(),
+        "events": evs,
+    }
+
+
+@router.get("/trace_stats")
+def trace_stats_endpoint():
+    return _trace_bus.stats()
+
+
+@router.post("/trace_ping")
+def trace_ping(message: Optional[str] = None):
+    """Publish a synthetic event for smoke-testing the stream."""
+    seq = _trace_bus.publish("ping", message=message or "hello from /trace_ping")
+    return {"published": True, "seq": seq}

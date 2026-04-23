@@ -153,6 +153,8 @@ class Subconscious:
             Dict mapping source_name → relevance_score (0-10)
             Includes both threads (identity, log, ...) and modules (chat, workspace)
         """
+        from agent.subconscious import trace_bus  # local import to avoid cycles
+        trace_bus.publish("score_start", query=query[:200] if query else "")
         linking_core = self._get_linking_core()
         if linking_core and query:
             scores = linking_core.score_threads(query)
@@ -172,6 +174,7 @@ class Subconscious:
             for mod in MODULES:
                 scores[mod] = 4.0
         
+        trace_bus.publish("score_done", scores={k: round(v, 2) for k, v in scores.items()})
         return scores
     
     def _score_modules(self, query: str) -> Dict[str, float]:
@@ -248,6 +251,14 @@ class Subconscious:
         Returns:
             Formatted STATE block string
         """
+        from agent.subconscious import trace_bus
+        import time as _t
+        _build_start = _t.perf_counter()
+        trace_bus.publish(
+            "build_state_start",
+            query=query[:200] if query else "",
+            source_count=len(scores),
+        )
         # Order ALL sources (threads + modules) by score, highest first
         ordered_sources: List[Tuple[str, float]] = sorted(
             scores.items(),
@@ -257,6 +268,10 @@ class Subconscious:
 
         # Allocate token budgets proportional to scores
         budgets = allocate_budgets(scores)
+        trace_bus.publish(
+            "budgets",
+            budgets={k: int(v) for k, v in budgets.items()},
+        )
         
         lines = ["== STATE =="]
         
@@ -313,6 +328,12 @@ class Subconscious:
         self._last_context_time = datetime.now(timezone.utc).isoformat()
         self._last_query = query
         
+        trace_bus.publish(
+            "build_state_done",
+            duration_ms=int((_t.perf_counter() - _build_start) * 1000),
+            chars=sum(len(s) for s in lines),
+            line_count=len(lines),
+        )
         return "\n".join(lines)
     
     # ------------------------------------------------------------------
@@ -324,8 +345,11 @@ class Subconscious:
         budget: int = 200,
     ) -> List[str]:
         """Build a STATE section for a scored thread via its adapter."""
+        from agent.subconscious import trace_bus
+        import time as _t
         adapter = self._get_adapter(thread_name)
         if not adapter:
+            trace_bus.publish("adapter_missing", source=thread_name, kind="thread")
             return []
         
         # Apply score-allocated budget to adapter's token budgets
@@ -336,6 +360,15 @@ class Subconscious:
                 3: budget,
             }
         
+        _t0 = _t.perf_counter()
+        trace_bus.publish(
+            "adapter_call",
+            source=thread_name,
+            kind="thread",
+            level=level,
+            threshold=round(threshold, 2),
+            budget=budget,
+        )
         try:
             result = adapter.introspect(
                 context_level=level, query=query, threshold=threshold
@@ -359,12 +392,21 @@ class Subconscious:
                 result_dict = result.to_dict()
                 facts = result_dict.get("facts", [])
             except Exception as e:
+                trace_bus.publish("adapter_error", source=thread_name, kind="thread", error=str(e)[:200])
                 print(f"⚠️ {thread_name} introspect failed: {e}")
                 return []
         except Exception as e:
+            trace_bus.publish("adapter_error", source=thread_name, kind="thread", error=str(e)[:200])
             print(f"⚠️ {thread_name} introspect failed: {e}")
             return []
         
+        trace_bus.publish(
+            "adapter_result",
+            source=thread_name,
+            kind="thread",
+            fact_count=len(facts),
+            duration_ms=int((_t.perf_counter() - _t0) * 1000),
+        )
         if not facts:
             return []
         

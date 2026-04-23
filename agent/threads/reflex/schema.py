@@ -435,7 +435,9 @@ __all__ = [
 # try/except and log silently on failure.
 
 META_THOUGHT_KINDS = ("rejected", "expected", "unknown", "compression")
-META_THOUGHT_SOURCES = ("model", "user_correction", "seed", "system")
+# "copilot" = notes left by the VS Code agent (Claude) across turns.
+# First-class source so these are distinguishable from model/user/system thoughts.
+META_THOUGHT_SOURCES = ("model", "user_correction", "seed", "system", "copilot")
 
 
 def init_meta_thoughts_table(conn: Optional[sqlite3.Connection] = None) -> None:
