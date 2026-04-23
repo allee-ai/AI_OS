@@ -421,6 +421,16 @@ async def health_check():
     return {"status": "healthy", "service": settings.app_name}
 
 
+@app.get("/api/morning-brief")
+async def morning_brief():
+    """JARVIS-style morning briefing composed from STATE threads."""
+    try:
+        from scripts.morning_brief import compose_brief
+        return compose_brief()
+    except Exception as e:
+        return {"error": str(e), "text": "Morning brief unavailable."}
+
+
 # Root endpoint only when frontend not built (dev mode uses Vite proxy)
 if not _frontend_dist.exists():
     @app.get("/")
