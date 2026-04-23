@@ -418,8 +418,10 @@ async def shutdown_event():
 # =============================================================================
 
 @app.get("/health")
+@app.get("/api/health")
 async def health_check():
-    """Health check endpoint"""
+    """Health check endpoint (aliased at /api/health so the dashboard's
+    standard /api/* probing succeeds). Kept /health for legacy clients."""
     return {"status": "healthy", "service": settings.app_name}
 
 

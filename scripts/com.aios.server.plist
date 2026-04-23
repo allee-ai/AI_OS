@@ -32,6 +32,9 @@
         <string>__AIOS_PATH__</string>
         <key>AIOS_PATH</key>
         <string>__AIOS_PATH__</string>
+        <!-- Background cognitive loops (reflex grader, training_gen, consolidation, etc.) -->
+        <key>AIOS_LOOPS</key>
+        <string>1</string>
     </dict>
     
     <!-- Start at login -->
