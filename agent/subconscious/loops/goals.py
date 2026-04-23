@@ -114,21 +114,67 @@ def propose_goal(goal: str, rationale: str = "", priority: str = "medium",
         # on VM / non-macOS). Wrapped so a keyboard hiccup can't block the
         # goal insert or ripple into callers.
         #
-        # Format as an action prompt, not a notification — Copilot reads the
-        # paste as the next user turn and should ACT on the goal, not just
-        # acknowledge it. "Act" can mean: do the work, ask one clarifying
-        # question, or respond if the goal is purely conversational
-        # ("ping me a letter" → actually ping a letter).
+        # Safety gate (added after the 2026-04-22 copilot-loop incident —
+        # Copilot proposed goals to itself under source=copilot, the forward
+        # ran identically to user-sourced goals, and Copilot treated its own
+        # proposals as approved work). Rules:
+        #   • Only forward goals whose sources look user-initiated.
+        #   • Non-user goals must be reviewed; they do not auto-act.
+        #   • Goals from 'copilot' are labeled 'copilot-proposal' in the
+        #     forwarded prompt so they are visually distinguishable.
+        #   • A rolling rate-limit blocks runaway proposers.
         try:
-            from agent.services.vs_bridge import forward as _vs_forward
-            rat_line = f"\nRationale: {rationale}" if rationale else ""
-            prompt = (
-                f"[goal #{new_id} · {priority}] {goal}{rat_line}\n\n"
-                "^ new goal from phone. act on it now: do the work, "
-                "ask one clarifying question, or just respond if it's "
-                "conversational. pick your own interpretation when ambiguous."
+            src_list = [str(s).lower() for s in (sources or [])]
+            is_user = any(
+                s in src_list for s in (
+                    "user", "user_vscode", "user_mobile", "cade",
+                    "phone", "manual",
+                )
             )
-            _vs_forward(prompt, source="goal_add")
+            is_copilot = "copilot" in src_list
+
+            # Rate-limit any single non-user source to 3 / 60min.
+            allowed = True
+            if not is_user and src_list:
+                try:
+                    from data.db import get_connection as _get_conn
+                    from contextlib import closing as _closing
+                    with _closing(_get_conn(readonly=True)) as _c:
+                        row = _c.execute(
+                            "SELECT COUNT(*) FROM proposed_goals "
+                            "WHERE created_at >= datetime('now', '-60 minutes') "
+                            "AND sources LIKE ?",
+                            (f"%{src_list[0]}%",),
+                        ).fetchone()
+                        if row and row[0] >= 4:  # this insert is the 4th+
+                            allowed = False
+                except Exception:
+                    pass
+
+            if is_user and allowed:
+                from agent.services.vs_bridge import forward as _vs_forward
+                rat_line = f"\nRationale: {rationale}" if rationale else ""
+                prompt = (
+                    f"[goal #{new_id} · {priority}] {goal}{rat_line}\n\n"
+                    "^ new goal from phone. act on it now: do the work, "
+                    "ask one clarifying question, or just respond if it's "
+                    "conversational. pick your own interpretation when ambiguous."
+                )
+                _vs_forward(prompt, source="goal_add")
+            elif is_copilot and allowed:
+                # Non-actioning announcement — Copilot sees its own proposal
+                # but is told NOT to treat it as work approval. Cade still
+                # needs to accept it via scripts/goal.py --done or the UI.
+                from agent.services.vs_bridge import forward as _vs_forward
+                rat_line = f"\nRationale: {rationale}" if rationale else ""
+                prompt = (
+                    f"[copilot-proposal #{new_id} · {priority}] {goal}{rat_line}\n\n"
+                    "^ THIS IS A PROPOSAL YOU MADE, not an approved goal. "
+                    "Do NOT execute it. Wait for Cade to explicitly accept "
+                    "it (he'll reference the #id) before doing any work."
+                )
+                _vs_forward(prompt, source="copilot_proposal")
+            # else: not forwarded (rate-limited or unknown source).
         except Exception:
             pass
         return new_id
