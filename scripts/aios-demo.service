@@ -1,0 +1,19 @@
+[Unit]
+Description=AI_OS Public Demo (read-only, no LLM, no auth)
+After=network.target aios.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/aios
+EnvironmentFile=/opt/aios/.env
+Environment=AIOS_MODE=demo
+Environment=AIOS_NO_LLM=1
+Environment=AIOS_READ_ONLY=1
+Environment=STATE_DB_PATH=/opt/aios/data/db/state_demo.db
+Environment=PORT=8001
+ExecStart=/root/.local/bin/uv run uvicorn scripts.server:app --host 127.0.0.1 --port 8001
+Restart=always
+RestartSec=5
+
+[Install]
+WantedBy=multi-user.target

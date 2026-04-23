@@ -1,0 +1,16 @@
+# AI_OS public demo via sslip.io (auto-resolves to VM IP, free LE cert)
+# Edit the hostname if VM IP changes.
+
+24-144-115-72.sslip.io {
+    encode gzip
+    reverse_proxy 127.0.0.1:8001 {
+        header_up Host {host}
+        header_up X-Real-IP {remote}
+        header_up X-Forwarded-For {remote}
+        header_up X-Forwarded-Proto {scheme}
+    }
+    log {
+        output file /var/log/caddy/aios-demo.log
+        format console
+    }
+}
