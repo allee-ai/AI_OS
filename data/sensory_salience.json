@@ -1,0 +1,39 @@
+{
+  "threshold": 0.35,
+  "min_text_chars": 3,
+  "source_weight": {
+    "mic": 1.0,
+    "camera": 0.95,
+    "screen": 0.7,
+    "clipboard": 0.6,
+    "system": 0.55,
+    "ambient": 0.4,
+    "unknown": 0.5
+  },
+  "kind_boost": {
+    "push_to_talk": 0.4,
+    "snapshot": 0.3,
+    "wake_word": 0.5,
+    "qr_or_barcode": 0.25,
+    "text_in_frame": 0.2,
+    "ocr_selection": 0.15,
+    "lid_close": 0.25,
+    "lid_open": 0.25,
+    "unlock": 0.1,
+    "lock": 0.05,
+    "idle_end": 0.15,
+    "app_switch": -0.1,
+    "window_title": -0.15,
+    "ambient": -0.2
+  },
+  "confidence_weight": 0.3,
+  "novelty_bonus_if_new_text": 0.1,
+  "dedup_recent_seconds": 120,
+  "always_keep_contains": [
+    "cade",
+    "aios",
+    "emergency",
+    "urgent"
+  ],
+  "always_drop_contains": []
+}

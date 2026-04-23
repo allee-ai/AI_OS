@@ -38,7 +38,7 @@ THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core"]
 # Top-level modules — scored for relevance alongside threads.
 # Each module provides summarised context (conversations, files, etc.)
 # and goes through the same score → level → threshold pipeline.
-MODULES = ["chat", "workspace", "docs", "goals"]
+MODULES = ["chat", "workspace", "docs", "goals", "sensory"]
 
 # Score thresholds for context levels
 # Score determines: (1) block order, (2) L1/L2/L3 level, (3) fact weight threshold
@@ -207,6 +207,18 @@ class Subconscious:
             scores["workspace"] = 7.0
         else:
             scores["workspace"] = 3.0
+
+        # Sensory — recent perceptual events (mic, vision, ambient)
+        if any(kw in q for kw in [
+            'heard', 'saw', 'see', 'hear', 'said', 'spoke', 'voice',
+            'mic', 'microphone', 'camera', 'screen', 'ambient',
+            'just now', 'right now', 'just happened',
+        ]):
+            scores["sensory"] = 8.5
+        elif any(kw in q for kw in ['notice', 'perceive', 'observed', 'observation']):
+            scores["sensory"] = 6.5
+        else:
+            scores["sensory"] = 3.5
 
         # Docs — READMEs, architecture, roadmap, changelog, docs/ tree
         if any(kw in q for kw in [
@@ -443,6 +455,7 @@ class Subconscious:
             "workspace": self._get_workspace_context,
             "docs": self._get_docs_context,
             "goals": self._get_goals_context,
+            "sensory": self._get_sensory_context,
         }
         provider = providers.get(module_name)
         if not provider:
@@ -468,6 +481,7 @@ class Subconscious:
         descriptions = {
             "chat": "Past conversations and discussion history",
             "workspace": "Files and documents I have access to",
+            "sensory": "Recent sensory events (mic, vision, ambient) converted to text",
         }
         section = [
             f"[{module_name}] {descriptions.get(module_name, '')}",
@@ -502,6 +516,12 @@ class Subconscious:
                 "  rules:",
                 "  - These are user-logged or loop-proposed goals. Treat them as live priorities.",
                 "  - If you complete a goal, resolve it: .venv/bin/python scripts/goal.py --done <id>.",
+            ],
+            "sensory": [
+                "  rules:",
+                "  - Sensory events are observations already converted to text (mic transcripts, vision captions, ambient clips).",
+                "  - These are observations, NOT user statements. Do not treat as direct user speech unless source=user_voice.",
+                "  - Low-confidence events may be inaccurate; weight by the confidence field when it's given.",
             ],
         }
         rules = module_rules.get(module_name, [])
@@ -895,6 +915,50 @@ class Subconscious:
                         facts.append(f"  goals.{status}.#{gid}: {gt}")
             if not facts:
                 facts.append("  (no pending goals — add one with: python scripts/goal.py \"...\")")
+            return facts
+        except Exception:
+            return []
+
+    def _get_sensory_context(
+        self, query: str = "", level: int = 1, threshold: float = 5.0,
+        max_results: int = 20,
+    ) -> List[str]:
+        """Surface recent sensory events (mic, vision, ambient, ...).
+
+        L1: last 5 events, one line each.
+        L2: last 10 events + per-source counts in last hour.
+        L3: last 20 events + meta snippets.
+        """
+        try:
+            from sensory.schema import get_recent_events, counts_by_source
+        except Exception:
+            return []
+
+        try:
+            n = {1: 5, 2: 10, 3: max_results}.get(level, 10)
+            rows = get_recent_events(limit=n)
+            facts: List[str] = []
+            if level >= 2:
+                try:
+                    from datetime import datetime, timedelta, timezone
+                    since = (datetime.now(timezone.utc) - timedelta(hours=1)).isoformat(timespec="seconds")
+                    counts = counts_by_source(since_iso=since)
+                    if counts:
+                        summary = ", ".join(f"{k}:{v}" for k, v in counts.items())
+                        facts.append(f"  sensory.last_hour: {summary}")
+                except Exception:
+                    pass
+            for r in rows:
+                rid = r.get("id")
+                src = r.get("source", "?")
+                kind = r.get("kind", "?")
+                ts = (r.get("created_at") or "")[-8:]  # HH:MM:SS
+                text = (r.get("text") or "").strip().replace("\n", " ")
+                if len(text) > 140:
+                    text = text[:137] + "..."
+                facts.append(f"  sensory.{src}.{rid} [{ts} {kind}]: {text}")
+            if not facts:
+                facts.append("  (no sensory events yet — POST /api/sensory/record to add)")
             return facts
         except Exception:
             return []
