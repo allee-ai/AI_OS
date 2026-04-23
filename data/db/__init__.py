@@ -37,13 +37,18 @@ DEMO_DB = _DB_DIR / "state_demo.db"
 
 def _get_current_mode() -> str:
     """
-    Get current mode - checks file first (for runtime switching), then env var.
+    Get current mode - env var wins (allows multi-process: personal + demo
+    services running on same host with different env). Falls back to the
+    .aios_mode file for runtime UI switching, then defaults to personal.
     
     Returns: "demo" or "personal"
     """
+    env = os.getenv("AIOS_MODE", "").strip().lower()
+    if env in ("demo", "personal"):
+        return env
     if _MODE_FILE.exists():
         return _MODE_FILE.read_text().strip().lower()
-    return os.getenv("AIOS_MODE", "personal").lower()
+    return "personal"
 
 
 def is_demo_mode() -> bool:
