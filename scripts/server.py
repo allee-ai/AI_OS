@@ -16,6 +16,7 @@ from fastapi.middleware.gzip import GZipMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.responses import JSONResponse
 import json
+import os
 import sys
 import time
 from pathlib import Path
@@ -139,6 +140,50 @@ app.add_middleware(HTTPLoggingMiddleware)
 
 
 # =============================================================================
+# Read-Only Middleware (demo deployments)
+# =============================================================================
+# When AIOS_READ_ONLY=1, reject mutating requests to /api/* with 403.
+# Used by the public demo service so visitors can browse but not modify state.
+# Whitelist: chat WS messages and a handful of demo-safe POSTs (sensory record,
+# notify dismissal) that don't touch identity / philosophy / goals / loops.
+
+if os.getenv("AIOS_READ_ONLY", "").lower() in ("1", "true", "yes"):
+    from starlette.middleware.base import BaseHTTPMiddleware
+    from starlette.responses import JSONResponse as _JSONResponse
+
+    _RO_WRITE_METHODS = {"POST", "PUT", "PATCH", "DELETE"}
+    # Paths we explicitly allow to mutate even in read-only mode.
+    # Each visitor session needs to be able to chat (canned LLM reply) and
+    # have its UI pings dismiss without errors. Nothing in this list can
+    # write to identity, philosophy, goals, loops, or workspace.
+    _RO_WRITE_ALLOWLIST = (
+        "/api/chat/",                # chat send (LLM is killswitched separately)
+        "/api/sensory/record",       # let visitors trigger demo events
+        "/api/notify/",              # ack/dismiss in-app pings
+    )
+
+    class ReadOnlyMiddleware(BaseHTTPMiddleware):
+        async def dispatch(self, request, call_next):
+            if request.method in _RO_WRITE_METHODS and request.url.path.startswith("/api/"):
+                if not any(request.url.path.startswith(p) for p in _RO_WRITE_ALLOWLIST):
+                    return _JSONResponse(
+                        status_code=403,
+                        content={
+                            "error": "demo is read-only",
+                            "detail": (
+                                f"{request.method} {request.url.path} is not allowed "
+                                "in the public demo. Run AI_OS locally to write state: "
+                                "https://github.com/allee-ai/AI_OS"
+                            ),
+                        },
+                    )
+            return await call_next(request)
+
+    app.add_middleware(ReadOnlyMiddleware)
+    print("[Startup] AIOS_READ_ONLY=1 — mutating /api/* requests will return 403 (allowlist applies)")
+
+
+# =============================================================================
 # Include Routers
 # =============================================================================
 
@@ -160,6 +205,9 @@ app.include_router(linking_router)
 app.include_router(log_router)
 app.include_router(voice_router)
 app.include_router(subconscious_router)
+
+# Sensory bus
+app.include_router(sensory_router)
 
 # Mobile remote-control API
 app.include_router(mobile_router)

@@ -107,6 +107,16 @@ async def require_auth(
     if _is_public(request.url.path):
         return None
 
+    # Public-demo bypass: when the server is intentionally read-only AND has
+    # LLM calls disabled, allow anonymous access. Visitors to the live demo
+    # iframe must not need a token. The read-only middleware still blocks
+    # any state-changing request (POST/PUT/PATCH/DELETE).
+    if (
+        os.environ.get("AIOS_READ_ONLY", "").lower() in ("1", "true", "yes")
+        and os.environ.get("AIOS_NO_LLM", "").lower() in ("1", "true", "yes")
+    ):
+        return None
+
     expected = _read_token_from_env()
     if not expected:
         # No token configured — auth disabled (first-run / local dev)
