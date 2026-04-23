@@ -44,6 +44,7 @@ from agent.services import router as services_router
 from agent.services.mobile_api import router as mobile_router
 from Feeds import api_router as feeds_router
 from agent.subconscious import subconscious_router
+from voice import router as voice_router
 
 # Thread routers
 from agent.threads.philosophy import router as philosophy_router
@@ -156,6 +157,7 @@ app.include_router(reflex_router)
 app.include_router(form_router)
 app.include_router(linking_router)
 app.include_router(log_router)
+app.include_router(voice_router)
 app.include_router(subconscious_router)
 
 # Mobile remote-control API
