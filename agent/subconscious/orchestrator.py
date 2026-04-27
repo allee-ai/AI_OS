@@ -750,43 +750,150 @@ class Subconscious:
 
     def _build_self_awareness_block(self) -> List[str]:
         """Build the self-awareness metadata for the top of STATE.
-        
-        Gives the agent awareness of its own architecture — what threads
-        exist, what they store, and the current state of its concept graph.
+
+        Surfaces the architecture as it actually exists right now — not a
+        hand-edited markdown table. The agent (and anyone reading STATE)
+        sees how many threads are registered, how many loops are running,
+        the current size of the concept graph, and the surface tables that
+        hold its state. Same shape every turn; the numbers move with the
+        system.
+
+        Design note: this is the "I can't name my neurons but I know my
+        architecture" block. It answers structural self-questions ("what
+        am I made of?", "what's running?") without listing implementation
+        details. Anything that needs to be re-derived per turn lives in
+        the per-thread blocks below.
         """
-        lines = [
-            "",
-            "[self] My internal structure",
-            "  | Thread | Question | What I Store |",
-            "  |--------|----------|--------------|",
-            "  | identity | WHO | My self-model, my user, our relationship |",
-            "  | form | WHAT | My tools, my actions, my capabilities |",
-            "  | philosophy | WHY | My values, my ethics, my reasoning style |",
-            "  | reflex | HOW | My learned patterns, my shortcuts, my recent meta-thoughts |",
-            "  | log | WHEN/WHERE | My event timeline, my session history |",
-            "  | linking_core | WHICH | My concept graph, my relevance scoring |",
-            "  | Module | | |",
-            "  | chat | RECALL | Past conversations, discussion history |",
-            "  | workspace | CONTEXT | Files, documents, project state |",
-            "  | docs | REFERENCE | Module READMEs + root architecture/roadmap/changelog |",
-            "  | goals | PRIORITY | Open + recently resolved goals (user + loop proposed) |",
-        ]
-        
-        # Graph stats (cheap read from DB)
+        from contextlib import closing
+
+        lines = ["", "[self] My internal structure (live)"]
+
+        # ── Threads: registry + per-thread fact counts ──────────────
+        try:
+            from agent.threads import get_all_threads
+            threads = get_all_threads()
+        except Exception:
+            threads = []
+
+        # Map of thread_name → (table, count_query). Only count what each
+        # thread actually owns; this isn't a tour of the DB, it's a roll-call.
+        thread_counts: Dict[str, str] = {}
         try:
             from data.db import get_connection
-            conn = get_connection(readonly=True)
-            cur = conn.cursor()
-            cur.execute("SELECT COUNT(*) FROM concept_links")
-            link_count = cur.fetchone()[0]
-            cur.execute("SELECT COUNT(DISTINCT concept_a) + COUNT(DISTINCT concept_b) FROM concept_links")
-            concept_count = cur.fetchone()[0] // 2 or 0
-            cur.execute("SELECT AVG(strength) FROM concept_links")
-            avg_strength = cur.fetchone()[0] or 0
-            lines.append(f"  graph: {link_count} links, ~{concept_count} concepts, avg_strength={avg_strength:.2f}")
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                queries = [
+                    ("identity",     "SELECT (SELECT COUNT(*) FROM profiles) || ' profiles, ' || "
+                                     "(SELECT COUNT(*) FROM profile_facts) || ' facts'"),
+                    ("philosophy",   "SELECT (SELECT COUNT(*) FROM philosophy_profile_facts) || ' stances'"),
+                    ("reflex",       "SELECT (SELECT COUNT(*) FROM reflex_meta_thoughts) || ' meta-thoughts, ' || "
+                                     "(SELECT COUNT(*) FROM reflex_triggers) || ' triggers'"),
+                    ("log",          "SELECT (SELECT COUNT(*) FROM unified_events) || ' events, ' || "
+                                     "(SELECT COUNT(*) FROM log_server) || ' http requests, ' || "
+                                     "(SELECT COUNT(*) FROM log_llm_inference) || ' llm calls'"),
+                    ("form",         "SELECT (SELECT COUNT(*) FROM form_tools) || ' tools, ' || "
+                                     "(SELECT COUNT(*) FROM tool_traces) || ' traces'"),
+                    ("field",        "SELECT (SELECT COUNT(*) FROM field_observations) || ' observations, ' || "
+                                     "(SELECT COUNT(*) FROM field_alerts) || ' alerts'"),
+                    ("linking_core", "SELECT (SELECT COUNT(*) FROM concept_links) || ' links'"),
+                ]
+                for name, q in queries:
+                    try:
+                        row = cur.execute(q).fetchone()
+                        if row and row[0]:
+                            thread_counts[name] = str(row[0])
+                    except Exception:
+                        pass
         except Exception:
             pass
-        
+
+        registered_names = sorted({getattr(t, "_name", "") or getattr(t, "thread_name", "") for t in threads if t} - {""})
+        lines.append(f"  threads: {len(registered_names)} registered")
+        for name in sorted(registered_names):
+            counts = thread_counts.get(name, "(no count available)")
+            lines.append(f"    {name}: {counts}")
+
+        # ── Loops: registry + last_tick from manager stats ──────────
+        try:
+            from agent.subconscious import _loop_manager
+            if _loop_manager:
+                loop_stats = _loop_manager.get_stats()
+                running = sum(1 for s in loop_stats if s.get("status") == "running")
+                lines.append(f"  loops: {len(loop_stats)} created, {running} running")
+                # Show top 6 by run_count so the most active ones surface first.
+                top = sorted(loop_stats, key=lambda s: -(s.get("run_count") or 0))[:6]
+                import time as _time
+                _now = _time.time()
+                for s in top:
+                    interval = s.get("interval")
+                    last_run = s.get("last_run")
+                    runs = s.get("run_count") or 0
+                    age = ""
+                    if isinstance(last_run, (int, float)) and last_run > 0:
+                        secs = int(_now - last_run)
+                        if secs < 120:
+                            age = f", last_tick {secs}s ago"
+                        elif secs < 7200:
+                            age = f", last_tick {secs // 60}m ago"
+                        else:
+                            age = f", last_tick {secs // 3600}h ago"
+                    lines.append(
+                        f"    {s.get('name')}: {s.get('status')} "
+                        f"(every {interval}s, {runs} runs{age})"
+                    )
+        except Exception:
+            pass
+
+        # ── Surface tables: anything outside the thread roll-call ───
+        try:
+            from data.db import get_connection
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                surface = []
+                for label, q in [
+                    ("workspace_files", "SELECT COUNT(*) FROM workspace_files"),
+                    ("proposed_goals (open)",
+                        "SELECT COUNT(*) FROM proposed_goals WHERE status IN "
+                        "('pending','approved','in_progress','paused','blocked')"),
+                    ("proposed_goals (total)",   "SELECT COUNT(*) FROM proposed_goals"),
+                    ("convo_turns",   "SELECT COUNT(*) FROM convo_turns"),
+                    ("sensory_events",      "SELECT COUNT(*) FROM sensory_events"),
+                    ("notifications",       "SELECT COUNT(*) FROM notifications"),
+                ]:
+                    try:
+                        n = cur.execute(q).fetchone()[0]
+                        surface.append(f"{label}={n}")
+                    except Exception:
+                        pass
+                if surface:
+                    lines.append(f"  surface_tables: {', '.join(surface)}")
+        except Exception:
+            pass
+
+        # ── Concept graph stats (kept from previous implementation) ──
+        try:
+            from data.db import get_connection
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                cur.execute("SELECT COUNT(*) FROM concept_links")
+                link_count = cur.fetchone()[0]
+                cur.execute("SELECT COUNT(DISTINCT concept_a) + COUNT(DISTINCT concept_b) FROM concept_links")
+                concept_count = (cur.fetchone()[0] // 2) or 0
+                cur.execute("SELECT AVG(strength) FROM concept_links")
+                avg_strength = cur.fetchone()[0] or 0.0
+                cur.execute("SELECT COUNT(*) FROM concept_links WHERE strength >= 0.7")
+                potentiated = cur.fetchone()[0]
+                lines.append(
+                    f"  graph: {link_count:,} links, ~{concept_count:,} concepts, "
+                    f"avg_strength={avg_strength:.2f}, long_potentiated={potentiated:,}"
+                )
+        except Exception:
+            pass
+
+        # ── One-line role hints (kept; cheap to print, useful for small models) ──
+        lines.append("  roles: identity=WHO, form=WHAT, philosophy=WHY, reflex=HOW, "
+                     "log=WHEN, linking_core=WHICH, field=NOW")
+
         return lines
 
     def _get_workspace_context(
