@@ -958,9 +958,14 @@ class Subconscious:
     ) -> List[str]:
         """Build docs context for STATE.
 
-        L1: recent doc edits (name + age).
-        L2: + query-matched docs (filename or headings).
-        L3: + first-heading preview.
+        Stable references first (root architecture/roadmap/changelog +
+        all module READMEs), then query-ranked recent doc edits to fill
+        the remaining budget. The system needs to see the *map* of
+        itself first; recent state-test artifacts second.
+
+        L1: stable references only.
+        L2: + a few recent edits.
+        L3: + first-heading preview, more recent edits, all READMEs.
         """
         try:
             import os as _os
@@ -983,15 +988,70 @@ class Subconscious:
             if not md_files:
                 return []
 
-            facts: List[str] = []
             now_ts = _dt.now().timestamp()
+            facts: List[str] = []
+            seen: set = set()
 
+            def _emit(rel: str, mt: float, sz: int, with_title: bool = False) -> None:
+                """Append one doc fact and (optionally) its title. Dedupe by path."""
+                if rel in seen:
+                    return
+                seen.add(rel)
+                age_min = int((now_ts - mt) // 60)
+                if age_min < 90:
+                    age_s = f"{age_min}m"
+                elif age_min < 60 * 48:
+                    age_s = f"{age_min // 60}h"
+                else:
+                    age_s = f"{age_min // (60 * 24)}d"
+                facts.append(f"  docs.{rel}: {sz}B ({age_s} ago)")
+                if with_title:
+                    try:
+                        with open(root / rel, "r", encoding="utf-8", errors="ignore") as fh:
+                            head = fh.read(400).strip().splitlines()
+                            first = next(
+                                (ln.strip("# ").strip() for ln in head if ln.strip().startswith("#")),
+                                "",
+                            )
+                            if first:
+                                facts.append(f"  docs.{rel}.title: {first[:120]}")
+                    except Exception:
+                        pass
+
+            # ---- Stable references (always shown) ----
+            # Root architecture-class docs.
+            ROOT_PRIORITY = (
+                "README.md",
+                "docs/ARCHITECTURE.md",
+                "docs/ROADMAP.md",
+                "docs/CHANGELOG.md",
+                "docs/RESEARCH_PAPER.md",
+                "CONTRIBUTING.md",
+            )
+            by_path = {rel: (rel, mt, sz) for rel, mt, sz in md_files}
+            for p in ROOT_PRIORITY:
+                if p in by_path:
+                    rel, mt, sz = by_path[p]
+                    _emit(rel, mt, sz, with_title=(level >= 2))
+
+            # All module READMEs (every <module>/README.md). These ARE
+            # the source of truth for adapters per scripts/sync_docs.py.
+            module_readmes = [
+                (rel, mt, sz)
+                for rel, mt, sz in md_files
+                if rel.endswith("/README.md") and rel != "README.md"
+            ]
+            module_readmes.sort(key=lambda x: x[0])
+            for rel, mt, sz in module_readmes:
+                _emit(rel, mt, sz, with_title=(level >= 3))
+
+            # ---- Recent edits, query-ranked, fill remaining budget ----
             q_terms = [t.lower() for t in (query or "").split() if len(t) > 2]
 
-            # Score each doc: recency + query-name hit
             def _score(item):
                 rel, mt, _sz = item
-                recency = max(0.0, 1.0 - (now_ts - mt) / (60 * 60 * 24 * 30))  # 30-day half-window
+                # 30-day half-window
+                recency = max(0.0, 1.0 - (now_ts - mt) / (60 * 60 * 24 * 30))
                 hit = 0.0
                 low = rel.lower()
                 for t in q_terms:
@@ -999,21 +1059,17 @@ class Subconscious:
                         hit += 1.0
                 return recency + hit * 2.0 if q_terms else recency
 
-            md_files.sort(key=_score, reverse=True)
-
-            for rel, mt, sz in md_files[:max_results]:
-                age_min = int((now_ts - mt) // 60)
-                age_s = f"{age_min}m" if age_min < 90 else f"{age_min // 60}h" if age_min < 60 * 48 else f"{age_min // (60 * 24)}d"
-                facts.append(f"  docs.{rel}: {sz}B ({age_s} ago)")
-                if level >= 3:
-                    try:
-                        with open(root / rel, "r", encoding="utf-8", errors="ignore") as fh:
-                            head = fh.read(400).strip().splitlines()
-                            first = next((ln.strip("# ").strip() for ln in head if ln.strip().startswith("#")), "")
-                            if first:
-                                facts.append(f"  docs.{rel}.title: {first[:120]}")
-                    except Exception:
-                        pass
+            recent_extra = {1: 0, 2: 4, 3: max_results}.get(level, max_results)
+            if recent_extra > 0:
+                ranked = sorted(md_files, key=_score, reverse=True)
+                emitted = 0
+                for rel, mt, sz in ranked:
+                    if rel in seen:
+                        continue
+                    _emit(rel, mt, sz, with_title=(level >= 3))
+                    emitted += 1
+                    if emitted >= recent_extra:
+                        break
 
             return facts
         except Exception:

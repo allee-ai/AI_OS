@@ -214,7 +214,10 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         # assemblies — Hebbian signal at the level the system actually
         # operates on (not raw text). Surfaced at every level because
         # this is the substrate of learned associations.
+        # Limit scales with level: L1=5, L2=10, L3=25 — the higher the
+        # level, the more of the learned graph we expose.
         try:
+            cooccur_limit = {1: 5, 2: 10, 3: 25}.get(level, 5)
             from data.db import get_connection
             from contextlib import closing
             with closing(get_connection(readonly=True)) as conn:
@@ -222,7 +225,8 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
                 cur.execute(
                     "SELECT key_a, key_b, count FROM key_cooccurrence "
                     "WHERE count >= 2 "
-                    "ORDER BY count DESC, last_seen DESC LIMIT 5"
+                    "ORDER BY count DESC, last_seen DESC LIMIT ?",
+                    (cooccur_limit,),
                 )
                 rows = cur.fetchall()
             for ka, kb, n in rows:

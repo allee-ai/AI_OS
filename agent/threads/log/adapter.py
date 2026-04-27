@@ -303,6 +303,46 @@ class LogThreadAdapter(BaseThreadAdapter):
                 lines.append(f"  total_events: {stats.get('total_events', 0)}")
             except Exception:
                 pass
+            # current_intent — the summary string from the most recent
+            # agent_turn event (set by scripts/turn_start.py "<summary>").
+            # Surfaces "what is this turn trying to do?" at the top of
+            # [log], independent of the longer recent_agent_turns trail
+            # below. If a coder/agent forgets to pass a summary, this is
+            # missing — that absence itself is signal.
+            try:
+                from data.db import get_connection
+                conn = get_connection(readonly=True)
+                row = conn.execute("""
+                    SELECT data, timestamp FROM unified_events
+                    WHERE event_type = 'agent_turn'
+                    ORDER BY id DESC LIMIT 1
+                """).fetchone()
+                if row and row["data"]:
+                    txt = str(row["data"]).strip()
+                    if txt.startswith("VS Code coding turn: "):
+                        txt = txt[len("VS Code coding turn: "):]
+                    txt = txt[:160]
+                    ts = str(row["timestamp"] or "").split(".")[0]
+                    # Compute age so the reader knows if this is now or stale.
+                    age_str = ""
+                    try:
+                        dt = datetime.fromisoformat(
+                            ts.replace(" ", "T").replace("Z", "+00:00")
+                        )
+                        if dt.tzinfo is None:
+                            dt = dt.replace(tzinfo=timezone.utc)
+                        age_s = (datetime.now(timezone.utc) - dt).total_seconds()
+                        if age_s < 60:
+                            age_str = f" ({int(age_s)}s ago)"
+                        elif age_s < 3600:
+                            age_str = f" ({int(age_s // 60)}m ago)"
+                        else:
+                            age_str = f" ({age_s / 3600:.1f}h ago)"
+                    except Exception:
+                        pass
+                    lines.append(f"  current_intent: {txt}{age_str}")
+            except Exception:
+                pass
             # Idle time since last event (answers "is the world still moving?")
             try:
                 from data.db import get_connection
