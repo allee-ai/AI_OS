@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN"
+  "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>Label</key>
+    <string>com.allee.aios.heartbeat</string>
+
+    <key>ProgramArguments</key>
+    <array>
+        <string>/Users/cade/Desktop/AI_OS/.venv/bin/python</string>
+        <string>/Users/cade/Desktop/AI_OS/scripts/heartbeat.py</string>
+        <string>--quiet</string>
+    </array>
+
+    <key>WorkingDirectory</key>
+    <string>/Users/cade/Desktop/AI_OS</string>
+
+    <!-- Every 30 minutes -->
+    <key>StartInterval</key>
+    <integer>1800</integer>
+
+    <key>RunAtLoad</key>
+    <true/>
+
+    <key>StandardOutPath</key>
+    <string>/Users/cade/Desktop/AI_OS/data/logs/heartbeat.stdout.log</string>
+    <key>StandardErrorPath</key>
+    <string>/Users/cade/Desktop/AI_OS/data/logs/heartbeat.stderr.log</string>
+</dict>
+</plist>
