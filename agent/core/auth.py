@@ -111,14 +111,15 @@ async def require_auth(
     if _is_public(request.url.path):
         return None
 
-    # Public-demo bypass: when the server is intentionally read-only AND has
-    # LLM calls disabled, allow anonymous access. Visitors to the live demo
-    # iframe must not need a token. The read-only middleware still blocks
-    # any state-changing request (POST/PUT/PATCH/DELETE).
-    if (
-        os.environ.get("AIOS_READ_ONLY", "").lower() in ("1", "true", "yes")
-        and os.environ.get("AIOS_NO_LLM", "").lower() in ("1", "true", "yes")
-    ):
+    # Public-demo bypass: when the server is intentionally read-only AND
+    # either LLM is fully off OR locked to chat-only, allow anonymous
+    # access. Visitors to the live demo iframe must not need a token.
+    # The read-only middleware still blocks any state-changing request
+    # (POST/PUT/PATCH/DELETE) outside the chat allowlist.
+    _ro = os.environ.get("AIOS_READ_ONLY", "").lower() in ("1", "true", "yes")
+    _no_llm = os.environ.get("AIOS_NO_LLM", "").lower() in ("1", "true", "yes")
+    _chat_only = os.environ.get("AIOS_DEMO_LLM_CHAT_ONLY", "").lower() in ("1", "true", "yes")
+    if _ro and (_no_llm or _chat_only):
         return None
 
     expected = _read_token_from_env()

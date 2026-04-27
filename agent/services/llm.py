@@ -763,6 +763,27 @@ def generate(prompt: Optional[str] = None,
         )
     # ──────────────────────────────────────────────────────────────────
 
+    # ── Chat-only demo gate ───────────────────────────────────────────
+    # When AIOS_DEMO_LLM_CHAT_ONLY=1, only the user-facing chat path is
+    # allowed to make real LLM calls. Every background role (memory,
+    # consolidation, naming, summary, thought, goal, evolve, …) gets a
+    # canned response so visitors can't trigger expensive backend work.
+    #
+    # Detection: the chat path resolves role upstream (in agent.agent.generate)
+    # and passes explicit provider+model with role=None. Every other role
+    # in the codebase calls generate(role="MEMORY"|"NAMING"|...). So the
+    # gate is: if role is set AND it's not CHAT, block.
+    if os.getenv("AIOS_DEMO_LLM_CHAT_ONLY", "").lower() in ("1", "true", "yes"):
+        if role and role.upper() != "CHAT":
+            return (
+                "[demo mode — only chat is live]\n\n"
+                f"Background role '{role}' is disabled in the public demo. "
+                "Only the user-facing chat is wired to a real LLM here. "
+                "Run AI_OS locally to enable the full subconscious:\n"
+                "  https://github.com/allee-ai/AI_OS"
+            )
+    # ──────────────────────────────────────────────────────────────────
+
     # Apply per-role overrides when caller didn't pin provider/model.
     if role and (provider is None or model is None):
         try:
