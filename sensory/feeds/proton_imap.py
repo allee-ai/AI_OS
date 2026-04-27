@@ -207,13 +207,15 @@ def _connect(cfg: Dict[str, Any]) -> imaplib.IMAP4:
 # Public entry point
 # ────────────────────────────────────────────────────────────────────
 
-def poll_once(feed: Dict[str, Any]) -> Dict[str, Any]:
+def poll_once(feed: Dict[str, Any], *, dry_run: bool = False) -> Dict[str, Any]:
     """Poll one IMAP feed. Pure function — no side effects on sensory_feeds row.
 
     The CLI is responsible for calling mark_feed_run / mark_feed_error.
 
     Args:
         feed: row dict from get_feeds(); must have 'config' parsed dict.
+        dry_run: if True, fetch + parse but DO NOT call record_event. The
+            cursor in the returned dict reflects what the cursor WOULD become.
 
     Returns:
         {polled, recorded, skipped, errors, cursor (new high-water UID), error_msg}
@@ -326,27 +328,31 @@ def poll_once(feed: Dict[str, Any]) -> Dict[str, Any]:
                 body = _extract_plaintext(msg)
                 summary = _format_summary(from_name, from_addr, subject, body)
 
-                rec_id = record_event(
-                    source="email",
-                    text=summary,
-                    kind="inbound",
-                    confidence=1.0,
-                    meta={
-                        "from_name": from_name,
-                        "from_addr": from_addr,
-                        "subject": subject,
-                        "message_id": message_id,
-                        "date": date_iso,
-                        "mailbox": mailbox,
-                        "uid": uid,
-                        "feed_id": feed.get("id"),
-                        "feed_name": feed.get("display_name"),
-                    },
-                )
-                if rec_id:
-                    out["recorded"] += 1
+                if dry_run:
+                    # Skip record_event entirely so we don't pollute the bus.
+                    out["recorded"] += 1  # "would-record" count under dry_run
                 else:
-                    out["skipped"] += 1  # consent block or salience drop
+                    rec_id = record_event(
+                        source="email",
+                        text=summary,
+                        kind="inbound",
+                        confidence=1.0,
+                        meta={
+                            "from_name": from_name,
+                            "from_addr": from_addr,
+                            "subject": subject,
+                            "message_id": message_id,
+                            "date": date_iso,
+                            "mailbox": mailbox,
+                            "uid": uid,
+                            "feed_id": feed.get("id"),
+                            "feed_name": feed.get("display_name"),
+                        },
+                    )
+                    if rec_id:
+                        out["recorded"] += 1
+                    else:
+                        out["skipped"] += 1  # consent block or salience drop
                 # Track high water regardless — we successfully observed it
                 if not new_high_uid or int(uid) > int(new_high_uid or 0):
                     new_high_uid = uid

@@ -59,8 +59,8 @@ def _poll_one(feed: dict, *, dry_run: bool, verbose: bool) -> dict:
         print(f"[poll] {name} starting...")
 
     if dry_run:
-        # Run poll but skip the cursor write so a re-run yields same results
-        result = poll_once(feed)
+        # poll_once now respects dry_run — fetches but does NOT call record_event
+        result = poll_once(feed, dry_run=True)
         print(
             f"[dry-run] {name}: polled={result['polled']} would_record={result['recorded']} "
             f"skipped={result['skipped']} errors={result['errors']}"
