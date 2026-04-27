@@ -52,22 +52,22 @@ identity.john_doe.birthday: 1985-06-15
 identity.john_doe.notes: Met at conference
 
 [log] Temporal awareness and history
-  session: 20260427_034544
+  session: 20260427_035732
   duration: 0m
   messages: 0
-  total_events: 21446
-  current_intent: verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion (1s ago)
-  idle_since_last_event: 1s
-  last_hour: code_change=80, agent_turn=11, turn_outcome=11, prune=2
+  total_events: 21457
+  current_intent: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) (1m ago)
+  idle_since_last_event: 1m
+  last_hour: code_change=71, agent_turn=11, turn_outcome=11, prune=2
   recent_agent_turns:
-    - 2026-04-27 03:45:43  verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion (6 files)
+    - 2026-04-27 03:55:44  kill env.local hub key (per confidence 0.622 PROCEED-NOTED) (2 files)
+    - 2026-04-27 03:51:34  add confidence-gating CLI so I can stop asking 'want me to do that next?' as oft (5 files) [reverted]
+    - 2026-04-27 03:45:43  verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion (6 files) [partial]
     - 2026-04-27 03:37:19  test recency boost second run (should boost) (2 files) [partial]
     - 2026-04-27 03:37:18  test recency boost first run (no prior keys) (54 files) [reverted]
-    - 2026-04-27 03:28:38  third turn — linking_core should now surface top cooccur pairs (35 files) [partial]
-    - 2026-04-27 03:28:10  second turn — counts should increment for repeated pairs (35 files) [partial]
   consequences:
-    uncommitted: 4 file(s)
-    last_commit: 4m ago
+    uncommitted: 5 file(s)
+    last_commit: 2m ago
     status: ok
   pings_unread: 49
   pings_latest: all 6 rot items closed: reflex grader (18/18 graded), training regen kicked (+43 pairs), /api/health alias, eval split 1
@@ -76,61 +76,61 @@ identity.john_doe.notes: Met at conference
   rules:
   - Events shown are a sample. Do not fabricate events not listed here.
   - To see more history, ask the user or use search tools.
-log.session.duration: Current session started at 2026-04-27T03:45:44.116561+00:00, active for 0s
-log.events.0: prior turn [partial]: 2/2 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.1: VS Code coding turn: verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion [agent_turn] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.8: prior turn [reverted]: 2/25 still dirty, 0 committed, 23 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:37:19
-log.events.9: VS Code coding turn: test recency boost second run (should boost) [agent_turn] source=agent.turn_start at=2026-04-27 03:37:19
-log.events.12: prior turn [partial]: 1/25 still dirty, 23 committed, 1 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.13: VS Code coding turn: test recency boost first run (no prior keys) [agent_turn] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.22: prior turn [partial]: 25/25 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.23: VS Code coding turn: third turn — linking_core should now surface top cooccur pairs [agent_turn] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.32: prior turn [partial]: 25/25 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.33: VS Code coding turn: second turn — counts should increment for repeated pairs [agent_turn] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.42: prior turn [partial]: 25/25 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:27:47
-log.events.43: VS Code coding turn: first wired build_state — should populate key_cooccurrence [agent_turn] source=agent.turn_start at=2026-04-27 03:27:47
-log.events.2: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.3: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.4: M agent/threads/log/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.5: M data/.last_turn_keys.json [code_change] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.6: M data/big_state.txt [code_change] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.7: M scripts/big_state.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
-log.events.10: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:37:19
-log.events.11: M data/.last_turn_keys.json [code_change] source=agent.turn_start at=2026-04-27 03:37:19
-log.events.14: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.15: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.16: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.17: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.18: M agent/threads/linking_core/__init__.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.19: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.20: M agent/threads/linking_core/attention.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.21: M agent/threads/linking_core/schema.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
-log.events.24: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.25: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.26: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.27: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.28: M agent/threads/linking_core/__init__.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.29: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.30: M agent/threads/linking_core/attention.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.31: M agent/threads/linking_core/schema.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
-log.events.34: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.35: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.36: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.37: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.38: M agent/threads/linking_core/__init__.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.39: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.40: M agent/threads/linking_core/attention.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.41: M agent/threads/linking_core/schema.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
-log.events.44: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:27:47
-log.events.45: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:27:47
-log.events.46: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:27:47
-log.events.47: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:27:47
-log.events.48: M agent/threads/linking_core/__init__.py [code_change] source=agent.turn_start at=2026-04-27 03:27:47
+log.session.duration: Current session started at 2026-04-27T03:57:32.568804+00:00, active for 0s
+log.events.0: prior turn [reverted]: 1/5 still dirty, 0 committed, 4 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:55:44
+log.events.1: VS Code coding turn: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) [agent_turn] source=agent.turn_start at=2026-04-27 03:55:44
+log.events.4: prior turn [partial]: 1/6 still dirty, 4 committed, 1 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.5: VS Code coding turn: add confidence-gating CLI so I can stop asking 'want me to do that next?' as often [agent_turn] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.11: prior turn [partial]: 2/2 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.12: VS Code coding turn: verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion [agent_turn] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.19: prior turn [reverted]: 2/25 still dirty, 0 committed, 23 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:37:19
+log.events.20: VS Code coding turn: test recency boost second run (should boost) [agent_turn] source=agent.turn_start at=2026-04-27 03:37:19
+log.events.23: prior turn [partial]: 1/25 still dirty, 23 committed, 1 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.24: VS Code coding turn: test recency boost first run (no prior keys) [agent_turn] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.33: prior turn [partial]: 25/25 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.34: VS Code coding turn: third turn — linking_core should now surface top cooccur pairs [agent_turn] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.43: prior turn [partial]: 25/25 still dirty, 0 committed, 0 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:28:10
+log.events.44: VS Code coding turn: second turn — counts should increment for repeated pairs [agent_turn] source=agent.turn_start at=2026-04-27 03:28:10
+log.events.2: M data/.last_turn_keys.json [code_change] source=agent.turn_start at=2026-04-27 03:55:44
+log.events.3: M scripts/confidence.py [code_change] source=agent.turn_start at=2026-04-27 03:55:44
+log.events.6: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.7: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.8: M agent/threads/log/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.9: M data/.last_turn_keys.json [code_change] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.10: M data/big_state.txt [code_change] source=agent.turn_start at=2026-04-27 03:51:34
+log.events.13: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.14: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.15: M agent/threads/log/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.16: M data/.last_turn_keys.json [code_change] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.17: M data/big_state.txt [code_change] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.18: M scripts/big_state.py [code_change] source=agent.turn_start at=2026-04-27 03:45:43
+log.events.21: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:37:19
+log.events.22: M data/.last_turn_keys.json [code_change] source=agent.turn_start at=2026-04-27 03:37:19
+log.events.25: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.26: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.27: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.28: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.29: M agent/threads/linking_core/__init__.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.30: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.31: M agent/threads/linking_core/attention.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.32: M agent/threads/linking_core/schema.py [code_change] source=agent.turn_start at=2026-04-27 03:37:18
+log.events.35: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.36: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.37: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.38: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.39: M agent/threads/linking_core/__init__.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.40: M agent/threads/linking_core/adapter.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.41: M agent/threads/linking_core/attention.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.42: M agent/threads/linking_core/schema.py [code_change] source=agent.turn_start at=2026-04-27 03:28:38
+log.events.45: M agent/core/auth.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
+log.events.46: M agent/services/mobile_api.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
+log.events.47: M agent/services/mobile_panel.html [code_change] source=agent.turn_start at=2026-04-27 03:28:10
+log.events.48: M agent/subconscious/orchestrator.py [code_change] source=agent.turn_start at=2026-04-27 03:28:10
 
 [form] Tool use, actions, and capabilities
   tools: 18 (11 runnable)
-  env.local: host=Mac.lan os=Darwin 24.6.0 arch=arm64
-  env.vm: ssh_host=AIOS configured=yes
+  form.env.local: host=Mac.lan os=Darwin 24.6.0 arch=arm64
+  form.env.vm: ssh_host=AIOS configured=yes
   executions: 159 (success_rate: 52%)
   per_tool_recent: terminal=100%(49), workspace_write=47%(17), terminal_vm=100%(13), workspace_read=17%(6), notify=100%(5)
   last_call: notify.alert [ok] 265.0318145751953ms → Alert sent (id=36, priority=high): STATUS: eval done: state_
@@ -201,31 +201,31 @@ philosophy.general.self.framings_to_catch: I have a persistent pull toward grand
 [reflex] Quick patterns, shortcuts, and triggers
   patterns: 0
   triggers: 3 (3 active)
-  meta_thoughts: 195 (graded: 18/27 expectations)
-  pending_expectations: 8
+  meta_thoughts: 204 (graded: 18/29 expectations)
+  pending_expectations: 10
   context_level: 3
   fact_count: 20
   rules:
   - Apply matching patterns when relevant. These are learned shortcuts.
   - Do not invent patterns not listed here.
   - reflex.meta.* entries are my own prior thoughts about earlier turns. Read them; do not treat them as user statements.
-reflex.meta.expected.162: [copilot] expected: System purpose: Cade has ADHD + strong pattern recognition but loses patterns mid-action. Role = 'hey, you're about to do that thing again.' Surface named patterns BEFORE the action, not after. Post-hoc observation is failure.
 reflex.meta.expected.173: [copilot] expected: Resentment signal: when Cade feels resentful toward a client/partner/friend 'for letting me work this hard for them,' that is her body's late boundary alarm. The resentment is accurate — she clocked the asymmetry at the quote moment and consented anyway. Goal: move the signal earlier. When she NOTICES the 'I'd do this for them' feeling during negotiation, that IS the boundary moment.
-reflex.meta.expected.163: [copilot] expected: Quote-moment pattern: in the first 90s of naming a price, Cade undercharges ~50%. Example 2026-04: sold $6k job for $3k. Trigger words: 'what's your price', 'what do you want for', quote, bid, estimate. Intervention: pause, write it down first, anchor to external market rate not internal 'feels fair'.
-reflex.meta.expected.164: [copilot] expected: Relationship-giveaway pattern: Cade gave 10 years each to two narcissistic partners. Nervous system trained that asking for fair share = losing the relationship. Business undercharging is the same program running in a different context. When 'this feels generous' or 'this feels fair' shows up in a contract/deal/agreement — that's the trigger to check external view, not trust internal.
 reflex.meta.expected.174: [copilot] expected: Business thesis (2026-04-23): Cade runs one thesis in three layers, not three businesses. Moving/truck co → feeds construction/electrician → upward mobility into tech side. Each tier is the on-ramp out of the one below. It's a career-ladder-as-a-business. 2-year red-to-black rhythm is her funding the elevator with her own labor until each floor pays rent. This is the hero-complex firewalled into a structure. Don't describe these as separate.
-reflex.meta.expected.165: [copilot] expected: Hero complex note: Cade's stated motivation for AIOS is 'fills my gaps, then other people can too.' This is a strength AND a giveaway vector. Watch for: building unpaid for users, scope creep 'since I'm already helping', pricing below sustainable for 'people who need it'. The hero impulse is real; it needs a firewall, not suppression.
-reflex.meta.expected.166: [copilot] expected: AIOS moat = accrued graph state per user, not code secrecy. Pricing unit should be per-user continuity (recurring), not per-deliverable (one-shot). One-shots are the context where giveaway happens historically. Default to subscription shape.
+reflex.meta.expected.228: [copilot] expected: Confidence-gating policy installed (scripts/confidence.py). New autopilot rule: before asking 'want me to do that next?', run confidence on the proposed action. PROCEED (>=0.70) -> just do it. PROCEED-NOTED (>=0.45) -> do it AND drop a forward note about the margin so future-self can grade. ASK (<0.45) -> only then surface to user. Asking is now an action with cost — it breaks autonomy in a learning system. Expected effect: more visible work per turn, fewer interrupts, and the asks that DO happe
+reflex.meta.unknown.224: [copilot] unknown: Fact-key sanitization needed: 'identity.primary_user.GET' surfaced in cooccur — corrupted key starts with HTTP verb, _FACT_KEY_RE stops at space so 'GET /api/...' truncates to 'GET'. Two layers: (1) regex pattern, (2) the source temp_fact has hier_key starting with HTTP method. Both should be stricter. Source is likely the recent prune that left some 'GET' or POST extraction artifacts.
+reflex.meta.unknown.222: [copilot] unknown: Hub-key pathology revealed by cooccur expansion (L3=25): all 26 top pairs share 'env.local' because it appears in every STATE turn. Hebbian count rewards ubiquity, opposite of selectivity. Top of leaderboard is therefore noise, not learning. Fix needed: tf-idf-style demotion (penalize keys that pair with too many distinct partners) OR per-key cap (hub_key can hold at most N slots in top-K). The right fix is upstream: env.local/env.vm should not be fact_keys at all — they are form-thread metadata
+reflex.meta.expected.223: [copilot] expected: Once hub-key noise is fixed, the cooccur leaderboard will start showing real cross-thread reflexes: e.g. log.events with high recurrence-paired with goals.open.#X, or chat.<topic> paired with reflex.meta.<theme>. Those are the actual reflex patterns. Currently invisible under env.local domination.
 reflex.meta.unknown.218: [copilot] unknown: BIG_STATE assessment 2026-04-26: gaps found while reviewing maximally-expanded STATE. (1) docs adapter at L3 only surfaces 16 state_tests outputs, NOT the 28 module READMEs nor root architecture docs — query-dependent ranking starves stable references. (2) extraction artifact 'identity.primary_user.GET /api/workspace/notes' survived prior prune — fact_key starts with HTTP method, not a property. (3) john_doe test contact still in identity profile. (4) reflex.patterns=0 but meta_thoughts=191 — pa
 reflex.meta.expected.219: [copilot] expected: Working hypothesis: linking_core.cooccur lines at L3 should expand from 5 to ~25 pairs. The substrate is rich enough now and they're the most useful learned signal. Also: reflex thread should mirror them under reflex.cooccur.* since reflexes ARE learned patterns — that's their semantic home, linking_core just owns the table.
 reflex.meta.unknown.211: [copilot] unknown: Wired co-activation recording into build_state today. key_cooccurrence now grows every turn (4105 pairs after 3 runs, max count 3). The substrate (record_cooccurrence, get_cooccurrence_score) already existed but was never called from STATE assembly. Pattern: when an existing capability seems unused, check if it's wired into the hot path before assuming it's broken.
 reflex.meta.expected.212: [copilot] expected: Next obvious win: pass previous turn's fact_keys as context_keys into score() so co-activation history actually boosts relevance scoring. record_cooccurrence writes; get_cooccurrence_score reads; loop is open. Closing it makes recent co-activations bias next STATE.
 reflex.meta.rejected.213: [copilot] rejected: Heuristic 'phantom = degree>=100 AND real_occurrences=0' is too aggressive. Catches legitimate LLM abstractions like user_believed_in_abuser. Don't filter the legacy concept_links graph this way. Move up one abstraction level (namespaced fact_keys) instead — cleaner signal, no archaeology.
+reflex.meta.unknown.225: [system] unknown: I have 6 unanswered questions/contradictions sitting open.  Worth reviewing. #hb_unknowns
 reflex.meta.rejected.177: [system] rejected: prior turn graded [partial]: 9 survived, 0 committed, 0 reverted of 9
 reflex.meta.rejected.175: [system] rejected: prior turn graded [partial]: 8 survived, 0 committed, 0 reverted of 8
 reflex.meta.rejected.171: [system] rejected: prior turn graded [partial]: 8 survived, 0 committed, 0 reverted of 8
-reflex.meta.rejected.169: [system] rejected: prior turn graded [partial]: 8 survived, 0 committed, 0 reverted of 8
-reflex.meta.rejected.167: [system] rejected: prior turn graded [partial]: 6 survived, 0 committed, 0 reverted of 6
+reflex.meta.compression.230: [system] compression: coder working on: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) | touched 2 files: data/.last_turn_keys.json, scripts/confidence.py
+reflex.meta.compression.227: [system] compression: coder working on: add confidence-gating CLI so I can stop asking 'want me to do that next?' as often | touched 5 files: agent/subconscious/orchestrator.py, agent/threads/linking_core/adapter.py, agent/threads/log/adapter.py, data/.last_turn_keys.json, data/big_state.txt
 reflex.meta.compression.221: [system] compression: coder working on: verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion | touched 6 files: agent/subconscious/orchestrator.py, agent/threads/linking_core/adapter.py, agent/threads/log/adapter.py, data/.last_turn_keys.json, data/big_state.txt (+1 more)
 reflex.meta.compression.217: [system] compression: coder working on: test recency boost second run (should boost) | touched 2 files: agent/subconscious/orchestrator.py, data/.last_turn_keys.json
 reflex.meta.compression.215: [system] compression: coder working on: test recency boost first run (no prior keys) | touched 54 files: agent/core/auth.py, agent/services/mobile_api.py, agent/services/mobile_panel.html, agent/subconscious/orchestrator.py, agent/threads/linking_core/__init__.py (+49 more)
@@ -241,34 +241,34 @@ reflex.meta.compression.215: [system] compression: coder working on: test recenc
   - Do not assume connections between concepts unless a link is listed.
 linking_core.function: Scores facts by relevance using spread activation
 linking_core.mechanism: Extracts concepts from query, finds connected concepts in graph
-linking_core.cooccur.env.local__env.vm: fired_together=6
-linking_core.cooccur.env.local__form.tools._usage: fired_together=6
-linking_core.cooccur.env.local__form.tools.ask_llm: fired_together=6
-linking_core.cooccur.env.local__form.traces._test_ctx.run: fired_together=6
-linking_core.cooccur.env.local__form.tools.memory_identity: fired_together=6
-linking_core.cooccur.env.local__form.tools.introspect: fired_together=6
-linking_core.cooccur.env.local__form.tools.memory_philosophy: fired_together=6
-linking_core.cooccur.env.local__form.tools.memory_linking: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.project_version: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.python_version: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.timeline: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.timeline_file: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.task_number: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.future_features: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.year_summary_request: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.current_funds: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.analysis_system: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.current_system: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.npm_version: fired_together=6
-linking_core.cooccur.env.local__identity.john_doe.name: fired_together=6
-linking_core.cooccur.env.local__identity.primary_user.GET: fired_together=6
-linking_core.cooccur.env.local__goals.open.#32: fired_together=6
-linking_core.cooccur.env.local__goals.open.#31: fired_together=6
-linking_core.cooccur.env.local__goals.open.#26: fired_together=6
-linking_core.cooccur.env.local__goals.open.#25: fired_together=6
+linking_core.cooccur.form.tools.ask_llm__form.traces._test_ctx.run: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__form.tools.memory_identity: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__form.tools.introspect: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__form.tools.memory_philosophy: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.project_version: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.python_version: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.timeline: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.timeline_file: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.task_number: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.future_features: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.year_summary_request: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.current_funds: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.analysis_system: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.current_system: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.npm_version: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.john_doe.name: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.GET: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__log.events.0: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__log.events.1: fired_together=9
+linking_core.cooccur.form.tools.memory_identity__form.traces._test_ctx.run: fired_together=9
+linking_core.cooccur.form.tools.introspect__form.traces._test_ctx.run: fired_together=9
+linking_core.cooccur.form.tools.memory_philosophy__form.traces._test_ctx.run: fired_together=9
+linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.project_version: fired_together=9
+linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.python_version: fired_together=9
+linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.timeline: fired_together=9
 linking_core.concepts: 4657
 linking_core.links: 398008
-linking_core.focus: memory_log(0.58), file_read(0.527), workspace_read(0.481), phone(0.44), terminal_vm(0.329)
+linking_core.focus: memory_log(0.551), file_read(0.5), workspace_read(0.457), phone(0.418), terminal_vm(0.313)
 linking_core.cache_size: 0
 
 [field] What's around me — environments, recurring devices, situational alerts
@@ -285,7 +285,7 @@ field.env.cafe-blue-bottle: cafe-blue-bottle (public)
 
 [chat] Past conversations and discussion history
   conversations: 292
-  total_turns: 8263
+  total_turns: 8265
   summaries: 29
   last_session: vscode_copilot_2026-04-27
   context_level: 3
@@ -293,7 +293,7 @@ field.env.cafe-blue-bottle: cafe-blue-bottle (public)
   rules:
   - Conversation history shown is a summary. Do not fabricate details from past chats.
   - If the user asks about a past conversation not shown, say you'd need to search.
-  chat.vscode_copil: "VS Code coding — 2026-04-27" (13 turns, w=0.5)
+  chat.vscode_copil: "VS Code coding — 2026-04-27" (15 turns, w=0.5)
   chat.vscode_copil: "VS Code coding — 2026-04-24" (12 turns, w=0.5)
   chat.react_202604: "Quick Test Response" (2 turns, w=0.5)
   chat.vscode_copil: "VS Code coding — 2026-04-23" (22 turns, w=0.5)
@@ -320,7 +320,7 @@ field.env.cafe-blue-bottle: cafe-blue-bottle (public)
 [docs] 
   markdown_files: 74
   module_readmes: 28
-  last_edit: data/state_tests/20260426_215815/self_reference/side_by_side.md (107m ago)
+  last_edit: data/state_tests/20260426_215815/self_reference/side_by_side.md (118m ago)
   context_level: 3
   fact_count: 77
   rules:
@@ -387,22 +387,22 @@ field.env.cafe-blue-bottle: cafe-blue-bottle (public)
   docs.tests/README.md.title: Tests
   docs.workspace/README.md: 4385B (33d ago)
   docs.workspace/README.md.title: Workspace Module
-  docs.docs/assessments/ASSESSMENT_2026-04-23.md: 13111B (3d ago)
-  docs.docs/assessments/ASSESSMENT_2026-04-23.md.title: AI_OS Codebase Assessment — 2026-04-23 (early morning)
-  docs.docs/assessments/ASSESSMENT_2026-04-22.md: 7707B (4d ago)
-  docs.docs/assessments/ASSESSMENT_2026-04-22.md.title: AI_OS Codebase Assessment — 2026-04-22
-  docs.docs/AUTONOMY_ASSESSMENT.md: 8722B (4d ago)
-  docs.docs/AUTONOMY_ASSESSMENT.md.title: Autonomy Assessment
-  docs.docs/ASSESSMENT.md: 21952B (27d ago)
-  docs.docs/ASSESSMENT.md.title: AI OS — Comprehensive Assessment
-  docs..github/assessments/repo_eval_prompt.md: 5100B (77d ago)
-  docs..github/assessments/repo_eval_prompt.md.title: AI OS Repository Evaluation Prompt
   docs.data/state_tests/20260426_215815/self_reference/side_by_side.md: 1742B (1h ago)
   docs.data/state_tests/20260426_215815/self_reference/side_by_side.md.title: self_reference
   docs.data/state_tests/20260426_215815/self_reference/control.md: 948B (1h ago)
   docs.data/state_tests/20260426_215815/self_reference/control.md.title: self_reference — CONTROL (no STATE)
   docs.data/state_tests/20260426_215815/self_reference/with_state.md: 646B (1h ago)
   docs.data/state_tests/20260426_215815/self_reference/with_state.md.title: self_reference — WITH STATE
+  docs.data/state_tests/20260426_215815/contextual_judgement/side_by_side.md: 839B (1h ago)
+  docs.data/state_tests/20260426_215815/contextual_judgement/side_by_side.md.title: contextual_judgement
+  docs.data/state_tests/20260426_215815/contextual_judgement/control.md: 365B (1h ago)
+  docs.data/state_tests/20260426_215815/contextual_judgement/control.md.title: contextual_judgement — CONTROL (no STATE)
+  docs.data/state_tests/20260426_215815/contextual_judgement/with_state.md: 372B (1h ago)
+  docs.data/state_tests/20260426_215815/contextual_judgement/with_state.md.title: contextual_judgement — WITH STATE
+  docs.data/state_tests/20260426_215815/factual_recall/side_by_side.md: 738B (1h ago)
+  docs.data/state_tests/20260426_215815/factual_recall/side_by_side.md.title: factual_recall
+  docs.data/state_tests/20260426_215815/factual_recall/control.md: 481B (1h ago)
+  docs.data/state_tests/20260426_215815/factual_recall/control.md.title: factual_recall — CONTROL (no STATE)
 
 [goals] 
   context_level: 3

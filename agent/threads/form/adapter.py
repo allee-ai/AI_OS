@@ -265,7 +265,7 @@ class FormThreadAdapter(BaseThreadAdapter):
                 release = _plat.release()
                 mach = _plat.machine()
                 lines.append(
-                    f"  env.local: host={hostname} os={system} {release} arch={mach}"
+                    f"  form.env.local: host={hostname} os={system} {release} arch={mach}"
                 )
                 # terminal_vm is only useful if the 'AIOS' ssh host resolves.
                 # We do NOT probe over network here (too slow for every
@@ -282,7 +282,7 @@ class FormThreadAdapter(BaseThreadAdapter):
                             for line in text.splitlines()
                         )
                     lines.append(
-                        f"  env.vm: ssh_host=AIOS configured={'yes' if vm_configured else 'no'}"
+                        f"  form.env.vm: ssh_host=AIOS configured={'yes' if vm_configured else 'no'}"
                     )
                 except Exception:
                     pass
