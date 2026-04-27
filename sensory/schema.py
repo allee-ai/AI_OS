@@ -162,3 +162,161 @@ def delete_event(event_id: int) -> bool:
         cur = conn.execute("DELETE FROM sensory_events WHERE id = ?", (event_id,))
         conn.commit()
         return cur.rowcount > 0
+
+
+# ---------------------------------------------------------------------------
+# sensory_feeds — metadata for external feeds that write into sensory_events.
+#
+# The bus itself (sensory_events) is dumb and append-only. Real feeds (email,
+# calendar, slack, ...) need somewhere to remember their cursor state, when
+# they last ran, and whether they're enabled. That's this table.
+#
+# This is NOT a replication of STATE. It's the side-table that lets a worker
+# loop know "I last polled Gmail at T, the next message after cursor C is
+# what I should fetch next." The worker still writes the actual content to
+# sensory_events with source='email' — same bus, same adapter, same STATE
+# block. This table just answers "where was I?"
+# ---------------------------------------------------------------------------
+
+def init_sensory_feeds_table() -> None:
+    """Create sensory_feeds table if missing. Called from server startup."""
+    with closing(get_connection()) as conn:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS sensory_feeds (
+                id            INTEGER PRIMARY KEY AUTOINCREMENT,
+                source        TEXT    NOT NULL,
+                feed_kind     TEXT    NOT NULL,
+                display_name  TEXT    NOT NULL,
+                enabled       INTEGER NOT NULL DEFAULT 0,
+                last_run_at   TEXT,
+                last_cursor   TEXT,
+                config_json   TEXT    NOT NULL DEFAULT '{}',
+                error_count   INTEGER NOT NULL DEFAULT 0,
+                last_error    TEXT,
+                created_at    TEXT    NOT NULL,
+                UNIQUE(source, feed_kind, display_name)
+            )
+            """
+        )
+        conn.execute(
+            "CREATE INDEX IF NOT EXISTS idx_sensory_feeds_enabled "
+            "ON sensory_feeds(enabled, source)"
+        )
+        conn.commit()
+
+
+def register_feed(
+    source: str,
+    feed_kind: str,
+    display_name: str,
+    *,
+    enabled: bool = False,
+    config: Optional[Dict[str, Any]] = None,
+) -> Optional[int]:
+    """Register (or upsert) a feed. Returns row id.
+
+    Disabled by default — caller must explicitly enable. Idempotent on the
+    (source, feed_kind, display_name) triple: re-registering merges config
+    and preserves cursor state.
+    """
+    source = (source or "").strip().lower()[:40]
+    feed_kind = (feed_kind or "").strip().lower()[:40]
+    display_name = (display_name or "").strip()[:120]
+    if not source or not feed_kind or not display_name:
+        return None
+
+    cfg_json = json.dumps(config or {}, default=str)[:4000]
+    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+
+    with closing(get_connection()) as conn:
+        cur = conn.execute(
+            "SELECT id FROM sensory_feeds "
+            "WHERE source = ? AND feed_kind = ? AND display_name = ?",
+            (source, feed_kind, display_name),
+        )
+        row = cur.fetchone()
+        if row is not None:
+            # Upsert: merge config, leave cursor + run state alone.
+            fid = row["id"] if hasattr(row, "keys") else row[0]
+            conn.execute(
+                "UPDATE sensory_feeds SET config_json = ?, enabled = ? WHERE id = ?",
+                (cfg_json, 1 if enabled else 0, fid),
+            )
+            conn.commit()
+            return int(fid)
+        cur = conn.execute(
+            "INSERT INTO sensory_feeds "
+            "(source, feed_kind, display_name, enabled, config_json, created_at) "
+            "VALUES (?, ?, ?, ?, ?, ?)",
+            (source, feed_kind, display_name, 1 if enabled else 0, cfg_json, ts),
+        )
+        conn.commit()
+        return cur.lastrowid
+
+
+def get_feeds(enabled_only: bool = False) -> List[Dict[str, Any]]:
+    q = "SELECT id, source, feed_kind, display_name, enabled, last_run_at, last_cursor, config_json, error_count, last_error, created_at FROM sensory_feeds"
+    if enabled_only:
+        q += " WHERE enabled = 1"
+    q += " ORDER BY source, display_name"
+    with closing(get_connection(readonly=True)) as conn:
+        rows = conn.execute(q).fetchall()
+    out: List[Dict[str, Any]] = []
+    for r in rows:
+        d = dict(r)
+        try:
+            d["config"] = json.loads(d.pop("config_json") or "{}")
+        except Exception:
+            d["config"] = {}
+        out.append(d)
+    return out
+
+
+def mark_feed_run(feed_id: int, cursor: Optional[str] = None) -> bool:
+    """Mark a feed as just-ran. Optionally update its cursor.
+
+    Resets error_count on success. Use this from a worker after a clean poll.
+    """
+    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with closing(get_connection()) as conn:
+        if cursor is not None:
+            cur = conn.execute(
+                "UPDATE sensory_feeds "
+                "SET last_run_at = ?, last_cursor = ?, error_count = 0, last_error = NULL "
+                "WHERE id = ?",
+                (ts, cursor[:1000], feed_id),
+            )
+        else:
+            cur = conn.execute(
+                "UPDATE sensory_feeds "
+                "SET last_run_at = ?, error_count = 0, last_error = NULL "
+                "WHERE id = ?",
+                (ts, feed_id),
+            )
+        conn.commit()
+        return cur.rowcount > 0
+
+
+def mark_feed_error(feed_id: int, error: str) -> bool:
+    """Record a feed-poll error. Increments error_count, stores last_error."""
+    ts = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    with closing(get_connection()) as conn:
+        cur = conn.execute(
+            "UPDATE sensory_feeds "
+            "SET last_run_at = ?, error_count = error_count + 1, last_error = ? "
+            "WHERE id = ?",
+            (ts, (error or "")[:500], feed_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0
+
+
+def set_feed_enabled(feed_id: int, enabled: bool) -> bool:
+    with closing(get_connection()) as conn:
+        cur = conn.execute(
+            "UPDATE sensory_feeds SET enabled = ? WHERE id = ?",
+            (1 if enabled else 0, feed_id),
+        )
+        conn.commit()
+        return cur.rowcount > 0

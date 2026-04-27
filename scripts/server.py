@@ -47,7 +47,7 @@ from agent.services.mobile_voice_api import router as mobile_voice_router
 from Feeds import api_router as feeds_router
 from agent.subconscious import subconscious_router
 from voice import router as voice_router
-from sensory import router as sensory_router, init_sensory_tables, init_salience_tables, init_consent_tables, seed_consent_from_taxonomy
+from sensory import router as sensory_router, init_sensory_tables, init_sensory_feeds_table, init_salience_tables, init_consent_tables, seed_consent_from_taxonomy
 from agent.threads.field import router as field_router, init_field_tables
 
 # Thread routers
@@ -319,6 +319,7 @@ async def startup_event():
         # Sensory bus tables (events + salience dropped log)
         try:
             init_sensory_tables()
+            init_sensory_feeds_table()
             init_salience_tables()
             init_consent_tables()
             added = seed_consent_from_taxonomy()

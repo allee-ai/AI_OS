@@ -1130,6 +1130,37 @@ class Subconscious:
             n = {1: 5, 2: 10, 3: max_results}.get(level, 10)
             rows = get_recent_events(limit=n)
             facts: List[str] = []
+
+            # Feed registry (L2+): show which external feeds are wired,
+            # when each last ran, and any error state. This is metadata
+            # ABOUT the bus, not bus content. Empty registry → no lines.
+            if level >= 2:
+                try:
+                    from sensory.schema import get_feeds
+                    feeds = get_feeds(enabled_only=False)
+                    if feeds:
+                        n_enabled = sum(1 for f in feeds if f.get("enabled"))
+                        facts.append(
+                            f"  sensory.feeds: {len(feeds)} registered, "
+                            f"{n_enabled} enabled"
+                        )
+                        # L3: per-feed status line
+                        if level >= 3:
+                            for f in feeds[:8]:
+                                fid = f.get("id")
+                                src = f.get("source", "?")
+                                fk = f.get("feed_kind", "?")
+                                en = "on" if f.get("enabled") else "off"
+                                last = (f.get("last_run_at") or "never")[-19:]
+                                errs = f.get("error_count") or 0
+                                err_tag = f" err×{errs}" if errs else ""
+                                facts.append(
+                                    f"  sensory.feeds.{fid}: "
+                                    f"{src}/{fk} [{en}] last={last}{err_tag}"
+                                )
+                except Exception:
+                    pass
+
             if level >= 2:
                 try:
                     from datetime import datetime, timedelta, timezone
