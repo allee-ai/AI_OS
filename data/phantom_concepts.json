@@ -1,0 +1,7543 @@
+{
+  "threshold_degree": 100,
+  "min_real_occurrences": 1,
+  "phantoms": [
+    {
+      "concept": "comparison_to_chatgpt",
+      "degree": 2029,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "comparison_to_linux",
+      "degree": 1941,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "action_pushes_to_github",
+      "degree": 1939,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "functions_to_add",
+      "degree": 1932,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "components_to_move",
+      "degree": 1913,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_believed_in_abuser",
+      "degree": 1590,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "interest_in_architecture",
+      "degree": 1586,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "trust_in instincts",
+      "degree": 1572,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "personal_info_in_codebase",
+      "degree": 1489,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "recent_focus_prompt_mode_sync_on_startup",
+      "degree": 1440,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "benefits_of_model_agnosticism",
+      "degree": 1402,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "system.architecture.new_fact_inclusion",
+      "degree": 1273,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "number_of_questions",
+      "degree": 1268,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "cons_of_feature_folder",
+      "degree": 1249,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "understanding_of_code",
+      "degree": 1246,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "pros_of_feature_folder",
+      "degree": 1242,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "agent_architecture_description",
+      "degree": 1217,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "goal_of_abuser",
+      "degree": 1213,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "thread_api_suggestion",
+      "degree": 1203,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "has_video",
+      "degree": 1173,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "result_of_changes",
+      "degree": 1167,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "database_api_update",
+      "degree": 1154,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuser_used_children_as_tactic",
+      "degree": 1150,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backend_api_issues",
+      "degree": 1133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "current_module_status",
+      "degree": 1125,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "system.architecture.fact_source",
+      "degree": 1106,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "personal_module_developed",
+      "degree": 1099,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "intro_as_first_turn",
+      "degree": 1075,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_changes_needed",
+      "degree": 1074,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "local_model_size",
+      "degree": 1044,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_understands_memory",
+      "degree": 1039,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "form_api_endpoint",
+      "degree": 1038,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "profile_context",
+      "degree": 1021,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_key_location",
+      "degree": 1005,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.goal.create_new_icloud",
+      "degree": 1004,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_key_reference",
+      "degree": 1004,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_directory_cleanup",
+      "degree": 1004,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "current_architecture_update",
+      "degree": 1000,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.new_fact",
+      "degree": 999,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_endpoint_format",
+      "degree": 998,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "new_control_methods",
+      "degree": 993,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "system.architecture.relevance_scoring",
+      "degree": 990,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.project.thread",
+      "degree": 989,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "reflex_thread_goal",
+      "degree": 988,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "new_tool_process",
+      "degree": 987,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.needs_review",
+      "degree": 972,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "assistant.memory.scope",
+      "degree": 972,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_log_thread",
+      "degree": 966,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_tested",
+      "degree": 961,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_code_location",
+      "degree": 960,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "memory_loop_function",
+      "degree": 956,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.test_fact",
+      "degree": 954,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ai_monopoly_prediction",
+      "degree": 953,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "memory_service_issue",
+      "degree": 952,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tooldashboard_api",
+      "degree": 945,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "requested_architecture_update",
+      "degree": 944,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_cleanliness",
+      "degree": 942,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_endpoint_suggestion",
+      "degree": 941,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_structure",
+      "degree": 940,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backend_frontend_mapping",
+      "degree": 940,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_linking_core_backend",
+      "degree": 938,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "thread_profiles_page",
+      "degree": 935,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_db_structure",
+      "degree": 921,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "vs_code_file",
+      "degree": 917,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "local_setup_required",
+      "degree": 909,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "memory_services_removal",
+      "degree": 906,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "run_batch_file",
+      "degree": 893,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "code_health_architecture",
+      "degree": 890,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_utilization",
+      "degree": 889,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "email_module_flow",
+      "degree": 887,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "feature_tool_builder",
+      "degree": 881,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ten_ollama_python",
+      "degree": 878,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "local_db_usage",
+      "degree": 869,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "read_write_local_db",
+      "degree": 868,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.goal.new_icloud",
+      "degree": 867,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "frontend_updates_required",
+      "degree": 866,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "new_email_needed",
+      "degree": 864,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_value_levels",
+      "degree": 857,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "reasons_for_building",
+      "degree": 857,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "batch_model_calls",
+      "degree": 857,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "reasons_against_building",
+      "degree": 850,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.action.new.icloud",
+      "degree": 845,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_value_layers",
+      "degree": 842,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dispatch_module_functions",
+      "degree": 842,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "conflict_module_functions",
+      "degree": 839,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_rag_index",
+      "degree": 834,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "override_module_functions",
+      "degree": 833,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_execution_flow",
+      "degree": 828,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_real",
+      "degree": 816,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "server_port_frontend",
+      "degree": 814,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_perception",
+      "degree": 813,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "frontend_technologies",
+      "degree": 803,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preference.work_method",
+      "degree": 802,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_frontend_tables",
+      "degree": 802,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "thread_scoring_upgrade",
+      "degree": 799,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "drug_use_search",
+      "degree": 788,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "prompt_only_vs_structured",
+      "degree": 787,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_display",
+      "degree": 785,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "consolidation_daemon_issue",
+      "degree": 785,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_goal",
+      "degree": 783,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "bridge_module",
+      "degree": 776,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "module_independence",
+      "degree": 774,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "start_batch_file",
+      "degree": 773,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "module_contents",
+      "degree": 768,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_new_convo_starting",
+      "degree": 768,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_availability_check",
+      "degree": 767,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "file_usage",
+      "degree": 767,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dmg_file_path",
+      "degree": 764,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "chat_history_behavior",
+      "degree": 763,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_module",
+      "degree": 762,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "feature_reflex_chains",
+      "degree": 760,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_delete",
+      "degree": 759,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "model_size_advantage",
+      "degree": 759,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "repo_management",
+      "degree": 758,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "action_cleans_db_files",
+      "degree": 756,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "file_path_display",
+      "degree": 754,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "new_routes_created",
+      "degree": 752,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "thread_responsibility",
+      "degree": 747,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "log_field_issue",
+      "degree": 745,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "cli_run_command",
+      "degree": 742,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "docker_files_removed",
+      "degree": 738,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "db_update",
+      "degree": 732,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "import_errors_fixed",
+      "degree": 725,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "comparison_context",
+      "degree": 724,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "output_behavioral_profile",
+      "degree": 723,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "missing_features",
+      "degree": 713,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "github_presence",
+      "degree": 713,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "consolidation_loop_function",
+      "degree": 711,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_expansion",
+      "degree": 710,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "code_language",
+      "degree": 709,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "understands_architecture",
+      "degree": 707,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "recent_pattern_change",
+      "degree": 707,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "frontend_expectations",
+      "degree": 707,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_needed",
+      "degree": 707,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "frontend_expectation",
+      "degree": 704,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "frontend_accessibility",
+      "degree": 701,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preferences.likes_python",
+      "degree": 698,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "db_setup_issue",
+      "degree": 694,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "delete_files",
+      "degree": 693,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "linking_file",
+      "degree": 689,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "problem_new_convo",
+      "degree": 688,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_rules",
+      "degree": 688,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "css_files_checked",
+      "degree": 685,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "github_issues_raised",
+      "degree": 683,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "linking_core_role",
+      "degree": 677,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "server_port_backend",
+      "degree": 675,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "context_source",
+      "degree": 674,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_conversation_sidebar",
+      "degree": 667,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "database_lock_issues",
+      "degree": 667,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "docs_updates",
+      "degree": 666,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "code_issue",
+      "degree": 665,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_consolidation_daemon",
+      "degree": 664,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_features",
+      "degree": 663,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dashboard_features",
+      "degree": 662,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preference.python",
+      "degree": 653,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tested_files",
+      "degree": 652,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "philosophy_no_data",
+      "degree": 651,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "llm_call_latency",
+      "degree": 651,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "clarifying_conversation_repeating",
+      "degree": 650,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "docs_structure",
+      "degree": 649,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_breakdown",
+      "degree": 648,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "git_command_usage",
+      "degree": 643,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "root_folder_structure",
+      "degree": 641,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "collaborators_start",
+      "degree": 638,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "commit_message_includes_ip",
+      "degree": 637,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "service_update",
+      "degree": 633,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "seed_file_creation",
+      "degree": 633,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preferences.prefers_dark_mode",
+      "degree": 632,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "root_folder_changes",
+      "degree": 630,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "next_work_points",
+      "degree": 628,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "gitignored_files",
+      "degree": 625,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "enforcement_context",
+      "degree": 625,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "kept_files",
+      "degree": 621,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.some_fact",
+      "degree": 619,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.fact_b",
+      "degree": 619,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "sync_loop_function",
+      "degree": 619,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "checked_files",
+      "degree": 617,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "files_checked",
+      "degree": 616,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "first_message_action",
+      "degree": 612,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "registration_file",
+      "degree": 606,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fact_extractor_function",
+      "degree": 605,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "message_analysis_focus",
+      "degree": 604,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "repo_type",
+      "degree": 602,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "subconscious_functionality",
+      "degree": 601,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "agent_remembering",
+      "degree": 601,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "feature_convo_import",
+      "degree": 599,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "main_orchestration_required",
+      "degree": 598,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backend_error",
+      "degree": 598,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_conversation_saving",
+      "degree": 597,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "vision_updated",
+      "degree": 593,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.corrected_text_here",
+      "degree": 593,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "health_loop_function",
+      "degree": 581,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "file_cleaned",
+      "degree": 581,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "auto_start_session",
+      "degree": 580,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "background_loop_needed",
+      "degree": 576,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_documentation_sync",
+      "degree": 575,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "idea_for_2025_analysis",
+      "degree": 574,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "file_exclusion",
+      "degree": 572,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "consolidated_files",
+      "degree": 572,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.fact",
+      "degree": 571,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "preserved_files",
+      "degree": 571,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "db_mode_switching",
+      "degree": 569,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "identity_adapter_update",
+      "degree": 568,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "documenting_history",
+      "degree": 568,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.pending_fact",
+      "degree": 567,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "log_data_exist",
+      "degree": 566,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "git_ignore_update",
+      "degree": 566,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "subconscious_role",
+      "degree": 564,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "centralized_db_logic",
+      "degree": 563,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.process.method.spread_activation",
+      "degree": 561,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.information.need",
+      "degree": 560,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "git_ignore_issue",
+      "degree": 557,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "code_size",
+      "degree": 557,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "missing_function",
+      "degree": 553,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "log_events_status",
+      "degree": 553,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "os_capabilities",
+      "degree": 549,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "threads_registry_status",
+      "degree": 548,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "specific_updates",
+      "degree": 548,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "background_orchestration_needed",
+      "degree": 548,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "redundant_code",
+      "degree": 539,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "recent_focus",
+      "degree": 537,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "repo_initialization",
+      "degree": 534,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "major_patterns",
+      "degree": 526,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "code_storage",
+      "degree": 524,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "session_manager_role",
+      "degree": 523,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fact_source_relevance",
+      "degree": 522,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_fixed",
+      "degree": 520,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_db_persistence",
+      "degree": 517,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "legacy_code_check",
+      "degree": 515,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "component_updated",
+      "degree": 515,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "readme_highlighting",
+      "degree": 514,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "os_preference",
+      "degree": 514,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "conversation_usage",
+      "degree": 513,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "section_21_updated",
+      "degree": 512,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "section_14_updated",
+      "degree": 510,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "assistant.response.greeting",
+      "degree": 509,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "section_13_updated",
+      "degree": 505,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "github_familiarity",
+      "degree": 503,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "section_23_updated",
+      "degree": 498,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "removed_features",
+      "degree": 498,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "log_data_exists",
+      "degree": 495,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "chosen_modules",
+      "degree": 495,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "year_summary_request",
+      "degree": 493,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "section_changes",
+      "degree": 493,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "feature_added",
+      "degree": 493,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "program_entry",
+      "degree": 492,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "profile_collection_questions",
+      "degree": 489,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "comparison_features",
+      "degree": 489,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_app_infrastructure",
+      "degree": 486,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "docs_quality",
+      "degree": 483,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "process_features",
+      "degree": 482,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "system_prompt_issue",
+      "degree": 481,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "page_limit",
+      "degree": 478,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "session_id_management",
+      "degree": 475,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "branch_usage",
+      "degree": 473,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.project.task",
+      "degree": 472,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "deprecated_modules",
+      "degree": 472,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "test_benchmarks",
+      "degree": 471,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "manifest_use",
+      "degree": 471,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "endpoint_mapping",
+      "degree": 470,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_updated",
+      "degree": 469,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "integrated_feeds",
+      "degree": 468,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fixed_issue",
+      "degree": 467,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.action.email",
+      "degree": 465,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "team_structure",
+      "degree": 465,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backend_not_restarted",
+      "degree": 465,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "specific_months",
+      "degree": 464,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "code_maturity",
+      "degree": 457,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dashboard_behavior",
+      "degree": 456,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "session_framing",
+      "degree": 453,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backend_registration",
+      "degree": 453,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backend_killed",
+      "degree": 453,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "error_fixed",
+      "degree": 451,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "directional_control",
+      "degree": 451,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuse_experience",
+      "degree": 451,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "response_advice",
+      "degree": 448,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preference.language",
+      "degree": 446,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "db_conversations",
+      "degree": 446,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fixed_format",
+      "degree": 444,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "git_command_needed",
+      "degree": 439,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dependency_added",
+      "degree": 439,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "cli_mode",
+      "degree": 439,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.keep",
+      "degree": 437,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preferences.prefers_large_dogs",
+      "degree": 434,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.ready_promotion",
+      "degree": 433,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tried_persist_three",
+      "degree": 432,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "assistant.data.policy",
+      "degree": 432,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "pitch_for_product",
+      "degree": 431,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "analysis_guidance",
+      "degree": 429,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tested_components",
+      "degree": 424,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "philosophy_change",
+      "degree": 424,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "verified_changes",
+      "degree": 423,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dashboard_role",
+      "degree": 419,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "test_performed",
+      "degree": 418,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dev_mode_accessibility",
+      "degree": 418,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "script_status",
+      "degree": 412,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "worked_hard",
+      "degree": 410,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "updated_examples",
+      "degree": 407,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "GET /api/form/tools",
+      "degree": 403,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "commit_history_insight",
+      "degree": 402,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "test_type",
+      "degree": 401,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "enable_browser_actions",
+      "degree": 401,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.relationship.familysharing",
+      "degree": 396,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "gender_analysis",
+      "degree": 396,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "test_process",
+      "degree": 395,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "redundant_services",
+      "degree": 395,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fix_actions",
+      "degree": 395,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_experienced_emotional_abuse",
+      "degree": 394,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "template_usage",
+      "degree": 389,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.trimmed_text",
+      "degree": 388,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.corrected_text",
+      "degree": 387,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "commit_history_evolution",
+      "degree": 387,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_components",
+      "degree": 386,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "solution_approach",
+      "degree": 384,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "GET /api/workspace/pinned",
+      "degree": 384,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "db_cleaned",
+      "degree": 383,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "unchanged_components",
+      "degree": 382,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "action_stages_changes",
+      "degree": 382,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "budget_management",
+      "degree": 381,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issues_type",
+      "degree": 379,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "existing_scripts",
+      "degree": 379,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "discord_needed",
+      "degree": 377,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.request.icoud_name_change",
+      "degree": 374,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "design_strengths",
+      "degree": 374,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "server_restart_required",
+      "degree": 373,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "redundant_profile",
+      "degree": 373,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "relationship_concern",
+      "degree": 369,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "current_activity",
+      "degree": 369,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "GET /api/workspace/recent",
+      "degree": 367,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "workspace_reviewed",
+      "degree": 362,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "git_command_used",
+      "degree": 361,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "repo_safe",
+      "degree": 359,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "current_assessment",
+      "degree": 359,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "desired_loop",
+      "degree": 357,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fix_action",
+      "degree": 355,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "step_direction_given",
+      "degree": 353,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_creation_method",
+      "degree": 353,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "refactor_history",
+      "degree": 352,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_description",
+      "degree": 352,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "remote_origin_setup",
+      "degree": 351,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "json_editing_required",
+      "degree": 348,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "eval_recommendation",
+      "degree": 347,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "browser_console_check",
+      "degree": 347,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "victim_safety",
+      "degree": 344,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "research_layers",
+      "degree": 341,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_decision",
+      "degree": 339,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_port",
+      "degree": 339,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "action_cleans_db",
+      "degree": 339,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuser_continued_exploitative_behavior",
+      "degree": 339,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "name_change_reason",
+      "degree": 338,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "server_restart_needed",
+      "degree": 337,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "processing_time_estimation",
+      "degree": 337,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "system_prompt_display",
+      "degree": 336,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_preference",
+      "degree": 336,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fix_suggestion",
+      "degree": 333,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "prompt_competing",
+      "degree": 332,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "server_shutdown",
+      "degree": 329,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "backup_required",
+      "degree": 328,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_heal1_l2_l3",
+      "degree": 323,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "document_type",
+      "degree": 322,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "GET /api/services/consolidation/pending",
+      "degree": 321,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fix_applied",
+      "degree": 319,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuser_behavior",
+      "degree": 319,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fine_tuning_status",
+      "degree": 318,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "job_impact",
+      "degree": 317,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "GET /api/eval/runs",
+      "degree": 317,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "current_stage",
+      "degree": 316,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.goal.name_change",
+      "degree": 311,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "preferred_user_interface_term",
+      "degree": 310,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "vm_usage",
+      "degree": 309,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "problem_area",
+      "degree": 308,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "favorite_design_pattern",
+      "degree": 308,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "competitor_analysis",
+      "degree": 307,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuse_duration",
+      "degree": 307,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "api_bridge",
+      "degree": 306,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "offline_sync",
+      "degree": 305,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "get_started_info",
+      "degree": 305,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "login_issue",
+      "degree": 304,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "prompt_name",
+      "degree": 300,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.quick_approve",
+      "degree": 299,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "execution_stage",
+      "degree": 298,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "token_consciousness",
+      "degree": 296,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_with_terminal",
+      "degree": 296,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "interest_level",
+      "degree": 292,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "timeframe_breakdown",
+      "degree": 290,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_encountered",
+      "degree": 289,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.account.type",
+      "degree": 287,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "kept_table",
+      "degree": 282,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "relevance_score_system",
+      "degree": 280,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "sacrifices_made",
+      "degree": 279,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "script_creation",
+      "degree": 278,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "concept_graph_status",
+      "degree": 278,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_feature",
+      "degree": 275,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "priority_issue",
+      "degree": 275,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "device_independence",
+      "degree": 275,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_theory",
+      "degree": 274,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "error_location",
+      "degree": 274,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.job",
+      "degree": 272,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "evaluation_recommendation",
+      "degree": 272,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "emotional_labor_dismissal",
+      "degree": 272,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "removed_tables",
+      "degree": 271,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "recognized_patterns",
+      "degree": 271,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fix_method",
+      "degree": 271,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "finetune_actions",
+      "degree": 271,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_stage",
+      "degree": 266,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "email_encryption",
+      "degree": 266,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "specialized_subset_script",
+      "degree": 264,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "evaluation_status",
+      "degree": 263,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "schema_location",
+      "degree": 262,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "folder_status",
+      "degree": 262,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_issue",
+      "degree": 258,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "software_name",
+      "degree": 258,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "timeline_periods",
+      "degree": 256,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.knowledge.source",
+      "degree": 255,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "safety_training_method",
+      "degree": 253,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "recognition_process",
+      "degree": 251,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuser_intelligence",
+      "degree": 251,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "schema_deletion",
+      "degree": 249,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_identified",
+      "degree": 249,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "query_scoring",
+      "degree": 248,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "conflicting_function",
+      "degree": 248,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "codebase_check",
+      "degree": 246,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "survived_abuse",
+      "degree": 241,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "schema_richness",
+      "degree": 241,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "pythonpath_issue",
+      "degree": 240,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_with_identity",
+      "degree": 240,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ab_testing",
+      "degree": 238,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_current",
+      "degree": 237,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "strong_personality",
+      "degree": 237,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.identity.trans",
+      "degree": 236,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "audience_continuity",
+      "degree": 236,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "directory_reorganization",
+      "degree": 232,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "device_accessibility",
+      "degree": 231,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preferences.prefers_espresso",
+      "degree": 230,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "directory_status",
+      "degree": 230,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "directory_leftover",
+      "degree": 230,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "theme_var_usage",
+      "degree": 229,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "reflex_ui_simplicity",
+      "degree": 229,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "favorite_design",
+      "degree": 228,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_knowledge",
+      "degree": 227,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "active_texting_hours",
+      "degree": 227,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_requirement",
+      "degree": 224,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "current_state_reflex_thread",
+      "degree": 224,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.job.position",
+      "degree": 223,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "complete_runtime_launcher",
+      "degree": 223,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "proposed_feature",
+      "degree": 222,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "likely_tactics",
+      "degree": 222,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "life360_monitoring",
+      "degree": 222,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "relationship_strategy",
+      "degree": 221,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "directory_action",
+      "degree": 221,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "scripts_renamed",
+      "degree": 219,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tactical_reactions",
+      "degree": 218,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_request",
+      "degree": 216,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_vision",
+      "degree": 214,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "sidebar_behavior",
+      "degree": 213,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "chat_ui_tool_value_layers_tool_system",
+      "degree": 213,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.action.backup",
+      "degree": 211,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "push_status",
+      "degree": 211,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "complete_version_doc",
+      "degree": 211,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "chat_ui_chat_interface_chat_schema",
+      "degree": 210,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "affected_component",
+      "degree": 210,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tools_built",
+      "degree": 208,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "openai_comparison",
+      "degree": 208,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "draft_post_title",
+      "degree": 206,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_desire",
+      "degree": 205,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.approve",
+      "degree": 204,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_location",
+      "degree": 203,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "roadmap_existence",
+      "degree": 202,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_theme",
+      "degree": 201,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "survivor_strength",
+      "degree": 200,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "feature_suggestion",
+      "degree": 199,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_inspiration",
+      "degree": 198,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "process_knowledge",
+      "degree": 198,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "improvement_suggestion",
+      "degree": 197,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "communication_type",
+      "degree": 197,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "branch_creation",
+      "degree": 197,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "ui_issues",
+      "degree": 194,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_thoughts",
+      "degree": 193,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_mode",
+      "degree": 193,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "problem_description",
+      "degree": 193,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "social_media_strategy",
+      "degree": 191,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_role",
+      "degree": 191,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "questioning_technique",
+      "degree": 189,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "normal_relationship_texts",
+      "degree": 188,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "big_success_prs",
+      "degree": 188,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "convo_weight_reasoning",
+      "degree": 187,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "unified_events_status",
+      "degree": 186,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "browser_status",
+      "degree": 186,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "text_replacement",
+      "degree": 185,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "average_text_length",
+      "degree": 185,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "apple_id_action",
+      "degree": 183,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "agi_target",
+      "degree": 183,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "genius_assumption",
+      "degree": 182,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "l2_value_returned",
+      "degree": 181,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preference.account",
+      "degree": 177,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_size_reduction",
+      "degree": 177,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "commit_details",
+      "degree": 177,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "process_understanding",
+      "degree": 176,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "pulse_count_lifetime",
+      "degree": 175,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "vm_ip_exposed",
+      "degree": 174,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "implementation_technology",
+      "degree": 173,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_concept",
+      "degree": 172,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "sections_edits",
+      "degree": 169,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_novelty",
+      "degree": 169,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "precreated_profiles",
+      "degree": 169,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "adjustments_suggested",
+      "degree": 169,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "improvement_directions",
+      "degree": 167,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "assistant.process.overview",
+      "degree": 167,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "impact_scope",
+      "degree": 166,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "preferred_processing_method",
+      "degree": 164,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "codebase_capture",
+      "degree": 163,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.action.icloud",
+      "degree": 160,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_requirements",
+      "degree": 160,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuse_type",
+      "degree": 160,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "container_tool",
+      "degree": 158,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_value_layers_tool_system_quick_wins",
+      "degree": 157,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "expected_contributor_engagement",
+      "degree": 157,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "transphobic_abuse",
+      "degree": 156,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "processed_messages",
+      "degree": 156,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.preferences.likes_coffee",
+      "degree": 155,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "health_check_fixes",
+      "degree": 155,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "git_ssh_config",
+      "degree": 155,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_version",
+      "degree": 152,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_features",
+      "degree": 151,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "outdated_version_doc",
+      "degree": 151,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "safety_precaution",
+      "degree": 150,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "direct_launch",
+      "degree": 150,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "sync_tool",
+      "degree": 147,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "devops_tool",
+      "degree": 147,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "trigger_tool_system",
+      "degree": 146,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "vision_publicity",
+      "degree": 145,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user.general.invalid_status",
+      "degree": 143,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tools_creator",
+      "degree": 143,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "codebase_completeness",
+      "degree": 143,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "blamed_for_problems",
+      "degree": 142,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "sidebar_preference",
+      "degree": 141,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "evidence_period",
+      "degree": 141,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_tools",
+      "degree": 140,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "potential_tool",
+      "degree": 140,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "tool_capacity",
+      "degree": 139,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_type",
+      "degree": 139,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "visualization_stalled",
+      "degree": 137,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "technology_used",
+      "degree": 137,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "profile_type_display",
+      "degree": 137,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "boredom_audit_conceptgraph3d",
+      "degree": 137,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_issue",
+      "degree": 136,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "favorite_language",
+      "degree": 135,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "abuser_strategy",
+      "degree": 135,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "next_project",
+      "degree": 134,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "benchmark_latency",
+      "degree": 134,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "workspace_source",
+      "degree": 133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "theme_preference",
+      "degree": 133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "reason_for_preference",
+      "degree": 133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "philosophical_change",
+      "degree": 133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "installer_behavior",
+      "degree": 133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "component_involved",
+      "degree": 133,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "poetry_usage",
+      "degree": 132,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "issue_resolved",
+      "degree": 132,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_concerns",
+      "degree": 131,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "comparison_result",
+      "degree": 125,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "eval_command",
+      "degree": 124,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "vm_type",
+      "degree": 123,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "task_request",
+      "degree": 123,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "identity_details",
+      "degree": 123,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "fact_logging",
+      "degree": 123,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "design_approach",
+      "degree": 122,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "profile_requirement",
+      "degree": 121,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "process_change",
+      "degree": 121,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "reflex_goal",
+      "degree": 120,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_worth",
+      "degree": 118,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "preferred_cleanup_option",
+      "degree": 118,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "expected_usage",
+      "degree": 115,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "workspace_content",
+      "degree": 114,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "logging_scope",
+      "degree": 114,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "conversation_history_usage",
+      "degree": 114,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "workspace_module_location",
+      "degree": 112,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "subagent_routine",
+      "degree": 112,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "workspace_definition",
+      "degree": 111,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "technical_overhead",
+      "degree": 111,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "preferred_profile",
+      "degree": 110,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "log_location",
+      "degree": 110,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_db_purpose",
+      "degree": 110,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "mac_gatekeeper",
+      "degree": 109,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_db_usage",
+      "degree": 109,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "expected_reactions",
+      "degree": 108,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "expected_growth",
+      "degree": 108,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "architecture_choice",
+      "degree": 108,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "profile_status",
+      "degree": 107,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "video_description",
+      "degree": 106,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "maturity_completeness",
+      "degree": 106,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "expected_viral_moment",
+      "degree": 106,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "token_budget_understanding",
+      "degree": 105,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "solution_proposed",
+      "degree": 105,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "file_size_new_structure_file_write",
+      "degree": 105,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "profile_strength",
+      "degree": 104,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "preference_shared_spaces",
+      "degree": 104,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "document_status",
+      "degree": 104,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_date",
+      "degree": 104,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "solution_applied",
+      "degree": 103,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "demo_availability",
+      "degree": 103,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "log_strategy",
+      "degree": 102,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "gender_identity_attacked",
+      "degree": 102,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "project_demo_ready",
+      "degree": 101,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "idea_potential",
+      "degree": 101,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "expected_stars",
+      "degree": 101,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "user_react_to_new",
+      "degree": 100,
+      "real_occurrences": 0
+    },
+    {
+      "concept": "dashboard_keep",
+      "degree": 100,
+      "real_occurrences": 0
+    }
+  ],
+  "kept": [
+    {
+      "concept": "nola_to_agent",
+      "degree": 2000,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "push_changes_to_server",
+      "degree": 1944,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "added_to_gitignore",
+      "degree": 1904,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "human_in_loop",
+      "degree": 1522,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "uses_ai",
+      "degree": 1347,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "sync_on_startup",
+      "degree": 1326,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "backend_api",
+      "degree": 1304,
+      "real_occurrences": 99
+    },
+    {
+      "concept": "user_wants_facts",
+      "degree": 1258,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "manifest_on_shutdown",
+      "degree": 1246,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "ai_tasks",
+      "degree": 1242,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "thread_local_models",
+      "degree": 1215,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "model_agnostic_architecture",
+      "degree": 1190,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "memory_architecture",
+      "degree": 1178,
+      "real_occurrences": 46
+    },
+    {
+      "concept": "conversation_state",
+      "degree": 1158,
+      "real_occurrences": 44
+    },
+    {
+      "concept": "global_state_structure",
+      "degree": 1138,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "frontend_api_service",
+      "degree": 1120,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "will_get_forked",
+      "degree": 1111,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "single_source_of_truth",
+      "degree": 1090,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "api_update",
+      "degree": 1089,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "local_ai",
+      "degree": 1081,
+      "real_occurrences": 75
+    },
+    {
+      "concept": "old_api_references",
+      "degree": 1072,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "row_limits_by_model",
+      "degree": 1070,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "separation_of_concerns",
+      "degree": 1069,
+      "real_occurrences": 52
+    },
+    {
+      "concept": "trusts_ai",
+      "degree": 1065,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "work_context",
+      "degree": 1063,
+      "real_occurrences": 23
+    },
+    {
+      "concept": "tools_architecture",
+      "degree": 1062,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "api_changes",
+      "degree": 1060,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "thread_architecture",
+      "degree": 1054,
+      "real_occurrences": 81
+    },
+    {
+      "concept": "model_architecture",
+      "degree": 1047,
+      "real_occurrences": 30
+    },
+    {
+      "concept": "ai_os",
+      "degree": 1046,
+      "real_occurrences": 521
+    },
+    {
+      "concept": "architecture_model",
+      "degree": 1041,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "global_state",
+      "degree": 1038,
+      "real_occurrences": 35
+    },
+    {
+      "concept": "incremental_state_update",
+      "degree": 1036,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "memory_layer",
+      "degree": 1033,
+      "real_occurrences": 51
+    },
+    {
+      "concept": "ai_usage",
+      "degree": 1033,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "api_issue",
+      "degree": 1030,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "current_project",
+      "degree": 1008,
+      "real_occurrences": 17
+    },
+    {
+      "concept": "state_update",
+      "degree": 1004,
+      "real_occurrences": 60
+    },
+    {
+      "concept": "state_manager",
+      "degree": 1002,
+      "real_occurrences": 19
+    },
+    {
+      "concept": "business_model",
+      "degree": 996,
+      "real_occurrences": 58
+    },
+    {
+      "concept": "emotional_state",
+      "degree": 995,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "api_usage",
+      "degree": 992,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "module_updates",
+      "degree": 990,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "personal_context",
+      "degree": 989,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "module_flow",
+      "degree": 984,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "module_based_operations",
+      "degree": 984,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "backend_structure",
+      "degree": 984,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "context_management",
+      "degree": 982,
+      "real_occurrences": 45
+    },
+    {
+      "concept": "model_used",
+      "degree": 981,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "memory_system",
+      "degree": 981,
+      "real_occurrences": 125
+    },
+    {
+      "concept": "ai_behavior",
+      "degree": 981,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "api_endpoints",
+      "degree": 978,
+      "real_occurrences": 98
+    },
+    {
+      "concept": "github_update",
+      "degree": 973,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "chat_module",
+      "degree": 972,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "db_state",
+      "degree": 970,
+      "real_occurrences": 32
+    },
+    {
+      "concept": "bedrock_api",
+      "degree": 966,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "context_elevation_rules",
+      "degree": 959,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "api_error",
+      "degree": 958,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "demo_flow",
+      "degree": 955,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "current_state",
+      "degree": 955,
+      "real_occurrences": 191
+    },
+    {
+      "concept": "ai_system",
+      "degree": 953,
+      "real_occurrences": 172
+    },
+    {
+      "concept": "api_endpoint",
+      "degree": 952,
+      "real_occurrences": 177
+    },
+    {
+      "concept": "runtime_context",
+      "degree": 945,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "api_status",
+      "degree": 945,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "current_file",
+      "degree": 944,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "new_module",
+      "degree": 942,
+      "real_occurrences": 43
+    },
+    {
+      "concept": "function_memory_schema",
+      "degree": 940,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "reflex_thread",
+      "degree": 938,
+      "real_occurrences": 372
+    },
+    {
+      "concept": "ai_role",
+      "degree": 938,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "features_added",
+      "degree": 935,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "sidebar_loads_from_db",
+      "degree": 933,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "api_mismatch",
+      "degree": 933,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "github_issues",
+      "degree": 928,
+      "real_occurrences": 32
+    },
+    {
+      "concept": "test_tools",
+      "degree": 922,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "state_structure",
+      "degree": 920,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "file_structure",
+      "degree": 919,
+      "real_occurrences": 50
+    },
+    {
+      "concept": "context_level",
+      "degree": 919,
+      "real_occurrences": 209
+    },
+    {
+      "concept": "updated_code",
+      "degree": 917,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "ui_update",
+      "degree": 917,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "state_block_format",
+      "degree": 915,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "memory_linking",
+      "degree": 914,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "context_loading",
+      "degree": 914,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "tool_management",
+      "degree": 913,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "profile_structure",
+      "degree": 912,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "memory_consolidation_stats",
+      "degree": 912,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "state_management",
+      "degree": 909,
+      "real_occurrences": 148
+    },
+    {
+      "concept": "chat_ui",
+      "degree": 909,
+      "real_occurrences": 69
+    },
+    {
+      "concept": "sub_agent_workflow",
+      "degree": 908,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "db_backed_tools",
+      "degree": 904,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "architecture_docs",
+      "degree": 903,
+      "real_occurrences": 28
+    },
+    {
+      "concept": "memory_node_pattern",
+      "degree": 901,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "thread_structure",
+      "degree": 898,
+      "real_occurrences": 44
+    },
+    {
+      "concept": "frontend_update",
+      "degree": 898,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "architecture_changes",
+      "degree": 896,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "First message",
+      "degree": 896,
+      "real_occurrences": 32
+    },
+    {
+      "concept": "ready_state",
+      "degree": 895,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "uses_docker",
+      "degree": 892,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "form_thread_handler",
+      "degree": 891,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "run_script",
+      "degree": 886,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "module_structure",
+      "degree": 886,
+      "real_occurrences": 31
+    },
+    {
+      "concept": "frontend_updates",
+      "degree": 884,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "frontend_structure",
+      "degree": 883,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "using_ollama_with_gptos",
+      "degree": 880,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "log_thread",
+      "degree": 880,
+      "real_occurrences": 315
+    },
+    {
+      "concept": "codebase_state",
+      "degree": 878,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "state_consistency",
+      "degree": 877,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "local_feed_integration",
+      "degree": 877,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "frontend_status",
+      "degree": 877,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "current_module",
+      "degree": 875,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "project_tool",
+      "degree": 872,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "architecture_test",
+      "degree": 872,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "thread_summary",
+      "degree": 865,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "os",
+      "degree": 865,
+      "real_occurrences": 6092
+    },
+    {
+      "concept": "model_control",
+      "degree": 864,
+      "real_occurrences": 21
+    },
+    {
+      "concept": "frontend_changes",
+      "degree": 862,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "current_thread",
+      "degree": 862,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "agent_role",
+      "degree": 861,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "state_persistence",
+      "degree": 860,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "code_architecture",
+      "degree": 860,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "module_config",
+      "degree": 858,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "file_write",
+      "degree": 858,
+      "real_occurrences": 37
+    },
+    {
+      "concept": "current_code",
+      "degree": 858,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "viral_demo",
+      "degree": 851,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "server_needs_restart",
+      "degree": 851,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "incremental_state_evolution",
+      "degree": 849,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "thread_scoring",
+      "degree": 844,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "frontend_integration",
+      "degree": 844,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "frontend_backend_sync",
+      "degree": 843,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "chat_interface",
+      "degree": 842,
+      "real_occurrences": 73
+    },
+    {
+      "concept": "separate_frontend",
+      "degree": 839,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "thread_names",
+      "degree": 835,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "backend_update",
+      "degree": 833,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "updated_files",
+      "degree": 830,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "file_updated",
+      "degree": 830,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "architecture_components",
+      "degree": 829,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "state_format",
+      "degree": 828,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "frontend_issue",
+      "degree": 828,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "local_llm_integration",
+      "degree": 817,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "state_awareness",
+      "degree": 812,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "context_elevation",
+      "degree": 812,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "tool_preference",
+      "degree": 811,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "model_routing",
+      "degree": 808,
+      "real_occurrences": 35
+    },
+    {
+      "concept": "frontend_interface",
+      "degree": 807,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "document_structure",
+      "degree": 805,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "module_functions",
+      "degree": 804,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "per_thread_schemas",
+      "degree": 803,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "module_creation",
+      "degree": 803,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "model_training",
+      "degree": 802,
+      "real_occurrences": 34
+    },
+    {
+      "concept": "current_architecture",
+      "degree": 800,
+      "real_occurrences": 32
+    },
+    {
+      "concept": "funding_model",
+      "degree": 799,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "memory_hierarchy",
+      "degree": 798,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "state_snapshot",
+      "degree": 797,
+      "real_occurrences": 37
+    },
+    {
+      "concept": "living_memory_system",
+      "degree": 795,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "tool_usage",
+      "degree": 794,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "architecture_vision",
+      "degree": 793,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "technical_architecture",
+      "degree": 792,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "prior_work",
+      "degree": 792,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "model_version",
+      "degree": 792,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "architecture_design",
+      "degree": 790,
+      "real_occurrences": 35
+    },
+    {
+      "concept": "model_format",
+      "degree": 787,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "hybrid_model",
+      "degree": 787,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "thread_purpose",
+      "degree": 786,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "xcode_command_line_tools",
+      "degree": 785,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "model_reasoning",
+      "degree": 785,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "proposed_model",
+      "degree": 784,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "clean_demo",
+      "degree": 784,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "nola_references",
+      "degree": 783,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "relationship_architecture",
+      "degree": 782,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "memory_technique",
+      "degree": 781,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "code_flow",
+      "degree": 781,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "tool_names",
+      "degree": 778,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "tool_used",
+      "degree": 775,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "new_structure",
+      "degree": 773,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "project_context",
+      "degree": 769,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "updated_readme",
+      "degree": 766,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "specific_files",
+      "degree": 762,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "identity_module",
+      "degree": 762,
+      "real_occurrences": 53
+    },
+    {
+      "concept": "optional_frontend",
+      "degree": 759,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "temp_memory",
+      "degree": 758,
+      "real_occurrences": 124
+    },
+    {
+      "concept": "folder_structure",
+      "degree": 758,
+      "real_occurrences": 64
+    },
+    {
+      "concept": "architecture_pattern",
+      "degree": 756,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "thread_metadata",
+      "degree": 755,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "import_update",
+      "degree": 754,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "reflex_call_detection",
+      "degree": 753,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "backend_changes",
+      "degree": 753,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "tool_system",
+      "degree": 752,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "README_update",
+      "degree": 752,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "current_task",
+      "degree": 749,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "model_understanding",
+      "degree": 748,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "cognitive_architecture",
+      "degree": 748,
+      "real_occurrences": 301
+    },
+    {
+      "concept": "thread_introspection",
+      "degree": 747,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "thread_data",
+      "degree": 747,
+      "real_occurrences": 25
+    },
+    {
+      "concept": "stimuli_architecture",
+      "degree": 747,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "tool_definitions",
+      "degree": 746,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "quick_start_guide",
+      "degree": 746,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "new_profile",
+      "degree": 746,
+      "real_occurrences": 15
+    },
+    {
+      "concept": "context_window",
+      "degree": 743,
+      "real_occurrences": 161
+    },
+    {
+      "concept": "nested_structure",
+      "degree": 741,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "file_analysis",
+      "degree": 741,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "subconscious_integration",
+      "degree": 738,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "json_files",
+      "degree": 737,
+      "real_occurrences": 114
+    },
+    {
+      "concept": "open_source_framework",
+      "degree": 736,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "file_issue",
+      "degree": 733,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "architecture_details",
+      "degree": 733,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "ui_pattern",
+      "degree": 732,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "architecture_doc",
+      "degree": 732,
+      "real_occurrences": 46
+    },
+    {
+      "concept": "readme_content",
+      "degree": 730,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "update_history",
+      "degree": 729,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "project_focus",
+      "degree": 729,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "new_patterns",
+      "degree": 728,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "subconscious_structure",
+      "degree": 727,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "demo_strategy",
+      "degree": 727,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "brain_inspired_architecture",
+      "degree": 727,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "code_changes",
+      "degree": 725,
+      "real_occurrences": 29
+    },
+    {
+      "concept": "single_prompt_mode",
+      "degree": 722,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "readme_added",
+      "degree": 720,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "local_execution",
+      "degree": 718,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "README_added",
+      "degree": 718,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "schema_file",
+      "degree": 717,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "ui_enhancements",
+      "degree": 716,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "calc_context_relevance",
+      "degree": 716,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "backend_control",
+      "degree": 716,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "domain_architecture",
+      "degree": 715,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "python_version",
+      "degree": 714,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "stub_tools",
+      "degree": 708,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "ui_change",
+      "degree": 707,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "remove_files",
+      "degree": 707,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "chat_endpoints",
+      "degree": 705,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "system_architecture",
+      "degree": 702,
+      "real_occurrences": 61
+    },
+    {
+      "concept": "features",
+      "degree": 702,
+      "real_occurrences": 437
+    },
+    {
+      "concept": "readme_update",
+      "degree": 701,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "changelog_update",
+      "degree": 698,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "demo_data",
+      "degree": 697,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "agent_process",
+      "degree": 697,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "integration_framework",
+      "degree": 695,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "deleted_files",
+      "degree": 693,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "chat_history",
+      "degree": 691,
+      "real_occurrences": 62
+    },
+    {
+      "concept": "local_vm_details",
+      "degree": 687,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "unified_context",
+      "degree": 685,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "new_schema",
+      "degree": 683,
+      "real_occurrences": 20
+    },
+    {
+      "concept": "dashboard_structure",
+      "degree": 682,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "architecture_overview",
+      "degree": 682,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "next_steps",
+      "degree": 681,
+      "real_occurrences": 271
+    },
+    {
+      "concept": "chat_schema",
+      "degree": 680,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "readme_updated",
+      "degree": 678,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "simplified_ui",
+      "degree": 675,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "file_processing",
+      "degree": 675,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "infinite_context",
+      "degree": 674,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "context_boundaries",
+      "degree": 674,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "default_agent_name",
+      "degree": 672,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "reflex_patterns",
+      "degree": 671,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "work_stress",
+      "degree": 670,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "agent_instance",
+      "degree": 670,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "current_changes",
+      "degree": 668,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "repo_structure",
+      "degree": 667,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "git_ignored_files",
+      "degree": 667,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "backend_issue",
+      "degree": 658,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "architecture",
+      "degree": 658,
+      "real_occurrences": 2233
+    },
+    {
+      "concept": "architecture_insight",
+      "degree": 656,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "target_architecture",
+      "degree": 653,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "profile_collection_phase",
+      "degree": 653,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "project_architecture",
+      "degree": 652,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "file_size",
+      "degree": 651,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "architecture_decision",
+      "degree": 650,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "self_sabotaging",
+      "degree": 649,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "removed_files",
+      "degree": 648,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "architecture_question",
+      "degree": 647,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "updated_endpoints",
+      "degree": 646,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "run_type_extensions",
+      "degree": 644,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "schema_update",
+      "degree": 641,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "modular_design",
+      "degree": 641,
+      "real_occurrences": 31
+    },
+    {
+      "concept": "documentation",
+      "degree": 639,
+      "real_occurrences": 461
+    },
+    {
+      "concept": "current_issue",
+      "degree": 637,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "future_plans",
+      "degree": 635,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "architecture_status",
+      "degree": 635,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "remaining_work",
+      "degree": 634,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "next_high_value_move",
+      "degree": 634,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "file_cleanup",
+      "degree": 634,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "future_features",
+      "degree": 633,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "frontend",
+      "degree": 633,
+      "real_occurrences": 714
+    },
+    {
+      "concept": "agent_name_lookup",
+      "degree": 632,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "file_operations",
+      "degree": 631,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "new_framing",
+      "degree": 630,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "algorithm_run",
+      "degree": 627,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "philosophy_modules",
+      "degree": 626,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "growth_through_code",
+      "degree": 626,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "system_prompt_structure",
+      "degree": 625,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "community_building",
+      "degree": 625,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "directory_structure",
+      "degree": 620,
+      "real_occurrences": 44
+    },
+    {
+      "concept": "remaining_files",
+      "degree": 619,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "readme_section",
+      "degree": 619,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "github_tiktok_distribution",
+      "degree": 618,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "executable_files",
+      "degree": 618,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "agent_card",
+      "degree": 616,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "import_history",
+      "degree": 614,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "sync_every_n_minutes",
+      "degree": 613,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "project_files",
+      "degree": 613,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "protected_core",
+      "degree": 612,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "python_path",
+      "degree": 609,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "conversation_history",
+      "degree": 607,
+      "real_occurrences": 108
+    },
+    {
+      "concept": "seed_files",
+      "degree": 606,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "redundant_files",
+      "degree": 602,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "deprecated_files",
+      "degree": 602,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "new_branding",
+      "degree": 601,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "folder_updated",
+      "degree": 600,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "prompt_mode",
+      "degree": 598,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "specific_features",
+      "degree": 597,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "project_structure",
+      "degree": 596,
+      "real_occurrences": 38
+    },
+    {
+      "concept": "source_files",
+      "degree": 595,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "singleton_agent",
+      "degree": 595,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "output_summary",
+      "degree": 594,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "os_mindset",
+      "degree": 591,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "current_design",
+      "degree": 590,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "notes",
+      "degree": 589,
+      "real_occurrences": 438
+    },
+    {
+      "concept": "rename_file",
+      "degree": 588,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "current_document",
+      "degree": 588,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "fact_types",
+      "degree": 587,
+      "real_occurrences": 34
+    },
+    {
+      "concept": "database_mode_toggle",
+      "degree": 586,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "orphan_file",
+      "degree": 585,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "current_eval",
+      "degree": 585,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "time_focused_refinement",
+      "degree": 584,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "add_family_members",
+      "degree": 584,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "reflex_system",
+      "degree": 583,
+      "real_occurrences": 40
+    },
+    {
+      "concept": "executor_file",
+      "degree": 583,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "file_deletion",
+      "degree": 582,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "design_pattern",
+      "degree": 578,
+      "real_occurrences": 15
+    },
+    {
+      "concept": "current_structure",
+      "degree": 577,
+      "real_occurrences": 32
+    },
+    {
+      "concept": "profile_storage",
+      "degree": 576,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "update_imports",
+      "degree": 574,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "incremental_learning",
+      "degree": 573,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "design_decisions",
+      "degree": 573,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "current_issues",
+      "degree": 573,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "consolidation_logic",
+      "degree": 573,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "adapter_update",
+      "degree": 573,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "file_type",
+      "degree": 571,
+      "real_occurrences": 59
+    },
+    {
+      "concept": "stress_test",
+      "degree": 570,
+      "real_occurrences": 36
+    },
+    {
+      "concept": "db_structure",
+      "degree": 568,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "recent_changes",
+      "degree": 567,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "personal_life",
+      "degree": 566,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "email",
+      "degree": 563,
+      "real_occurrences": 470
+    },
+    {
+      "concept": "readme_display",
+      "degree": 559,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "design_improvements",
+      "degree": 559,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "current_tactic",
+      "degree": 559,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "generate_user_summary",
+      "degree": 556,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "task_list",
+      "degree": 555,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "output_structure",
+      "degree": 555,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "subconscious_orchestrator",
+      "degree": 553,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "start_script",
+      "degree": 553,
+      "real_occurrences": 32
+    },
+    {
+      "concept": "schema_updates",
+      "degree": 552,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "abuse_patterns",
+      "degree": 551,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "db_schema",
+      "degree": 549,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "update_dmg",
+      "degree": 548,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "machine",
+      "degree": 547,
+      "real_occurrences": 667
+    },
+    {
+      "concept": "added_section",
+      "degree": 546,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "mode_management",
+      "degree": 543,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "clean_exit_handling",
+      "degree": 543,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "technical_tasks",
+      "degree": 542,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "llm_viewable_format",
+      "degree": 542,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "score_threads",
+      "degree": 539,
+      "real_occurrences": 21
+    },
+    {
+      "concept": "sidebar_update",
+      "degree": 536,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "backend_version",
+      "degree": 535,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "feature_changes",
+      "degree": 531,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "extraction_consolidation",
+      "degree": 530,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "features_implemented",
+      "degree": 528,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "target_users",
+      "degree": 527,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "css_theme_updates",
+      "degree": 527,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "os_abstraction",
+      "degree": 526,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "next_step",
+      "degree": 526,
+      "real_occurrences": 445
+    },
+    {
+      "concept": "service_management",
+      "degree": 525,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "database_schema",
+      "degree": 523,
+      "real_occurrences": 30
+    },
+    {
+      "concept": "team_size",
+      "degree": 520,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "ollama_installed",
+      "degree": 518,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "db_issue",
+      "degree": 518,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "function_execution",
+      "degree": 517,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "browser_integration",
+      "degree": 517,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "version_control",
+      "degree": 513,
+      "real_occurrences": 36
+    },
+    {
+      "concept": "profile_types",
+      "degree": 513,
+      "real_occurrences": 40
+    },
+    {
+      "concept": "test_results",
+      "degree": 510,
+      "real_occurrences": 21
+    },
+    {
+      "concept": "updated_imports",
+      "degree": 509,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "fact_keys",
+      "degree": 509,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "fact_format",
+      "degree": 509,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "db_tables",
+      "degree": 509,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "current_emotion",
+      "degree": 506,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "self_concept_graph",
+      "degree": 502,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "removed_dev_mode",
+      "degree": 502,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "analysis_phase",
+      "degree": 502,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "column_analysis",
+      "degree": 500,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "project_goal",
+      "degree": 498,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "profile_linking",
+      "degree": 498,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "multiple_data_sources",
+      "degree": 498,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "deprecated_code",
+      "degree": 496,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "error_handling",
+      "degree": 495,
+      "real_occurrences": 88
+    },
+    {
+      "concept": "timeline",
+      "degree": 492,
+      "real_occurrences": 297
+    },
+    {
+      "concept": "css_changes",
+      "degree": 488,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "stimuli_integration",
+      "degree": 487,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "legacy_code",
+      "degree": 487,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "documentation_process",
+      "degree": 486,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "server_error",
+      "degree": 485,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "relationship_pattern",
+      "degree": 484,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "use_cases",
+      "degree": 482,
+      "real_occurrences": 90
+    },
+    {
+      "concept": "training_vision",
+      "degree": 481,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "time_frame",
+      "degree": 480,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "current_development_status",
+      "degree": 480,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "ghost_code_report",
+      "degree": 476,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "git_workflow",
+      "degree": 472,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "current_feature",
+      "degree": 472,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "analysis_system",
+      "degree": 471,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "refactored_code",
+      "degree": 470,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "expanded_use_cases",
+      "degree": 470,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "escalation_path",
+      "degree": 470,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "update_contents",
+      "degree": 464,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "approve_fact",
+      "degree": 464,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "product_vision",
+      "degree": 459,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "data_size",
+      "degree": 459,
+      "real_occurrences": 15
+    },
+    {
+      "concept": "cognitive_cost",
+      "degree": 459,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "machine_profile",
+      "degree": 457,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "current_strategy",
+      "degree": 457,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "sidebar_updates",
+      "degree": 456,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "backend_status",
+      "degree": 455,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "questions_focus",
+      "degree": 452,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "privacy_control",
+      "degree": 452,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "log_status",
+      "degree": 451,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "db_entries",
+      "degree": 449,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "financial_control",
+      "degree": 447,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "database_locked",
+      "degree": 443,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "assess_block",
+      "degree": 443,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "dependency_management",
+      "degree": 440,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "relationship",
+      "degree": 439,
+      "real_occurrences": 339
+    },
+    {
+      "concept": "stateless_prompt",
+      "degree": 438,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "db_migration",
+      "degree": 436,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "current_concept",
+      "degree": 436,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "behavioral_analysis",
+      "degree": 435,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "unused_components",
+      "degree": 434,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "project_status",
+      "degree": 434,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "commit_message",
+      "degree": 433,
+      "real_occurrences": 26
+    },
+    {
+      "concept": "path_issues",
+      "degree": 432,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "endpoint_fixed",
+      "degree": 431,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "default_facts",
+      "degree": 430,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "multiple_profiles",
+      "degree": 429,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "installed_package",
+      "degree": 429,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "technology_stack",
+      "degree": 428,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "current_flow",
+      "degree": 428,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "commit_changes",
+      "degree": 428,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "database_cleanup",
+      "degree": 426,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "GET /api/services/",
+      "degree": 426,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "updated_instructions",
+      "degree": 424,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "structure_cleaned",
+      "degree": 424,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "expected_behavior",
+      "degree": 423,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "dot_loop",
+      "degree": 423,
+      "real_occurrences": 17
+    },
+    {
+      "concept": "abuse_pattern",
+      "degree": 420,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "feature_request",
+      "degree": 419,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "graph_integration",
+      "degree": 417,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "csv_task",
+      "degree": 417,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "safety_measures",
+      "degree": 416,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "docs",
+      "degree": 416,
+      "real_occurrences": 582
+    },
+    {
+      "concept": "decision_making",
+      "degree": 416,
+      "real_occurrences": 70
+    },
+    {
+      "concept": "development_time",
+      "degree": 414,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "database_lock",
+      "degree": 414,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "repo_description",
+      "degree": 413,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "legacy_components",
+      "degree": 413,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "updated_gitignore",
+      "degree": 412,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "learning_visible",
+      "degree": 411,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "GET /api/workspace/files",
+      "degree": 411,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "calc_machine_relevance",
+      "degree": 409,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "test_coverage",
+      "degree": 407,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "setup_steps",
+      "degree": 407,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "development_environment",
+      "degree": 407,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "db_usage",
+      "degree": 407,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "llm_decision",
+      "degree": 406,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "test_action",
+      "degree": 404,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "remaining_tasks",
+      "degree": 404,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "missing_link",
+      "degree": 404,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "event_logging",
+      "degree": 404,
+      "real_occurrences": 26
+    },
+    {
+      "concept": "test_intent",
+      "degree": 403,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "feeds_sources",
+      "degree": 403,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "current_focus",
+      "degree": 403,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "metadata",
+      "degree": 400,
+      "real_occurrences": 329
+    },
+    {
+      "concept": "consolidation_process",
+      "degree": 400,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "role",
+      "degree": 399,
+      "real_occurrences": 487
+    },
+    {
+      "concept": "framework_built",
+      "degree": 399,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "calendar_integration",
+      "degree": 399,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "marketplace_vision",
+      "degree": 397,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "foreign_key_error",
+      "degree": 396,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "primary user",
+      "degree": 393,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "behavior_pattern",
+      "degree": 392,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "GET /api/workspace/notes",
+      "degree": 390,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "missing_piece",
+      "degree": 387,
+      "real_occurrences": 31
+    },
+    {
+      "concept": "GET /api/subconscious/goals",
+      "degree": 386,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "project_name",
+      "degree": 382,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "court_ready",
+      "degree": 382,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "integration",
+      "degree": 381,
+      "real_occurrences": 644
+    },
+    {
+      "concept": "scoring_improvement",
+      "degree": 380,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "technical_background",
+      "degree": 378,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "issue_found",
+      "degree": 378,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "app_launch",
+      "degree": 377,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "location",
+      "degree": 376,
+      "real_occurrences": 309
+    },
+    {
+      "concept": "self_assessment",
+      "degree": 375,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "alignment_loop",
+      "degree": 375,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "research_focus",
+      "degree": 374,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "removed_vm_scripts",
+      "degree": 374,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "mode_handling",
+      "degree": 374,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "requested_feature",
+      "degree": 373,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "example_character",
+      "degree": 373,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "built_since_jan_21",
+      "degree": 372,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "two_factor_auth",
+      "degree": 371,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "GET /api/subconscious/improvements",
+      "degree": 371,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "ml_framework",
+      "degree": 370,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "vm_environment_variables",
+      "degree": 369,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "novel_concepts",
+      "degree": 368,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "self_reference",
+      "degree": 365,
+      "real_occurrences": 47
+    },
+    {
+      "concept": "env_section",
+      "degree": 364,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "server_restart",
+      "degree": 363,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "app_behavior",
+      "degree": 362,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "phone",
+      "degree": 360,
+      "real_occurrences": 238
+    },
+    {
+      "concept": "active_tables",
+      "degree": 359,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "privacy_concerns",
+      "degree": 358,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "technical_innovation",
+      "degree": 357,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "tests_passed",
+      "degree": 356,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "self_modeling",
+      "degree": 356,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "self_contained",
+      "degree": 356,
+      "real_occurrences": 81
+    },
+    {
+      "concept": "kernel_service_status",
+      "degree": 356,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "expected_format",
+      "degree": 356,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "testing_phase",
+      "degree": 355,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "cloud_approach",
+      "degree": 355,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "GET /api/eval/comparisons",
+      "degree": 355,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "server_restarted",
+      "degree": 354,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "schema_change",
+      "degree": 354,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "GET /api/reflex/all",
+      "degree": 353,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "expected_output",
+      "degree": 351,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "codebase_health_check",
+      "degree": 351,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "target_platform",
+      "degree": 349,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "hardware",
+      "degree": 349,
+      "real_occurrences": 217
+    },
+    {
+      "concept": "dependency_issue",
+      "degree": 349,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "current_format",
+      "degree": 345,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "launch_date",
+      "degree": 344,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "eval_tier",
+      "degree": 344,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "package_manager",
+      "degree": 343,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "api_test_endpoint",
+      "degree": 340,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "ssh_key_setup",
+      "degree": 338,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "vite_api_url",
+      "degree": 337,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "rename_endpoint",
+      "degree": 336,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "primary_user",
+      "degree": 335,
+      "real_occurrences": 33
+    },
+    {
+      "concept": "project_type",
+      "degree": 334,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "profile_collection",
+      "degree": 334,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "problem_type",
+      "degree": 333,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "organization",
+      "degree": 333,
+      "real_occurrences": 135
+    },
+    {
+      "concept": "power_dynamic_assessment",
+      "degree": 331,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "message_processing",
+      "degree": 331,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "server_status",
+      "degree": 330,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "restarting_server",
+      "degree": 330,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "current_status",
+      "degree": 330,
+      "real_occurrences": 27
+    },
+    {
+      "concept": "apple_developer_program",
+      "degree": 330,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "profile",
+      "degree": 325,
+      "real_occurrences": 744
+    },
+    {
+      "concept": "family.mom",
+      "degree": 325,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "api_check",
+      "degree": 325,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "v2_goals",
+      "degree": 324,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "profile_system",
+      "degree": 323,
+      "real_occurrences": 21
+    },
+    {
+      "concept": "old_post",
+      "degree": 323,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "testing",
+      "degree": 322,
+      "real_occurrences": 438
+    },
+    {
+      "concept": "profile_type",
+      "degree": 322,
+      "real_occurrences": 49
+    },
+    {
+      "concept": "apology_patterns",
+      "degree": 322,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "GET /api/services/kernel/status",
+      "degree": 322,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "user_facing_philosophy",
+      "degree": 321,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "hebbian_learning",
+      "degree": 321,
+      "real_occurrences": 145
+    },
+    {
+      "concept": "learning_process",
+      "degree": 320,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "issue",
+      "degree": 319,
+      "real_occurrences": 799
+    },
+    {
+      "concept": "schema_consistency",
+      "degree": 318,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "package_name",
+      "degree": 318,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "fine_tuning_data",
+      "degree": 318,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "scoring_method",
+      "degree": 317,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "novel_concept",
+      "degree": 317,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "pattern_recognition",
+      "degree": 316,
+      "real_occurrences": 81
+    },
+    {
+      "concept": "documentation_status",
+      "degree": 316,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "fix_needed",
+      "degree": 315,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "app_bundle",
+      "degree": 315,
+      "real_occurrences": 40
+    },
+    {
+      "concept": "developer_experience",
+      "degree": 314,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "GET /api/models",
+      "degree": 314,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "multiple_sources",
+      "degree": 313,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "chat_api",
+      "degree": 313,
+      "real_occurrences": 27
+    },
+    {
+      "concept": "build_method",
+      "degree": 313,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "multiple_api_routers",
+      "degree": 312,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "instant_functionality",
+      "degree": 312,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "schema_mismatch",
+      "degree": 311,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "launch_strategy",
+      "degree": 310,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "attention_mechanism",
+      "degree": 310,
+      "real_occurrences": 59
+    },
+    {
+      "concept": "feature_branches",
+      "degree": 309,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "user_product",
+      "degree": 307,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "refactoring_task",
+      "degree": 307,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "change_resistance",
+      "degree": 306,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "adversary_prompt",
+      "degree": 305,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "workspace_experts",
+      "degree": 304,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "concept_graph_weights",
+      "degree": 304,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "technical_barriers",
+      "degree": 303,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "execute_endpoint",
+      "degree": 302,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "assessment_section",
+      "degree": 302,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "current_action",
+      "degree": 301,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "GET /api/feeds/sources",
+      "degree": 301,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "runtime_environment",
+      "degree": 300,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "api_response",
+      "degree": 300,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "court_case",
+      "degree": 297,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "api_support",
+      "degree": 297,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "api_experience",
+      "degree": 296,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "theme_variables_used",
+      "degree": 295,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "macos_experience",
+      "degree": 293,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "monthly_analysis",
+      "degree": 290,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "concurrency_issues",
+      "degree": 290,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "fix",
+      "degree": 287,
+      "real_occurrences": 1048
+    },
+    {
+      "concept": "tested_setup",
+      "degree": 285,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "form_thread_ui",
+      "degree": 285,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "error_encountered",
+      "degree": 285,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "emotional_regulation",
+      "degree": 284,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "current_bottleneck",
+      "degree": 284,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "parallel_processing",
+      "degree": 283,
+      "real_occurrences": 20
+    },
+    {
+      "concept": "market_strategy",
+      "degree": 283,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "caching_issues",
+      "degree": 283,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "tech_stack",
+      "degree": 282,
+      "real_occurrences": 35
+    },
+    {
+      "concept": "evidence_needed",
+      "degree": 282,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "documented_abuse",
+      "degree": 281,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "virtual_environment",
+      "degree": 280,
+      "real_occurrences": 75
+    },
+    {
+      "concept": "velocity",
+      "degree": 279,
+      "real_occurrences": 58
+    },
+    {
+      "concept": "project_risk",
+      "degree": 279,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "monthly_csv",
+      "degree": 279,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "proposed_convo_schema",
+      "degree": 278,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "stateless_machine",
+      "degree": 277,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "clean_separation",
+      "degree": 275,
+      "real_occurrences": 50
+    },
+    {
+      "concept": "legacy_schema",
+      "degree": 271,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "shared_directory",
+      "degree": 269,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "fighting_back",
+      "degree": 269,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "red_flags",
+      "degree": 268,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "browser_cache",
+      "degree": 268,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "potential_issue",
+      "degree": 267,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "background_processing",
+      "degree": 267,
+      "real_occurrences": 39
+    },
+    {
+      "concept": "validation_seeking",
+      "degree": 266,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "user_message",
+      "degree": 266,
+      "real_occurrences": 78
+    },
+    {
+      "concept": "functions_moved",
+      "degree": 266,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "unique_blend",
+      "degree": 265,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "root",
+      "degree": 264,
+      "real_occurrences": 530
+    },
+    {
+      "concept": "background_loops_status",
+      "degree": 264,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "weight_function",
+      "degree": 263,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "mental_health",
+      "degree": 263,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "debug_logging",
+      "degree": 261,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "distribution_channels",
+      "degree": 260,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "toggle_functionality",
+      "degree": 259,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "successful_business",
+      "degree": 259,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "user_interest",
+      "degree": 258,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "issue_type",
+      "degree": 258,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "cleanup_function",
+      "degree": 258,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "remove_reference",
+      "degree": 257,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "static_level_mapping",
+      "degree": 256,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "error_type",
+      "degree": 255,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "emotional_manipulation",
+      "degree": 255,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "ui_preference",
+      "degree": 252,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "feature_description",
+      "degree": 252,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "philosophy",
+      "degree": 251,
+      "real_occurrences": 827
+    },
+    {
+      "concept": "phase_1",
+      "degree": 251,
+      "real_occurrences": 114
+    },
+    {
+      "concept": "log_ui",
+      "degree": 251,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "implementation_details",
+      "degree": 250,
+      "real_occurrences": 19
+    },
+    {
+      "concept": "design_principles",
+      "degree": 246,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "ui_concern",
+      "degree": 245,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "evidence",
+      "degree": 244,
+      "real_occurrences": 150
+    },
+    {
+      "concept": "next_task",
+      "degree": 243,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "dynamic_result_config",
+      "degree": 243,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "cli_interface",
+      "degree": 243,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "button_text",
+      "degree": 241,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "system_design",
+      "degree": 240,
+      "real_occurrences": 70
+    },
+    {
+      "concept": "schema_check",
+      "degree": 240,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "directory_contents",
+      "degree": 240,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "changes_made",
+      "degree": 240,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "realization",
+      "degree": 238,
+      "real_occurrences": 28
+    },
+    {
+      "concept": "macos_sleep_prevention",
+      "degree": 238,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "project_goals",
+      "degree": 236,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "embedding_infrastructure",
+      "degree": 236,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "dmg_flow",
+      "degree": 236,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "machine_name",
+      "degree": 235,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "initial_setup",
+      "degree": 235,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "no_new_ui",
+      "degree": 231,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "path_spaghetti",
+      "degree": 230,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "directory_name",
+      "degree": 230,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "theme_variables",
+      "degree": 229,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "goal",
+      "degree": 228,
+      "real_occurrences": 571
+    },
+    {
+      "concept": "ui_integration",
+      "degree": 227,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "relationship_status",
+      "degree": 227,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "recent_action",
+      "degree": 227,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "practical_solution",
+      "degree": 227,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "obsolete_tables",
+      "degree": 227,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "conflict_initiation",
+      "degree": 227,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "vision",
+      "degree": 226,
+      "real_occurrences": 465
+    },
+    {
+      "concept": "trigger_pattern",
+      "degree": 226,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "onboarding",
+      "degree": 225,
+      "real_occurrences": 89
+    },
+    {
+      "concept": "emotional_labor",
+      "degree": 224,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "data_flow",
+      "degree": 223,
+      "real_occurrences": 53
+    },
+    {
+      "concept": "past_cheating",
+      "degree": 221,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "ui_features",
+      "degree": 219,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "duration",
+      "degree": 219,
+      "real_occurrences": 39
+    },
+    {
+      "concept": "philosophy_status",
+      "degree": 218,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "novel_approach",
+      "degree": 218,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "emergency_control",
+      "degree": 218,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "ui_elements",
+      "degree": 216,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "ui_components",
+      "degree": 216,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "relevance_engine",
+      "degree": 216,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "quick_wins",
+      "degree": 216,
+      "real_occurrences": 25
+    },
+    {
+      "concept": "enterprise_ready",
+      "degree": 215,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "boundary_responses",
+      "degree": 214,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "financial_entanglement",
+      "degree": 213,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "family_sharing",
+      "degree": 213,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "ui_layout",
+      "degree": 211,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "progress_report",
+      "degree": 210,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "time_estimate",
+      "degree": 209,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "improvements_made",
+      "degree": 208,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "hobby",
+      "degree": 207,
+      "real_occurrences": 22
+    },
+    {
+      "concept": "program_overview",
+      "degree": 206,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "physical_brain_analogy",
+      "degree": 206,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "oauth_flow",
+      "degree": 206,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "home_life",
+      "degree": 206,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "calc_user_relevance",
+      "degree": 205,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "relevance_tags",
+      "degree": 204,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "implementation_success",
+      "degree": 204,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "chunking_strategy",
+      "degree": 203,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "preferred_ui",
+      "degree": 201,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "estimated_time",
+      "degree": 201,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "script_location",
+      "degree": 199,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "old_system",
+      "degree": 198,
+      "real_occurrences": 10
+    },
+    {
+      "concept": "signal_processing_engine",
+      "degree": 197,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "coping_strategies",
+      "degree": 197,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "ui",
+      "degree": 196,
+      "real_occurrences": 4975
+    },
+    {
+      "concept": "domain_separation",
+      "degree": 195,
+      "real_occurrences": 41
+    },
+    {
+      "concept": "safety_gate",
+      "degree": 194,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "delete_option",
+      "degree": 194,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "section_2_3",
+      "degree": 193,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "video_content",
+      "degree": 192,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "scripts",
+      "degree": 191,
+      "real_occurrences": 307
+    },
+    {
+      "concept": "financial_exploitation",
+      "degree": 191,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "deployment_status",
+      "degree": 191,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "metadata_tracking",
+      "degree": 190,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "production_ready",
+      "degree": 189,
+      "real_occurrences": 48
+    },
+    {
+      "concept": "recent_work",
+      "degree": 188,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "interest",
+      "degree": 186,
+      "real_occurrences": 349
+    },
+    {
+      "concept": "legal_evidence",
+      "degree": 183,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "flow_understanding",
+      "degree": 183,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "action_items",
+      "degree": 182,
+      "real_occurrences": 11
+    },
+    {
+      "concept": "domain_abstraction",
+      "degree": 180,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "versioning",
+      "degree": 179,
+      "real_occurrences": 34
+    },
+    {
+      "concept": "technical_approach",
+      "degree": 179,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "subconscious_tool",
+      "degree": 179,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "problem_solved",
+      "degree": 179,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "training_recipe",
+      "degree": 177,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "permission_checks",
+      "degree": 176,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "exit_strategy",
+      "degree": 176,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "tagging",
+      "degree": 175,
+      "real_occurrences": 25
+    },
+    {
+      "concept": "signal_flow",
+      "degree": 172,
+      "real_occurrences": 27
+    },
+    {
+      "concept": "doc_accuracy",
+      "degree": 172,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "concern",
+      "degree": 172,
+      "real_occurrences": 165
+    },
+    {
+      "concept": "tool_creation",
+      "degree": 170,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "dad_relationship",
+      "degree": 170,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "training_data",
+      "degree": 169,
+      "real_occurrences": 244
+    },
+    {
+      "concept": "project_vision",
+      "degree": 169,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "openai_keys",
+      "degree": 169,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "executable_permission",
+      "degree": 169,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "trigger_system",
+      "degree": 168,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "tool_definition",
+      "degree": 168,
+      "real_occurrences": 27
+    },
+    {
+      "concept": "post_strategy",
+      "degree": 168,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "operating_system",
+      "degree": 167,
+      "real_occurrences": 149
+    },
+    {
+      "concept": "gui_tool",
+      "degree": 167,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "security_mechanism",
+      "degree": 166,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "protection_order",
+      "degree": 166,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "preferred_tool",
+      "degree": 166,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "learned_memories",
+      "degree": 166,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "batch_size",
+      "degree": 166,
+      "real_occurrences": 19
+    },
+    {
+      "concept": "audit_trail",
+      "degree": 166,
+      "real_occurrences": 53
+    },
+    {
+      "concept": "origin_story",
+      "degree": 165,
+      "real_occurrences": 27
+    },
+    {
+      "concept": "demo_ready",
+      "degree": 165,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "better_option",
+      "degree": 164,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "tool_building",
+      "degree": 163,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "safety_concerns",
+      "degree": 163,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "previous_success",
+      "degree": 162,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "ethical_concerns",
+      "degree": 162,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "commands_to_run",
+      "degree": 162,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "recent_development",
+      "degree": 161,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "tool_input",
+      "degree": 160,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "system_status",
+      "degree": 159,
+      "real_occurrences": 12
+    },
+    {
+      "concept": "steps",
+      "degree": 159,
+      "real_occurrences": 574
+    },
+    {
+      "concept": "summary_column",
+      "degree": 158,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "next_action",
+      "degree": 158,
+      "real_occurrences": 50
+    },
+    {
+      "concept": "safety_validation",
+      "degree": 155,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "occupation",
+      "degree": 155,
+      "real_occurrences": 23
+    },
+    {
+      "concept": "boredom_audit",
+      "degree": 155,
+      "real_occurrences": 16
+    },
+    {
+      "concept": "reddit_post",
+      "degree": 153,
+      "real_occurrences": 28
+    },
+    {
+      "concept": "knowledge_graphs",
+      "degree": 153,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "gaps_to_fix",
+      "degree": 153,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "brain_analogy",
+      "degree": 153,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "assessment_ready",
+      "degree": 153,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "signal_tracking",
+      "degree": 152,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "middle_ground_option",
+      "degree": 152,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "dynamic_parts",
+      "degree": 151,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "form",
+      "degree": 150,
+      "real_occurrences": 3030
+    },
+    {
+      "concept": "current_goals",
+      "degree": 150,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "tool_idea",
+      "degree": 149,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "focus_areas",
+      "degree": 149,
+      "real_occurrences": 17
+    },
+    {
+      "concept": "john_doe",
+      "degree": 148,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "emotional_energy",
+      "degree": 148,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "tone_adjustments",
+      "degree": 147,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "removed_idv2",
+      "degree": 147,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "evaluation_tool",
+      "degree": 147,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "dependency_installation",
+      "degree": 147,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "thread_readmes",
+      "degree": 146,
+      "real_occurrences": 19
+    },
+    {
+      "concept": "notes_workflow",
+      "degree": 146,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "workflow",
+      "degree": 145,
+      "real_occurrences": 316
+    },
+    {
+      "concept": "system_change",
+      "degree": 145,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "user_experience",
+      "degree": 144,
+      "real_occurrences": 54
+    },
+    {
+      "concept": "terminal_resize",
+      "degree": 144,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "dev_tools",
+      "degree": 144,
+      "real_occurrences": 24
+    },
+    {
+      "concept": "tool_execution",
+      "degree": 143,
+      "real_occurrences": 46
+    },
+    {
+      "concept": "tool_calls",
+      "degree": 143,
+      "real_occurrences": 59
+    },
+    {
+      "concept": "last_action",
+      "degree": 142,
+      "real_occurrences": 34
+    },
+    {
+      "concept": "future_expansion",
+      "degree": 142,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "tool_chains",
+      "degree": 141,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "thread_roles",
+      "degree": 141,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "thread_description",
+      "degree": 141,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "evidence_type",
+      "degree": 141,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "restart_required",
+      "degree": 140,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "reflex_bypass",
+      "degree": 140,
+      "real_occurrences": 9
+    },
+    {
+      "concept": "power_assessment",
+      "degree": 140,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "feminine_energy",
+      "degree": 140,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "edit_tools",
+      "degree": 140,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "current_tool",
+      "degree": 140,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "core_concept",
+      "degree": 140,
+      "real_occurrences": 30
+    },
+    {
+      "concept": "manipulation_tactics",
+      "degree": 139,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "thread_functions",
+      "degree": 138,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "abandonment_risk",
+      "degree": 138,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "stimuli_system",
+      "degree": 137,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "expected_results",
+      "degree": 137,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "scaffold_agent",
+      "degree": 134,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "thread_name",
+      "degree": 132,
+      "real_occurrences": 66
+    },
+    {
+      "concept": "thread_health_indicators",
+      "degree": 132,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "identity_thread",
+      "degree": 132,
+      "real_occurrences": 400
+    },
+    {
+      "concept": "project_idea",
+      "degree": 131,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "ui_hierarchy",
+      "degree": 130,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "thread_management_model",
+      "degree": 130,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "systematic_process",
+      "degree": 129,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "modules_to_update",
+      "degree": 129,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "model_size",
+      "degree": 129,
+      "real_occurrences": 53
+    },
+    {
+      "concept": "user_role",
+      "degree": 127,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "thread_adapters",
+      "degree": 126,
+      "real_occurrences": 48
+    },
+    {
+      "concept": "novel_contributions",
+      "degree": 125,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "eval_harness",
+      "degree": 125,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "self_improvement",
+      "degree": 124,
+      "real_occurrences": 40
+    },
+    {
+      "concept": "refactoring_plan",
+      "degree": 124,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "common_files",
+      "degree": 124,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "project_setup",
+      "degree": 123,
+      "real_occurrences": 4
+    },
+    {
+      "concept": "avoidance",
+      "degree": 123,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "thread_system",
+      "degree": 121,
+      "real_occurrences": 57
+    },
+    {
+      "concept": "architecture_style",
+      "degree": 121,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "singleton_pattern",
+      "degree": 119,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "model_comparison",
+      "degree": 118,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "technical_focus",
+      "degree": 117,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "git_history",
+      "degree": 117,
+      "real_occurrences": 13
+    },
+    {
+      "concept": "subconscious_design",
+      "degree": 115,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "run_mode",
+      "degree": 112,
+      "real_occurrences": 18
+    },
+    {
+      "concept": "risk_level",
+      "degree": 112,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "project_phase",
+      "degree": 112,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "identity_tab",
+      "degree": 112,
+      "real_occurrences": 23
+    },
+    {
+      "concept": "fixes_made",
+      "degree": 112,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "best_approach",
+      "degree": 112,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "profile_switch",
+      "degree": 111,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "orchestrator_process_turn",
+      "degree": 111,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "missing_item",
+      "degree": 111,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "timing_strategy",
+      "degree": 110,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "demo_db_use",
+      "degree": 110,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "major_work",
+      "degree": 108,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "differentiation",
+      "degree": 108,
+      "real_occurrences": 38
+    },
+    {
+      "concept": "identity_attacks",
+      "degree": 107,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "current_projects",
+      "degree": 107,
+      "real_occurrences": 7
+    },
+    {
+      "concept": "architecture_plan",
+      "degree": 107,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "reflex_mechanism",
+      "degree": 106,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "missing_fact_types",
+      "degree": 106,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "bluesky_bio",
+      "degree": 106,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "linkedin_profile",
+      "degree": 105,
+      "real_occurrences": 8
+    },
+    {
+      "concept": "lazy_loading",
+      "degree": 105,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "coding_style",
+      "degree": 105,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "zero_terminal",
+      "degree": 104,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "planned_feature",
+      "degree": 104,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "github_integration",
+      "degree": 104,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "demo_db",
+      "degree": 104,
+      "real_occurrences": 57
+    },
+    {
+      "concept": "dating_profile",
+      "degree": 104,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "user.preference.activity",
+      "degree": 103,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "focus_area",
+      "degree": 103,
+      "real_occurrences": 21
+    },
+    {
+      "concept": "file_management",
+      "degree": 103,
+      "real_occurrences": 14
+    },
+    {
+      "concept": "default_name",
+      "degree": 103,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "bluesky_pinned",
+      "degree": 103,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "release_readiness",
+      "degree": 102,
+      "real_occurrences": 3
+    },
+    {
+      "concept": "project_phases",
+      "degree": 102,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "linkedin_skills",
+      "degree": 102,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "first_run_experience",
+      "degree": 102,
+      "real_occurrences": 1
+    },
+    {
+      "concept": "elaris_context",
+      "degree": 102,
+      "real_occurrences": 5
+    },
+    {
+      "concept": "data_moved",
+      "degree": 102,
+      "real_occurrences": 2
+    },
+    {
+      "concept": "demo_mode",
+      "degree": 101,
+      "real_occurrences": 48
+    },
+    {
+      "concept": "current_goal",
+      "degree": 101,
+      "real_occurrences": 15
+    },
+    {
+      "concept": "ssh_keys",
+      "degree": 100,
+      "real_occurrences": 15
+    },
+    {
+      "concept": "documentation_structure",
+      "degree": 100,
+      "real_occurrences": 6
+    },
+    {
+      "concept": "custom_dropdown",
+      "degree": 100,
+      "real_occurrences": 4
+    }
+  ]
+}

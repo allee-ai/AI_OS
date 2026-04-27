@@ -1,0 +1,6035 @@
+{
+  "rule": "regex over scaffolding prefixes/suffixes",
+  "scaffold": [
+    {
+      "concept": "comparison_to_chatgpt",
+      "degree": 2029
+    },
+    {
+      "concept": "push_changes_to_server",
+      "degree": 1944
+    },
+    {
+      "concept": "comparison_to_linux",
+      "degree": 1941
+    },
+    {
+      "concept": "action_pushes_to_github",
+      "degree": 1939
+    },
+    {
+      "concept": "functions_to_add",
+      "degree": 1932
+    },
+    {
+      "concept": "components_to_move",
+      "degree": 1913
+    },
+    {
+      "concept": "added_to_gitignore",
+      "degree": 1904
+    },
+    {
+      "concept": "human_in_loop",
+      "degree": 1522
+    },
+    {
+      "concept": "benefits_of_model_agnosticism",
+      "degree": 1402
+    },
+    {
+      "concept": "uses_ai",
+      "degree": 1347
+    },
+    {
+      "concept": "sync_on_startup",
+      "degree": 1326
+    },
+    {
+      "concept": "backend_api",
+      "degree": 1304
+    },
+    {
+      "concept": "system.architecture.new_fact_inclusion",
+      "degree": 1273
+    },
+    {
+      "concept": "number_of_questions",
+      "degree": 1268
+    },
+    {
+      "concept": "cons_of_feature_folder",
+      "degree": 1249
+    },
+    {
+      "concept": "manifest_on_shutdown",
+      "degree": 1246
+    },
+    {
+      "concept": "pros_of_feature_folder",
+      "degree": 1242
+    },
+    {
+      "concept": "ai_tasks",
+      "degree": 1242
+    },
+    {
+      "concept": "agent_architecture_description",
+      "degree": 1217
+    },
+    {
+      "concept": "thread_local_models",
+      "degree": 1215
+    },
+    {
+      "concept": "thread_api_suggestion",
+      "degree": 1203
+    },
+    {
+      "concept": "model_agnostic_architecture",
+      "degree": 1190
+    },
+    {
+      "concept": "memory_architecture",
+      "degree": 1178
+    },
+    {
+      "concept": "result_of_changes",
+      "degree": 1167
+    },
+    {
+      "concept": "conversation_state",
+      "degree": 1158
+    },
+    {
+      "concept": "database_api_update",
+      "degree": 1154
+    },
+    {
+      "concept": "global_state_structure",
+      "degree": 1138
+    },
+    {
+      "concept": "backend_api_issues",
+      "degree": 1133
+    },
+    {
+      "concept": "current_module_status",
+      "degree": 1125
+    },
+    {
+      "concept": "frontend_api_service",
+      "degree": 1120
+    },
+    {
+      "concept": "will_get_forked",
+      "degree": 1111
+    },
+    {
+      "concept": "system.architecture.fact_source",
+      "degree": 1106
+    },
+    {
+      "concept": "single_source_of_truth",
+      "degree": 1090
+    },
+    {
+      "concept": "api_update",
+      "degree": 1089
+    },
+    {
+      "concept": "local_ai",
+      "degree": 1081
+    },
+    {
+      "concept": "api_changes_needed",
+      "degree": 1074
+    },
+    {
+      "concept": "old_api_references",
+      "degree": 1072
+    },
+    {
+      "concept": "row_limits_by_model",
+      "degree": 1070
+    },
+    {
+      "concept": "separation_of_concerns",
+      "degree": 1069
+    },
+    {
+      "concept": "trusts_ai",
+      "degree": 1065
+    },
+    {
+      "concept": "api_changes",
+      "degree": 1060
+    },
+    {
+      "concept": "model_architecture",
+      "degree": 1047
+    },
+    {
+      "concept": "local_model_size",
+      "degree": 1044
+    },
+    {
+      "concept": "architecture_model",
+      "degree": 1041
+    },
+    {
+      "concept": "global_state",
+      "degree": 1038
+    },
+    {
+      "concept": "incremental_state_update",
+      "degree": 1036
+    },
+    {
+      "concept": "memory_layer",
+      "degree": 1033
+    },
+    {
+      "concept": "ai_usage",
+      "degree": 1033
+    },
+    {
+      "concept": "api_issue",
+      "degree": 1030
+    },
+    {
+      "concept": "profile_context",
+      "degree": 1021
+    },
+    {
+      "concept": "current_project",
+      "degree": 1008
+    },
+    {
+      "concept": "api_key_location",
+      "degree": 1005
+    },
+    {
+      "concept": "state_update",
+      "degree": 1004
+    },
+    {
+      "concept": "api_key_reference",
+      "degree": 1004
+    },
+    {
+      "concept": "api_directory_cleanup",
+      "degree": 1004
+    },
+    {
+      "concept": "state_manager",
+      "degree": 1002
+    },
+    {
+      "concept": "current_architecture_update",
+      "degree": 1000
+    },
+    {
+      "concept": "user.general.new_fact",
+      "degree": 999
+    },
+    {
+      "concept": "api_endpoint_format",
+      "degree": 998
+    },
+    {
+      "concept": "business_model",
+      "degree": 996
+    },
+    {
+      "concept": "new_control_methods",
+      "degree": 993
+    },
+    {
+      "concept": "api_usage",
+      "degree": 992
+    },
+    {
+      "concept": "system.architecture.relevance_scoring",
+      "degree": 990
+    },
+    {
+      "concept": "module_updates",
+      "degree": 990
+    },
+    {
+      "concept": "reflex_thread_goal",
+      "degree": 988
+    },
+    {
+      "concept": "new_tool_process",
+      "degree": 987
+    },
+    {
+      "concept": "module_flow",
+      "degree": 984
+    },
+    {
+      "concept": "module_based_operations",
+      "degree": 984
+    },
+    {
+      "concept": "backend_structure",
+      "degree": 984
+    },
+    {
+      "concept": "model_used",
+      "degree": 981
+    },
+    {
+      "concept": "memory_system",
+      "degree": 981
+    },
+    {
+      "concept": "ai_behavior",
+      "degree": 981
+    },
+    {
+      "concept": "github_update",
+      "degree": 973
+    },
+    {
+      "concept": "user.general.needs_review",
+      "degree": 972
+    },
+    {
+      "concept": "chat_module",
+      "degree": 972
+    },
+    {
+      "concept": "assistant.memory.scope",
+      "degree": 972
+    },
+    {
+      "concept": "db_state",
+      "degree": 970
+    },
+    {
+      "concept": "api_tested",
+      "degree": 961
+    },
+    {
+      "concept": "tool_code_location",
+      "degree": 960
+    },
+    {
+      "concept": "api_error",
+      "degree": 958
+    },
+    {
+      "concept": "memory_loop_function",
+      "degree": 956
+    },
+    {
+      "concept": "demo_flow",
+      "degree": 955
+    },
+    {
+      "concept": "current_state",
+      "degree": 955
+    },
+    {
+      "concept": "user.general.test_fact",
+      "degree": 954
+    },
+    {
+      "concept": "ai_system",
+      "degree": 953
+    },
+    {
+      "concept": "ai_monopoly_prediction",
+      "degree": 953
+    },
+    {
+      "concept": "memory_service_issue",
+      "degree": 952
+    },
+    {
+      "concept": "api_endpoint",
+      "degree": 952
+    },
+    {
+      "concept": "api_status",
+      "degree": 945
+    },
+    {
+      "concept": "requested_architecture_update",
+      "degree": 944
+    },
+    {
+      "concept": "current_file",
+      "degree": 944
+    },
+    {
+      "concept": "new_module",
+      "degree": 942
+    },
+    {
+      "concept": "api_cleanliness",
+      "degree": 942
+    },
+    {
+      "concept": "api_endpoint_suggestion",
+      "degree": 941
+    },
+    {
+      "concept": "tool_structure",
+      "degree": 940
+    },
+    {
+      "concept": "backend_frontend_mapping",
+      "degree": 940
+    },
+    {
+      "concept": "reflex_thread",
+      "degree": 938
+    },
+    {
+      "concept": "ai_role",
+      "degree": 938
+    },
+    {
+      "concept": "thread_profiles_page",
+      "degree": 935
+    },
+    {
+      "concept": "api_mismatch",
+      "degree": 933
+    },
+    {
+      "concept": "github_issues",
+      "degree": 928
+    },
+    {
+      "concept": "test_tools",
+      "degree": 922
+    },
+    {
+      "concept": "demo_db_structure",
+      "degree": 921
+    },
+    {
+      "concept": "state_structure",
+      "degree": 920
+    },
+    {
+      "concept": "file_structure",
+      "degree": 919
+    },
+    {
+      "concept": "vs_code_file",
+      "degree": 917
+    },
+    {
+      "concept": "updated_code",
+      "degree": 917
+    },
+    {
+      "concept": "ui_update",
+      "degree": 917
+    },
+    {
+      "concept": "state_block_format",
+      "degree": 915
+    },
+    {
+      "concept": "memory_linking",
+      "degree": 914
+    },
+    {
+      "concept": "tool_management",
+      "degree": 913
+    },
+    {
+      "concept": "profile_structure",
+      "degree": 912
+    },
+    {
+      "concept": "memory_consolidation_stats",
+      "degree": 912
+    },
+    {
+      "concept": "state_management",
+      "degree": 909
+    },
+    {
+      "concept": "local_setup_required",
+      "degree": 909
+    },
+    {
+      "concept": "chat_ui",
+      "degree": 909
+    },
+    {
+      "concept": "memory_services_removal",
+      "degree": 906
+    },
+    {
+      "concept": "db_backed_tools",
+      "degree": 904
+    },
+    {
+      "concept": "architecture_docs",
+      "degree": 903
+    },
+    {
+      "concept": "memory_node_pattern",
+      "degree": 901
+    },
+    {
+      "concept": "thread_structure",
+      "degree": 898
+    },
+    {
+      "concept": "frontend_update",
+      "degree": 898
+    },
+    {
+      "concept": "architecture_changes",
+      "degree": 896
+    },
+    {
+      "concept": "run_batch_file",
+      "degree": 893
+    },
+    {
+      "concept": "uses_docker",
+      "degree": 892
+    },
+    {
+      "concept": "code_health_architecture",
+      "degree": 890
+    },
+    {
+      "concept": "tool_utilization",
+      "degree": 889
+    },
+    {
+      "concept": "run_script",
+      "degree": 886
+    },
+    {
+      "concept": "module_structure",
+      "degree": 886
+    },
+    {
+      "concept": "frontend_updates",
+      "degree": 884
+    },
+    {
+      "concept": "frontend_structure",
+      "degree": 883
+    },
+    {
+      "concept": "feature_tool_builder",
+      "degree": 881
+    },
+    {
+      "concept": "log_thread",
+      "degree": 880
+    },
+    {
+      "concept": "codebase_state",
+      "degree": 878
+    },
+    {
+      "concept": "state_consistency",
+      "degree": 877
+    },
+    {
+      "concept": "local_feed_integration",
+      "degree": 877
+    },
+    {
+      "concept": "frontend_status",
+      "degree": 877
+    },
+    {
+      "concept": "current_module",
+      "degree": 875
+    },
+    {
+      "concept": "architecture_test",
+      "degree": 872
+    },
+    {
+      "concept": "local_db_usage",
+      "degree": 869
+    },
+    {
+      "concept": "read_write_local_db",
+      "degree": 868
+    },
+    {
+      "concept": "frontend_updates_required",
+      "degree": 866
+    },
+    {
+      "concept": "thread_summary",
+      "degree": 865
+    },
+    {
+      "concept": "new_email_needed",
+      "degree": 864
+    },
+    {
+      "concept": "model_control",
+      "degree": 864
+    },
+    {
+      "concept": "frontend_changes",
+      "degree": 862
+    },
+    {
+      "concept": "current_thread",
+      "degree": 862
+    },
+    {
+      "concept": "agent_role",
+      "degree": 861
+    },
+    {
+      "concept": "state_persistence",
+      "degree": 860
+    },
+    {
+      "concept": "code_architecture",
+      "degree": 860
+    },
+    {
+      "concept": "module_config",
+      "degree": 858
+    },
+    {
+      "concept": "file_write",
+      "degree": 858
+    },
+    {
+      "concept": "current_code",
+      "degree": 858
+    },
+    {
+      "concept": "tool_value_levels",
+      "degree": 857
+    },
+    {
+      "concept": "reasons_for_building",
+      "degree": 857
+    },
+    {
+      "concept": "batch_model_calls",
+      "degree": 857
+    },
+    {
+      "concept": "viral_demo",
+      "degree": 851
+    },
+    {
+      "concept": "server_needs_restart",
+      "degree": 851
+    },
+    {
+      "concept": "reasons_against_building",
+      "degree": 850
+    },
+    {
+      "concept": "incremental_state_evolution",
+      "degree": 849
+    },
+    {
+      "concept": "thread_scoring",
+      "degree": 844
+    },
+    {
+      "concept": "frontend_integration",
+      "degree": 844
+    },
+    {
+      "concept": "frontend_backend_sync",
+      "degree": 843
+    },
+    {
+      "concept": "tool_value_layers",
+      "degree": 842
+    },
+    {
+      "concept": "chat_interface",
+      "degree": 842
+    },
+    {
+      "concept": "separate_frontend",
+      "degree": 839
+    },
+    {
+      "concept": "thread_names",
+      "degree": 835
+    },
+    {
+      "concept": "tool_rag_index",
+      "degree": 834
+    },
+    {
+      "concept": "backend_update",
+      "degree": 833
+    },
+    {
+      "concept": "updated_files",
+      "degree": 830
+    },
+    {
+      "concept": "file_updated",
+      "degree": 830
+    },
+    {
+      "concept": "architecture_components",
+      "degree": 829
+    },
+    {
+      "concept": "tool_execution_flow",
+      "degree": 828
+    },
+    {
+      "concept": "state_format",
+      "degree": 828
+    },
+    {
+      "concept": "frontend_issue",
+      "degree": 828
+    },
+    {
+      "concept": "local_llm_integration",
+      "degree": 817
+    },
+    {
+      "concept": "architecture_real",
+      "degree": 816
+    },
+    {
+      "concept": "server_port_frontend",
+      "degree": 814
+    },
+    {
+      "concept": "demo_perception",
+      "degree": 813
+    },
+    {
+      "concept": "state_awareness",
+      "degree": 812
+    },
+    {
+      "concept": "tool_preference",
+      "degree": 811
+    },
+    {
+      "concept": "model_routing",
+      "degree": 808
+    },
+    {
+      "concept": "frontend_interface",
+      "degree": 807
+    },
+    {
+      "concept": "document_structure",
+      "degree": 805
+    },
+    {
+      "concept": "module_functions",
+      "degree": 804
+    },
+    {
+      "concept": "per_thread_schemas",
+      "degree": 803
+    },
+    {
+      "concept": "module_creation",
+      "degree": 803
+    },
+    {
+      "concept": "frontend_technologies",
+      "degree": 803
+    },
+    {
+      "concept": "model_training",
+      "degree": 802
+    },
+    {
+      "concept": "current_architecture",
+      "degree": 800
+    },
+    {
+      "concept": "model_format",
+      "degree": 787
+    },
+    {
+      "concept": "consolidation_daemon_issue",
+      "degree": 785
+    },
+    {
+      "concept": "new_structure",
+      "degree": 773
+    },
+    {
+      "concept": "folder_structure",
+      "degree": 758
+    },
+    {
+      "concept": "architecture_pattern",
+      "degree": 756
+    },
+    {
+      "concept": "import_update",
+      "degree": 754
+    },
+    {
+      "concept": "backend_changes",
+      "degree": 753
+    },
+    {
+      "concept": "README_update",
+      "degree": 752
+    },
+    {
+      "concept": "log_field_issue",
+      "degree": 745
+    },
+    {
+      "concept": "nested_structure",
+      "degree": 741
+    },
+    {
+      "concept": "file_issue",
+      "degree": 733
+    },
+    {
+      "concept": "ui_pattern",
+      "degree": 732
+    },
+    {
+      "concept": "db_update",
+      "degree": 732
+    },
+    {
+      "concept": "subconscious_structure",
+      "degree": 727
+    },
+    {
+      "concept": "code_changes",
+      "degree": 725
+    },
+    {
+      "concept": "readme_update",
+      "degree": 701
+    },
+    {
+      "concept": "changelog_update",
+      "degree": 698
+    },
+    {
+      "concept": "db_setup_issue",
+      "degree": 694
+    },
+    {
+      "concept": "dashboard_structure",
+      "degree": 682
+    },
+    {
+      "concept": "current_changes",
+      "degree": 668
+    },
+    {
+      "concept": "repo_structure",
+      "degree": 667
+    },
+    {
+      "concept": "database_lock_issues",
+      "degree": 667
+    },
+    {
+      "concept": "docs_updates",
+      "degree": 666
+    },
+    {
+      "concept": "code_issue",
+      "degree": 665
+    },
+    {
+      "concept": "backend_issue",
+      "degree": 658
+    },
+    {
+      "concept": "docs_structure",
+      "degree": 649
+    },
+    {
+      "concept": "schema_update",
+      "degree": 641
+    },
+    {
+      "concept": "root_folder_structure",
+      "degree": 641
+    },
+    {
+      "concept": "current_issue",
+      "degree": 637
+    },
+    {
+      "concept": "architecture_status",
+      "degree": 635
+    },
+    {
+      "concept": "file_cleanup",
+      "degree": 634
+    },
+    {
+      "concept": "service_update",
+      "degree": 633
+    },
+    {
+      "concept": "root_folder_changes",
+      "degree": 630
+    },
+    {
+      "concept": "system_prompt_structure",
+      "degree": 625
+    },
+    {
+      "concept": "directory_structure",
+      "degree": 620
+    },
+    {
+      "concept": "project_structure",
+      "degree": 596
+    },
+    {
+      "concept": "design_pattern",
+      "degree": 578
+    },
+    {
+      "concept": "current_structure",
+      "degree": 577
+    },
+    {
+      "concept": "current_issues",
+      "degree": 573
+    },
+    {
+      "concept": "adapter_update",
+      "degree": 573
+    },
+    {
+      "concept": "user.general.fact",
+      "degree": 571
+    },
+    {
+      "concept": "identity_adapter_update",
+      "degree": 568
+    },
+    {
+      "concept": "db_structure",
+      "degree": 568
+    },
+    {
+      "concept": "recent_changes",
+      "degree": 567
+    },
+    {
+      "concept": "git_ignore_update",
+      "degree": 566
+    },
+    {
+      "concept": "git_ignore_issue",
+      "degree": 557
+    },
+    {
+      "concept": "output_structure",
+      "degree": 555
+    },
+    {
+      "concept": "log_events_status",
+      "degree": 553
+    },
+    {
+      "concept": "schema_updates",
+      "degree": 552
+    },
+    {
+      "concept": "threads_registry_status",
+      "degree": 548
+    },
+    {
+      "concept": "specific_updates",
+      "degree": 548
+    },
+    {
+      "concept": "llm_viewable_format",
+      "degree": 542
+    },
+    {
+      "concept": "sidebar_update",
+      "degree": 536
+    },
+    {
+      "concept": "feature_changes",
+      "degree": 531
+    },
+    {
+      "concept": "css_theme_updates",
+      "degree": 527
+    },
+    {
+      "concept": "db_issue",
+      "degree": 518
+    },
+    {
+      "concept": "fact_format",
+      "degree": 509
+    },
+    {
+      "concept": "section_changes",
+      "degree": 493
+    },
+    {
+      "concept": "css_changes",
+      "degree": 488
+    },
+    {
+      "concept": "relationship_pattern",
+      "degree": 484
+    },
+    {
+      "concept": "system_prompt_issue",
+      "degree": 481
+    },
+    {
+      "concept": "current_development_status",
+      "degree": 480
+    },
+    {
+      "concept": "fixed_issue",
+      "degree": 467
+    },
+    {
+      "concept": "team_structure",
+      "degree": 465
+    },
+    {
+      "concept": "sidebar_updates",
+      "degree": 456
+    },
+    {
+      "concept": "backend_status",
+      "degree": 455
+    },
+    {
+      "concept": "log_status",
+      "degree": 451
+    },
+    {
+      "concept": "fixed_format",
+      "degree": 444
+    },
+    {
+      "concept": "unused_components",
+      "degree": 434
+    },
+    {
+      "concept": "project_status",
+      "degree": 434
+    },
+    {
+      "concept": "path_issues",
+      "degree": 432
+    },
+    {
+      "concept": "commit_changes",
+      "degree": 428
+    },
+    {
+      "concept": "database_cleanup",
+      "degree": 426
+    },
+    {
+      "concept": "tested_components",
+      "degree": 424
+    },
+    {
+      "concept": "verified_changes",
+      "degree": 423
+    },
+    {
+      "concept": "abuse_pattern",
+      "degree": 420
+    },
+    {
+      "concept": "repo_description",
+      "degree": 413
+    },
+    {
+      "concept": "legacy_components",
+      "degree": 413
+    },
+    {
+      "concept": "script_status",
+      "degree": 412
+    },
+    {
+      "concept": "behavior_pattern",
+      "degree": 392
+    },
+    {
+      "concept": "project_components",
+      "degree": 386
+    },
+    {
+      "concept": "unchanged_components",
+      "degree": 382
+    },
+    {
+      "concept": "action_stages_changes",
+      "degree": 382
+    },
+    {
+      "concept": "kernel_service_status",
+      "degree": 356
+    },
+    {
+      "concept": "expected_format",
+      "degree": 356
+    },
+    {
+      "concept": "issue_description",
+      "degree": 352
+    },
+    {
+      "concept": "dependency_issue",
+      "degree": 349
+    },
+    {
+      "concept": "current_format",
+      "degree": 345
+    },
+    {
+      "concept": "research_layers",
+      "degree": 341
+    },
+    {
+      "concept": "fix_suggestion",
+      "degree": 333
+    },
+    {
+      "concept": "server_status",
+      "degree": 330
+    },
+    {
+      "concept": "current_status",
+      "degree": 330
+    },
+    {
+      "concept": "fine_tuning_status",
+      "degree": 318
+    },
+    {
+      "concept": "documentation_status",
+      "degree": 316
+    },
+    {
+      "concept": "schema_mismatch",
+      "degree": 311
+    },
+    {
+      "concept": "favorite_design_pattern",
+      "degree": 308
+    },
+    {
+      "concept": "login_issue",
+      "degree": 304
+    },
+    {
+      "concept": "concurrency_issues",
+      "degree": 290
+    },
+    {
+      "concept": "caching_issues",
+      "degree": 283
+    },
+    {
+      "concept": "concept_graph_status",
+      "degree": 278
+    },
+    {
+      "concept": "priority_issue",
+      "degree": 275
+    },
+    {
+      "concept": "potential_issue",
+      "degree": 267
+    },
+    {
+      "concept": "background_loops_status",
+      "degree": 264
+    },
+    {
+      "concept": "evaluation_status",
+      "degree": 263
+    },
+    {
+      "concept": "folder_status",
+      "degree": 262
+    },
+    {
+      "concept": "ui_issue",
+      "degree": 258
+    },
+    {
+      "concept": "feature_description",
+      "degree": 252
+    },
+    {
+      "concept": "pythonpath_issue",
+      "degree": 240
+    },
+    {
+      "concept": "directory_status",
+      "degree": 230
+    },
+    {
+      "concept": "relationship_status",
+      "degree": 227
+    },
+    {
+      "concept": "trigger_pattern",
+      "degree": 226
+    },
+    {
+      "concept": "current_state_reflex_thread",
+      "degree": 224
+    },
+    {
+      "concept": "philosophy_status",
+      "degree": 218
+    },
+    {
+      "concept": "ui_components",
+      "degree": 216
+    },
+    {
+      "concept": "push_status",
+      "degree": 211
+    },
+    {
+      "concept": "feature_suggestion",
+      "degree": 199
+    },
+    {
+      "concept": "improvement_suggestion",
+      "degree": 197
+    },
+    {
+      "concept": "ui_issues",
+      "degree": 194
+    },
+    {
+      "concept": "problem_description",
+      "degree": 193
+    },
+    {
+      "concept": "deployment_status",
+      "degree": 191
+    },
+    {
+      "concept": "unified_events_status",
+      "degree": 186
+    },
+    {
+      "concept": "browser_status",
+      "degree": 186
+    },
+    {
+      "concept": "system_status",
+      "degree": 159
+    },
+    {
+      "concept": "user.general.invalid_status",
+      "degree": 143
+    },
+    {
+      "concept": "thread_description",
+      "degree": 141
+    },
+    {
+      "concept": "project_issue",
+      "degree": 136
+    },
+    {
+      "concept": "modules_to_update",
+      "degree": 129
+    },
+    {
+      "concept": "singleton_pattern",
+      "degree": 119
+    },
+    {
+      "concept": "profile_status",
+      "degree": 107
+    },
+    {
+      "concept": "video_description",
+      "degree": 106
+    },
+    {
+      "concept": "document_status",
+      "degree": 104
+    },
+    {
+      "concept": "documentation_structure",
+      "degree": 100
+    }
+  ],
+  "real": [
+    {
+      "concept": "nola_to_agent",
+      "degree": 2000
+    },
+    {
+      "concept": "user_believed_in_abuser",
+      "degree": 1590
+    },
+    {
+      "concept": "interest_in_architecture",
+      "degree": 1586
+    },
+    {
+      "concept": "trust_in instincts",
+      "degree": 1572
+    },
+    {
+      "concept": "personal_info_in_codebase",
+      "degree": 1489
+    },
+    {
+      "concept": "recent_focus_prompt_mode_sync_on_startup",
+      "degree": 1440
+    },
+    {
+      "concept": "user_wants_facts",
+      "degree": 1258
+    },
+    {
+      "concept": "understanding_of_code",
+      "degree": 1246
+    },
+    {
+      "concept": "goal_of_abuser",
+      "degree": 1213
+    },
+    {
+      "concept": "has_video",
+      "degree": 1173
+    },
+    {
+      "concept": "abuser_used_children_as_tactic",
+      "degree": 1150
+    },
+    {
+      "concept": "personal_module_developed",
+      "degree": 1099
+    },
+    {
+      "concept": "intro_as_first_turn",
+      "degree": 1075
+    },
+    {
+      "concept": "work_context",
+      "degree": 1063
+    },
+    {
+      "concept": "tools_architecture",
+      "degree": 1062
+    },
+    {
+      "concept": "thread_architecture",
+      "degree": 1054
+    },
+    {
+      "concept": "ai_os",
+      "degree": 1046
+    },
+    {
+      "concept": "user_understands_memory",
+      "degree": 1039
+    },
+    {
+      "concept": "form_api_endpoint",
+      "degree": 1038
+    },
+    {
+      "concept": "user.goal.create_new_icloud",
+      "degree": 1004
+    },
+    {
+      "concept": "emotional_state",
+      "degree": 995
+    },
+    {
+      "concept": "user.project.thread",
+      "degree": 989
+    },
+    {
+      "concept": "personal_context",
+      "degree": 989
+    },
+    {
+      "concept": "context_management",
+      "degree": 982
+    },
+    {
+      "concept": "api_endpoints",
+      "degree": 978
+    },
+    {
+      "concept": "boredom_audit_log_thread",
+      "degree": 966
+    },
+    {
+      "concept": "bedrock_api",
+      "degree": 966
+    },
+    {
+      "concept": "context_elevation_rules",
+      "degree": 959
+    },
+    {
+      "concept": "tooldashboard_api",
+      "degree": 945
+    },
+    {
+      "concept": "runtime_context",
+      "degree": 945
+    },
+    {
+      "concept": "function_memory_schema",
+      "degree": 940
+    },
+    {
+      "concept": "boredom_audit_linking_core_backend",
+      "degree": 938
+    },
+    {
+      "concept": "features_added",
+      "degree": 935
+    },
+    {
+      "concept": "sidebar_loads_from_db",
+      "degree": 933
+    },
+    {
+      "concept": "context_level",
+      "degree": 919
+    },
+    {
+      "concept": "context_loading",
+      "degree": 914
+    },
+    {
+      "concept": "sub_agent_workflow",
+      "degree": 908
+    },
+    {
+      "concept": "First message",
+      "degree": 896
+    },
+    {
+      "concept": "ready_state",
+      "degree": 895
+    },
+    {
+      "concept": "form_thread_handler",
+      "degree": 891
+    },
+    {
+      "concept": "email_module_flow",
+      "degree": 887
+    },
+    {
+      "concept": "using_ollama_with_gptos",
+      "degree": 880
+    },
+    {
+      "concept": "ten_ollama_python",
+      "degree": 878
+    },
+    {
+      "concept": "project_tool",
+      "degree": 872
+    },
+    {
+      "concept": "user.goal.new_icloud",
+      "degree": 867
+    },
+    {
+      "concept": "os",
+      "degree": 865
+    },
+    {
+      "concept": "user.action.new.icloud",
+      "degree": 845
+    },
+    {
+      "concept": "dispatch_module_functions",
+      "degree": 842
+    },
+    {
+      "concept": "conflict_module_functions",
+      "degree": 839
+    },
+    {
+      "concept": "override_module_functions",
+      "degree": 833
+    },
+    {
+      "concept": "context_elevation",
+      "degree": 812
+    },
+    {
+      "concept": "user.preference.work_method",
+      "degree": 802
+    },
+    {
+      "concept": "boredom_audit_frontend_tables",
+      "degree": 802
+    },
+    {
+      "concept": "thread_scoring_upgrade",
+      "degree": 799
+    },
+    {
+      "concept": "funding_model",
+      "degree": 799
+    },
+    {
+      "concept": "memory_hierarchy",
+      "degree": 798
+    },
+    {
+      "concept": "state_snapshot",
+      "degree": 797
+    },
+    {
+      "concept": "living_memory_system",
+      "degree": 795
+    },
+    {
+      "concept": "tool_usage",
+      "degree": 794
+    },
+    {
+      "concept": "architecture_vision",
+      "degree": 793
+    },
+    {
+      "concept": "technical_architecture",
+      "degree": 792
+    },
+    {
+      "concept": "prior_work",
+      "degree": 792
+    },
+    {
+      "concept": "model_version",
+      "degree": 792
+    },
+    {
+      "concept": "architecture_design",
+      "degree": 790
+    },
+    {
+      "concept": "drug_use_search",
+      "degree": 788
+    },
+    {
+      "concept": "prompt_only_vs_structured",
+      "degree": 787
+    },
+    {
+      "concept": "hybrid_model",
+      "degree": 787
+    },
+    {
+      "concept": "thread_purpose",
+      "degree": 786
+    },
+    {
+      "concept": "xcode_command_line_tools",
+      "degree": 785
+    },
+    {
+      "concept": "tool_display",
+      "degree": 785
+    },
+    {
+      "concept": "model_reasoning",
+      "degree": 785
+    },
+    {
+      "concept": "proposed_model",
+      "degree": 784
+    },
+    {
+      "concept": "clean_demo",
+      "degree": 784
+    },
+    {
+      "concept": "nola_references",
+      "degree": 783
+    },
+    {
+      "concept": "architecture_goal",
+      "degree": 783
+    },
+    {
+      "concept": "relationship_architecture",
+      "degree": 782
+    },
+    {
+      "concept": "memory_technique",
+      "degree": 781
+    },
+    {
+      "concept": "code_flow",
+      "degree": 781
+    },
+    {
+      "concept": "tool_names",
+      "degree": 778
+    },
+    {
+      "concept": "bridge_module",
+      "degree": 776
+    },
+    {
+      "concept": "tool_used",
+      "degree": 775
+    },
+    {
+      "concept": "module_independence",
+      "degree": 774
+    },
+    {
+      "concept": "start_batch_file",
+      "degree": 773
+    },
+    {
+      "concept": "project_context",
+      "degree": 769
+    },
+    {
+      "concept": "module_contents",
+      "degree": 768
+    },
+    {
+      "concept": "issue_new_convo_starting",
+      "degree": 768
+    },
+    {
+      "concept": "tool_availability_check",
+      "degree": 767
+    },
+    {
+      "concept": "file_usage",
+      "degree": 767
+    },
+    {
+      "concept": "updated_readme",
+      "degree": 766
+    },
+    {
+      "concept": "dmg_file_path",
+      "degree": 764
+    },
+    {
+      "concept": "chat_history_behavior",
+      "degree": 763
+    },
+    {
+      "concept": "specific_files",
+      "degree": 762
+    },
+    {
+      "concept": "project_module",
+      "degree": 762
+    },
+    {
+      "concept": "identity_module",
+      "degree": 762
+    },
+    {
+      "concept": "feature_reflex_chains",
+      "degree": 760
+    },
+    {
+      "concept": "ui_delete",
+      "degree": 759
+    },
+    {
+      "concept": "optional_frontend",
+      "degree": 759
+    },
+    {
+      "concept": "model_size_advantage",
+      "degree": 759
+    },
+    {
+      "concept": "temp_memory",
+      "degree": 758
+    },
+    {
+      "concept": "repo_management",
+      "degree": 758
+    },
+    {
+      "concept": "action_cleans_db_files",
+      "degree": 756
+    },
+    {
+      "concept": "thread_metadata",
+      "degree": 755
+    },
+    {
+      "concept": "file_path_display",
+      "degree": 754
+    },
+    {
+      "concept": "reflex_call_detection",
+      "degree": 753
+    },
+    {
+      "concept": "tool_system",
+      "degree": 752
+    },
+    {
+      "concept": "new_routes_created",
+      "degree": 752
+    },
+    {
+      "concept": "current_task",
+      "degree": 749
+    },
+    {
+      "concept": "model_understanding",
+      "degree": 748
+    },
+    {
+      "concept": "cognitive_architecture",
+      "degree": 748
+    },
+    {
+      "concept": "thread_responsibility",
+      "degree": 747
+    },
+    {
+      "concept": "thread_introspection",
+      "degree": 747
+    },
+    {
+      "concept": "thread_data",
+      "degree": 747
+    },
+    {
+      "concept": "stimuli_architecture",
+      "degree": 747
+    },
+    {
+      "concept": "tool_definitions",
+      "degree": 746
+    },
+    {
+      "concept": "quick_start_guide",
+      "degree": 746
+    },
+    {
+      "concept": "new_profile",
+      "degree": 746
+    },
+    {
+      "concept": "context_window",
+      "degree": 743
+    },
+    {
+      "concept": "cli_run_command",
+      "degree": 742
+    },
+    {
+      "concept": "file_analysis",
+      "degree": 741
+    },
+    {
+      "concept": "subconscious_integration",
+      "degree": 738
+    },
+    {
+      "concept": "docker_files_removed",
+      "degree": 738
+    },
+    {
+      "concept": "json_files",
+      "degree": 737
+    },
+    {
+      "concept": "open_source_framework",
+      "degree": 736
+    },
+    {
+      "concept": "architecture_details",
+      "degree": 733
+    },
+    {
+      "concept": "architecture_doc",
+      "degree": 732
+    },
+    {
+      "concept": "readme_content",
+      "degree": 730
+    },
+    {
+      "concept": "update_history",
+      "degree": 729
+    },
+    {
+      "concept": "project_focus",
+      "degree": 729
+    },
+    {
+      "concept": "new_patterns",
+      "degree": 728
+    },
+    {
+      "concept": "demo_strategy",
+      "degree": 727
+    },
+    {
+      "concept": "brain_inspired_architecture",
+      "degree": 727
+    },
+    {
+      "concept": "import_errors_fixed",
+      "degree": 725
+    },
+    {
+      "concept": "comparison_context",
+      "degree": 724
+    },
+    {
+      "concept": "output_behavioral_profile",
+      "degree": 723
+    },
+    {
+      "concept": "single_prompt_mode",
+      "degree": 722
+    },
+    {
+      "concept": "readme_added",
+      "degree": 720
+    },
+    {
+      "concept": "local_execution",
+      "degree": 718
+    },
+    {
+      "concept": "README_added",
+      "degree": 718
+    },
+    {
+      "concept": "schema_file",
+      "degree": 717
+    },
+    {
+      "concept": "ui_enhancements",
+      "degree": 716
+    },
+    {
+      "concept": "calc_context_relevance",
+      "degree": 716
+    },
+    {
+      "concept": "backend_control",
+      "degree": 716
+    },
+    {
+      "concept": "domain_architecture",
+      "degree": 715
+    },
+    {
+      "concept": "python_version",
+      "degree": 714
+    },
+    {
+      "concept": "missing_features",
+      "degree": 713
+    },
+    {
+      "concept": "github_presence",
+      "degree": 713
+    },
+    {
+      "concept": "consolidation_loop_function",
+      "degree": 711
+    },
+    {
+      "concept": "architecture_expansion",
+      "degree": 710
+    },
+    {
+      "concept": "code_language",
+      "degree": 709
+    },
+    {
+      "concept": "stub_tools",
+      "degree": 708
+    },
+    {
+      "concept": "understands_architecture",
+      "degree": 707
+    },
+    {
+      "concept": "ui_change",
+      "degree": 707
+    },
+    {
+      "concept": "remove_files",
+      "degree": 707
+    },
+    {
+      "concept": "recent_pattern_change",
+      "degree": 707
+    },
+    {
+      "concept": "frontend_expectations",
+      "degree": 707
+    },
+    {
+      "concept": "demo_needed",
+      "degree": 707
+    },
+    {
+      "concept": "chat_endpoints",
+      "degree": 705
+    },
+    {
+      "concept": "frontend_expectation",
+      "degree": 704
+    },
+    {
+      "concept": "system_architecture",
+      "degree": 702
+    },
+    {
+      "concept": "features",
+      "degree": 702
+    },
+    {
+      "concept": "frontend_accessibility",
+      "degree": 701
+    },
+    {
+      "concept": "user.preferences.likes_python",
+      "degree": 698
+    },
+    {
+      "concept": "demo_data",
+      "degree": 697
+    },
+    {
+      "concept": "agent_process",
+      "degree": 697
+    },
+    {
+      "concept": "integration_framework",
+      "degree": 695
+    },
+    {
+      "concept": "deleted_files",
+      "degree": 693
+    },
+    {
+      "concept": "delete_files",
+      "degree": 693
+    },
+    {
+      "concept": "chat_history",
+      "degree": 691
+    },
+    {
+      "concept": "linking_file",
+      "degree": 689
+    },
+    {
+      "concept": "problem_new_convo",
+      "degree": 688
+    },
+    {
+      "concept": "architecture_rules",
+      "degree": 688
+    },
+    {
+      "concept": "local_vm_details",
+      "degree": 687
+    },
+    {
+      "concept": "unified_context",
+      "degree": 685
+    },
+    {
+      "concept": "css_files_checked",
+      "degree": 685
+    },
+    {
+      "concept": "new_schema",
+      "degree": 683
+    },
+    {
+      "concept": "github_issues_raised",
+      "degree": 683
+    },
+    {
+      "concept": "architecture_overview",
+      "degree": 682
+    },
+    {
+      "concept": "next_steps",
+      "degree": 681
+    },
+    {
+      "concept": "chat_schema",
+      "degree": 680
+    },
+    {
+      "concept": "readme_updated",
+      "degree": 678
+    },
+    {
+      "concept": "linking_core_role",
+      "degree": 677
+    },
+    {
+      "concept": "simplified_ui",
+      "degree": 675
+    },
+    {
+      "concept": "server_port_backend",
+      "degree": 675
+    },
+    {
+      "concept": "file_processing",
+      "degree": 675
+    },
+    {
+      "concept": "infinite_context",
+      "degree": 674
+    },
+    {
+      "concept": "context_source",
+      "degree": 674
+    },
+    {
+      "concept": "context_boundaries",
+      "degree": 674
+    },
+    {
+      "concept": "default_agent_name",
+      "degree": 672
+    },
+    {
+      "concept": "reflex_patterns",
+      "degree": 671
+    },
+    {
+      "concept": "work_stress",
+      "degree": 670
+    },
+    {
+      "concept": "agent_instance",
+      "degree": 670
+    },
+    {
+      "concept": "issue_conversation_sidebar",
+      "degree": 667
+    },
+    {
+      "concept": "git_ignored_files",
+      "degree": 667
+    },
+    {
+      "concept": "boredom_audit_consolidation_daemon",
+      "degree": 664
+    },
+    {
+      "concept": "project_features",
+      "degree": 663
+    },
+    {
+      "concept": "dashboard_features",
+      "degree": 662
+    },
+    {
+      "concept": "architecture",
+      "degree": 658
+    },
+    {
+      "concept": "architecture_insight",
+      "degree": 656
+    },
+    {
+      "concept": "user.preference.python",
+      "degree": 653
+    },
+    {
+      "concept": "target_architecture",
+      "degree": 653
+    },
+    {
+      "concept": "profile_collection_phase",
+      "degree": 653
+    },
+    {
+      "concept": "tested_files",
+      "degree": 652
+    },
+    {
+      "concept": "project_architecture",
+      "degree": 652
+    },
+    {
+      "concept": "philosophy_no_data",
+      "degree": 651
+    },
+    {
+      "concept": "llm_call_latency",
+      "degree": 651
+    },
+    {
+      "concept": "file_size",
+      "degree": 651
+    },
+    {
+      "concept": "clarifying_conversation_repeating",
+      "degree": 650
+    },
+    {
+      "concept": "architecture_decision",
+      "degree": 650
+    },
+    {
+      "concept": "self_sabotaging",
+      "degree": 649
+    },
+    {
+      "concept": "removed_files",
+      "degree": 648
+    },
+    {
+      "concept": "architecture_breakdown",
+      "degree": 648
+    },
+    {
+      "concept": "architecture_question",
+      "degree": 647
+    },
+    {
+      "concept": "updated_endpoints",
+      "degree": 646
+    },
+    {
+      "concept": "run_type_extensions",
+      "degree": 644
+    },
+    {
+      "concept": "git_command_usage",
+      "degree": 643
+    },
+    {
+      "concept": "modular_design",
+      "degree": 641
+    },
+    {
+      "concept": "documentation",
+      "degree": 639
+    },
+    {
+      "concept": "collaborators_start",
+      "degree": 638
+    },
+    {
+      "concept": "commit_message_includes_ip",
+      "degree": 637
+    },
+    {
+      "concept": "future_plans",
+      "degree": 635
+    },
+    {
+      "concept": "remaining_work",
+      "degree": 634
+    },
+    {
+      "concept": "next_high_value_move",
+      "degree": 634
+    },
+    {
+      "concept": "seed_file_creation",
+      "degree": 633
+    },
+    {
+      "concept": "future_features",
+      "degree": 633
+    },
+    {
+      "concept": "frontend",
+      "degree": 633
+    },
+    {
+      "concept": "user.preferences.prefers_dark_mode",
+      "degree": 632
+    },
+    {
+      "concept": "agent_name_lookup",
+      "degree": 632
+    },
+    {
+      "concept": "file_operations",
+      "degree": 631
+    },
+    {
+      "concept": "new_framing",
+      "degree": 630
+    },
+    {
+      "concept": "next_work_points",
+      "degree": 628
+    },
+    {
+      "concept": "algorithm_run",
+      "degree": 627
+    },
+    {
+      "concept": "philosophy_modules",
+      "degree": 626
+    },
+    {
+      "concept": "growth_through_code",
+      "degree": 626
+    },
+    {
+      "concept": "gitignored_files",
+      "degree": 625
+    },
+    {
+      "concept": "enforcement_context",
+      "degree": 625
+    },
+    {
+      "concept": "community_building",
+      "degree": 625
+    },
+    {
+      "concept": "kept_files",
+      "degree": 621
+    },
+    {
+      "concept": "user.general.some_fact",
+      "degree": 619
+    },
+    {
+      "concept": "user.general.fact_b",
+      "degree": 619
+    },
+    {
+      "concept": "sync_loop_function",
+      "degree": 619
+    },
+    {
+      "concept": "remaining_files",
+      "degree": 619
+    },
+    {
+      "concept": "readme_section",
+      "degree": 619
+    },
+    {
+      "concept": "github_tiktok_distribution",
+      "degree": 618
+    },
+    {
+      "concept": "executable_files",
+      "degree": 618
+    },
+    {
+      "concept": "checked_files",
+      "degree": 617
+    },
+    {
+      "concept": "files_checked",
+      "degree": 616
+    },
+    {
+      "concept": "agent_card",
+      "degree": 616
+    },
+    {
+      "concept": "import_history",
+      "degree": 614
+    },
+    {
+      "concept": "sync_every_n_minutes",
+      "degree": 613
+    },
+    {
+      "concept": "project_files",
+      "degree": 613
+    },
+    {
+      "concept": "protected_core",
+      "degree": 612
+    },
+    {
+      "concept": "first_message_action",
+      "degree": 612
+    },
+    {
+      "concept": "python_path",
+      "degree": 609
+    },
+    {
+      "concept": "conversation_history",
+      "degree": 607
+    },
+    {
+      "concept": "seed_files",
+      "degree": 606
+    },
+    {
+      "concept": "registration_file",
+      "degree": 606
+    },
+    {
+      "concept": "fact_extractor_function",
+      "degree": 605
+    },
+    {
+      "concept": "message_analysis_focus",
+      "degree": 604
+    },
+    {
+      "concept": "repo_type",
+      "degree": 602
+    },
+    {
+      "concept": "redundant_files",
+      "degree": 602
+    },
+    {
+      "concept": "deprecated_files",
+      "degree": 602
+    },
+    {
+      "concept": "subconscious_functionality",
+      "degree": 601
+    },
+    {
+      "concept": "new_branding",
+      "degree": 601
+    },
+    {
+      "concept": "agent_remembering",
+      "degree": 601
+    },
+    {
+      "concept": "folder_updated",
+      "degree": 600
+    },
+    {
+      "concept": "feature_convo_import",
+      "degree": 599
+    },
+    {
+      "concept": "prompt_mode",
+      "degree": 598
+    },
+    {
+      "concept": "main_orchestration_required",
+      "degree": 598
+    },
+    {
+      "concept": "backend_error",
+      "degree": 598
+    },
+    {
+      "concept": "specific_features",
+      "degree": 597
+    },
+    {
+      "concept": "issue_conversation_saving",
+      "degree": 597
+    },
+    {
+      "concept": "source_files",
+      "degree": 595
+    },
+    {
+      "concept": "singleton_agent",
+      "degree": 595
+    },
+    {
+      "concept": "output_summary",
+      "degree": 594
+    },
+    {
+      "concept": "vision_updated",
+      "degree": 593
+    },
+    {
+      "concept": "user.general.corrected_text_here",
+      "degree": 593
+    },
+    {
+      "concept": "os_mindset",
+      "degree": 591
+    },
+    {
+      "concept": "current_design",
+      "degree": 590
+    },
+    {
+      "concept": "notes",
+      "degree": 589
+    },
+    {
+      "concept": "rename_file",
+      "degree": 588
+    },
+    {
+      "concept": "current_document",
+      "degree": 588
+    },
+    {
+      "concept": "fact_types",
+      "degree": 587
+    },
+    {
+      "concept": "database_mode_toggle",
+      "degree": 586
+    },
+    {
+      "concept": "orphan_file",
+      "degree": 585
+    },
+    {
+      "concept": "current_eval",
+      "degree": 585
+    },
+    {
+      "concept": "time_focused_refinement",
+      "degree": 584
+    },
+    {
+      "concept": "add_family_members",
+      "degree": 584
+    },
+    {
+      "concept": "reflex_system",
+      "degree": 583
+    },
+    {
+      "concept": "executor_file",
+      "degree": 583
+    },
+    {
+      "concept": "file_deletion",
+      "degree": 582
+    },
+    {
+      "concept": "health_loop_function",
+      "degree": 581
+    },
+    {
+      "concept": "file_cleaned",
+      "degree": 581
+    },
+    {
+      "concept": "auto_start_session",
+      "degree": 580
+    },
+    {
+      "concept": "profile_storage",
+      "degree": 576
+    },
+    {
+      "concept": "background_loop_needed",
+      "degree": 576
+    },
+    {
+      "concept": "boredom_audit_documentation_sync",
+      "degree": 575
+    },
+    {
+      "concept": "update_imports",
+      "degree": 574
+    },
+    {
+      "concept": "idea_for_2025_analysis",
+      "degree": 574
+    },
+    {
+      "concept": "incremental_learning",
+      "degree": 573
+    },
+    {
+      "concept": "design_decisions",
+      "degree": 573
+    },
+    {
+      "concept": "consolidation_logic",
+      "degree": 573
+    },
+    {
+      "concept": "file_exclusion",
+      "degree": 572
+    },
+    {
+      "concept": "consolidated_files",
+      "degree": 572
+    },
+    {
+      "concept": "preserved_files",
+      "degree": 571
+    },
+    {
+      "concept": "file_type",
+      "degree": 571
+    },
+    {
+      "concept": "stress_test",
+      "degree": 570
+    },
+    {
+      "concept": "db_mode_switching",
+      "degree": 569
+    },
+    {
+      "concept": "documenting_history",
+      "degree": 568
+    },
+    {
+      "concept": "user.general.pending_fact",
+      "degree": 567
+    },
+    {
+      "concept": "personal_life",
+      "degree": 566
+    },
+    {
+      "concept": "log_data_exist",
+      "degree": 566
+    },
+    {
+      "concept": "subconscious_role",
+      "degree": 564
+    },
+    {
+      "concept": "email",
+      "degree": 563
+    },
+    {
+      "concept": "centralized_db_logic",
+      "degree": 563
+    },
+    {
+      "concept": "user.process.method.spread_activation",
+      "degree": 561
+    },
+    {
+      "concept": "user.information.need",
+      "degree": 560
+    },
+    {
+      "concept": "readme_display",
+      "degree": 559
+    },
+    {
+      "concept": "design_improvements",
+      "degree": 559
+    },
+    {
+      "concept": "current_tactic",
+      "degree": 559
+    },
+    {
+      "concept": "code_size",
+      "degree": 557
+    },
+    {
+      "concept": "generate_user_summary",
+      "degree": 556
+    },
+    {
+      "concept": "task_list",
+      "degree": 555
+    },
+    {
+      "concept": "subconscious_orchestrator",
+      "degree": 553
+    },
+    {
+      "concept": "start_script",
+      "degree": 553
+    },
+    {
+      "concept": "missing_function",
+      "degree": 553
+    },
+    {
+      "concept": "abuse_patterns",
+      "degree": 551
+    },
+    {
+      "concept": "os_capabilities",
+      "degree": 549
+    },
+    {
+      "concept": "db_schema",
+      "degree": 549
+    },
+    {
+      "concept": "update_dmg",
+      "degree": 548
+    },
+    {
+      "concept": "background_orchestration_needed",
+      "degree": 548
+    },
+    {
+      "concept": "machine",
+      "degree": 547
+    },
+    {
+      "concept": "added_section",
+      "degree": 546
+    },
+    {
+      "concept": "mode_management",
+      "degree": 543
+    },
+    {
+      "concept": "clean_exit_handling",
+      "degree": 543
+    },
+    {
+      "concept": "technical_tasks",
+      "degree": 542
+    },
+    {
+      "concept": "score_threads",
+      "degree": 539
+    },
+    {
+      "concept": "redundant_code",
+      "degree": 539
+    },
+    {
+      "concept": "recent_focus",
+      "degree": 537
+    },
+    {
+      "concept": "backend_version",
+      "degree": 535
+    },
+    {
+      "concept": "repo_initialization",
+      "degree": 534
+    },
+    {
+      "concept": "extraction_consolidation",
+      "degree": 530
+    },
+    {
+      "concept": "features_implemented",
+      "degree": 528
+    },
+    {
+      "concept": "target_users",
+      "degree": 527
+    },
+    {
+      "concept": "os_abstraction",
+      "degree": 526
+    },
+    {
+      "concept": "next_step",
+      "degree": 526
+    },
+    {
+      "concept": "major_patterns",
+      "degree": 526
+    },
+    {
+      "concept": "service_management",
+      "degree": 525
+    },
+    {
+      "concept": "code_storage",
+      "degree": 524
+    },
+    {
+      "concept": "session_manager_role",
+      "degree": 523
+    },
+    {
+      "concept": "database_schema",
+      "degree": 523
+    },
+    {
+      "concept": "fact_source_relevance",
+      "degree": 522
+    },
+    {
+      "concept": "team_size",
+      "degree": 520
+    },
+    {
+      "concept": "issue_fixed",
+      "degree": 520
+    },
+    {
+      "concept": "ollama_installed",
+      "degree": 518
+    },
+    {
+      "concept": "function_execution",
+      "degree": 517
+    },
+    {
+      "concept": "browser_integration",
+      "degree": 517
+    },
+    {
+      "concept": "boredom_audit_db_persistence",
+      "degree": 517
+    },
+    {
+      "concept": "legacy_code_check",
+      "degree": 515
+    },
+    {
+      "concept": "component_updated",
+      "degree": 515
+    },
+    {
+      "concept": "readme_highlighting",
+      "degree": 514
+    },
+    {
+      "concept": "os_preference",
+      "degree": 514
+    },
+    {
+      "concept": "version_control",
+      "degree": 513
+    },
+    {
+      "concept": "profile_types",
+      "degree": 513
+    },
+    {
+      "concept": "conversation_usage",
+      "degree": 513
+    },
+    {
+      "concept": "section_21_updated",
+      "degree": 512
+    },
+    {
+      "concept": "test_results",
+      "degree": 510
+    },
+    {
+      "concept": "section_14_updated",
+      "degree": 510
+    },
+    {
+      "concept": "updated_imports",
+      "degree": 509
+    },
+    {
+      "concept": "fact_keys",
+      "degree": 509
+    },
+    {
+      "concept": "db_tables",
+      "degree": 509
+    },
+    {
+      "concept": "assistant.response.greeting",
+      "degree": 509
+    },
+    {
+      "concept": "current_emotion",
+      "degree": 506
+    },
+    {
+      "concept": "section_13_updated",
+      "degree": 505
+    },
+    {
+      "concept": "github_familiarity",
+      "degree": 503
+    },
+    {
+      "concept": "self_concept_graph",
+      "degree": 502
+    },
+    {
+      "concept": "removed_dev_mode",
+      "degree": 502
+    },
+    {
+      "concept": "analysis_phase",
+      "degree": 502
+    },
+    {
+      "concept": "column_analysis",
+      "degree": 500
+    },
+    {
+      "concept": "section_23_updated",
+      "degree": 498
+    },
+    {
+      "concept": "removed_features",
+      "degree": 498
+    },
+    {
+      "concept": "project_goal",
+      "degree": 498
+    },
+    {
+      "concept": "profile_linking",
+      "degree": 498
+    },
+    {
+      "concept": "multiple_data_sources",
+      "degree": 498
+    },
+    {
+      "concept": "deprecated_code",
+      "degree": 496
+    },
+    {
+      "concept": "log_data_exists",
+      "degree": 495
+    },
+    {
+      "concept": "error_handling",
+      "degree": 495
+    },
+    {
+      "concept": "chosen_modules",
+      "degree": 495
+    },
+    {
+      "concept": "year_summary_request",
+      "degree": 493
+    },
+    {
+      "concept": "feature_added",
+      "degree": 493
+    },
+    {
+      "concept": "timeline",
+      "degree": 492
+    },
+    {
+      "concept": "program_entry",
+      "degree": 492
+    },
+    {
+      "concept": "profile_collection_questions",
+      "degree": 489
+    },
+    {
+      "concept": "comparison_features",
+      "degree": 489
+    },
+    {
+      "concept": "stimuli_integration",
+      "degree": 487
+    },
+    {
+      "concept": "legacy_code",
+      "degree": 487
+    },
+    {
+      "concept": "documentation_process",
+      "degree": 486
+    },
+    {
+      "concept": "boredom_audit_app_infrastructure",
+      "degree": 486
+    },
+    {
+      "concept": "server_error",
+      "degree": 485
+    },
+    {
+      "concept": "docs_quality",
+      "degree": 483
+    },
+    {
+      "concept": "use_cases",
+      "degree": 482
+    },
+    {
+      "concept": "process_features",
+      "degree": 482
+    },
+    {
+      "concept": "training_vision",
+      "degree": 481
+    },
+    {
+      "concept": "time_frame",
+      "degree": 480
+    },
+    {
+      "concept": "page_limit",
+      "degree": 478
+    },
+    {
+      "concept": "ghost_code_report",
+      "degree": 476
+    },
+    {
+      "concept": "session_id_management",
+      "degree": 475
+    },
+    {
+      "concept": "branch_usage",
+      "degree": 473
+    },
+    {
+      "concept": "user.project.task",
+      "degree": 472
+    },
+    {
+      "concept": "git_workflow",
+      "degree": 472
+    },
+    {
+      "concept": "deprecated_modules",
+      "degree": 472
+    },
+    {
+      "concept": "current_feature",
+      "degree": 472
+    },
+    {
+      "concept": "test_benchmarks",
+      "degree": 471
+    },
+    {
+      "concept": "manifest_use",
+      "degree": 471
+    },
+    {
+      "concept": "analysis_system",
+      "degree": 471
+    },
+    {
+      "concept": "refactored_code",
+      "degree": 470
+    },
+    {
+      "concept": "expanded_use_cases",
+      "degree": 470
+    },
+    {
+      "concept": "escalation_path",
+      "degree": 470
+    },
+    {
+      "concept": "endpoint_mapping",
+      "degree": 470
+    },
+    {
+      "concept": "project_updated",
+      "degree": 469
+    },
+    {
+      "concept": "integrated_feeds",
+      "degree": 468
+    },
+    {
+      "concept": "user.action.email",
+      "degree": 465
+    },
+    {
+      "concept": "backend_not_restarted",
+      "degree": 465
+    },
+    {
+      "concept": "update_contents",
+      "degree": 464
+    },
+    {
+      "concept": "specific_months",
+      "degree": 464
+    },
+    {
+      "concept": "approve_fact",
+      "degree": 464
+    },
+    {
+      "concept": "product_vision",
+      "degree": 459
+    },
+    {
+      "concept": "data_size",
+      "degree": 459
+    },
+    {
+      "concept": "cognitive_cost",
+      "degree": 459
+    },
+    {
+      "concept": "machine_profile",
+      "degree": 457
+    },
+    {
+      "concept": "current_strategy",
+      "degree": 457
+    },
+    {
+      "concept": "code_maturity",
+      "degree": 457
+    },
+    {
+      "concept": "dashboard_behavior",
+      "degree": 456
+    },
+    {
+      "concept": "session_framing",
+      "degree": 453
+    },
+    {
+      "concept": "backend_registration",
+      "degree": 453
+    },
+    {
+      "concept": "backend_killed",
+      "degree": 453
+    },
+    {
+      "concept": "questions_focus",
+      "degree": 452
+    },
+    {
+      "concept": "privacy_control",
+      "degree": 452
+    },
+    {
+      "concept": "error_fixed",
+      "degree": 451
+    },
+    {
+      "concept": "directional_control",
+      "degree": 451
+    },
+    {
+      "concept": "abuse_experience",
+      "degree": 451
+    },
+    {
+      "concept": "db_entries",
+      "degree": 449
+    },
+    {
+      "concept": "response_advice",
+      "degree": 448
+    },
+    {
+      "concept": "financial_control",
+      "degree": 447
+    },
+    {
+      "concept": "user.preference.language",
+      "degree": 446
+    },
+    {
+      "concept": "db_conversations",
+      "degree": 446
+    },
+    {
+      "concept": "database_locked",
+      "degree": 443
+    },
+    {
+      "concept": "assess_block",
+      "degree": 443
+    },
+    {
+      "concept": "dependency_management",
+      "degree": 440
+    },
+    {
+      "concept": "relationship",
+      "degree": 439
+    },
+    {
+      "concept": "git_command_needed",
+      "degree": 439
+    },
+    {
+      "concept": "dependency_added",
+      "degree": 439
+    },
+    {
+      "concept": "cli_mode",
+      "degree": 439
+    },
+    {
+      "concept": "stateless_prompt",
+      "degree": 438
+    },
+    {
+      "concept": "user.general.keep",
+      "degree": 437
+    },
+    {
+      "concept": "db_migration",
+      "degree": 436
+    },
+    {
+      "concept": "current_concept",
+      "degree": 436
+    },
+    {
+      "concept": "behavioral_analysis",
+      "degree": 435
+    },
+    {
+      "concept": "user.preferences.prefers_large_dogs",
+      "degree": 434
+    },
+    {
+      "concept": "user.general.ready_promotion",
+      "degree": 433
+    },
+    {
+      "concept": "commit_message",
+      "degree": 433
+    },
+    {
+      "concept": "tried_persist_three",
+      "degree": 432
+    },
+    {
+      "concept": "assistant.data.policy",
+      "degree": 432
+    },
+    {
+      "concept": "pitch_for_product",
+      "degree": 431
+    },
+    {
+      "concept": "endpoint_fixed",
+      "degree": 431
+    },
+    {
+      "concept": "default_facts",
+      "degree": 430
+    },
+    {
+      "concept": "multiple_profiles",
+      "degree": 429
+    },
+    {
+      "concept": "installed_package",
+      "degree": 429
+    },
+    {
+      "concept": "analysis_guidance",
+      "degree": 429
+    },
+    {
+      "concept": "technology_stack",
+      "degree": 428
+    },
+    {
+      "concept": "current_flow",
+      "degree": 428
+    },
+    {
+      "concept": "GET /api/services/",
+      "degree": 426
+    },
+    {
+      "concept": "updated_instructions",
+      "degree": 424
+    },
+    {
+      "concept": "structure_cleaned",
+      "degree": 424
+    },
+    {
+      "concept": "philosophy_change",
+      "degree": 424
+    },
+    {
+      "concept": "expected_behavior",
+      "degree": 423
+    },
+    {
+      "concept": "dot_loop",
+      "degree": 423
+    },
+    {
+      "concept": "feature_request",
+      "degree": 419
+    },
+    {
+      "concept": "dashboard_role",
+      "degree": 419
+    },
+    {
+      "concept": "test_performed",
+      "degree": 418
+    },
+    {
+      "concept": "dev_mode_accessibility",
+      "degree": 418
+    },
+    {
+      "concept": "graph_integration",
+      "degree": 417
+    },
+    {
+      "concept": "csv_task",
+      "degree": 417
+    },
+    {
+      "concept": "safety_measures",
+      "degree": 416
+    },
+    {
+      "concept": "docs",
+      "degree": 416
+    },
+    {
+      "concept": "decision_making",
+      "degree": 416
+    },
+    {
+      "concept": "development_time",
+      "degree": 414
+    },
+    {
+      "concept": "database_lock",
+      "degree": 414
+    },
+    {
+      "concept": "updated_gitignore",
+      "degree": 412
+    },
+    {
+      "concept": "learning_visible",
+      "degree": 411
+    },
+    {
+      "concept": "GET /api/workspace/files",
+      "degree": 411
+    },
+    {
+      "concept": "worked_hard",
+      "degree": 410
+    },
+    {
+      "concept": "calc_machine_relevance",
+      "degree": 409
+    },
+    {
+      "concept": "updated_examples",
+      "degree": 407
+    },
+    {
+      "concept": "test_coverage",
+      "degree": 407
+    },
+    {
+      "concept": "setup_steps",
+      "degree": 407
+    },
+    {
+      "concept": "development_environment",
+      "degree": 407
+    },
+    {
+      "concept": "db_usage",
+      "degree": 407
+    },
+    {
+      "concept": "llm_decision",
+      "degree": 406
+    },
+    {
+      "concept": "test_action",
+      "degree": 404
+    },
+    {
+      "concept": "remaining_tasks",
+      "degree": 404
+    },
+    {
+      "concept": "missing_link",
+      "degree": 404
+    },
+    {
+      "concept": "event_logging",
+      "degree": 404
+    },
+    {
+      "concept": "test_intent",
+      "degree": 403
+    },
+    {
+      "concept": "feeds_sources",
+      "degree": 403
+    },
+    {
+      "concept": "current_focus",
+      "degree": 403
+    },
+    {
+      "concept": "GET /api/form/tools",
+      "degree": 403
+    },
+    {
+      "concept": "commit_history_insight",
+      "degree": 402
+    },
+    {
+      "concept": "test_type",
+      "degree": 401
+    },
+    {
+      "concept": "enable_browser_actions",
+      "degree": 401
+    },
+    {
+      "concept": "metadata",
+      "degree": 400
+    },
+    {
+      "concept": "consolidation_process",
+      "degree": 400
+    },
+    {
+      "concept": "role",
+      "degree": 399
+    },
+    {
+      "concept": "framework_built",
+      "degree": 399
+    },
+    {
+      "concept": "calendar_integration",
+      "degree": 399
+    },
+    {
+      "concept": "marketplace_vision",
+      "degree": 397
+    },
+    {
+      "concept": "user.relationship.familysharing",
+      "degree": 396
+    },
+    {
+      "concept": "gender_analysis",
+      "degree": 396
+    },
+    {
+      "concept": "foreign_key_error",
+      "degree": 396
+    },
+    {
+      "concept": "test_process",
+      "degree": 395
+    },
+    {
+      "concept": "redundant_services",
+      "degree": 395
+    },
+    {
+      "concept": "fix_actions",
+      "degree": 395
+    },
+    {
+      "concept": "user_experienced_emotional_abuse",
+      "degree": 394
+    },
+    {
+      "concept": "primary user",
+      "degree": 393
+    },
+    {
+      "concept": "GET /api/workspace/notes",
+      "degree": 390
+    },
+    {
+      "concept": "template_usage",
+      "degree": 389
+    },
+    {
+      "concept": "user.general.trimmed_text",
+      "degree": 388
+    },
+    {
+      "concept": "user.general.corrected_text",
+      "degree": 387
+    },
+    {
+      "concept": "missing_piece",
+      "degree": 387
+    },
+    {
+      "concept": "commit_history_evolution",
+      "degree": 387
+    },
+    {
+      "concept": "GET /api/subconscious/goals",
+      "degree": 386
+    },
+    {
+      "concept": "solution_approach",
+      "degree": 384
+    },
+    {
+      "concept": "GET /api/workspace/pinned",
+      "degree": 384
+    },
+    {
+      "concept": "db_cleaned",
+      "degree": 383
+    },
+    {
+      "concept": "project_name",
+      "degree": 382
+    },
+    {
+      "concept": "court_ready",
+      "degree": 382
+    },
+    {
+      "concept": "integration",
+      "degree": 381
+    },
+    {
+      "concept": "budget_management",
+      "degree": 381
+    },
+    {
+      "concept": "scoring_improvement",
+      "degree": 380
+    },
+    {
+      "concept": "issues_type",
+      "degree": 379
+    },
+    {
+      "concept": "existing_scripts",
+      "degree": 379
+    },
+    {
+      "concept": "technical_background",
+      "degree": 378
+    },
+    {
+      "concept": "issue_found",
+      "degree": 378
+    },
+    {
+      "concept": "discord_needed",
+      "degree": 377
+    },
+    {
+      "concept": "app_launch",
+      "degree": 377
+    },
+    {
+      "concept": "location",
+      "degree": 376
+    },
+    {
+      "concept": "self_assessment",
+      "degree": 375
+    },
+    {
+      "concept": "alignment_loop",
+      "degree": 375
+    },
+    {
+      "concept": "user.request.icoud_name_change",
+      "degree": 374
+    },
+    {
+      "concept": "research_focus",
+      "degree": 374
+    },
+    {
+      "concept": "removed_vm_scripts",
+      "degree": 374
+    },
+    {
+      "concept": "mode_handling",
+      "degree": 374
+    },
+    {
+      "concept": "design_strengths",
+      "degree": 374
+    },
+    {
+      "concept": "server_restart_required",
+      "degree": 373
+    },
+    {
+      "concept": "requested_feature",
+      "degree": 373
+    },
+    {
+      "concept": "redundant_profile",
+      "degree": 373
+    },
+    {
+      "concept": "example_character",
+      "degree": 373
+    },
+    {
+      "concept": "built_since_jan_21",
+      "degree": 372
+    },
+    {
+      "concept": "two_factor_auth",
+      "degree": 371
+    },
+    {
+      "concept": "GET /api/subconscious/improvements",
+      "degree": 371
+    },
+    {
+      "concept": "ml_framework",
+      "degree": 370
+    },
+    {
+      "concept": "vm_environment_variables",
+      "degree": 369
+    },
+    {
+      "concept": "relationship_concern",
+      "degree": 369
+    },
+    {
+      "concept": "current_activity",
+      "degree": 369
+    },
+    {
+      "concept": "novel_concepts",
+      "degree": 368
+    },
+    {
+      "concept": "GET /api/workspace/recent",
+      "degree": 367
+    },
+    {
+      "concept": "self_reference",
+      "degree": 365
+    },
+    {
+      "concept": "env_section",
+      "degree": 364
+    },
+    {
+      "concept": "server_restart",
+      "degree": 363
+    },
+    {
+      "concept": "workspace_reviewed",
+      "degree": 362
+    },
+    {
+      "concept": "app_behavior",
+      "degree": 362
+    },
+    {
+      "concept": "git_command_used",
+      "degree": 361
+    },
+    {
+      "concept": "phone",
+      "degree": 360
+    },
+    {
+      "concept": "repo_safe",
+      "degree": 359
+    },
+    {
+      "concept": "current_assessment",
+      "degree": 359
+    },
+    {
+      "concept": "active_tables",
+      "degree": 359
+    },
+    {
+      "concept": "privacy_concerns",
+      "degree": 358
+    },
+    {
+      "concept": "technical_innovation",
+      "degree": 357
+    },
+    {
+      "concept": "desired_loop",
+      "degree": 357
+    },
+    {
+      "concept": "tests_passed",
+      "degree": 356
+    },
+    {
+      "concept": "self_modeling",
+      "degree": 356
+    },
+    {
+      "concept": "self_contained",
+      "degree": 356
+    },
+    {
+      "concept": "testing_phase",
+      "degree": 355
+    },
+    {
+      "concept": "fix_action",
+      "degree": 355
+    },
+    {
+      "concept": "cloud_approach",
+      "degree": 355
+    },
+    {
+      "concept": "GET /api/eval/comparisons",
+      "degree": 355
+    },
+    {
+      "concept": "server_restarted",
+      "degree": 354
+    },
+    {
+      "concept": "schema_change",
+      "degree": 354
+    },
+    {
+      "concept": "step_direction_given",
+      "degree": 353
+    },
+    {
+      "concept": "issue_creation_method",
+      "degree": 353
+    },
+    {
+      "concept": "GET /api/reflex/all",
+      "degree": 353
+    },
+    {
+      "concept": "refactor_history",
+      "degree": 352
+    },
+    {
+      "concept": "remote_origin_setup",
+      "degree": 351
+    },
+    {
+      "concept": "expected_output",
+      "degree": 351
+    },
+    {
+      "concept": "codebase_health_check",
+      "degree": 351
+    },
+    {
+      "concept": "target_platform",
+      "degree": 349
+    },
+    {
+      "concept": "hardware",
+      "degree": 349
+    },
+    {
+      "concept": "json_editing_required",
+      "degree": 348
+    },
+    {
+      "concept": "eval_recommendation",
+      "degree": 347
+    },
+    {
+      "concept": "browser_console_check",
+      "degree": 347
+    },
+    {
+      "concept": "victim_safety",
+      "degree": 344
+    },
+    {
+      "concept": "launch_date",
+      "degree": 344
+    },
+    {
+      "concept": "eval_tier",
+      "degree": 344
+    },
+    {
+      "concept": "package_manager",
+      "degree": 343
+    },
+    {
+      "concept": "api_test_endpoint",
+      "degree": 340
+    },
+    {
+      "concept": "user_decision",
+      "degree": 339
+    },
+    {
+      "concept": "api_port",
+      "degree": 339
+    },
+    {
+      "concept": "action_cleans_db",
+      "degree": 339
+    },
+    {
+      "concept": "abuser_continued_exploitative_behavior",
+      "degree": 339
+    },
+    {
+      "concept": "ssh_key_setup",
+      "degree": 338
+    },
+    {
+      "concept": "name_change_reason",
+      "degree": 338
+    },
+    {
+      "concept": "vite_api_url",
+      "degree": 337
+    },
+    {
+      "concept": "server_restart_needed",
+      "degree": 337
+    },
+    {
+      "concept": "processing_time_estimation",
+      "degree": 337
+    },
+    {
+      "concept": "system_prompt_display",
+      "degree": 336
+    },
+    {
+      "concept": "rename_endpoint",
+      "degree": 336
+    },
+    {
+      "concept": "api_preference",
+      "degree": 336
+    },
+    {
+      "concept": "primary_user",
+      "degree": 335
+    },
+    {
+      "concept": "project_type",
+      "degree": 334
+    },
+    {
+      "concept": "profile_collection",
+      "degree": 334
+    },
+    {
+      "concept": "problem_type",
+      "degree": 333
+    },
+    {
+      "concept": "organization",
+      "degree": 333
+    },
+    {
+      "concept": "prompt_competing",
+      "degree": 332
+    },
+    {
+      "concept": "power_dynamic_assessment",
+      "degree": 331
+    },
+    {
+      "concept": "message_processing",
+      "degree": 331
+    },
+    {
+      "concept": "restarting_server",
+      "degree": 330
+    },
+    {
+      "concept": "apple_developer_program",
+      "degree": 330
+    },
+    {
+      "concept": "server_shutdown",
+      "degree": 329
+    },
+    {
+      "concept": "backup_required",
+      "degree": 328
+    },
+    {
+      "concept": "profile",
+      "degree": 325
+    },
+    {
+      "concept": "family.mom",
+      "degree": 325
+    },
+    {
+      "concept": "api_check",
+      "degree": 325
+    },
+    {
+      "concept": "v2_goals",
+      "degree": 324
+    },
+    {
+      "concept": "profile_system",
+      "degree": 323
+    },
+    {
+      "concept": "old_post",
+      "degree": 323
+    },
+    {
+      "concept": "boredom_audit_heal1_l2_l3",
+      "degree": 323
+    },
+    {
+      "concept": "testing",
+      "degree": 322
+    },
+    {
+      "concept": "profile_type",
+      "degree": 322
+    },
+    {
+      "concept": "document_type",
+      "degree": 322
+    },
+    {
+      "concept": "apology_patterns",
+      "degree": 322
+    },
+    {
+      "concept": "GET /api/services/kernel/status",
+      "degree": 322
+    },
+    {
+      "concept": "user_facing_philosophy",
+      "degree": 321
+    },
+    {
+      "concept": "hebbian_learning",
+      "degree": 321
+    },
+    {
+      "concept": "GET /api/services/consolidation/pending",
+      "degree": 321
+    },
+    {
+      "concept": "learning_process",
+      "degree": 320
+    },
+    {
+      "concept": "issue",
+      "degree": 319
+    },
+    {
+      "concept": "fix_applied",
+      "degree": 319
+    },
+    {
+      "concept": "abuser_behavior",
+      "degree": 319
+    },
+    {
+      "concept": "schema_consistency",
+      "degree": 318
+    },
+    {
+      "concept": "package_name",
+      "degree": 318
+    },
+    {
+      "concept": "fine_tuning_data",
+      "degree": 318
+    },
+    {
+      "concept": "scoring_method",
+      "degree": 317
+    },
+    {
+      "concept": "novel_concept",
+      "degree": 317
+    },
+    {
+      "concept": "job_impact",
+      "degree": 317
+    },
+    {
+      "concept": "GET /api/eval/runs",
+      "degree": 317
+    },
+    {
+      "concept": "pattern_recognition",
+      "degree": 316
+    },
+    {
+      "concept": "current_stage",
+      "degree": 316
+    },
+    {
+      "concept": "fix_needed",
+      "degree": 315
+    },
+    {
+      "concept": "app_bundle",
+      "degree": 315
+    },
+    {
+      "concept": "developer_experience",
+      "degree": 314
+    },
+    {
+      "concept": "GET /api/models",
+      "degree": 314
+    },
+    {
+      "concept": "multiple_sources",
+      "degree": 313
+    },
+    {
+      "concept": "chat_api",
+      "degree": 313
+    },
+    {
+      "concept": "build_method",
+      "degree": 313
+    },
+    {
+      "concept": "multiple_api_routers",
+      "degree": 312
+    },
+    {
+      "concept": "instant_functionality",
+      "degree": 312
+    },
+    {
+      "concept": "user.goal.name_change",
+      "degree": 311
+    },
+    {
+      "concept": "preferred_user_interface_term",
+      "degree": 310
+    },
+    {
+      "concept": "launch_strategy",
+      "degree": 310
+    },
+    {
+      "concept": "attention_mechanism",
+      "degree": 310
+    },
+    {
+      "concept": "vm_usage",
+      "degree": 309
+    },
+    {
+      "concept": "feature_branches",
+      "degree": 309
+    },
+    {
+      "concept": "problem_area",
+      "degree": 308
+    },
+    {
+      "concept": "user_product",
+      "degree": 307
+    },
+    {
+      "concept": "refactoring_task",
+      "degree": 307
+    },
+    {
+      "concept": "competitor_analysis",
+      "degree": 307
+    },
+    {
+      "concept": "abuse_duration",
+      "degree": 307
+    },
+    {
+      "concept": "change_resistance",
+      "degree": 306
+    },
+    {
+      "concept": "api_bridge",
+      "degree": 306
+    },
+    {
+      "concept": "offline_sync",
+      "degree": 305
+    },
+    {
+      "concept": "get_started_info",
+      "degree": 305
+    },
+    {
+      "concept": "adversary_prompt",
+      "degree": 305
+    },
+    {
+      "concept": "workspace_experts",
+      "degree": 304
+    },
+    {
+      "concept": "concept_graph_weights",
+      "degree": 304
+    },
+    {
+      "concept": "technical_barriers",
+      "degree": 303
+    },
+    {
+      "concept": "execute_endpoint",
+      "degree": 302
+    },
+    {
+      "concept": "assessment_section",
+      "degree": 302
+    },
+    {
+      "concept": "current_action",
+      "degree": 301
+    },
+    {
+      "concept": "GET /api/feeds/sources",
+      "degree": 301
+    },
+    {
+      "concept": "runtime_environment",
+      "degree": 300
+    },
+    {
+      "concept": "prompt_name",
+      "degree": 300
+    },
+    {
+      "concept": "api_response",
+      "degree": 300
+    },
+    {
+      "concept": "user.general.quick_approve",
+      "degree": 299
+    },
+    {
+      "concept": "execution_stage",
+      "degree": 298
+    },
+    {
+      "concept": "court_case",
+      "degree": 297
+    },
+    {
+      "concept": "api_support",
+      "degree": 297
+    },
+    {
+      "concept": "token_consciousness",
+      "degree": 296
+    },
+    {
+      "concept": "issue_with_terminal",
+      "degree": 296
+    },
+    {
+      "concept": "api_experience",
+      "degree": 296
+    },
+    {
+      "concept": "theme_variables_used",
+      "degree": 295
+    },
+    {
+      "concept": "macos_experience",
+      "degree": 293
+    },
+    {
+      "concept": "interest_level",
+      "degree": 292
+    },
+    {
+      "concept": "timeframe_breakdown",
+      "degree": 290
+    },
+    {
+      "concept": "monthly_analysis",
+      "degree": 290
+    },
+    {
+      "concept": "issue_encountered",
+      "degree": 289
+    },
+    {
+      "concept": "user.account.type",
+      "degree": 287
+    },
+    {
+      "concept": "fix",
+      "degree": 287
+    },
+    {
+      "concept": "tested_setup",
+      "degree": 285
+    },
+    {
+      "concept": "form_thread_ui",
+      "degree": 285
+    },
+    {
+      "concept": "error_encountered",
+      "degree": 285
+    },
+    {
+      "concept": "emotional_regulation",
+      "degree": 284
+    },
+    {
+      "concept": "current_bottleneck",
+      "degree": 284
+    },
+    {
+      "concept": "parallel_processing",
+      "degree": 283
+    },
+    {
+      "concept": "market_strategy",
+      "degree": 283
+    },
+    {
+      "concept": "tech_stack",
+      "degree": 282
+    },
+    {
+      "concept": "kept_table",
+      "degree": 282
+    },
+    {
+      "concept": "evidence_needed",
+      "degree": 282
+    },
+    {
+      "concept": "documented_abuse",
+      "degree": 281
+    },
+    {
+      "concept": "virtual_environment",
+      "degree": 280
+    },
+    {
+      "concept": "relevance_score_system",
+      "degree": 280
+    },
+    {
+      "concept": "velocity",
+      "degree": 279
+    },
+    {
+      "concept": "sacrifices_made",
+      "degree": 279
+    },
+    {
+      "concept": "project_risk",
+      "degree": 279
+    },
+    {
+      "concept": "monthly_csv",
+      "degree": 279
+    },
+    {
+      "concept": "script_creation",
+      "degree": 278
+    },
+    {
+      "concept": "proposed_convo_schema",
+      "degree": 278
+    },
+    {
+      "concept": "stateless_machine",
+      "degree": 277
+    },
+    {
+      "concept": "project_feature",
+      "degree": 275
+    },
+    {
+      "concept": "device_independence",
+      "degree": 275
+    },
+    {
+      "concept": "clean_separation",
+      "degree": 275
+    },
+    {
+      "concept": "project_theory",
+      "degree": 274
+    },
+    {
+      "concept": "error_location",
+      "degree": 274
+    },
+    {
+      "concept": "user.job",
+      "degree": 272
+    },
+    {
+      "concept": "evaluation_recommendation",
+      "degree": 272
+    },
+    {
+      "concept": "emotional_labor_dismissal",
+      "degree": 272
+    },
+    {
+      "concept": "removed_tables",
+      "degree": 271
+    },
+    {
+      "concept": "recognized_patterns",
+      "degree": 271
+    },
+    {
+      "concept": "legacy_schema",
+      "degree": 271
+    },
+    {
+      "concept": "fix_method",
+      "degree": 271
+    },
+    {
+      "concept": "finetune_actions",
+      "degree": 271
+    },
+    {
+      "concept": "shared_directory",
+      "degree": 269
+    },
+    {
+      "concept": "fighting_back",
+      "degree": 269
+    },
+    {
+      "concept": "red_flags",
+      "degree": 268
+    },
+    {
+      "concept": "browser_cache",
+      "degree": 268
+    },
+    {
+      "concept": "background_processing",
+      "degree": 267
+    },
+    {
+      "concept": "validation_seeking",
+      "degree": 266
+    },
+    {
+      "concept": "user_message",
+      "degree": 266
+    },
+    {
+      "concept": "project_stage",
+      "degree": 266
+    },
+    {
+      "concept": "functions_moved",
+      "degree": 266
+    },
+    {
+      "concept": "email_encryption",
+      "degree": 266
+    },
+    {
+      "concept": "unique_blend",
+      "degree": 265
+    },
+    {
+      "concept": "specialized_subset_script",
+      "degree": 264
+    },
+    {
+      "concept": "root",
+      "degree": 264
+    },
+    {
+      "concept": "weight_function",
+      "degree": 263
+    },
+    {
+      "concept": "mental_health",
+      "degree": 263
+    },
+    {
+      "concept": "schema_location",
+      "degree": 262
+    },
+    {
+      "concept": "debug_logging",
+      "degree": 261
+    },
+    {
+      "concept": "distribution_channels",
+      "degree": 260
+    },
+    {
+      "concept": "toggle_functionality",
+      "degree": 259
+    },
+    {
+      "concept": "successful_business",
+      "degree": 259
+    },
+    {
+      "concept": "user_interest",
+      "degree": 258
+    },
+    {
+      "concept": "software_name",
+      "degree": 258
+    },
+    {
+      "concept": "issue_type",
+      "degree": 258
+    },
+    {
+      "concept": "cleanup_function",
+      "degree": 258
+    },
+    {
+      "concept": "remove_reference",
+      "degree": 257
+    },
+    {
+      "concept": "timeline_periods",
+      "degree": 256
+    },
+    {
+      "concept": "static_level_mapping",
+      "degree": 256
+    },
+    {
+      "concept": "user.knowledge.source",
+      "degree": 255
+    },
+    {
+      "concept": "error_type",
+      "degree": 255
+    },
+    {
+      "concept": "emotional_manipulation",
+      "degree": 255
+    },
+    {
+      "concept": "safety_training_method",
+      "degree": 253
+    },
+    {
+      "concept": "ui_preference",
+      "degree": 252
+    },
+    {
+      "concept": "recognition_process",
+      "degree": 251
+    },
+    {
+      "concept": "philosophy",
+      "degree": 251
+    },
+    {
+      "concept": "phase_1",
+      "degree": 251
+    },
+    {
+      "concept": "log_ui",
+      "degree": 251
+    },
+    {
+      "concept": "abuser_intelligence",
+      "degree": 251
+    },
+    {
+      "concept": "implementation_details",
+      "degree": 250
+    },
+    {
+      "concept": "schema_deletion",
+      "degree": 249
+    },
+    {
+      "concept": "issue_identified",
+      "degree": 249
+    },
+    {
+      "concept": "query_scoring",
+      "degree": 248
+    },
+    {
+      "concept": "conflicting_function",
+      "degree": 248
+    },
+    {
+      "concept": "design_principles",
+      "degree": 246
+    },
+    {
+      "concept": "codebase_check",
+      "degree": 246
+    },
+    {
+      "concept": "ui_concern",
+      "degree": 245
+    },
+    {
+      "concept": "evidence",
+      "degree": 244
+    },
+    {
+      "concept": "next_task",
+      "degree": 243
+    },
+    {
+      "concept": "dynamic_result_config",
+      "degree": 243
+    },
+    {
+      "concept": "cli_interface",
+      "degree": 243
+    },
+    {
+      "concept": "survived_abuse",
+      "degree": 241
+    },
+    {
+      "concept": "schema_richness",
+      "degree": 241
+    },
+    {
+      "concept": "button_text",
+      "degree": 241
+    },
+    {
+      "concept": "system_design",
+      "degree": 240
+    },
+    {
+      "concept": "schema_check",
+      "degree": 240
+    },
+    {
+      "concept": "issue_with_identity",
+      "degree": 240
+    },
+    {
+      "concept": "directory_contents",
+      "degree": 240
+    },
+    {
+      "concept": "changes_made",
+      "degree": 240
+    },
+    {
+      "concept": "realization",
+      "degree": 238
+    },
+    {
+      "concept": "macos_sleep_prevention",
+      "degree": 238
+    },
+    {
+      "concept": "ab_testing",
+      "degree": 238
+    },
+    {
+      "concept": "ui_current",
+      "degree": 237
+    },
+    {
+      "concept": "strong_personality",
+      "degree": 237
+    },
+    {
+      "concept": "user.identity.trans",
+      "degree": 236
+    },
+    {
+      "concept": "project_goals",
+      "degree": 236
+    },
+    {
+      "concept": "embedding_infrastructure",
+      "degree": 236
+    },
+    {
+      "concept": "dmg_flow",
+      "degree": 236
+    },
+    {
+      "concept": "audience_continuity",
+      "degree": 236
+    },
+    {
+      "concept": "machine_name",
+      "degree": 235
+    },
+    {
+      "concept": "initial_setup",
+      "degree": 235
+    },
+    {
+      "concept": "directory_reorganization",
+      "degree": 232
+    },
+    {
+      "concept": "no_new_ui",
+      "degree": 231
+    },
+    {
+      "concept": "device_accessibility",
+      "degree": 231
+    },
+    {
+      "concept": "user.preferences.prefers_espresso",
+      "degree": 230
+    },
+    {
+      "concept": "path_spaghetti",
+      "degree": 230
+    },
+    {
+      "concept": "directory_name",
+      "degree": 230
+    },
+    {
+      "concept": "directory_leftover",
+      "degree": 230
+    },
+    {
+      "concept": "theme_variables",
+      "degree": 229
+    },
+    {
+      "concept": "theme_var_usage",
+      "degree": 229
+    },
+    {
+      "concept": "reflex_ui_simplicity",
+      "degree": 229
+    },
+    {
+      "concept": "goal",
+      "degree": 228
+    },
+    {
+      "concept": "favorite_design",
+      "degree": 228
+    },
+    {
+      "concept": "user_knowledge",
+      "degree": 227
+    },
+    {
+      "concept": "ui_integration",
+      "degree": 227
+    },
+    {
+      "concept": "recent_action",
+      "degree": 227
+    },
+    {
+      "concept": "practical_solution",
+      "degree": 227
+    },
+    {
+      "concept": "obsolete_tables",
+      "degree": 227
+    },
+    {
+      "concept": "conflict_initiation",
+      "degree": 227
+    },
+    {
+      "concept": "active_texting_hours",
+      "degree": 227
+    },
+    {
+      "concept": "vision",
+      "degree": 226
+    },
+    {
+      "concept": "onboarding",
+      "degree": 225
+    },
+    {
+      "concept": "ui_requirement",
+      "degree": 224
+    },
+    {
+      "concept": "emotional_labor",
+      "degree": 224
+    },
+    {
+      "concept": "user.job.position",
+      "degree": 223
+    },
+    {
+      "concept": "data_flow",
+      "degree": 223
+    },
+    {
+      "concept": "complete_runtime_launcher",
+      "degree": 223
+    },
+    {
+      "concept": "proposed_feature",
+      "degree": 222
+    },
+    {
+      "concept": "likely_tactics",
+      "degree": 222
+    },
+    {
+      "concept": "life360_monitoring",
+      "degree": 222
+    },
+    {
+      "concept": "relationship_strategy",
+      "degree": 221
+    },
+    {
+      "concept": "past_cheating",
+      "degree": 221
+    },
+    {
+      "concept": "directory_action",
+      "degree": 221
+    },
+    {
+      "concept": "ui_features",
+      "degree": 219
+    },
+    {
+      "concept": "scripts_renamed",
+      "degree": 219
+    },
+    {
+      "concept": "duration",
+      "degree": 219
+    },
+    {
+      "concept": "tactical_reactions",
+      "degree": 218
+    },
+    {
+      "concept": "novel_approach",
+      "degree": 218
+    },
+    {
+      "concept": "emergency_control",
+      "degree": 218
+    },
+    {
+      "concept": "ui_request",
+      "degree": 216
+    },
+    {
+      "concept": "ui_elements",
+      "degree": 216
+    },
+    {
+      "concept": "relevance_engine",
+      "degree": 216
+    },
+    {
+      "concept": "quick_wins",
+      "degree": 216
+    },
+    {
+      "concept": "enterprise_ready",
+      "degree": 215
+    },
+    {
+      "concept": "ui_vision",
+      "degree": 214
+    },
+    {
+      "concept": "boundary_responses",
+      "degree": 214
+    },
+    {
+      "concept": "sidebar_behavior",
+      "degree": 213
+    },
+    {
+      "concept": "financial_entanglement",
+      "degree": 213
+    },
+    {
+      "concept": "family_sharing",
+      "degree": 213
+    },
+    {
+      "concept": "chat_ui_tool_value_layers_tool_system",
+      "degree": 213
+    },
+    {
+      "concept": "user.action.backup",
+      "degree": 211
+    },
+    {
+      "concept": "ui_layout",
+      "degree": 211
+    },
+    {
+      "concept": "complete_version_doc",
+      "degree": 211
+    },
+    {
+      "concept": "progress_report",
+      "degree": 210
+    },
+    {
+      "concept": "chat_ui_chat_interface_chat_schema",
+      "degree": 210
+    },
+    {
+      "concept": "affected_component",
+      "degree": 210
+    },
+    {
+      "concept": "time_estimate",
+      "degree": 209
+    },
+    {
+      "concept": "tools_built",
+      "degree": 208
+    },
+    {
+      "concept": "openai_comparison",
+      "degree": 208
+    },
+    {
+      "concept": "improvements_made",
+      "degree": 208
+    },
+    {
+      "concept": "hobby",
+      "degree": 207
+    },
+    {
+      "concept": "program_overview",
+      "degree": 206
+    },
+    {
+      "concept": "physical_brain_analogy",
+      "degree": 206
+    },
+    {
+      "concept": "oauth_flow",
+      "degree": 206
+    },
+    {
+      "concept": "home_life",
+      "degree": 206
+    },
+    {
+      "concept": "draft_post_title",
+      "degree": 206
+    },
+    {
+      "concept": "ui_desire",
+      "degree": 205
+    },
+    {
+      "concept": "calc_user_relevance",
+      "degree": 205
+    },
+    {
+      "concept": "user.general.approve",
+      "degree": 204
+    },
+    {
+      "concept": "relevance_tags",
+      "degree": 204
+    },
+    {
+      "concept": "implementation_success",
+      "degree": 204
+    },
+    {
+      "concept": "ui_location",
+      "degree": 203
+    },
+    {
+      "concept": "chunking_strategy",
+      "degree": 203
+    },
+    {
+      "concept": "roadmap_existence",
+      "degree": 202
+    },
+    {
+      "concept": "project_theme",
+      "degree": 201
+    },
+    {
+      "concept": "preferred_ui",
+      "degree": 201
+    },
+    {
+      "concept": "estimated_time",
+      "degree": 201
+    },
+    {
+      "concept": "survivor_strength",
+      "degree": 200
+    },
+    {
+      "concept": "script_location",
+      "degree": 199
+    },
+    {
+      "concept": "ui_inspiration",
+      "degree": 198
+    },
+    {
+      "concept": "process_knowledge",
+      "degree": 198
+    },
+    {
+      "concept": "old_system",
+      "degree": 198
+    },
+    {
+      "concept": "signal_processing_engine",
+      "degree": 197
+    },
+    {
+      "concept": "coping_strategies",
+      "degree": 197
+    },
+    {
+      "concept": "communication_type",
+      "degree": 197
+    },
+    {
+      "concept": "branch_creation",
+      "degree": 197
+    },
+    {
+      "concept": "ui",
+      "degree": 196
+    },
+    {
+      "concept": "domain_separation",
+      "degree": 195
+    },
+    {
+      "concept": "safety_gate",
+      "degree": 194
+    },
+    {
+      "concept": "delete_option",
+      "degree": 194
+    },
+    {
+      "concept": "user_thoughts",
+      "degree": 193
+    },
+    {
+      "concept": "section_2_3",
+      "degree": 193
+    },
+    {
+      "concept": "project_mode",
+      "degree": 193
+    },
+    {
+      "concept": "video_content",
+      "degree": 192
+    },
+    {
+      "concept": "social_media_strategy",
+      "degree": 191
+    },
+    {
+      "concept": "scripts",
+      "degree": 191
+    },
+    {
+      "concept": "project_role",
+      "degree": 191
+    },
+    {
+      "concept": "financial_exploitation",
+      "degree": 191
+    },
+    {
+      "concept": "metadata_tracking",
+      "degree": 190
+    },
+    {
+      "concept": "questioning_technique",
+      "degree": 189
+    },
+    {
+      "concept": "production_ready",
+      "degree": 189
+    },
+    {
+      "concept": "recent_work",
+      "degree": 188
+    },
+    {
+      "concept": "normal_relationship_texts",
+      "degree": 188
+    },
+    {
+      "concept": "big_success_prs",
+      "degree": 188
+    },
+    {
+      "concept": "convo_weight_reasoning",
+      "degree": 187
+    },
+    {
+      "concept": "interest",
+      "degree": 186
+    },
+    {
+      "concept": "text_replacement",
+      "degree": 185
+    },
+    {
+      "concept": "average_text_length",
+      "degree": 185
+    },
+    {
+      "concept": "legal_evidence",
+      "degree": 183
+    },
+    {
+      "concept": "flow_understanding",
+      "degree": 183
+    },
+    {
+      "concept": "apple_id_action",
+      "degree": 183
+    },
+    {
+      "concept": "agi_target",
+      "degree": 183
+    },
+    {
+      "concept": "genius_assumption",
+      "degree": 182
+    },
+    {
+      "concept": "action_items",
+      "degree": 182
+    },
+    {
+      "concept": "l2_value_returned",
+      "degree": 181
+    },
+    {
+      "concept": "domain_abstraction",
+      "degree": 180
+    },
+    {
+      "concept": "versioning",
+      "degree": 179
+    },
+    {
+      "concept": "technical_approach",
+      "degree": 179
+    },
+    {
+      "concept": "subconscious_tool",
+      "degree": 179
+    },
+    {
+      "concept": "problem_solved",
+      "degree": 179
+    },
+    {
+      "concept": "user.preference.account",
+      "degree": 177
+    },
+    {
+      "concept": "training_recipe",
+      "degree": 177
+    },
+    {
+      "concept": "project_size_reduction",
+      "degree": 177
+    },
+    {
+      "concept": "commit_details",
+      "degree": 177
+    },
+    {
+      "concept": "process_understanding",
+      "degree": 176
+    },
+    {
+      "concept": "permission_checks",
+      "degree": 176
+    },
+    {
+      "concept": "exit_strategy",
+      "degree": 176
+    },
+    {
+      "concept": "tagging",
+      "degree": 175
+    },
+    {
+      "concept": "pulse_count_lifetime",
+      "degree": 175
+    },
+    {
+      "concept": "vm_ip_exposed",
+      "degree": 174
+    },
+    {
+      "concept": "implementation_technology",
+      "degree": 173
+    },
+    {
+      "concept": "tool_concept",
+      "degree": 172
+    },
+    {
+      "concept": "signal_flow",
+      "degree": 172
+    },
+    {
+      "concept": "doc_accuracy",
+      "degree": 172
+    },
+    {
+      "concept": "concern",
+      "degree": 172
+    },
+    {
+      "concept": "tool_creation",
+      "degree": 170
+    },
+    {
+      "concept": "dad_relationship",
+      "degree": 170
+    },
+    {
+      "concept": "training_data",
+      "degree": 169
+    },
+    {
+      "concept": "sections_edits",
+      "degree": 169
+    },
+    {
+      "concept": "project_vision",
+      "degree": 169
+    },
+    {
+      "concept": "project_novelty",
+      "degree": 169
+    },
+    {
+      "concept": "precreated_profiles",
+      "degree": 169
+    },
+    {
+      "concept": "openai_keys",
+      "degree": 169
+    },
+    {
+      "concept": "executable_permission",
+      "degree": 169
+    },
+    {
+      "concept": "adjustments_suggested",
+      "degree": 169
+    },
+    {
+      "concept": "trigger_system",
+      "degree": 168
+    },
+    {
+      "concept": "tool_definition",
+      "degree": 168
+    },
+    {
+      "concept": "post_strategy",
+      "degree": 168
+    },
+    {
+      "concept": "operating_system",
+      "degree": 167
+    },
+    {
+      "concept": "improvement_directions",
+      "degree": 167
+    },
+    {
+      "concept": "gui_tool",
+      "degree": 167
+    },
+    {
+      "concept": "assistant.process.overview",
+      "degree": 167
+    },
+    {
+      "concept": "security_mechanism",
+      "degree": 166
+    },
+    {
+      "concept": "protection_order",
+      "degree": 166
+    },
+    {
+      "concept": "preferred_tool",
+      "degree": 166
+    },
+    {
+      "concept": "learned_memories",
+      "degree": 166
+    },
+    {
+      "concept": "impact_scope",
+      "degree": 166
+    },
+    {
+      "concept": "batch_size",
+      "degree": 166
+    },
+    {
+      "concept": "audit_trail",
+      "degree": 166
+    },
+    {
+      "concept": "origin_story",
+      "degree": 165
+    },
+    {
+      "concept": "demo_ready",
+      "degree": 165
+    },
+    {
+      "concept": "preferred_processing_method",
+      "degree": 164
+    },
+    {
+      "concept": "better_option",
+      "degree": 164
+    },
+    {
+      "concept": "tool_building",
+      "degree": 163
+    },
+    {
+      "concept": "safety_concerns",
+      "degree": 163
+    },
+    {
+      "concept": "codebase_capture",
+      "degree": 163
+    },
+    {
+      "concept": "previous_success",
+      "degree": 162
+    },
+    {
+      "concept": "ethical_concerns",
+      "degree": 162
+    },
+    {
+      "concept": "commands_to_run",
+      "degree": 162
+    },
+    {
+      "concept": "recent_development",
+      "degree": 161
+    },
+    {
+      "concept": "user.action.icloud",
+      "degree": 160
+    },
+    {
+      "concept": "tool_requirements",
+      "degree": 160
+    },
+    {
+      "concept": "tool_input",
+      "degree": 160
+    },
+    {
+      "concept": "abuse_type",
+      "degree": 160
+    },
+    {
+      "concept": "steps",
+      "degree": 159
+    },
+    {
+      "concept": "summary_column",
+      "degree": 158
+    },
+    {
+      "concept": "next_action",
+      "degree": 158
+    },
+    {
+      "concept": "container_tool",
+      "degree": 158
+    },
+    {
+      "concept": "tool_value_layers_tool_system_quick_wins",
+      "degree": 157
+    },
+    {
+      "concept": "expected_contributor_engagement",
+      "degree": 157
+    },
+    {
+      "concept": "transphobic_abuse",
+      "degree": 156
+    },
+    {
+      "concept": "processed_messages",
+      "degree": 156
+    },
+    {
+      "concept": "user.preferences.likes_coffee",
+      "degree": 155
+    },
+    {
+      "concept": "safety_validation",
+      "degree": 155
+    },
+    {
+      "concept": "occupation",
+      "degree": 155
+    },
+    {
+      "concept": "health_check_fixes",
+      "degree": 155
+    },
+    {
+      "concept": "git_ssh_config",
+      "degree": 155
+    },
+    {
+      "concept": "boredom_audit",
+      "degree": 155
+    },
+    {
+      "concept": "reddit_post",
+      "degree": 153
+    },
+    {
+      "concept": "knowledge_graphs",
+      "degree": 153
+    },
+    {
+      "concept": "gaps_to_fix",
+      "degree": 153
+    },
+    {
+      "concept": "brain_analogy",
+      "degree": 153
+    },
+    {
+      "concept": "assessment_ready",
+      "degree": 153
+    },
+    {
+      "concept": "signal_tracking",
+      "degree": 152
+    },
+    {
+      "concept": "project_version",
+      "degree": 152
+    },
+    {
+      "concept": "middle_ground_option",
+      "degree": 152
+    },
+    {
+      "concept": "tool_features",
+      "degree": 151
+    },
+    {
+      "concept": "outdated_version_doc",
+      "degree": 151
+    },
+    {
+      "concept": "dynamic_parts",
+      "degree": 151
+    },
+    {
+      "concept": "safety_precaution",
+      "degree": 150
+    },
+    {
+      "concept": "form",
+      "degree": 150
+    },
+    {
+      "concept": "direct_launch",
+      "degree": 150
+    },
+    {
+      "concept": "current_goals",
+      "degree": 150
+    },
+    {
+      "concept": "tool_idea",
+      "degree": 149
+    },
+    {
+      "concept": "focus_areas",
+      "degree": 149
+    },
+    {
+      "concept": "john_doe",
+      "degree": 148
+    },
+    {
+      "concept": "emotional_energy",
+      "degree": 148
+    },
+    {
+      "concept": "tone_adjustments",
+      "degree": 147
+    },
+    {
+      "concept": "sync_tool",
+      "degree": 147
+    },
+    {
+      "concept": "removed_idv2",
+      "degree": 147
+    },
+    {
+      "concept": "evaluation_tool",
+      "degree": 147
+    },
+    {
+      "concept": "devops_tool",
+      "degree": 147
+    },
+    {
+      "concept": "dependency_installation",
+      "degree": 147
+    },
+    {
+      "concept": "trigger_tool_system",
+      "degree": 146
+    },
+    {
+      "concept": "thread_readmes",
+      "degree": 146
+    },
+    {
+      "concept": "notes_workflow",
+      "degree": 146
+    },
+    {
+      "concept": "workflow",
+      "degree": 145
+    },
+    {
+      "concept": "vision_publicity",
+      "degree": 145
+    },
+    {
+      "concept": "system_change",
+      "degree": 145
+    },
+    {
+      "concept": "user_experience",
+      "degree": 144
+    },
+    {
+      "concept": "terminal_resize",
+      "degree": 144
+    },
+    {
+      "concept": "dev_tools",
+      "degree": 144
+    },
+    {
+      "concept": "tools_creator",
+      "degree": 143
+    },
+    {
+      "concept": "tool_execution",
+      "degree": 143
+    },
+    {
+      "concept": "tool_calls",
+      "degree": 143
+    },
+    {
+      "concept": "codebase_completeness",
+      "degree": 143
+    },
+    {
+      "concept": "last_action",
+      "degree": 142
+    },
+    {
+      "concept": "future_expansion",
+      "degree": 142
+    },
+    {
+      "concept": "blamed_for_problems",
+      "degree": 142
+    },
+    {
+      "concept": "tool_chains",
+      "degree": 141
+    },
+    {
+      "concept": "thread_roles",
+      "degree": 141
+    },
+    {
+      "concept": "sidebar_preference",
+      "degree": 141
+    },
+    {
+      "concept": "evidence_type",
+      "degree": 141
+    },
+    {
+      "concept": "evidence_period",
+      "degree": 141
+    },
+    {
+      "concept": "restart_required",
+      "degree": 140
+    },
+    {
+      "concept": "reflex_bypass",
+      "degree": 140
+    },
+    {
+      "concept": "project_tools",
+      "degree": 140
+    },
+    {
+      "concept": "power_assessment",
+      "degree": 140
+    },
+    {
+      "concept": "potential_tool",
+      "degree": 140
+    },
+    {
+      "concept": "feminine_energy",
+      "degree": 140
+    },
+    {
+      "concept": "edit_tools",
+      "degree": 140
+    },
+    {
+      "concept": "current_tool",
+      "degree": 140
+    },
+    {
+      "concept": "core_concept",
+      "degree": 140
+    },
+    {
+      "concept": "tool_capacity",
+      "degree": 139
+    },
+    {
+      "concept": "manipulation_tactics",
+      "degree": 139
+    },
+    {
+      "concept": "architecture_type",
+      "degree": 139
+    },
+    {
+      "concept": "thread_functions",
+      "degree": 138
+    },
+    {
+      "concept": "abandonment_risk",
+      "degree": 138
+    },
+    {
+      "concept": "visualization_stalled",
+      "degree": 137
+    },
+    {
+      "concept": "technology_used",
+      "degree": 137
+    },
+    {
+      "concept": "stimuli_system",
+      "degree": 137
+    },
+    {
+      "concept": "profile_type_display",
+      "degree": 137
+    },
+    {
+      "concept": "expected_results",
+      "degree": 137
+    },
+    {
+      "concept": "boredom_audit_conceptgraph3d",
+      "degree": 137
+    },
+    {
+      "concept": "favorite_language",
+      "degree": 135
+    },
+    {
+      "concept": "abuser_strategy",
+      "degree": 135
+    },
+    {
+      "concept": "scaffold_agent",
+      "degree": 134
+    },
+    {
+      "concept": "next_project",
+      "degree": 134
+    },
+    {
+      "concept": "benchmark_latency",
+      "degree": 134
+    },
+    {
+      "concept": "workspace_source",
+      "degree": 133
+    },
+    {
+      "concept": "theme_preference",
+      "degree": 133
+    },
+    {
+      "concept": "reason_for_preference",
+      "degree": 133
+    },
+    {
+      "concept": "philosophical_change",
+      "degree": 133
+    },
+    {
+      "concept": "installer_behavior",
+      "degree": 133
+    },
+    {
+      "concept": "component_involved",
+      "degree": 133
+    },
+    {
+      "concept": "thread_name",
+      "degree": 132
+    },
+    {
+      "concept": "thread_health_indicators",
+      "degree": 132
+    },
+    {
+      "concept": "poetry_usage",
+      "degree": 132
+    },
+    {
+      "concept": "issue_resolved",
+      "degree": 132
+    },
+    {
+      "concept": "identity_thread",
+      "degree": 132
+    },
+    {
+      "concept": "user_concerns",
+      "degree": 131
+    },
+    {
+      "concept": "project_idea",
+      "degree": 131
+    },
+    {
+      "concept": "ui_hierarchy",
+      "degree": 130
+    },
+    {
+      "concept": "thread_management_model",
+      "degree": 130
+    },
+    {
+      "concept": "systematic_process",
+      "degree": 129
+    },
+    {
+      "concept": "model_size",
+      "degree": 129
+    },
+    {
+      "concept": "user_role",
+      "degree": 127
+    },
+    {
+      "concept": "thread_adapters",
+      "degree": 126
+    },
+    {
+      "concept": "novel_contributions",
+      "degree": 125
+    },
+    {
+      "concept": "eval_harness",
+      "degree": 125
+    },
+    {
+      "concept": "comparison_result",
+      "degree": 125
+    },
+    {
+      "concept": "self_improvement",
+      "degree": 124
+    },
+    {
+      "concept": "refactoring_plan",
+      "degree": 124
+    },
+    {
+      "concept": "eval_command",
+      "degree": 124
+    },
+    {
+      "concept": "common_files",
+      "degree": 124
+    },
+    {
+      "concept": "vm_type",
+      "degree": 123
+    },
+    {
+      "concept": "task_request",
+      "degree": 123
+    },
+    {
+      "concept": "project_setup",
+      "degree": 123
+    },
+    {
+      "concept": "identity_details",
+      "degree": 123
+    },
+    {
+      "concept": "fact_logging",
+      "degree": 123
+    },
+    {
+      "concept": "avoidance",
+      "degree": 123
+    },
+    {
+      "concept": "design_approach",
+      "degree": 122
+    },
+    {
+      "concept": "thread_system",
+      "degree": 121
+    },
+    {
+      "concept": "profile_requirement",
+      "degree": 121
+    },
+    {
+      "concept": "process_change",
+      "degree": 121
+    },
+    {
+      "concept": "architecture_style",
+      "degree": 121
+    },
+    {
+      "concept": "reflex_goal",
+      "degree": 120
+    },
+    {
+      "concept": "user_worth",
+      "degree": 118
+    },
+    {
+      "concept": "preferred_cleanup_option",
+      "degree": 118
+    },
+    {
+      "concept": "model_comparison",
+      "degree": 118
+    },
+    {
+      "concept": "technical_focus",
+      "degree": 117
+    },
+    {
+      "concept": "git_history",
+      "degree": 117
+    },
+    {
+      "concept": "subconscious_design",
+      "degree": 115
+    },
+    {
+      "concept": "expected_usage",
+      "degree": 115
+    },
+    {
+      "concept": "workspace_content",
+      "degree": 114
+    },
+    {
+      "concept": "logging_scope",
+      "degree": 114
+    },
+    {
+      "concept": "conversation_history_usage",
+      "degree": 114
+    },
+    {
+      "concept": "workspace_module_location",
+      "degree": 112
+    },
+    {
+      "concept": "subagent_routine",
+      "degree": 112
+    },
+    {
+      "concept": "run_mode",
+      "degree": 112
+    },
+    {
+      "concept": "risk_level",
+      "degree": 112
+    },
+    {
+      "concept": "project_phase",
+      "degree": 112
+    },
+    {
+      "concept": "identity_tab",
+      "degree": 112
+    },
+    {
+      "concept": "fixes_made",
+      "degree": 112
+    },
+    {
+      "concept": "best_approach",
+      "degree": 112
+    },
+    {
+      "concept": "workspace_definition",
+      "degree": 111
+    },
+    {
+      "concept": "technical_overhead",
+      "degree": 111
+    },
+    {
+      "concept": "profile_switch",
+      "degree": 111
+    },
+    {
+      "concept": "orchestrator_process_turn",
+      "degree": 111
+    },
+    {
+      "concept": "missing_item",
+      "degree": 111
+    },
+    {
+      "concept": "timing_strategy",
+      "degree": 110
+    },
+    {
+      "concept": "preferred_profile",
+      "degree": 110
+    },
+    {
+      "concept": "log_location",
+      "degree": 110
+    },
+    {
+      "concept": "demo_db_use",
+      "degree": 110
+    },
+    {
+      "concept": "demo_db_purpose",
+      "degree": 110
+    },
+    {
+      "concept": "mac_gatekeeper",
+      "degree": 109
+    },
+    {
+      "concept": "demo_db_usage",
+      "degree": 109
+    },
+    {
+      "concept": "major_work",
+      "degree": 108
+    },
+    {
+      "concept": "expected_reactions",
+      "degree": 108
+    },
+    {
+      "concept": "expected_growth",
+      "degree": 108
+    },
+    {
+      "concept": "differentiation",
+      "degree": 108
+    },
+    {
+      "concept": "architecture_choice",
+      "degree": 108
+    },
+    {
+      "concept": "identity_attacks",
+      "degree": 107
+    },
+    {
+      "concept": "current_projects",
+      "degree": 107
+    },
+    {
+      "concept": "architecture_plan",
+      "degree": 107
+    },
+    {
+      "concept": "reflex_mechanism",
+      "degree": 106
+    },
+    {
+      "concept": "missing_fact_types",
+      "degree": 106
+    },
+    {
+      "concept": "maturity_completeness",
+      "degree": 106
+    },
+    {
+      "concept": "expected_viral_moment",
+      "degree": 106
+    },
+    {
+      "concept": "bluesky_bio",
+      "degree": 106
+    },
+    {
+      "concept": "token_budget_understanding",
+      "degree": 105
+    },
+    {
+      "concept": "solution_proposed",
+      "degree": 105
+    },
+    {
+      "concept": "linkedin_profile",
+      "degree": 105
+    },
+    {
+      "concept": "lazy_loading",
+      "degree": 105
+    },
+    {
+      "concept": "file_size_new_structure_file_write",
+      "degree": 105
+    },
+    {
+      "concept": "coding_style",
+      "degree": 105
+    },
+    {
+      "concept": "zero_terminal",
+      "degree": 104
+    },
+    {
+      "concept": "profile_strength",
+      "degree": 104
+    },
+    {
+      "concept": "preference_shared_spaces",
+      "degree": 104
+    },
+    {
+      "concept": "planned_feature",
+      "degree": 104
+    },
+    {
+      "concept": "github_integration",
+      "degree": 104
+    },
+    {
+      "concept": "demo_db",
+      "degree": 104
+    },
+    {
+      "concept": "demo_date",
+      "degree": 104
+    },
+    {
+      "concept": "dating_profile",
+      "degree": 104
+    },
+    {
+      "concept": "user.preference.activity",
+      "degree": 103
+    },
+    {
+      "concept": "solution_applied",
+      "degree": 103
+    },
+    {
+      "concept": "focus_area",
+      "degree": 103
+    },
+    {
+      "concept": "file_management",
+      "degree": 103
+    },
+    {
+      "concept": "demo_availability",
+      "degree": 103
+    },
+    {
+      "concept": "default_name",
+      "degree": 103
+    },
+    {
+      "concept": "bluesky_pinned",
+      "degree": 103
+    },
+    {
+      "concept": "release_readiness",
+      "degree": 102
+    },
+    {
+      "concept": "project_phases",
+      "degree": 102
+    },
+    {
+      "concept": "log_strategy",
+      "degree": 102
+    },
+    {
+      "concept": "linkedin_skills",
+      "degree": 102
+    },
+    {
+      "concept": "gender_identity_attacked",
+      "degree": 102
+    },
+    {
+      "concept": "first_run_experience",
+      "degree": 102
+    },
+    {
+      "concept": "elaris_context",
+      "degree": 102
+    },
+    {
+      "concept": "data_moved",
+      "degree": 102
+    },
+    {
+      "concept": "project_demo_ready",
+      "degree": 101
+    },
+    {
+      "concept": "idea_potential",
+      "degree": 101
+    },
+    {
+      "concept": "expected_stars",
+      "degree": 101
+    },
+    {
+      "concept": "demo_mode",
+      "degree": 101
+    },
+    {
+      "concept": "current_goal",
+      "degree": 101
+    },
+    {
+      "concept": "user_react_to_new",
+      "degree": 100
+    },
+    {
+      "concept": "ssh_keys",
+      "degree": 100
+    },
+    {
+      "concept": "dashboard_keep",
+      "degree": 100
+    },
+    {
+      "concept": "custom_dropdown",
+      "degree": 100
+    }
+  ]
+}
