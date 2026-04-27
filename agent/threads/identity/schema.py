@@ -13,7 +13,7 @@ Tables:
 import sqlite3
 import threading
 from contextlib import closing
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Any
 
 # Database connection from central location
 from data.db import get_connection
@@ -570,6 +570,165 @@ def delete_profile_fact(profile_id: str, key: str) -> bool:
 
 
 # ============================================================================
+# Decay
+# ============================================================================
+
+def decay_learned_facts(
+    grace_days: int = 14,
+    delete_age_days: int = 30,
+    delete_max_access: int = 1,
+    half_life_days: int = 30,
+    min_weight_floor: float = 0.05,
+    dry_run: bool = False,
+) -> Dict[str, Any]:
+    """Decay and prune facts of fact_type='learned'.
+
+    Two passes, both restricted to ``fact_type='learned'`` and
+    ``protected=0`` so curated facts (name/email/location/etc.) and
+    machine/operator-set facts are never touched:
+
+    1. **Prune** — DELETE learned facts whose ``last_accessed`` is older
+       than ``delete_age_days`` AND whose ``access_count`` is at most
+       ``delete_max_access``.  Captures auto-extracted noise that never
+       got reused.
+    2. **Decay** — for every other learned fact older than ``grace_days``
+       since last access, multiply weight by ``0.5 ** (age / half_life)``,
+       clamping to ``min_weight_floor``.  After decay, any fact whose
+       weight is at or below the floor AND whose access_count is 0 is
+       also deleted.
+
+    Args:
+        grace_days: Skip decay for facts touched in the last N days.
+        delete_age_days: Hard-prune cutoff for unused learned facts.
+        delete_max_access: An access_count <= this counts as 'unused'.
+        half_life_days: Weight halves every N days of inactivity.
+        min_weight_floor: Decay never drops below this; anything at or
+            below this with access_count=0 is then deleted.
+        dry_run: If True, no DB writes happen; the return dict shows
+            what *would* be done.
+
+    Returns:
+        {
+            "pruned": [{profile_id, key, weight, access_count, age_days}, ...],
+            "decayed": [{profile_id, key, old_weight, new_weight, age_days}, ...],
+            "floor_deleted": [{profile_id, key}, ...],
+            "skipped_recent": int,
+            "dry_run": bool,
+        }
+    """
+    out: Dict[str, Any] = {
+        "pruned": [],
+        "decayed": [],
+        "floor_deleted": [],
+        "skipped_recent": 0,
+        "dry_run": dry_run,
+    }
+
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+
+        # Pass 1 — hard-prune unused learned facts.
+        cur.execute(
+            """
+            SELECT profile_id, key, weight, access_count, last_accessed,
+                   CAST(julianday('now') - julianday(last_accessed) AS REAL) AS age_days
+            FROM profile_facts
+            WHERE fact_type = 'learned'
+              AND protected = 0
+              AND access_count <= ?
+              AND CAST(julianday('now') - julianday(last_accessed) AS REAL) >= ?
+            """,
+            (delete_max_access, delete_age_days),
+        )
+        prune_rows = cur.fetchall()
+        pruned_keys: set = set()
+        for r in prune_rows:
+            pruned_keys.add((r["profile_id"], r["key"]))
+            out["pruned"].append({
+                "profile_id": r["profile_id"],
+                "key": r["key"],
+                "weight": r["weight"],
+                "access_count": r["access_count"],
+                "age_days": round(r["age_days"], 1),
+            })
+            if not dry_run:
+                cur.execute(
+                    "DELETE FROM profile_facts WHERE profile_id = ? AND key = ? "
+                    "AND fact_type = 'learned' AND protected = 0",
+                    (r["profile_id"], r["key"]),
+                )
+
+        # Pass 2 — exponential decay on remaining learned facts past grace.
+        cur.execute(
+            """
+            SELECT profile_id, key, weight, access_count,
+                   CAST(julianday('now') - julianday(last_accessed) AS REAL) AS age_days
+            FROM profile_facts
+            WHERE fact_type = 'learned'
+              AND protected = 0
+            """
+        )
+        for r in cur.fetchall():
+            # In dry_run, pass 1 didn't actually delete — skip those rows here
+            # so the report doesn't double-count.
+            if (r["profile_id"], r["key"]) in pruned_keys:
+                continue
+            age = float(r["age_days"] or 0.0)
+            if age < grace_days:
+                out["skipped_recent"] += 1
+                continue
+            old_w = float(r["weight"] or 0.0)
+            decay_mult = 0.5 ** (age / float(half_life_days))
+            new_w = max(min_weight_floor, old_w * decay_mult)
+            # Skip no-op updates
+            if abs(new_w - old_w) < 1e-4:
+                continue
+            out["decayed"].append({
+                "profile_id": r["profile_id"],
+                "key": r["key"],
+                "old_weight": round(old_w, 3),
+                "new_weight": round(new_w, 3),
+                "age_days": round(age, 1),
+            })
+            if not dry_run:
+                cur.execute(
+                    "UPDATE profile_facts SET weight = ? "
+                    "WHERE profile_id = ? AND key = ? "
+                    "AND fact_type = 'learned' AND protected = 0",
+                    (new_w, r["profile_id"], r["key"]),
+                )
+
+        # Pass 3 — facts that hit the floor with no access ever, drop them.
+        cur.execute(
+            """
+            SELECT profile_id, key
+            FROM profile_facts
+            WHERE fact_type = 'learned'
+              AND protected = 0
+              AND access_count = 0
+              AND weight <= ?
+            """,
+            (min_weight_floor,),
+        )
+        for r in cur.fetchall():
+            out["floor_deleted"].append({
+                "profile_id": r["profile_id"],
+                "key": r["key"],
+            })
+            if not dry_run:
+                cur.execute(
+                    "DELETE FROM profile_facts WHERE profile_id = ? AND key = ? "
+                    "AND fact_type = 'learned' AND protected = 0",
+                    (r["profile_id"], r["key"]),
+                )
+
+        if not dry_run:
+            conn.commit()
+
+    return out
+
+
+# ============================================================================
 # Utility
 # ============================================================================
 
@@ -614,5 +773,6 @@ __all__ = [
     'pull_profile_facts',
     'update_fact_weight',
     'delete_profile_fact',
+    'decay_learned_facts',
     'get_value_by_weight',
 ]
