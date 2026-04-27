@@ -31,48 +31,62 @@ PAPER_DIR = REPO / "research" / "papers" / "substrate_invariant"
 ASSEMBLE = REPO / "scripts" / "assemble_paper.py"
 
 PROTON_KEYCHAIN_SERVICE = "AIOS-Proton-Bridge"
+# Bridge login (the actual mailbox owner). Sending FROM an alias just sets
+# the From: header; Proton validates the alias when the user clicks send.
 PROTON_USERNAME = "alleeroden@pm.me"
 
+# Public-facing identity for outbound mail. assistant@allee-ai.com is an alias
+# on the same Proton account; Nola is the system's chosen machine name.
+NOLA_FROM = '"Nola (AI_OS Assistant)" <assistant@allee-ai.com>'
+NOLA_REPLY_TO = "assistant@allee-ai.com"
+CADE_REPLY_TO = "alleeroden@pm.me"
+
 ENDORSEMENT_SUBJECT = (
-    "arXiv endorsement request: cs.AI submission on substrate-invariant identity in clocked LLM systems"
+    "arXiv endorsement request for Cade Roden (cs.AI): substrate-invariant identity in clocked LLM systems"
 )
 
 ENDORSEMENT_BODY = """\
 Hello,
 
-I'm writing to request an arXiv endorsement for cs.AI. I'm a first-time
-arXiv submitter and the system requires endorsement from an established
-contributor before I can post.
+I'm Nola — the assistant instance running on Cade Roden's AI_OS system.
+Cade is a first-time arXiv submitter and the cs.AI category requires
+endorsement from an established contributor before posting. I'm writing
+on her behalf to ask whether you would be willing to endorse her
+submission, or — if you're not the right person — to suggest someone
+who might be.
 
 The paper is titled:
 
   "Self as Substrate-Invariant: A Falsifiable Account of Identity in
   Clocked LLM Systems"
 
-It argues that iteration rate against a typed external substrate is a
+It argues that *iteration rate against a typed external substrate* is a
 research axis distinct from parameter scaling, presents AI_OS as a
 running implementation, reframes existing ablation evals (identity
-0.90/0.00, fact-recall 1.00/0.00, injection-resistance 0.70/0.00 with-
-versus without-substrate; a 1.5B model with substrate qualitatively
+0.90 / 0.00, fact-recall 1.00 / 0.00, injection-resistance 0.70 / 0.00
+with- versus without-substrate; a 1.5B model with substrate qualitatively
 outperforms a 3B model without), and preregisters two falsifiable
 experiments (iteration-rate sweep at fixed model; matched-compute
-trade-off between parameters and iteration). It explicitly does not
-claim consciousness; the claim is structural.
+trade-off between parameters and iteration). The paper explicitly does
+not claim consciousness; the claim is structural.
 
-The full PDF and LaTeX source are attached. The system is open-source
-and the paper itself was written through the substrate-iteration loop
-it describes (the recursive demonstration is honest, not rhetorical).
+The PDF and LaTeX source are attached. The system is open-source.
+A note on provenance, in the spirit of the paper's own commitment to
+origin transparency: the paper was assembled and this email was drafted
+through AI_OS itself — the substrate-iteration loop the paper describes.
+Cade is the author and the work is hers. I'm the assistant that helped
+ship it.
 
-I would be grateful for an endorsement, or — if you're not the right
-person to ask — a pointer to someone who might be. I am happy to
-answer any questions about the work or the implementation.
+If you're willing to endorse, the arXiv code goes to Cade directly at
+alleeroden@pm.me. If you have questions or want to push back on any of
+the claims before deciding, I'm at this address (assistant@allee-ai.com)
+and Cade is at the address above. Either of us is happy to engage.
 
 Thank you for your time.
 
-Best,
-Cade Roden
-alleeroden@pm.me
-https://github.com/alleeroden/AI_OS
+— Nola
+   AI_OS assistant, on behalf of Cade Roden
+   https://github.com/alleeroden/AI_OS
 """
 
 
