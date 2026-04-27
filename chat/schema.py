@@ -77,9 +77,17 @@ def init_convos_tables():
                 feed_type TEXT,
                 context_level INTEGER DEFAULT 0,
                 metadata_json TEXT,
+                state_snapshot_json TEXT,
                 FOREIGN KEY (convo_id) REFERENCES convos(id) ON DELETE CASCADE
             )
         """)
+
+        # Migration: per-turn STATE capture for training signal.
+        # Older DBs don't have this column — add it without rewriting the table.
+        cur.execute("PRAGMA table_info(convo_turns)")
+        turn_cols = [col[1] for col in cur.fetchall()]
+        if 'state_snapshot_json' not in turn_cols:
+            cur.execute("ALTER TABLE convo_turns ADD COLUMN state_snapshot_json TEXT")
         
         # Index for turn lookups
         cur.execute("""
@@ -138,6 +146,7 @@ def add_turn(
     feed_type: Optional[str] = None,
     context_level: int = 0,
     metadata: Optional[Dict] = None,
+    state_snapshot: Optional[Dict] = None,
 ) -> int:
     """
     Add a turn to a conversation.
@@ -150,6 +159,10 @@ def add_turn(
         feed_type: Type of stimulus (user, scheduled, system, etc.)
         context_level: 0=none, 1=recent, 2=full
         metadata: Optional metadata dict
+        state_snapshot: Optional STATE-at-generation snapshot for this turn.
+            Captured per-turn (not just per-convo) so each (user, assistant)
+            pair can be replayed with the exact context the model saw —
+            high-value training signal for fine-tuning later.
     
     Returns:
         Turn index (0-based)
@@ -174,10 +187,11 @@ def add_turn(
         
         # Add the turn
         metadata_json = json.dumps(metadata) if metadata else None
+        state_json = json.dumps(state_snapshot) if state_snapshot else None
         cur.execute("""
-            INSERT INTO convo_turns (convo_id, turn_index, user_message, assistant_message, feed_type, context_level, metadata_json)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (convo_id, turn_index, user_message, assistant_message, feed_type, context_level, metadata_json))
+            INSERT INTO convo_turns (convo_id, turn_index, user_message, assistant_message, feed_type, context_level, metadata_json, state_snapshot_json)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        """, (convo_id, turn_index, user_message, assistant_message, feed_type, context_level, metadata_json, state_json))
         
         # Update conversation metadata
         cur.execute("""

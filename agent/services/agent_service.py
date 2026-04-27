@@ -462,13 +462,20 @@ class AgentService:
                     state_snapshot=state_snapshot
                 )
             
-            # Add the turn
+            # Add the turn (with per-turn STATE snapshot for training signal)
+            turn_state_snapshot = None
+            try:
+                if self.agent:
+                    turn_state_snapshot = self._capture_state_snapshot(feed_type)
+            except Exception:
+                turn_state_snapshot = None
             add_turn(
                 session_id=self.session_id,
                 user_message=user_msg,
                 assistant_message=assistant_msg,
                 feed_type=feed_type,
-                context_level=self.context_manager.current_level
+                context_level=self.context_manager.current_level,
+                state_snapshot=turn_state_snapshot,
             )
 
             # Commit model-authored meta-thoughts, if any (Phase 2).

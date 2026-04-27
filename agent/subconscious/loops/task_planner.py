@@ -367,6 +367,12 @@ class TaskPlanner(BackgroundLoop):
                 
                 # On failure: retry once, then stop
                 if not result.get("success"):
+                    # If this is a per-tool rate-limit error, give it room
+                    # to clear before retrying. Tool gates are typically 1s.
+                    err = (result.get("error") or "").lower()
+                    if "rate limited" in err or "wait" in err:
+                        import time as _time
+                        _time.sleep(2.0)
                     retry_result = self._execute_step(step, results, context, is_retry=True)
                     if retry_result.get("success"):
                         results[-1] = retry_result
@@ -424,7 +430,7 @@ class TaskPlanner(BackgroundLoop):
                 }
                 for t in tools
             ]
-            ctx["tools_prompt"] = format_tools_for_prompt(tools, level=2)
+            ctx["tools_prompt"] = format_tools_for_prompt(tools, level=3)
         except Exception:
             ctx["tools_prompt"] = "No tools available."
         

@@ -251,7 +251,7 @@ def write_goals(rework: List[Dict[str, object]]) -> int:
             continue
         path = d["path"]
         reasons_str = "; ".join(d["reasons"])  # type: ignore[index]
-        goal = f"Audit and rework {path}"
+        goal = f"Audit and propose a rewrite for {path}"
         rationale = (
             f"Doc audit flagged this file: {reasons_str}. "
             f"Either delete, merge into a sibling doc, or refresh so it "

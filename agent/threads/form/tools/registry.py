@@ -627,13 +627,17 @@ def format_tools_for_prompt(tools: Optional[List[ToolDefinition]] = None, level:
             lines.append(f"  {status} {tool.name}: {tool.description}")
         return "\n".join(lines)
     
-    # Level 3: Full details
+    # Level 3: Full details — only list SAFE actions so the planner can't
+    # pick blocked actions that will always fail at execute time.
     lines = ["Available tools:"]
     for tool in tools:
         status = "✓" if tool.exists else "○"
+        safe_actions = [a for a in tool.actions if is_action_safe(tool.name, a)]
+        if not safe_actions:
+            continue  # tool has no safe actions — hide it from the planner
         lines.append(f"\n  {status} {tool.name}")
         lines.append(f"    {tool.description}")
-        lines.append(f"    Actions: {', '.join(tool.actions)}")
+        lines.append(f"    Actions: {', '.join(safe_actions)}")
         lines.append(f"    File: {tool.run_file} ({tool.run_type.value})")
         if tool.requires_env:
             lines.append(f"    Requires: {', '.join(tool.requires_env)}")
