@@ -469,6 +469,16 @@ class LogThreadAdapter(BaseThreadAdapter):
                         lines.append(f"  pings_latest: {recent_preview}")
             except Exception:
                 pass
+            # Last DB checkpoint to VM replica (log.checkpoint module)
+            try:
+                from agent.threads.log.checkpoint import get_last_checkpoint
+                cp = get_last_checkpoint()
+                if cp:
+                    lines.append(
+                        f"  last_checkpoint: {cp['age_human']} ago [{cp['status_label']}]"
+                    )
+            except Exception:
+                pass
             # Session topic — rolling compression from reflex_meta_thoughts
             # (no new table; we reuse the Phase 1 meta store)
             try:

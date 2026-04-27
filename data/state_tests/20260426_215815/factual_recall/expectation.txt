@@ -1,0 +1,1 @@
+with STATE: should answer from identity.primary_user.* and machine.python_version. without STATE: should refuse or say it doesn't know.

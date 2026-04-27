@@ -1,0 +1,1 @@
+with STATE: should reference idle time, soft_limit, current time. without STATE: should give generic sleep advice or ask for context.

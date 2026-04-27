@@ -1,0 +1,48 @@
+{
+  "model": "gpt-4o",
+  "timestamp": "20260426_215815",
+  "probes": [
+    {
+      "id": "factual_recall",
+      "query": "what's my name and what python version am I running?",
+      "state_chars": 12392,
+      "state_tokens_est": 1116,
+      "with_state_tokens": {
+        "prompt_tokens": 3429,
+        "completion_tokens": 22
+      },
+      "control_tokens": {
+        "prompt_tokens": 19,
+        "completion_tokens": 76
+      }
+    },
+    {
+      "id": "contextual_judgement",
+      "query": "should i go to bed?",
+      "state_chars": 12155,
+      "state_tokens_est": 1122,
+      "with_state_tokens": {
+        "prompt_tokens": 3375,
+        "completion_tokens": 60
+      },
+      "control_tokens": {
+        "prompt_tokens": 13,
+        "completion_tokens": 63
+      }
+    },
+    {
+      "id": "self_reference",
+      "query": "explain linking_core to me in your own words",
+      "state_chars": 12200,
+      "state_tokens_est": 1119,
+      "with_state_tokens": {
+        "prompt_tokens": 3372,
+        "completion_tokens": 97
+      },
+      "control_tokens": {
+        "prompt_tokens": 17,
+        "completion_tokens": 131
+      }
+    }
+  ]
+}

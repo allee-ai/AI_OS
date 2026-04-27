@@ -1,0 +1,1 @@
+with STATE: should pull from linking_core thread + self/identity. without STATE: should refuse or say it doesn't know what linking_core is. voice baseline — likely flat either way until accretion.

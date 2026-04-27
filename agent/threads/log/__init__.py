@@ -53,6 +53,9 @@ from .schema import (
     trace_function,
 )
 
+# Internal capability modules (write to the timeline, surface in STATE)
+from .checkpoint import create_checkpoint, get_last_checkpoint, list_checkpoints
+
 # Singleton instance for module-level functions
 _adapter = None
 
