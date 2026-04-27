@@ -7,16 +7,23 @@ any IMAP server with `use_ssl` and `starttls` config knobs.
 
 Config schema (stored as JSON in sensory_feeds.config_json):
     {
-        "host":          "127.0.0.1",         # required
-        "port":          1143,                 # required
-        "username":      "you@proton.me",      # required (Bridge wants full address)
-        "password_env":  "PROTON_BRIDGE_PASS", # required, env var holding Bridge app password
-        "mailbox":       "INBOX",              # optional, default INBOX
-        "max_per_poll":  20,                   # optional, default 20
-        "initial_fetch": 5,                    # optional, default 5 (only first run)
-        "use_ssl":       false,                # default false (Bridge uses STARTTLS)
-        "starttls":      true,                 # default true
-        "verify_cert":   false                 # default false (Bridge cert is self-signed)
+        "host":              "127.0.0.1",         # required
+        "port":              1143,                  # required
+        "username":          "you@proton.me",       # required (Bridge wants full address)
+
+        # Credential lookup — use ONE of these (keychain preferred on macOS):
+        "password_keychain": {                       # macOS: `security` CLI
+            "service":  "AIOS-Proton-Bridge",         # -s
+            "account":  "you@proton.me"               # -a (defaults to username if omitted)
+        },
+        "password_env":      "PROTON_BRIDGE_PASS",   # fallback: env var name
+
+        "mailbox":           "INBOX",                # optional, default INBOX
+        "max_per_poll":      20,                     # optional, default 20
+        "initial_fetch":     5,                      # optional, default 5 (only first run)
+        "use_ssl":           false,                  # default false (Bridge uses STARTTLS)
+        "starttls":          true,                   # default true
+        "verify_cert":       false                   # default false (Bridge cert is self-signed)
     }
 
 Cursor is the highest UID seen so far (string, monotonic per mailbox).
@@ -27,6 +34,7 @@ import email
 import imaplib
 import os
 import ssl
+import subprocess
 from email.header import decode_header, make_header
 from email.utils import parseaddr, parsedate_to_datetime
 from typing import Any, Dict, Optional
@@ -36,6 +44,68 @@ from sensory.schema import record_event
 
 _SNIPPET_CHARS = 500
 _TEXT_HARD_CAP = 1200  # text column truncated to 4000 in record_event but we keep it small
+
+# Set by _resolve_password to convey a specific failure to the caller.
+_last_password_error: Optional[str] = None
+
+
+# ────────────────────────────────────────────────────────────────────
+# Credential resolution
+# ────────────────────────────────────────────────────────────────────
+
+def _resolve_password(cfg: Dict[str, Any]) -> Optional[str]:
+    """Return the IMAP password from the configured source, or None on failure.
+
+    Prefers macOS Keychain (`password_keychain`); falls back to env var
+    (`password_env`). On failure, sets the module-level `_last_password_error`
+    so the caller can surface the precise reason.
+    """
+    global _last_password_error
+    _last_password_error = None
+
+    kc = cfg.get("password_keychain")
+    if kc:
+        service = (kc.get("service") if isinstance(kc, dict) else None) or ""
+        account = (kc.get("account") if isinstance(kc, dict) else None) or cfg.get("username", "")
+        if not service:
+            _last_password_error = "password_keychain.service is required"
+            return None
+        if not account:
+            _last_password_error = "password_keychain.account missing (and no username fallback)"
+            return None
+        try:
+            r = subprocess.run(
+                ["security", "find-generic-password", "-a", account, "-s", service, "-w"],
+                capture_output=True, text=True, timeout=5,
+            )
+        except FileNotFoundError:
+            _last_password_error = "`security` CLI not found (Keychain lookup is macOS-only)"
+            return None
+        except Exception as e:
+            _last_password_error = f"keychain lookup failed: {e}"
+            return None
+        if r.returncode != 0:
+            _last_password_error = (
+                f"keychain entry not found for service='{service}' account='{account}' "
+                f"(security exit {r.returncode}: {r.stderr.strip()})"
+            )
+            return None
+        pw = r.stdout.rstrip("\n")
+        if not pw:
+            _last_password_error = "keychain entry empty"
+            return None
+        return pw
+
+    env_var = cfg.get("password_env")
+    if env_var:
+        pw = os.environ.get(env_var)
+        if not pw:
+            _last_password_error = f"env var {env_var} not set"
+            return None
+        return pw
+
+    _last_password_error = "no credential source configured"
+    return None
 
 
 # ────────────────────────────────────────────────────────────────────
@@ -159,14 +229,18 @@ def poll_once(feed: Dict[str, Any]) -> Dict[str, Any]:
     }
 
     # Validate required config
-    for key in ("host", "port", "username", "password_env"):
+    for key in ("host", "port", "username"):
         if not cfg.get(key):
             out["error_msg"] = f"missing config key: {key}"
             return out
+    if not cfg.get("password_keychain") and not cfg.get("password_env"):
+        out["error_msg"] = "missing credential: set either password_keychain or password_env"
+        return out
 
-    password = os.environ.get(cfg["password_env"])
+    password = _resolve_password(cfg)
     if not password:
-        out["error_msg"] = f"env var {cfg['password_env']} not set"
+        # _resolve_password sets a specific message
+        out["error_msg"] = _last_password_error or "credential not available"
         return out
 
     mailbox = cfg.get("mailbox", "INBOX")
