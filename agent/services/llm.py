@@ -140,20 +140,18 @@ class OllamaProvider(LLMProvider):
         except ImportError:
             raise RuntimeError("ollama not installed. Run: pip install ollama")
 
-        # Cloud Ollama (https://ollama.com) — same protocol, just an auth
-        # header. Trigger: OLLAMA_HOST set to a non-localhost URL OR
-        # OLLAMA_API_KEY present. Falls back to bare module call (default
-        # localhost daemon) when neither is set.
+        # Cloud routing convention: cloud-tagged models (e.g.
+        # "gpt-oss:120b-cloud", "kimi-k2:1t-cloud") route through the
+        # *local* ollama daemon to Ollama Cloud automatically once the
+        # user has run `ollama signin`. No separate host or auth header
+        # required \u2014 the daemon handles it.
+        #
+        # OLLAMA_HOST is honored as a fallback for custom remote daemons
+        # (self-hosted, separate machine, etc).
         host = os.getenv("OLLAMA_HOST", "").strip()
-        api_key = os.getenv("OLLAMA_API_KEY", "").strip()
         try:
-            if host or api_key:
-                client_kwargs: Dict[str, Any] = {}
-                if host:
-                    client_kwargs["host"] = host
-                if api_key:
-                    client_kwargs["headers"] = {"Authorization": f"Bearer {api_key}"}
-                client = _ollama.Client(**client_kwargs)
+            if host:
+                client = _ollama.Client(host=host)
                 response = client.chat(
                     model=model,
                     messages=messages,

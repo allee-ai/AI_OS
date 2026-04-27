@@ -39,6 +39,15 @@ class RoleConfig:
 _BOOT_DEFAULT_PROVIDER = "ollama"
 _BOOT_DEFAULT_MODEL    = "qwen2.5:7b"
 
+# Per-role hard defaults. These only kick in when no env override exists
+# at any layer. Pattern: WORKER defaults to a cloud-tagged Ollama model so
+# the planner→worker pipeline ships pre-wired for anyone who has run
+# `ollama signin`. The local daemon routes :Nb-cloud tags to Ollama Cloud
+# automatically — no separate host/headers needed.
+_ROLE_DEFAULTS: dict = {
+    "WORKER": {"provider": "ollama", "model": "gpt-oss:120b-cloud"},
+}
+
 
 def resolve_role(role: str, legacy_prefix: str = "EXTRACT") -> RoleConfig:
     """Return the effective (provider, model, endpoint, api_key) for *role*.
@@ -75,8 +84,12 @@ def resolve_role(role: str, legacy_prefix: str = "EXTRACT") -> RoleConfig:
                 return v
         return os.getenv(field_global, "").strip()
 
-    provider = (_layered("PROVIDER", "AIOS_MODEL_PROVIDER") or _BOOT_DEFAULT_PROVIDER).lower()
-    model    = _layered("MODEL",    "AIOS_MODEL_NAME")    or _BOOT_DEFAULT_MODEL
+    provider = (_layered("PROVIDER", "AIOS_MODEL_PROVIDER")
+                or _ROLE_DEFAULTS.get(r, {}).get("provider")
+                or _BOOT_DEFAULT_PROVIDER).lower()
+    model    = (_layered("MODEL",    "AIOS_MODEL_NAME")
+                or _ROLE_DEFAULTS.get(r, {}).get("model")
+                or _BOOT_DEFAULT_MODEL)
     endpoint = _layered("ENDPOINT", "AIOS_MODEL_ENDPOINT")
     api_key  = os.getenv("OPENAI_API_KEY", "").strip() if provider == "openai" else ""
 

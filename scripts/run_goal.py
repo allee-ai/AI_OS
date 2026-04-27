@@ -91,7 +91,8 @@ def print_routing() -> None:
     for role in ("TASK_PLANNER", "WORKER"):
         cfg = resolve_role(role)
         endpoint = cfg.endpoint or "(provider default)"
-        print(f"  {role:14s} provider={cfg.provider:8s} model={cfg.model}  endpoint={endpoint}")
+        cloud_tag = " [☁ cloud]" if cfg.model.endswith("-cloud") else ""
+        print(f"  {role:14s} provider={cfg.provider:8s} model={cfg.model}{cloud_tag}  endpoint={endpoint}")
 
 
 # ── Run ──────────────────────────────────────────────────────────────
@@ -184,7 +185,19 @@ def main() -> int:
                     help="plan only, don't execute steps")
     ap.add_argument("--mark-done", action="store_true",
                     help="on success, mark the source goal completed")
+    ap.add_argument("--planner", default=None,
+                    help="override planner model (e.g. gpt-4o, gpt-oss:120b-cloud)")
+    ap.add_argument("--worker", default=None,
+                    help="override worker model (e.g. gpt-oss:20b-cloud, qwen2.5:7b)")
     args = ap.parse_args()
+
+    import os
+    if args.planner:
+        os.environ["AIOS_TASK_PLANNER_MODEL"] = args.planner
+        # If user passed an OpenAI model name without setting provider,
+        # leave provider untouched — they can do that explicitly.
+    if args.worker:
+        os.environ["AIOS_WORKER_MODEL"] = args.worker
 
     print_routing()
 

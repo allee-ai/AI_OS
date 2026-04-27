@@ -693,71 +693,16 @@ STEP RESULTS:
 
         role=TASK_PLANNER: planner / synthesizer (large model).
         role=WORKER:       per-step executor (smaller cloud or local model).
+
+        Delegates to agent.services.llm.generate so all role routing,
+        per-role provider/model/endpoint env overrides, and Ollama Cloud
+        cloud-tagged-model routing happen in one place.
         """
-        from agent.services.role_model import resolve_role
-        cfg = resolve_role(role)
-        if cfg.provider == "openai":
-            return self._call_openai(prompt, cfg)
-        return self._call_ollama(prompt, cfg)
-    
-    def _call_ollama(self, prompt: str, cfg=None) -> str:
-        from .base import acquire_ollama_gate, release_ollama_gate, is_llm_enabled
+        from .base import is_llm_enabled
         if not is_llm_enabled():
             return ""
-        import ollama, os
-        # Ollama Cloud (or any custom host) is opt-in via:
-        #   - cfg.endpoint (per-role override)
-        #   - OLLAMA_HOST env
-        # plus OLLAMA_API_KEY for cloud auth. Without either we hit the
-        # local daemon, which keeps the original behavior.
-        host = (cfg.endpoint if cfg else "") or os.getenv("OLLAMA_HOST", "").strip()
-        api_key = os.getenv("OLLAMA_API_KEY", "").strip()
-        model = (cfg.model if cfg else self.model) or self.model
-        if not acquire_ollama_gate():
-            raise RuntimeError("Ollama gate timeout")
-        try:
-            if host or api_key:
-                client_kwargs = {}
-                if host:
-                    client_kwargs["host"] = host
-                if api_key:
-                    client_kwargs["headers"] = {"Authorization": f"Bearer {api_key}"}
-                client = ollama.Client(**client_kwargs)
-                response = client.chat(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    options={"temperature": 0.2}
-                )
-            else:
-                response = ollama.chat(
-                    model=model,
-                    messages=[{"role": "user", "content": prompt}],
-                    options={"temperature": 0.2}
-                )
-            return response["message"]["content"].strip()
-        finally:
-            release_ollama_gate()
-    
-    def _call_openai(self, prompt: str, cfg=None) -> str:
-        import os, requests
-        from agent.services.role_model import resolve_role
-        if cfg is None:
-            cfg = resolve_role("TASK_PLANNER")
-        base_url = cfg.endpoint or os.getenv("OPENAI_BASE_URL", "https://api.openai.com/v1")
-        api_key = cfg.api_key or os.getenv("OPENAI_API_KEY", "")
-        model = cfg.model or self.model
-        resp = requests.post(
-            f"{base_url}/chat/completions",
-            headers={"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"},
-            json={
-                "model": model,
-                "messages": [{"role": "user", "content": prompt}],
-                "temperature": 0.2,
-            },
-            timeout=60,
-        )
-        resp.raise_for_status()
-        return resp.json()["choices"][0]["message"]["content"].strip()
+        from agent.services.llm import generate
+        return generate(prompt=prompt, role=role, temperature=0.2)
     
     # ── Parsing ─────────────────────────────────────────────
     
