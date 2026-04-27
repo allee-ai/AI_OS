@@ -130,6 +130,13 @@ header .dot.err{background:var(--red)}
 <!-- ── Chat Panel ── -->
 <div class="panel" id="p-chat">
   <div class="card" style="padding:12px">
+    <div style="display:flex;gap:6px;margin-bottom:8px;align-items:center">
+      <button class="btn" id="convoPickerBtn" style="flex:1;padding:6px 10px;font-size:.85em;background:var(--card);border:1px solid var(--border);color:var(--text);text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis" onclick="toggleConvoPicker()">
+        <span id="convoCurrentLabel">no conversation</span>
+      </button>
+      <button class="btn" onclick="newConvo()" title="new chat" style="padding:6px 10px;font-size:.85em">+ new</button>
+    </div>
+    <div id="convoPicker" style="display:none;margin-bottom:10px;max-height:40vh;overflow-y:auto;background:var(--card);border:1px solid var(--border);border-radius:6px"></div>
     <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
       <label style="color:var(--dim);font-size:.8em">agent</label>
       <select id="chatAgent" style="flex:1;padding:6px;background:var(--card);border:1px solid var(--border);color:var(--fg);border-radius:6px">
@@ -270,6 +277,7 @@ document.getElementById('tabs').addEventListener('click', e => {
   if (tab === 'tasks' && typeof loadTasks === 'function') loadTasks();
   if (tab === 'notes' && typeof loadNotes === 'function') loadNotes();
   if (tab === 'loops' && typeof loadLoops === 'function') loadLoops();
+  if (tab === 'chat' && typeof initChatTab === 'function') initChatTab();
 });
 
 // ── Toast ──
@@ -373,6 +381,105 @@ async function toggleLoop(name, action) {
 
 // ── Chat ──
 const chatMsgs = [];
+let currentSessionId = localStorage.getItem('aios_mobile_session_id') || null;
+let currentSessionName = localStorage.getItem('aios_mobile_session_name') || '';
+
+function setCurrentSession(sid, name) {
+  currentSessionId = sid || null;
+  currentSessionName = name || '';
+  if (sid) {
+    localStorage.setItem('aios_mobile_session_id', sid);
+    localStorage.setItem('aios_mobile_session_name', name || '');
+  } else {
+    localStorage.removeItem('aios_mobile_session_id');
+    localStorage.removeItem('aios_mobile_session_name');
+  }
+  const label = document.getElementById('convoCurrentLabel');
+  if (label) label.textContent = name || (sid ? sid.substring(0,18)+'…' : 'new conversation');
+}
+
+function toggleConvoPicker() {
+  const el = document.getElementById('convoPicker');
+  if (el.style.display === 'none') {
+    loadConvoList();
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+async function loadConvoList() {
+  const el = document.getElementById('convoPicker');
+  el.innerHTML = '<div class="empty" style="padding:10px">loading…</div>';
+  try {
+    const r = await fetch(BASE + '/api/conversations?limit=30');
+    if (!r.ok) throw new Error(r.statusText);
+    const data = await r.json();
+    const convos = Array.isArray(data) ? data : (data.conversations || []);
+    if (!convos.length) {
+      el.innerHTML = '<div class="empty" style="padding:10px">no conversations yet</div>';
+      return;
+    }
+    el.innerHTML = convos.map(c => {
+      const sid = c.session_id || c.id || '';
+      const name = c.name || c.title || sid.substring(0,24);
+      const ts = c.updated_at || c.last_turn_at || c.created_at || '';
+      const when = ts ? new Date(ts).toLocaleString([], {month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}) : '';
+      const src = c.source ? '<span style="color:var(--dim);font-size:.75em"> · '+esc(c.source)+'</span>' : '';
+      const isActive = sid === currentSessionId;
+      return '<div onclick="selectConvo(\''+encodeURIComponent(sid)+'\', \''+encodeURIComponent(name)+'\')" ' +
+        'style="padding:10px 12px;border-bottom:1px solid var(--border);cursor:pointer;'+(isActive?'background:rgba(79,157,247,0.08)':'')+'">' +
+        '<div style="font-weight:'+(isActive?'700':'500')+';font-size:.9em">' + esc(name) + src + '</div>' +
+        '<div style="color:var(--dim);font-size:.75em;margin-top:2px">' + esc(when) + '</div>' +
+        '</div>';
+    }).join('');
+  } catch (e) {
+    el.innerHTML = '<div class="empty" style="padding:10px">error: '+esc(e.message)+'</div>';
+  }
+}
+
+async function selectConvo(sidEnc, nameEnc) {
+  const sid = decodeURIComponent(sidEnc);
+  const name = decodeURIComponent(nameEnc);
+  setCurrentSession(sid, name);
+  document.getElementById('convoPicker').style.display = 'none';
+  await loadConvoHistory(sid);
+}
+
+async function loadConvoHistory(sid) {
+  chatMsgs.length = 0;
+  if (!sid) { renderChat(); return; }
+  try {
+    const r = await fetch(BASE + '/api/conversations/' + encodeURIComponent(sid) + '?limit=200');
+    if (!r.ok) throw new Error(r.statusText);
+    const data = await r.json();
+    const turns = data.turns || [];
+    for (const t of turns) {
+      const ts = t.timestamp ? new Date(t.timestamp).getTime() : Date.now();
+      if (t.user) chatMsgs.push({role:'user', text:t.user, ts});
+      if (t.assistant) chatMsgs.push({role:'assistant', text:t.assistant, ts, agent:'aios'});
+    }
+  } catch (e) {
+    chatMsgs.push({role:'assistant', text:'(failed to load history: '+e.message+')', ts:Date.now(), agent:'aios'});
+  }
+  renderChat();
+}
+
+async function newConvo() {
+  setCurrentSession(null, '');
+  chatMsgs.length = 0;
+  renderChat();
+  // Ask backend to spin a fresh session so the next message doesn't
+  // accidentally land in whatever session the singleton was holding.
+  try {
+    const r = await fetch(BASE + '/api/chat/start-session', {method:'POST'});
+    if (r.ok) {
+      const d = await r.json();
+      if (d.session_id) setCurrentSession(d.session_id, 'new chat');
+    }
+  } catch (e) { /* best-effort */ }
+  toast('new conversation');
+}
 
 // Minimal safe markdown: escape everything, then re-enable a small set
 // of patterns. No HTML from the reply ever reaches the DOM raw.
@@ -445,9 +552,14 @@ async function sendChat() {
     const d = await api(API + '/chat', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({text, agent})
+      body: JSON.stringify({text, agent, session_id: currentSessionId})
     });
     chatMsgs.push({role: 'assistant', text: d.reply, ts: Date.now(), agent: d.agent || agent});
+    // Adopt whatever session_id the backend ended up using (first
+    // message in a brand-new chat gets its sid back from the server).
+    if (d.session_id && d.session_id !== currentSessionId) {
+      setCurrentSession(d.session_id, currentSessionName || '');
+    }
   } catch(e) {
     chatMsgs.push({role: 'assistant', text: '(error: ' + e.message + ')', ts: Date.now(), agent});
   }
@@ -460,6 +572,18 @@ async function sendChat() {
 document.getElementById('chatInput').addEventListener('keydown', e => {
   if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendChat(); }
 });
+
+// Hydrate the chat tab the first time it's opened (and on initial load
+// if that's the saved session). Reloads turns from whichever conversation
+// we left off in so the phone feels continuous.
+let _chatHydrated = false;
+async function initChatTab() {
+  if (!_chatHydrated) {
+    _chatHydrated = true;
+    setCurrentSession(currentSessionId, currentSessionName);
+    if (currentSessionId) await loadConvoHistory(currentSessionId);
+  }
+}
 
 // ── Tasks ──
 async function loadTasks() {

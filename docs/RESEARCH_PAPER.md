@@ -344,6 +344,85 @@ These are the same phenomenon at different scales: **model + structured access t
 
 This makes the development process itself evidence for the architecture's core claim. If crude RAG (VS Code file search) enables a large model to produce working architectural improvements, then proper STATE (which is strictly better-organized retrieval) should enable a smaller model to produce working behavior. The eval results confirm this: the same 7B model scores identity_persistence 0.90 with STATE and 0.00 without it. The structure is doing the work.
 
+### 4.13 Positional STATE: Attention-Zone Shaping and Redundancy-as-Integrity
+
+> *Side note: the idea came because i was reading into positional languages (COBOL, FORTRAN, RPG, assembly) so i could build a "to JSON" translation layer for positional arguments and thought maybe relevance isnt just a json shape its a positional shape. random thought buuuuut kinda works soooo* — Cade
+
+Section 3.3 describes *how much* context to include (L1/L2/L3 token budgets). This subsection addresses a separate question the original design under-specified: **where inside the assembled STATE each fact should sit, and whether its information should be expressed once or reinforced.** The practical payoff is largest for small models (1B–3B), which is also where the existing approach breaks down most visibly.
+
+#### 4.13.1 The Lost-in-the-Middle Problem as a Shape Constraint
+
+Empirically, transformer attention on long contexts is not uniform. Recall accuracy for a fact at position *p* in a context of length *L* follows approximately:
+
+$$ A(p, L) \approx a \cdot e^{-\alpha p} + b \cdot e^{-\beta (L - p)} + c $$
+
+Two exponential bumps (primacy, recency) with a middle floor *c*. Liu et al. (2023) measured this for GPT-3.5 on needle-in-haystack tasks; the floor for larger models is tolerable, but as model size decreases:
+
+- α and β widen — the primacy/recency bumps get narrower
+- *c* drops toward the random baseline — middle facts become effectively ignored
+
+For a 3B model with a 4k-token STATE, only the first ~500 and last ~500 tokens are reliably attended. The middle ~3k is read at approximately 50% effectiveness. **Every fact placed in the middle costs roughly 2× its tokens to produce the same behavioral effect as an edge fact.**
+
+This is a constraint on the *shape* of STATE, not its content.
+
+#### 4.13.2 Role-Assigned Zones
+
+The original HEA assembler sorted facts by relevance and packed them linearly. We replace this with a two-stage pipeline: first assign a *role* to each fact, then pack role-by-role into position-appropriate zones.
+
+| Role | Zone | Content | Function |
+|------|------|---------|----------|
+| **Frame** | Top | Identity, register, tone, stance | Read once, colors every downstream token |
+| **Substrate** | Middle | Stable reference facts, tool inventory, workspace | Tolerates partial attention; survives through structure |
+| **Action** | Bottom | Current ask, fired reflexes, turn-scoped residue | Acted on immediately; benefits from recency attention |
+
+This is not a per-fact re-ranking. It is a per-*kind*-of-fact placement rule. Relevance scoring is preserved but now operates *within* each zone rather than *across* the whole document.
+
+A consequence worth naming: stable ground-truth facts (identity reinforcements, workspace inventory) live in the middle on purpose. They rarely change meaning turn-to-turn, so the middle attention-sag is acceptable — *provided* they survive lossy reading. That survival is the next mechanism.
+
+#### 4.13.3 Redundancy as Error-Correcting Code
+
+In the substrate zone, critical truths are expressed multiple times from different angles rather than once:
+
+```
+identity.primary_user.name: Cade
+identity.primary_user.pronoun: she/her
+identity.primary_user.preference.coffee: black, no sugar
+```
+
+Three facts that independently reinforce the same underlying truths: (1) the user is named Cade, (2) female-coded register is correct. If attention reads any one of them, the signal lands.
+
+Under a probabilistic reading model where each middle-zone token is ignored with independent probability *p*, the probability that a single-statement fact is missed is *p*. The probability that *all three* restatements of the same truth are missed is *p³*. For *p* = 0.5 (empirical middle-floor dropout on a 3B), survival probability climbs from 0.5 to 1 − 0.5³ = 0.875.
+
+This is Hamming-style error-correction applied to attention. The "bits" being protected are semantic truths. The "redundant parity" is paraphrase from different surface vectors (name, pronoun, preference-with-feminine-marker).
+
+The standard software engineering impulse is DRY — "Don't Repeat Yourself" — which is correct for code that executes. It is wrong for data that must survive lossy channels. Older positional languages (COBOL's `REDEFINES`, FORTRAN's fixed-column layout, assembly's opcode-then-operand rhythm) embraced redundancy as integrity because their readers had *finite scanning budgets* — punch cards, worn tape, humans tracking with a finger. A small LLM's attention layer is structurally identical: a reader with a finite scanning budget. STATE should be shaped accordingly.
+
+#### 4.13.4 Cost-Adjusted Information Density
+
+The original HEA optimization was implicit: maximize included weight-times-relevance within a token budget. With positional awareness, the objective becomes:
+
+$$ I_{\text{eff}}(f) = w_f \cdot r_f(q) \cdot A(p_f, L) $$
+
+where *w_f* is the fact's stored weight, *r_f(q)* is its query-relevance, and *A(p_f, L)* is the positional attention profile above. The packer maximizes total *I_eff* across facts subject to the token budget *and* the role-zone structure. Two-stage, not one-stage: role is assigned first, then relevance ranks within role.
+
+This makes "which middle facts deserve redundancy?" a tractable question. Answer: the facts whose *misread* would most derail the response. Identity, pronoun, core stance, active-relationship information. Not trivia (language preference, file extension). The reinforcement token-budget is spent on truths that color every downstream sentence.
+
+#### 4.13.5 Why Building for a 3B Improves Behavior at Every Scale
+
+Larger models have a softer middle-floor *c* — they partially compensate for lost-in-the-middle through sheer parametric capacity. This means shape bugs in STATE are *invisible* at 70B and *behavior-breaking* at 3B. Designing the STATE assembler against a 3B target surfaces these bugs where they are unambiguous. The fixes (role-zoning, substrate redundancy) then carry up-scale as improvements that were masked but always present. The 3B is not a degraded test target; it is a strict one.
+
+This reframes the original HEA design claim (Section 3.3) from "context levels control how much" to **"context shape controls what lands."** The token budget is necessary but not sufficient. A 3B with properly shaped 2k-token STATE outperforms the same 3B with sorted-by-relevance 4k-token STATE on identity-sensitive tasks — not because the second version lacks information but because its information cannot be read.
+
+#### 4.13.6 Falsifiability
+
+This theory makes three testable predictions:
+
+1. **Position sensitivity scales inversely with model size.** Identity behaviors (pronoun adherence, name persistence, stance stability) should degrade more steeply as identity facts are moved toward the middle of STATE for a 3B than for a 70B. Testable by systematic position permutation on the existing behavioral eval suite (Section 6.11).
+2. **Redundancy pays off only in lossy zones.** Triplicating a frame-zone fact (already at top) should produce no improvement. Triplicating a substrate-zone fact should produce measurable improvement on small models and negligible improvement on large models. Testable by redundancy ablation per zone.
+3. **Cross-scale transfer of shape fixes.** Improvements measured on a 3B under role-zoned STATE should transfer to 7B and 70B at *smaller* absolute magnitude but consistent sign. Testable by running the same shape-ablation across model sizes.
+
+These predictions are hard to falsify definitively — behavioral eval is noisy — but the sign and relative magnitude of effects are measurable with existing infrastructure. If any of the three come out flat or reversed, the theory needs revision.
+
 ---
 
 ## 5. Observed Parallels with Cognitive Architecture

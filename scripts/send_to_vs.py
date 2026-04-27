@@ -15,10 +15,14 @@ Why clipboard paste instead of `keystroke "text"`:
   - keystroke mangles non-ASCII, quote chars, and is slow for long text.
   - Paste is O(1) regardless of message length.
 
-Why ctrl+cmd+i instead of cmd+shift+i:
-  - cmd+shift+i has historically been other things (DevTools etc);
-    the VS Code default "Copilot Chat: Focus Chat Input" in recent
-    releases is ctrl+cmd+i. Configurable via --chat-shortcut.
+Why 'palette' is the default:
+  - ctrl+cmd+i is the built-in chat keybinding but it TOGGLES — if the
+    chat is already open it closes it, which is the opposite of what
+    a mirror wants.
+  - cmd+shift+p -> 'Chat: Focus Chat Input' only focuses; it never
+    closes the chat. It's locale-dependent (English command name) but
+    it's deterministic on any workspace that hasn't been relocalized.
+  - Configurable via --chat-shortcut if you want the raw kb anyway.
 
 Dependencies: stdlib only. Requires macOS Accessibility permission for
 whatever terminal/VS Code process invokes this.
@@ -84,9 +88,13 @@ _CHAT_SHORTCUT_APPLESCRIPT = {
     # Newer VS Code: "Chat: Focus Chat Input" often bound to
     # cmd+alt+b for side bar or custom; expose as override.
     "cmd+alt+i": 'keystroke "i" using {command down, option down}',
+    # ctrl+cmd+shift+a is a CUSTOM keybinding we install in the user's
+    # VS Code keybindings.json -> workbench.action.chat.focusInput.
+    # Focus-only (never toggles chat closed). This is the default used
+    # by the aios phone bridge.
+    "focus-input": 'keystroke "a" using {control down, command down, shift down}',
     # "palette" is special — handled below by opening Cmd+Shift+P and
-    # typing the command name. This is toggle-proof: the palette always
-    # opens, the named command always focuses chat (never closes it).
+    # typing the command name. Kept as fallback but locale-dependent.
     "palette": "__PALETTE__",
 }
 
@@ -94,7 +102,7 @@ _CHAT_SHORTCUT_APPLESCRIPT = {
 def send_to_vs(
     message: str,
     submit: bool = True,
-    chat_shortcut: str = "palette",
+    chat_shortcut: str = "focus-input",
     settle_ms: int = 250,
 ) -> int:
     if platform.system() != "Darwin":
@@ -179,10 +187,13 @@ def main() -> int:
     )
     ap.add_argument(
         "--chat-shortcut", choices=sorted(_CHAT_SHORTCUT_APPLESCRIPT.keys()),
-        default="palette",
-        help="How to focus the Copilot Chat input. 'palette' (default) "
-             "opens the Command Palette and runs 'Chat: Focus Chat Input' — "
-             "toggle-proof, works whether the panel is open or closed.",
+        default="focus-input",
+        help="How to focus the Copilot Chat input. Default 'focus-input' "
+             "uses the aios-installed ctrl+cmd+shift+a keybinding bound to "
+             "workbench.action.chat.focusInput — deterministic + non-toggling. "
+             "'palette' falls back to Cmd+Shift+P + fuzzy match (locale-"
+             "dependent, can misfire if MRU shifts). 'ctrl+cmd+i' is the "
+             "built-in keybinding but TOGGLES chat (closes if already open).",
     )
     ap.add_argument(
         "--settle-ms", type=int, default=250,

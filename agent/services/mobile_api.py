@@ -138,12 +138,24 @@ async def mobile_chat(msg: QuickChat, _=Depends(_check_token)):
 
     from agent.services.agent_service import get_agent_service
     svc = get_agent_service()
+    # Honor explicit session_id so phone can resume / switch conversations.
+    # Without this, every phone message lands in the singleton's current
+    # session regardless of what the UI thinks it's talking to.
+    if msg.session_id and msg.session_id.strip():
+        try:
+            svc.set_session(msg.session_id.strip())
+        except Exception:
+            pass
     reply = await svc.send_message(
         msg.text.strip(),
         msg.session_id,
         provider_override=provider_override,
     )
-    return {"reply": reply.content, "session_id": msg.session_id, "agent": agent or "aios"}
+    return {
+        "reply": reply.content,
+        "session_id": getattr(svc, "session_id", msg.session_id),
+        "agent": agent or "aios",
+    }
 
 
 @router.post("/task")

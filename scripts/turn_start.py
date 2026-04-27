@@ -290,8 +290,20 @@ def _grade_prior_turn(current_uncommitted: list, current_committed: list) -> dic
 
         # Also drop a reflex meta-thought so the pattern shows up in the
         # reflex block, not only in log.events.
+        # NOTE: low weight (0.25) so these don't crowd out curated
+        # high-signal priors. They're a heartbeat, not a pattern.
+        # Scoped to the current active session so residue stays in the
+        # conversation that produced it, not leaked globally.
         try:
             from agent.threads.reflex.schema import add_meta_thought
+            _sid = None
+            try:
+                from agent.threads.log.schema import get_active_sessions
+                _active = get_active_sessions()
+                if _active:
+                    _sid = (_active[0].get("data") or {}).get("session_id")
+            except Exception:
+                _sid = None
             kind = "expected" if status == "success" else "rejected"
             add_meta_thought(
                 kind=kind,
@@ -303,8 +315,9 @@ def _grade_prior_turn(current_uncommitted: list, current_committed: list) -> dic
                     f"of {total}"
                 ),
                 source="system",
+                session_id=_sid,
                 confidence=0.8,
-                weight=0.8,
+                weight=0.25,
             )
         except Exception as exc:  # pragma: no cover
             out["errors"].append(f"add_meta_thought(outcome): {exc!r}")

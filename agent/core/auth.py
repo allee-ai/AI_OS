@@ -83,7 +83,8 @@ PUBLIC_PATHS = {
 }
 
 PUBLIC_PREFIXES = (
-    "/assets/",     # Static frontend files
+    "/assets/",          # Static frontend files
+    "/api/mobile/voice/",  # all mobile-voice endpoints use their own X-Device-Token
 )
 
 

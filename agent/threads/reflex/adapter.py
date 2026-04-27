@@ -330,25 +330,71 @@ class ReflexThreadAdapter(BaseThreadAdapter):
         # Meta-thoughts (cognitive residue from prior turns)
         # Best-effort read: if the table is missing or DB fails, we just
         # contribute nothing. Meta-thoughts never break the STATE read.
+        #
+        # Session-scoping rule (2026-04-23):
+        #   - Session-less entries (session_id IS NULL) are situational
+        #     reflexes that fire on key/trigger — always eligible.
+        #     These are the curated copilot/user_correction priors.
+        #   - Session-scoped entries (session_id IS NOT NULL) are
+        #     in-conversation residue — only visible inside that session,
+        #     never bled across conversations.
         try:
             import os as _os_prov
             provenance_on = _os_prov.getenv("AIOS_META_PROVENANCE", "1") == "1"
             from agent.threads.reflex.schema import get_recent_meta_thoughts
+            # Resolve current session if available so session-scoped
+            # residue from THIS conversation survives, other sessions
+            # don't leak in.
+            _current_sid = None
+            try:
+                from agent.threads.log.schema import get_active_sessions
+                _active = get_active_sessions()
+                if _active:
+                    _current_sid = (_active[0].get("data") or {}).get("session_id")
+            except Exception:
+                _current_sid = None
+
+            # Pull a wider window than we'll surface (60) so high-weight
+            # curated entries aren't crowded out by fresh auto-generated
+            # system grades. We then rank + truncate below.
             meta = get_recent_meta_thoughts(
                 min_weight=min_weight,
-                limit=20,
+                limit=60,
             )
-            # Sort so user_correction floats to top (always audible);
-            # then model; then system; then seed. Within a group the
-            # original ordering (newest-first) is preserved.
-            _SRC_PRI = {"user_correction": 0, "model": 1, "system": 2, "seed": 3}
+            # Session-scope filter: drop residue from OTHER sessions.
+            # Session-less (session_id is None/"") always survives —
+            # those are the situational priors.
+            def _session_ok(m):
+                sid = m.get("session_id")
+                if not sid:
+                    return True  # session-less prior, always eligible
+                if _current_sid and sid == _current_sid:
+                    return True  # residue from current conversation
+                return False
+            meta = [m for m in meta if _session_ok(m)]
+
+            # Source priority: user_correction and copilot are curated,
+            # high-signal notes and must outrank the firehose of system
+            # turn-grades. Within a priority tier, rank by weight desc.
+            _SRC_PRI = {
+                "user_correction": 0,
+                "copilot": 0,
+                "model": 1,
+                "seed": 2,
+                "system": 3,
+            }
             try:
                 meta = sorted(
                     meta,
-                    key=lambda m: (_SRC_PRI.get(m.get("source", ""), 9), )
+                    key=lambda m: (
+                        _SRC_PRI.get(m.get("source", ""), 9),
+                        -float(m.get("weight", 0.0) or 0.0),
+                    ),
                 )
             except Exception:
                 pass
+            # Cap to 20 for STATE packing; curated entries now at top.
+            meta = meta[:20]
             # Reserve at least 1 slot for user_correction entries from
             # the last 24h so they survive budget truncation downstream.
             # (Implemented simply via the sort above; reflex adapter's
@@ -361,14 +407,14 @@ class ReflexThreadAdapter(BaseThreadAdapter):
                 if not content or kind not in ("rejected", "expected", "unknown", "compression"):
                     continue
                 base_weight = float(m.get("weight", 0.5) or 0.5)
-                # user_correction entries get a weight floor so they
-                # aren't decayed out by the window position.
+                # user_correction + copilot entries get a weight floor so
+                # they aren't decayed out by the window position.
                 src = m.get("source", "")
-                if src == "user_correction":
+                if src in ("user_correction", "copilot"):
                     base_weight = max(base_weight, 0.9)
                 # Simple linear decay across the returned window
                 decayed = max(0.1, base_weight * (1.0 - 0.03 * i))
-                if decayed < min_weight and src != "user_correction":
+                if decayed < min_weight and src not in ("user_correction", "copilot"):
                     continue
                 tid = m.get("id", 0)
                 short = content if len(content) <= 100 else content[:97] + "..."
