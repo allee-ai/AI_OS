@@ -496,6 +496,22 @@ class AgentService:
             except Exception:
                 pass
 
+            # Commit model-emitted per-thread affect tags.  Same shape as
+            # meta-thoughts: stashed by agent.generate(), committed here
+            # where session_id is available.  Never fails the turn.
+            try:
+                if self.agent and getattr(self.agent, "_last_affect", None):
+                    from agent.services.affect import commit_affect
+                    affect_list = list(self.agent._last_affect)
+                    commit_affect(
+                        affect_list,
+                        session_id=self.session_id,
+                        source="model",
+                    )
+                    self.agent._last_affect = []
+            except Exception:
+                pass
+
             # Seed a compression meta-thought for this turn — ONLY if the
             # model did not author one.  Model-authored compression is
             # strictly preferred; seed is a fallback so the read path is

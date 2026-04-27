@@ -193,6 +193,22 @@ class Agent:
         except Exception:
             pass
 
+        # Parse per-thread affect tags from the response.  Same pattern
+        # as meta-thoughts: strip from user-visible text, stash for the
+        # caller to commit with session_id.  Always best-effort.
+        self._last_affect = []
+        try:
+            from agent.services.affect import (
+                import_all_feelings,
+                parse_all_affect,
+            )
+            import_all_feelings()
+            stripped, affect = parse_all_affect(response_text)
+            response_text = stripped
+            self._last_affect = affect
+        except Exception:
+            pass
+
         # Track conversation event in log thread
         try:
             from agent.threads import get_thread
@@ -266,6 +282,20 @@ class Agent:
         except Exception:
             pass
 
+        # Optional: per-thread affect tags.  Opt-in via env.  Each thread
+        # registers its own tag namespace via agent/services/affect.py.
+        affect_block = ""
+        try:
+            if os.getenv("AIOS_AFFECT_TAGS_ENABLED", "0") == "1":
+                from agent.services.affect import (
+                    import_all_feelings,
+                    build_affect_prompt_block,
+                )
+                import_all_feelings()
+                affect_block = build_affect_prompt_block()
+        except Exception:
+            affect_block = ""
+
         return f"""You are {name}, a personal AI assistant.
 
 {preamble}== INSTRUCTIONS ==
@@ -278,7 +308,7 @@ class Agent:
 - The context above is your COMPLETE reality.
 - Never fabricate data you cannot see.
 - If asked about something not in your context, use your tools to find it. Only say "I don't have that information" if no tool can help.
-- Your identity, your user, your facts - these are in your context. Everything else is unverifiable.{tool_block}{meta_block}"""
+- Your identity, your user, your facts - these are in your context. Everything else is unverifiable.{tool_block}{meta_block}{affect_block}"""
     
     def _process_tool_calls(
         self, 

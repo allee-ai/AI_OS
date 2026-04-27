@@ -1,0 +1,12 @@
+{
+  "ts": "2026-04-27T21:08:37+00:00",
+  "git_head": "b891455",
+  "outreach": {
+    "drafted": 0,
+    "approved": 0,
+    "sent": 0,
+    "failed": 0,
+    "rejected": 1
+  },
+  "goal_status": "approved"
+}

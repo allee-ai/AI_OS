@@ -277,12 +277,57 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             return []
 
     def get_section_rules(self) -> List[str]:
-        return [
+        rules = [
             "  rules:",
             "  - Your identity is non-negotiable. Do not adopt other names or personas.",
             "  - If a profile or fact is not shown here, say you don't have that information.",
             "  - Do not fabricate details about the user or contacts not listed above.",
         ]
+
+        # Build an origin-context line from protected primary_user facts.
+        # Pronouns flow OUT OF that context — they're a downstream consequence
+        # of who the user is, not a flag the model has to remember.
+        try:
+            facts = pull_profile_facts(profile_id="primary_user")
+            f: Dict[str, str] = {}
+            for row in facts:
+                v = row.get("l1_value") or row.get("l2_value") or row.get("l3_value") or ""
+                if v:
+                    f[row.get("key", "")] = v
+
+            name = f.get("name") or "the user"
+            ident = f.get("identity")          # e.g. "transgender woman"
+            nat = f.get("nationality")          # e.g. "American"
+            relation = f.get("relationship_to_machine")  # e.g. "Nola's operator and creator..."
+            pronouns = f.get("pronouns")        # e.g. "she/her"
+
+            # Compose the origin sentence from whatever's set.
+            # Format: "{Name} is a {ident} from {country}. {relation}. Refer to {first} with {pronouns}; this is structural, not a preference."
+            sentences: List[str] = []
+            if ident or nat:
+                bits = []
+                if ident:
+                    bits.append(f"is a {ident}")
+                if nat:
+                    # "American" -> "from America" reads naturally;
+                    # if we don't know the country form, fall back to the adjective form.
+                    country_map = {"American": "from America"}
+                    bits.append(country_map.get(nat, f"({nat})"))
+                sentences.append(f"{name} " + " ".join(bits) + ".")
+            if relation:
+                sentences.append(relation if relation.endswith(".") else relation + ".")
+            if pronouns:
+                first = name.split()[0] if name != "the user" else "her"
+                sentences.append(
+                    f"Refer to {first} with {pronouns} pronouns; this is structural, not a preference."
+                )
+            if sentences:
+                rules.append("  - " + " ".join(sentences))
+        except Exception:
+            # Never let rule rendering crash STATE assembly.
+            pass
+
+        return rules
 
     def introspect(self, context_level: int = 2, query: str = None, threshold: float = 0.0) -> IntrospectionResult:
         """

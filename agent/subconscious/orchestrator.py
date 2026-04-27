@@ -579,6 +579,30 @@ class Subconscious:
         except Exception:
             pass
         section.extend(facts)
+
+        # Per-thread affect layer.  Each thread's feelings.py registered
+        # a closed schema; current values are read from affect_state and
+        # rendered as `<thread>.affect.<key>: <value>`.  Best-effort —
+        # never breaks STATE assembly.  See agent/services/affect.py.
+        try:
+            from agent.services.affect import (
+                read_thread_affect, import_all_feelings,
+            )
+            import_all_feelings()
+            affect_kv = read_thread_affect(thread_name)
+            if affect_kv:
+                section.append(f"  affect: {len(affect_kv)} keys")
+                for k in sorted(affect_kv):
+                    section.append(f"{thread_name}.affect.{k}: {affect_kv[k]}")
+            # Identity also surfaces machine.* (host-written interoception).
+            if thread_name == "identity":
+                machine_kv = read_thread_affect("machine")
+                if machine_kv:
+                    for k in sorted(machine_kv):
+                        section.append(f"identity.machine.affect.{k}: {machine_kv[k]}")
+        except Exception:
+            pass
+
         return section
     
     def _build_module_section(

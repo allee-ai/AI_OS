@@ -362,6 +362,17 @@ async def startup_event():
         except Exception as e:
             print(f"[Startup] Field init skipped: {e}")
 
+        # Per-thread affect store (feelings.py registry + shared table)
+        try:
+            from agent.services.affect import (
+                init_affect_state, import_all_feelings, all_schemas,
+            )
+            init_affect_state()
+            import_all_feelings()
+            print(f"[Startup] Affect store initialized ({len(all_schemas())} threads registered)")
+        except Exception as e:
+            print(f"[Startup] Affect init skipped: {e}")
+
         # Check Ollama connectivity
         import os
         ollama_host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
