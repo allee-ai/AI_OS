@@ -615,7 +615,42 @@ Python list:"""
                 # Add previous context to params if relevant
                 if prev_context and "context" not in params:
                     params["context"] = prev_context.strip()
-                
+
+                # Param threading: when a tool step's content/text/body
+                # param is empty but it depends on a previous LLM step,
+                # inject that step's output as the content. The planner
+                # generates params at plan time \u2014 it can't know what a
+                # later LLM rewrite will produce \u2014 so we patch the gap
+                # here using the most recent successful dependency.
+                # Param threading: when a write/edit step's content
+                # param is empty / a short placeholder (e.g. "see step 3",
+                # "{{rewrite}}") but it depends on an LLM step that
+                # produced real content, use the dependency's output.
+                # The planner generates params at plan time — it can't
+                # know the future output — so we patch the gap here.
+                _CONTENT_KEYS = ("content", "text", "body", "data", "message")
+                _WRITE_TOOLS = {"workspace_write", "file_write", "code_edit"}
+                _WRITE_ACTIONS = {"write_file", "append_file", "edit_file"}
+                if depends and tool_name in _WRITE_TOOLS and action in _WRITE_ACTIONS:
+                    best_payload = ""
+                    for dep_idx in depends:
+                        if dep_idx < len(previous_results):
+                            prev = previous_results[dep_idx]
+                            if prev.get("success") and prev.get("tool") == "llm":
+                                payload = (prev.get("output") or "").strip()
+                                if len(payload) > len(best_payload):
+                                    best_payload = payload
+                    if best_payload:
+                        target = next((k for k in _CONTENT_KEYS if k in params), "content")
+                        existing = (params.get(target) or "").strip()
+                        looks_placeholder = (
+                            len(existing) < 200
+                            or "{{" in existing
+                            or existing.lower().startswith(("see step", "see previous", "<rewritten"))
+                        )
+                        if looks_placeholder and len(best_payload) > len(existing):
+                            params[target] = best_payload
+
                 result = execute_tool(tool_name, action, params)
                 
                 return {
