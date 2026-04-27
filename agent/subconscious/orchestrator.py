@@ -29,8 +29,17 @@ Architecture:
 
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timezone
+from pathlib import Path
 import json
 import re
+
+# Path where the previous turn's fact_keys are cached so the next turn's
+# score() can apply a Hebbian recency boost to the threads/modules that
+# fired last time. File-based so it survives process restarts.
+_LAST_KEYS_PATH = Path("data/.last_turn_keys.json")
+# Boost added to a thread/module score when at least one of its fact_keys
+# lit up in the previous turn. Capped at SCORE_MAX in apply.
+_RECENCY_BOOST = 0.6
 
 
 # Thread list - linking_core included for UI visibility
@@ -84,6 +93,42 @@ def _extract_fact_keys(lines: List[str]) -> List[str]:
         if len(keys) >= _MAX_COACTIVATION_KEYS:
             break
     return keys
+
+
+def _save_last_keys(keys: List[str]) -> None:
+    """Persist this turn's fact_keys for next turn's recency boost."""
+    try:
+        _LAST_KEYS_PATH.parent.mkdir(parents=True, exist_ok=True)
+        _LAST_KEYS_PATH.write_text(json.dumps({
+            "ts": datetime.now(timezone.utc).isoformat(),
+            "keys": keys,
+        }))
+    except Exception:
+        pass
+
+
+def _load_last_keys() -> List[str]:
+    """Load previous turn's fact_keys. Returns [] on any error."""
+    try:
+        if not _LAST_KEYS_PATH.exists():
+            return []
+        data = json.loads(_LAST_KEYS_PATH.read_text())
+        keys = data.get("keys") or []
+        if isinstance(keys, list):
+            return [k for k in keys if isinstance(k, str)]
+    except Exception:
+        pass
+    return []
+
+
+def _namespaces_from_keys(keys: List[str]) -> set:
+    """'identity.primary_user.name' -> 'identity'. Returns set of namespaces."""
+    out = set()
+    for k in keys:
+        if "." in k:
+            ns = k.split(".", 1)[0]
+            out.add(ns)
+    return out
 
 # Context-window aware budget allocation.
 # Total STATE budget = STATE_FRACTION of the target context window.
@@ -210,7 +255,30 @@ class Subconscious:
         else:
             for mod in MODULES:
                 scores[mod] = 4.0
-        
+
+        # Hebbian recency: boost threads/modules whose fact_keys lit up
+        # in the previous turn. Closes the loop between record_cooccurrence
+        # (write side, in build_state) and score-time bias (read side).
+        try:
+            last_keys = _load_last_keys()
+            if last_keys:
+                hot_namespaces = _namespaces_from_keys(last_keys)
+                boosted = []
+                for ns in hot_namespaces:
+                    if ns in scores:
+                        before = scores[ns]
+                        scores[ns] = min(10.0, before + _RECENCY_BOOST)
+                        if scores[ns] != before:
+                            boosted.append(ns)
+                if boosted:
+                    trace_bus.publish(
+                        "recency_boost",
+                        boosted=boosted,
+                        boost=_RECENCY_BOOST,
+                    )
+        except Exception as e:
+            trace_bus.publish("recency_boost_error", error=str(e)[:200])
+
         trace_bus.publish("score_done", scores={k: round(v, 2) for k, v in scores.items()})
         return scores
     
@@ -398,6 +466,9 @@ class Subconscious:
                         keys=len(fact_keys),
                         pairs=n_recorded,
                     )
+                # Persist for next turn's recency boost regardless of pair count.
+                if fact_keys:
+                    _save_last_keys(fact_keys)
             except Exception as e:
                 # Never let co-activation recording break STATE assembly
                 trace_bus.publish("cooccurrence_error", error=str(e)[:200])
