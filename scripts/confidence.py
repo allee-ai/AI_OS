@@ -10,6 +10,10 @@ against:
   3. reversibility — declared (default true)
   4. goal_alignment — keyword overlap with open proposed_goals
   5. precedent      — keyword overlap with recently committed convo_turns
+  6. user_correction_alignment — overlap with user-correction meta_thoughts
+     (rejected: strong dampen; expected/unknown: mild boost). Carries the
+     structural asymmetry: the user can see things the agent can't, and
+     her corrections are off-policy.
 
 Weighted score in [0,1] -> recommendation:
   >= proceed_threshold (default 0.70)  PROCEED      (do it, no ask)
@@ -43,11 +47,12 @@ DB = ROOT / "data" / "db" / "state.db"
 
 # Weights sum to 1.0
 WEIGHTS = {
-    "track_record": 0.40,
-    "blast":        0.25,
-    "reversibility": 0.15,
-    "goal_alignment": 0.10,
-    "precedent":    0.10,
+    "track_record":              0.35,
+    "blast":                     0.20,
+    "reversibility":             0.15,
+    "goal_alignment":            0.10,
+    "precedent":                 0.10,
+    "user_correction_alignment": 0.10,
 }
 
 BLAST_SCORE = {"low": 1.0, "med": 0.55, "high": 0.20}
@@ -235,6 +240,70 @@ def score_precedent(conn: sqlite3.Connection, q_tokens: set[str], scan: int = 80
     return s, f"{len(matches)} similar turns ({statuses})"
 
 
+def score_user_correction_alignment(
+    conn: sqlite3.Connection, q_tokens: set[str], scan: int = 60
+) -> tuple[float, str]:
+    """Score against recent user_correction meta_thoughts.
+
+    The user sees off-policy signal the agent can't generate from inside
+    its own loop. If a proposed action overlaps with a 'rejected' user
+    correction, that's a strong signal this category of action was
+    previously corrected — dampen hard. Overlap with 'expected'/'unknown'
+    user notes — mild boost (the user flagged this territory as worth
+    watching).
+
+    Returns (score, detail). No user_correction history -> 0.5 neutral.
+    """
+    cur = conn.execute(
+        "SELECT id, kind, content, weight FROM reflex_meta_thoughts "
+        "WHERE source = 'user_correction' "
+        "ORDER BY id DESC LIMIT ?",
+        (scan,),
+    )
+    rows = cur.fetchall()
+    if not rows:
+        return 0.5, "no user_correction history; neutral"
+
+    # Use overlap_ratio (asymmetric, query-side) rather than jaccard:
+    # user notes are typically longer / richer than the one-line action,
+    # so jaccard under-counts conceptual matches. A 0.15 query-side
+    # overlap means 15% of the action's tokens appear in the note \u2014
+    # tight enough to avoid noise, loose enough to catch reformulations
+    # like "kill env hub" matching note #233's "hub-key stoplist".
+    rejected_hits: list[tuple[float, int]] = []
+    positive_hits: list[tuple[float, int]] = []
+    for mid, kind, content, _w in rows:
+        if not content:
+            continue
+        ov = overlap_ratio(q_tokens, tokens(content))
+        if ov < 0.15:
+            continue
+        if kind == "rejected":
+            rejected_hits.append((ov, mid))
+        elif kind in ("expected", "unknown"):
+            positive_hits.append((ov, mid))
+
+    if not rejected_hits and not positive_hits:
+        return 0.5, f"scanned {len(rows)} user notes; no overlap; neutral"
+
+    # Strong dampen if any rejected overlap. Best-overlap weighted.
+    if rejected_hits:
+        best_ov, best_id = max(rejected_hits, key=lambda x: x[0])
+        # 0.10 -> 0.40, 0.50 -> 0.10, 1.00 -> 0.00
+        s = max(0.0, 0.5 - best_ov)
+        return s, (
+            f"⚠ overlaps user-rejected note #{best_id} "
+            f"(overlap {best_ov:.2f}); strong dampen"
+        )
+
+    # Otherwise, mild boost from positive hits.
+    best_ov, best_id = max(positive_hits, key=lambda x: x[0])
+    s = min(1.0, 0.5 + best_ov * 0.6)
+    return s, (
+        f"matches user-flagged note #{best_id} (overlap {best_ov:.2f}); mild boost"
+    )
+
+
 def main() -> int:
     ap = argparse.ArgumentParser(description="Confidence-gate a proposed next action.")
     ap.add_argument("action", help="Proposed next action (one line).")
@@ -277,6 +346,8 @@ def main() -> int:
         sig["goal_alignment"] = {"score": s_goal, "detail": d_goal}
         s_prec, d_prec = score_precedent(conn, q_tokens)
         sig["precedent"] = {"score": s_prec, "detail": d_prec}
+        s_uca, d_uca = score_user_correction_alignment(conn, q_tokens)
+        sig["user_correction_alignment"] = {"score": s_uca, "detail": d_uca}
 
     weighted = sum(WEIGHTS[k] * sig[k]["score"] for k in WEIGHTS)
     if weighted >= args.proceed_threshold:
@@ -313,10 +384,10 @@ def main() -> int:
     print(f"  blast={blast}  reversible={reversible}")
     print(f"  tokens: {sorted(q_tokens)[:12]}{'...' if len(q_tokens) > 12 else ''}")
     print()
-    for k in ("track_record", "blast", "reversibility", "goal_alignment", "precedent"):
+    for k in ("track_record", "blast", "reversibility", "goal_alignment", "precedent", "user_correction_alignment"):
         s = sig[k]
         bar = "#" * int(round(s["score"] * 10))
-        print(f"  {k:<16} {s['score']:.2f}  [{bar:<10}]  ({WEIGHTS[k]:.0%})  {s['detail']}")
+        print(f"  {k:<26} {s['score']:.2f}  [{bar:<10}]  ({WEIGHTS[k]:.0%})  {s['detail']}")
     print()
     print(f"  weighted_score = {weighted:.3f}")
     print(f"  recommendation = {rec}")

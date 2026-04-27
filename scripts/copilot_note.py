@@ -21,6 +21,13 @@ kinds:
     expected     — a hypothesis about what will happen next
     rejected     — an approach that failed, with reason
     compression  — a summary of several recent turns
+
+flags:
+    --from-user  — capture as source='user_correction' instead of 'copilot'.
+                   Use when Cade pushes back, corrects, or says "no, that's
+                   wrong" — her words/reasoning go off-policy and the asymmetric
+                   weighting in confidence.py + reflex adapter will treat them
+                   accordingly. Self-notes about her corrections stay 'copilot'.
 """
 
 from __future__ import annotations
@@ -40,12 +47,12 @@ from agent.threads.reflex.schema import (  # noqa: E402
 )
 
 
-def cmd_add(content: str, kind: str, confidence: float, weight: float) -> int:
+def cmd_add(content: str, kind: str, confidence: float, weight: float, source: str) -> int:
     init_meta_thoughts_table()
     rid = add_meta_thought(
         kind=kind,
         content=content,
-        source="copilot",
+        source=source,
         confidence=confidence,
         weight=weight,
     )
@@ -56,7 +63,8 @@ def cmd_add(content: str, kind: str, confidence: float, weight: float) -> int:
             file=sys.stderr,
         )
         return 1
-    print(f"note#{rid} [{kind}] {content[:80]}")
+    tag = source if source != "copilot" else kind
+    print(f"note#{rid} [{tag}] {content[:80]}")
     return 0
 
 
@@ -91,6 +99,12 @@ def main() -> int:
     ap.add_argument("--weight", type=float, default=0.5)
     ap.add_argument("--list", action="store_true", help="list recent copilot notes")
     ap.add_argument("--limit", type=int, default=10)
+    ap.add_argument(
+        "--from-user",
+        action="store_true",
+        help="capture as source='user_correction' (off-policy ground truth) "
+             "instead of 'copilot' self-note.",
+    )
     args = ap.parse_args()
 
     if args.list:
@@ -98,7 +112,11 @@ def main() -> int:
     if not args.content:
         ap.print_help()
         return 2
-    return cmd_add(args.content, args.kind, args.confidence, args.weight)
+    source = "user_correction" if args.from_user else "copilot"
+    # User corrections get a higher default weight — they're off-policy ground
+    # truth and should not be easily decayed out of STATE surfacing.
+    weight = args.weight if args.weight != 0.5 else (0.95 if args.from_user else 0.5)
+    return cmd_add(args.content, args.kind, args.confidence, weight, source)
 
 
 if __name__ == "__main__":

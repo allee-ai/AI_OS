@@ -373,15 +373,21 @@ class ReflexThreadAdapter(BaseThreadAdapter):
                 return False
             meta = [m for m in meta if _session_ok(m)]
 
-            # Source priority: user_correction and copilot are curated,
-            # high-signal notes and must outrank the firehose of system
-            # turn-grades. Within a priority tier, rank by weight desc.
+            # Source priority: user_correction is the highest-signal
+            # source — it carries off-policy ground-truth the agent
+            # cannot generate from inside its own loop. copilot self-notes
+            # are still curated but must not co-mingle with that tier;
+            # they're on-policy and risk self-reinforcement. Within a
+            # priority tier, rank by weight desc.
+            #   2026-04-27: split copilot from user_correction so the
+            #   asymmetry between external correction and self-note is
+            #   structural, not implicit.
             _SRC_PRI = {
                 "user_correction": 0,
-                "copilot": 0,
-                "model": 1,
-                "seed": 2,
-                "system": 3,
+                "copilot": 1,
+                "model": 2,
+                "seed": 3,
+                "system": 4,
             }
             try:
                 meta = sorted(
@@ -407,14 +413,23 @@ class ReflexThreadAdapter(BaseThreadAdapter):
                 if not content or kind not in ("rejected", "expected", "unknown", "compression"):
                     continue
                 base_weight = float(m.get("weight", 0.5) or 0.5)
-                # user_correction + copilot entries get a weight floor so
-                # they aren't decayed out by the window position.
+                # Asymmetric weight floors:
+                #   user_correction: 0.9 — off-policy ground-truth, must
+                #     not be decayed out by window position. Also immune
+                #     to the min_weight threshold filter below.
+                #   copilot: 0.7 — curated self-notes, but on-policy.
+                #     Floor is lower so weak self-notes can still be
+                #     filtered if they fall under threshold.
                 src = m.get("source", "")
-                if src in ("user_correction", "copilot"):
+                if src == "user_correction":
                     base_weight = max(base_weight, 0.9)
+                elif src == "copilot":
+                    base_weight = max(base_weight, 0.7)
                 # Simple linear decay across the returned window
                 decayed = max(0.1, base_weight * (1.0 - 0.03 * i))
-                if decayed < min_weight and src not in ("user_correction", "copilot"):
+                # Only user_correction bypasses min_weight — everything
+                # else (including copilot) must clear the bar.
+                if decayed < min_weight and src != "user_correction":
                     continue
                 tid = m.get("id", 0)
                 short = content if len(content) <= 100 else content[:97] + "..."
