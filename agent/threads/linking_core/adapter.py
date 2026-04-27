@@ -163,8 +163,12 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         medium → core stats, high → full activation details.
         Also updates self-attention focus based on query concepts.
         """
-        # Low score → linking_core adds no value to STATE
-        if threshold < 2.0:
+        # Low score → linking_core adds no value to STATE.
+        # threshold = 10 - score, so HIGH threshold means LOW score.
+        # Previous code had this inverted (`< 2.0`) which silently
+        # excluded linking_core whenever its score was high — found
+        # while building BIG_STATE.
+        if threshold > 8.0:
             return IntrospectionResult(
                 facts=[], state=self._get_state_summary(),
                 context_level=context_level, relevant_concepts=[]

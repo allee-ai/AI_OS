@@ -350,7 +350,7 @@ class Subconscious:
 
         return scores
     
-    def build_state(self, scores: Dict[str, float], query: str = "", record_activations: bool = True) -> str:
+    def build_state(self, scores: Dict[str, float], query: str = "", record_activations: bool = True, context_window: int = 0, state_fraction: float = 0.0) -> str:
         """
         Build STATE block from scored threads AND modules.
         
@@ -388,7 +388,7 @@ class Subconscious:
         )
 
         # Allocate token budgets proportional to scores
-        budgets = allocate_budgets(scores)
+        budgets = allocate_budgets(scores, context_window=context_window, state_fraction=state_fraction)
         trace_bus.publish(
             "budgets",
             budgets={k: int(v) for k, v in budgets.items()},
@@ -1113,6 +1113,41 @@ class Subconscious:
         """
         scores = self.score(query)
         return self.build_state(scores, query)
+
+    def build_big_state(
+        self,
+        query: str = "",
+        context_window: int = 200_000,
+        state_fraction: float = 0.8,
+        record_activations: bool = True,
+    ) -> str:
+        """Build a maximally-expanded STATE for large-context models.
+
+        Forces every thread/module to L3 (full level), zero weight threshold,
+        and a huge budget so the assembler emits as many facts as the
+        adapters will produce. Intended for GPT-5.5-class / Gemini Pro /
+        Claude windows where the bottleneck is fact production, not prompt
+        size.
+
+        Args:
+            query: query string used for query-conditioned filtering
+            context_window: total context budget in tokens (default 200k)
+            state_fraction: fraction of window allotted to STATE (default 0.8)
+            record_activations: still record cooccurrences (default True)
+
+        Returns:
+            STATE block string, typically 10-50x larger than build_state().
+        """
+        # All known sources, all maxed -> level 3 + threshold 0
+        all_sources = list(THREADS) + list(MODULES)
+        scores = {src: 10.0 for src in all_sources}
+        return self.build_state(
+            scores,
+            query=query,
+            record_activations=record_activations,
+            context_window=context_window,
+            state_fraction=state_fraction,
+        )
 
     def preview_state(self, query: str) -> Dict[str, Any]:
         """
