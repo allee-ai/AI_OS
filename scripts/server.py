@@ -186,6 +186,34 @@ if os.getenv("AIOS_READ_ONLY", "").lower() in ("1", "true", "yes"):
 
 
 # =============================================================================
+# Demo Rate Limiting (public deployments backed by a paid LLM)
+# =============================================================================
+# When AIOS_DEMO_LLM_CHAT_ONLY=1, the chat path actually burns OpenAI tokens.
+# The rate-limit middleware caps unique IPs/day, messages per IP, and total
+# daily spend so a public URL can't spike the bill. Visitors who hit a cap
+# get a normal-looking assistant reply explaining the situation — no errors.
+
+if os.getenv("AIOS_DEMO_LLM_CHAT_ONLY", "").lower() in ("1", "true", "yes"):
+    from agent.core.demo_rate_limit import (
+        DemoRateLimitMiddleware,
+        get_demo_rate_snapshot,
+        DAILY_IP_CAP,
+        PER_IP_MSGS,
+        DAILY_BUDGET,
+    )
+    app.add_middleware(DemoRateLimitMiddleware)
+    print(
+        f"[Startup] AIOS_DEMO_LLM_CHAT_ONLY=1 — chat rate limited: "
+        f"{DAILY_IP_CAP} unique IPs/day, {PER_IP_MSGS} msgs/IP, ${DAILY_BUDGET:.2f} budget"
+    )
+
+    # Public read-only status endpoint so the demo UI can render usage.
+    @app.get("/api/demo/rate-status")
+    async def demo_rate_status():
+        return get_demo_rate_snapshot()
+
+
+# =============================================================================
 # Include Routers
 # =============================================================================
 
