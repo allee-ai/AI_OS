@@ -193,7 +193,7 @@ header .dot.err{background:var(--red)}
         </select>
         <input type="number" id="goalUrgency" min="0" max="100" placeholder="urgency 0-100" style="flex:1"/>
       </div>
-      <button class="btn" onclick="addGoal()" style="align-self:flex-end">Add Goal (pushes to Copilot)</button>
+      <button id="goalSubmitBtn" class="btn" onclick="addGoal()" style="align-self:flex-end">Add Goal (pushes to Copilot)</button>
     </div>
   </div>
   <div class="card">
@@ -637,18 +637,56 @@ async function addGoal() {
   const rat = document.getElementById('goalRationale');
   const pri = document.getElementById('goalPriority');
   const urg = document.getElementById('goalUrgency');
+  const btn = document.getElementById('goalSubmitBtn');
+  const list = document.getElementById('goalsList');
   const goal = input.value.trim();
   if (!goal) return;
+  // In-flight guard: prevent the user from mashing the button while the
+  // request is in flight. Goal #20 (mobile): without this it was easy to
+  // submit 19 duplicates before the first round-trip returned.
+  if (btn.dataset.busy === '1') return;
+  btn.dataset.busy = '1';
+  btn.disabled = true;
+  const origLabel = btn.textContent;
+  btn.textContent = 'Adding\u2026';
+  // Optimistic row at top of pending list so it's obvious the goal
+  // landed locally even before the server confirms.
+  const tempId = 'goal-pending-' + Date.now();
+  const optimistic =
+    '<div id="' + tempId + '" class="task-row" style="opacity:.7">' +
+      '<span class="task-goal"><em>adding\u2026</em> ' + esc(goal) + '</span>' +
+      '<span class="task-status">' + esc(pri.value) +
+        (urg.value !== '' ? ' u' + esc(urg.value) : '') + '</span>' +
+    '</div>';
+  if (list.querySelector('.empty')) {
+    list.innerHTML = optimistic;
+  } else {
+    list.insertAdjacentHTML('afterbegin', optimistic);
+  }
   const body = { goal, rationale: rat.value.trim(), priority: pri.value };
   if (urg.value !== '' && !isNaN(Number(urg.value))) body.urgency = Number(urg.value);
-  const res = await api(API + '/goal', {
-    method: 'POST',
-    headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify(body)
-  });
-  input.value = ''; rat.value = ''; urg.value = '';
-  toast('Goal #' + res.id + ' added — pushed to Copilot');
-  loadGoals();
+  try {
+    const res = await api(API + '/goal', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(body)
+    });
+    input.value = ''; rat.value = ''; urg.value = '';
+    toast('Goal #' + res.id + ' added \u2014 pushed to Copilot');
+    loadGoals();  // Replaces the optimistic row with the real list.
+  } catch (e) {
+    // api() already showed a toast. Roll back the optimistic row so
+    // the user knows it didn't land.
+    const tmp = document.getElementById(tempId);
+    if (tmp) tmp.remove();
+    if (!list.children.length) {
+      list.innerHTML = '<div class="empty">No pending goals</div>';
+    }
+  } finally {
+    btn.dataset.busy = '0';
+    btn.disabled = false;
+    btn.textContent = origLabel;
+  }
 }
 
 document.getElementById('goalInput').addEventListener('keydown', e => {
