@@ -76,23 +76,6 @@ _FACT_KEY_RE = re.compile(r"^\s*([a-z_][a-z_]*\.[A-Za-z0-9_./#\-]+)(?=[\s:\[]|$)
 # 80 keys → ~3160 pairs, well within a fast single-transaction batch.
 _MAX_COACTIVATION_KEYS = 80
 
-# Structural-metadata keys that appear at the top of every STATE for their
-# section. They co-fire with literally everything, so pair-counting them is
-# noise (zero mutual information). They're still EXTRACTED — visible as facts,
-# eligible for recency boost — but skipped from cooccurrence pair recording.
-#
-# Long-term: replace this stoplist with a real document-frequency penalty
-# (penalize keys that appear in >X% of recent turns). For now this is the
-# surgical fix to make the cooccur leaderboard show actual learning.
-_HUB_KEYS = frozenset({
-    "form.tools._usage",
-    "form.env.local",
-    "form.env.vm",
-    "linking_core.function",
-    "linking_core.mechanism",
-    "log.session.duration",
-})
-
 
 def _extract_fact_keys(lines: List[str]) -> List[str]:
     """Pull namespaced fact keys from STATE lines, in order, deduped."""
@@ -470,14 +453,11 @@ class Subconscious:
         if record_activations:
             try:
                 fact_keys = _extract_fact_keys(lines)
-                # Filter hub keys for pair recording only — they remain in
-                # fact_keys for recency boost and visibility.
-                pair_keys = [k for k in fact_keys if k not in _HUB_KEYS]
-                if len(pair_keys) >= 2:
+                if len(fact_keys) >= 2:
                     pairs = [
-                        (pair_keys[i], pair_keys[j])
-                        for i in range(len(pair_keys))
-                        for j in range(i + 1, len(pair_keys))
+                        (fact_keys[i], fact_keys[j])
+                        for i in range(len(fact_keys))
+                        for j in range(i + 1, len(fact_keys))
                     ]
                     from agent.threads.linking_core import record_cooccurrence_batch
                     n_recorded = record_cooccurrence_batch(pairs)

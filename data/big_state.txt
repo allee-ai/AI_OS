@@ -52,12 +52,12 @@ identity.john_doe.birthday: 1985-06-15
 identity.john_doe.notes: Met at conference
 
 [log] Temporal awareness and history
-  session: 20260427_035732
+  session: 20260427_035931
   duration: 0m
   messages: 0
   total_events: 21457
-  current_intent: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) (1m ago)
-  idle_since_last_event: 1m
+  current_intent: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) (3m ago)
+  idle_since_last_event: 3m
   last_hour: code_change=71, agent_turn=11, turn_outcome=11, prune=2
   recent_agent_turns:
     - 2026-04-27 03:55:44  kill env.local hub key (per confidence 0.622 PROCEED-NOTED) (2 files)
@@ -66,8 +66,8 @@ identity.john_doe.notes: Met at conference
     - 2026-04-27 03:37:19  test recency boost second run (should boost) (2 files) [partial]
     - 2026-04-27 03:37:18  test recency boost first run (no prior keys) (54 files) [reverted]
   consequences:
-    uncommitted: 5 file(s)
-    last_commit: 2m ago
+    uncommitted: 1 file(s)
+    last_commit: 0m ago
     status: ok
   pings_unread: 49
   pings_latest: all 6 rot items closed: reflex grader (18/18 graded), training regen kicked (+43 pairs), /api/health alias, eval split 1
@@ -76,7 +76,7 @@ identity.john_doe.notes: Met at conference
   rules:
   - Events shown are a sample. Do not fabricate events not listed here.
   - To see more history, ask the user or use search tools.
-log.session.duration: Current session started at 2026-04-27T03:57:32.568804+00:00, active for 0s
+log.session.duration: Current session started at 2026-04-27T03:59:31.088054+00:00, active for 0s
 log.events.0: prior turn [reverted]: 1/5 still dirty, 0 committed, 4 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:55:44
 log.events.1: VS Code coding turn: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) [agent_turn] source=agent.turn_start at=2026-04-27 03:55:44
 log.events.4: prior turn [partial]: 1/6 still dirty, 4 committed, 1 reverted [turn_outcome] source=agent.turn_start at=2026-04-27 03:51:34
@@ -201,7 +201,7 @@ philosophy.general.self.framings_to_catch: I have a persistent pull toward grand
 [reflex] Quick patterns, shortcuts, and triggers
   patterns: 0
   triggers: 3 (3 active)
-  meta_thoughts: 204 (graded: 18/29 expectations)
+  meta_thoughts: 206 (graded: 18/30 expectations)
   pending_expectations: 10
   context_level: 3
   fact_count: 20
@@ -211,6 +211,8 @@ philosophy.general.self.framings_to_catch: I have a persistent pull toward grand
   - reflex.meta.* entries are my own prior thoughts about earlier turns. Read them; do not treat them as user statements.
 reflex.meta.expected.173: [copilot] expected: Resentment signal: when Cade feels resentful toward a client/partner/friend 'for letting me work this hard for them,' that is her body's late boundary alarm. The resentment is accurate — she clocked the asymmetry at the quote moment and consented anyway. Goal: move the signal earlier. When she NOTICES the 'I'd do this for them' feeling during negotiation, that IS the boundary moment.
 reflex.meta.expected.174: [copilot] expected: Business thesis (2026-04-23): Cade runs one thesis in three layers, not three businesses. Moving/truck co → feeds construction/electrician → upward mobility into tech side. Each tier is the on-ramp out of the one below. It's a career-ladder-as-a-business. 2-year red-to-black rhythm is her funding the elevator with her own labor until each floor pays rent. This is the hero-complex firewalled into a structure. Don't describe these as separate.
+reflex.meta.unknown.232: [copilot] unknown: Confidence policy worked exactly as designed. Last turn confidence said 'kill env hub' was 0.622 PROCEED-NOTED. I executed without asking. The execution exposed a new finding (form.tools.* hub) that is OUT OF SCOPE for the queued action. Right move was to scope-discipline: capture finding as forward note, commit the win, stop. The script's PROCEED-NOTED tier is correctly designed to make this discipline natural — 'do it AND log a forward note about the margin.' That margin became the selectivity
+reflex.meta.expected.231: [copilot] expected: Stoplist patch killed env.local hub but exposed deeper truth: every key enumerated in every STATE (form.tools.*, form.traces._test_ctx.run, etc.) is structural-presence not learning. Cooccur leaderboard is currently dominated by 'all enumerated facts pair with all other enumerated facts.' The right fix is SELECTIVITY: track per-key activation frequency in a 'key_activations' counter, then surface pairs by PMI-like score: count(a,b) / sqrt(turns_a * turns_b). Stoplist is a patch; selectivity is t
 reflex.meta.expected.228: [copilot] expected: Confidence-gating policy installed (scripts/confidence.py). New autopilot rule: before asking 'want me to do that next?', run confidence on the proposed action. PROCEED (>=0.70) -> just do it. PROCEED-NOTED (>=0.45) -> do it AND drop a forward note about the margin so future-self can grade. ASK (<0.45) -> only then surface to user. Asking is now an action with cost — it breaks autonomy in a learning system. Expected effect: more visible work per turn, fewer interrupts, and the asks that DO happe
 reflex.meta.unknown.224: [copilot] unknown: Fact-key sanitization needed: 'identity.primary_user.GET' surfaced in cooccur — corrupted key starts with HTTP verb, _FACT_KEY_RE stops at space so 'GET /api/...' truncates to 'GET'. Two layers: (1) regex pattern, (2) the source temp_fact has hier_key starting with HTTP method. Both should be stricter. Source is likely the recent prune that left some 'GET' or POST extraction artifacts.
 reflex.meta.unknown.222: [copilot] unknown: Hub-key pathology revealed by cooccur expansion (L3=25): all 26 top pairs share 'env.local' because it appears in every STATE turn. Hebbian count rewards ubiquity, opposite of selectivity. Top of leaderboard is therefore noise, not learning. Fix needed: tf-idf-style demotion (penalize keys that pair with too many distinct partners) OR per-key cap (hub_key can hold at most N slots in top-K). The right fix is upstream: env.local/env.vm should not be fact_keys at all — they are form-thread metadata
@@ -223,12 +225,10 @@ reflex.meta.rejected.213: [copilot] rejected: Heuristic 'phantom = degree>=100 A
 reflex.meta.unknown.225: [system] unknown: I have 6 unanswered questions/contradictions sitting open.  Worth reviewing. #hb_unknowns
 reflex.meta.rejected.177: [system] rejected: prior turn graded [partial]: 9 survived, 0 committed, 0 reverted of 9
 reflex.meta.rejected.175: [system] rejected: prior turn graded [partial]: 8 survived, 0 committed, 0 reverted of 8
-reflex.meta.rejected.171: [system] rejected: prior turn graded [partial]: 8 survived, 0 committed, 0 reverted of 8
 reflex.meta.compression.230: [system] compression: coder working on: kill env.local hub key (per confidence 0.622 PROCEED-NOTED) | touched 2 files: data/.last_turn_keys.json, scripts/confidence.py
 reflex.meta.compression.227: [system] compression: coder working on: add confidence-gating CLI so I can stop asking 'want me to do that next?' as often | touched 5 files: agent/subconscious/orchestrator.py, agent/threads/linking_core/adapter.py, agent/threads/log/adapter.py, data/.last_turn_keys.json, data/big_state.txt
 reflex.meta.compression.221: [system] compression: coder working on: verify a/b/c: docs stable refs, log.current_intent, cooccur 25-line expansion | touched 6 files: agent/subconscious/orchestrator.py, agent/threads/linking_core/adapter.py, agent/threads/log/adapter.py, data/.last_turn_keys.json, data/big_state.txt (+1 more)
 reflex.meta.compression.217: [system] compression: coder working on: test recency boost second run (should boost) | touched 2 files: agent/subconscious/orchestrator.py, data/.last_turn_keys.json
-reflex.meta.compression.215: [system] compression: coder working on: test recency boost first run (no prior keys) | touched 54 files: agent/core/auth.py, agent/services/mobile_api.py, agent/services/mobile_panel.html, agent/subconscious/orchestrator.py, agent/threads/linking_core/__init__.py (+49 more)
 
 [linking_core] Relevance scoring and concept association
   concepts: 4657
@@ -241,31 +241,31 @@ reflex.meta.compression.215: [system] compression: coder working on: test recenc
   - Do not assume connections between concepts unless a link is listed.
 linking_core.function: Scores facts by relevance using spread activation
 linking_core.mechanism: Extracts concepts from query, finds connected concepts in graph
-linking_core.cooccur.form.tools.ask_llm__form.traces._test_ctx.run: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__form.tools.memory_identity: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__form.tools.introspect: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__form.tools.memory_philosophy: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.project_version: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.python_version: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.timeline: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.timeline_file: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.task_number: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.future_features: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.year_summary_request: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.current_funds: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.analysis_system: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.current_system: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.npm_version: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.john_doe.name: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__identity.primary_user.GET: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__log.events.0: fired_together=9
-linking_core.cooccur.form.tools.ask_llm__log.events.1: fired_together=9
-linking_core.cooccur.form.tools.memory_identity__form.traces._test_ctx.run: fired_together=9
-linking_core.cooccur.form.tools.introspect__form.traces._test_ctx.run: fired_together=9
-linking_core.cooccur.form.tools.memory_philosophy__form.traces._test_ctx.run: fired_together=9
-linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.project_version: fired_together=9
-linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.python_version: fired_together=9
-linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.timeline: fired_together=9
+linking_core.cooccur.form.tools.ask_llm__form.traces._test_ctx.run: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__form.tools.memory_identity: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__form.tools.introspect: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__form.tools.memory_philosophy: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.project_version: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.python_version: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.timeline: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.timeline_file: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.task_number: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.future_features: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.year_summary_request: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.current_funds: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.analysis_system: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.current_system: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.npm_version: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.john_doe.name: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__identity.primary_user.GET: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__log.events.0: fired_together=10
+linking_core.cooccur.form.tools.ask_llm__log.events.1: fired_together=10
+linking_core.cooccur.form.tools.memory_identity__form.traces._test_ctx.run: fired_together=10
+linking_core.cooccur.form.tools.introspect__form.traces._test_ctx.run: fired_together=10
+linking_core.cooccur.form.tools.memory_philosophy__form.traces._test_ctx.run: fired_together=10
+linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.project_version: fired_together=10
+linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.python_version: fired_together=10
+linking_core.cooccur.form.traces._test_ctx.run__identity.primary_user.timeline: fired_together=10
 linking_core.concepts: 4657
 linking_core.links: 398008
 linking_core.focus: memory_log(0.551), file_read(0.5), workspace_read(0.457), phone(0.418), terminal_vm(0.313)
@@ -320,7 +320,7 @@ field.env.cafe-blue-bottle: cafe-blue-bottle (public)
 [docs] 
   markdown_files: 74
   module_readmes: 28
-  last_edit: data/state_tests/20260426_215815/self_reference/side_by_side.md (118m ago)
+  last_edit: data/state_tests/20260426_215815/self_reference/side_by_side.md (120m ago)
   context_level: 3
   fact_count: 77
   rules:
@@ -387,21 +387,21 @@ field.env.cafe-blue-bottle: cafe-blue-bottle (public)
   docs.tests/README.md.title: Tests
   docs.workspace/README.md: 4385B (33d ago)
   docs.workspace/README.md.title: Workspace Module
-  docs.data/state_tests/20260426_215815/self_reference/side_by_side.md: 1742B (1h ago)
+  docs.data/state_tests/20260426_215815/self_reference/side_by_side.md: 1742B (2h ago)
   docs.data/state_tests/20260426_215815/self_reference/side_by_side.md.title: self_reference
-  docs.data/state_tests/20260426_215815/self_reference/control.md: 948B (1h ago)
+  docs.data/state_tests/20260426_215815/self_reference/control.md: 948B (2h ago)
   docs.data/state_tests/20260426_215815/self_reference/control.md.title: self_reference — CONTROL (no STATE)
-  docs.data/state_tests/20260426_215815/self_reference/with_state.md: 646B (1h ago)
+  docs.data/state_tests/20260426_215815/self_reference/with_state.md: 646B (2h ago)
   docs.data/state_tests/20260426_215815/self_reference/with_state.md.title: self_reference — WITH STATE
-  docs.data/state_tests/20260426_215815/contextual_judgement/side_by_side.md: 839B (1h ago)
+  docs.data/state_tests/20260426_215815/contextual_judgement/side_by_side.md: 839B (2h ago)
   docs.data/state_tests/20260426_215815/contextual_judgement/side_by_side.md.title: contextual_judgement
-  docs.data/state_tests/20260426_215815/contextual_judgement/control.md: 365B (1h ago)
+  docs.data/state_tests/20260426_215815/contextual_judgement/control.md: 365B (2h ago)
   docs.data/state_tests/20260426_215815/contextual_judgement/control.md.title: contextual_judgement — CONTROL (no STATE)
-  docs.data/state_tests/20260426_215815/contextual_judgement/with_state.md: 372B (1h ago)
+  docs.data/state_tests/20260426_215815/contextual_judgement/with_state.md: 372B (2h ago)
   docs.data/state_tests/20260426_215815/contextual_judgement/with_state.md.title: contextual_judgement — WITH STATE
-  docs.data/state_tests/20260426_215815/factual_recall/side_by_side.md: 738B (1h ago)
+  docs.data/state_tests/20260426_215815/factual_recall/side_by_side.md: 738B (2h ago)
   docs.data/state_tests/20260426_215815/factual_recall/side_by_side.md.title: factual_recall
-  docs.data/state_tests/20260426_215815/factual_recall/control.md: 481B (1h ago)
+  docs.data/state_tests/20260426_215815/factual_recall/control.md: 481B (2h ago)
   docs.data/state_tests/20260426_215815/factual_recall/control.md.title: factual_recall — CONTROL (no STATE)
 
 [goals] 
