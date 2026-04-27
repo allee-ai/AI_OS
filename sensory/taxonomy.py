@@ -149,12 +149,31 @@ SYSTEM_KINDS: Dict[str, KindSpec] = {
 }
 
 
+# ──────────────────────────────────────────────────────────────────
+# EMAIL — inbound mail seen by IMAP/Proton-Bridge/etc workers.
+# Event-driven: a feed worker writes one row per newly-seen message.
+# ──────────────────────────────────────────────────────────────────
+EMAIL_KINDS: Dict[str, KindSpec] = {
+    "inbound": {
+        "description": "A new message arrived in a watched mailbox. Text = compact summary (From / Subject / snippet); meta carries message_id, mailbox, uid, full headers.",
+        "trigger": "feed worker (e.g. proton_imap) sees UID > last_cursor on poll",
+        "typical_confidence": "1.0",
+    },
+    "thread_update": {
+        "description": "An existing thread received a reply. Text = compact summary; meta links to the thread anchor.",
+        "trigger": "feed worker detects new message in thread already on the bus (deferred)",
+        "typical_confidence": "1.0",
+    },
+}
+
+
 SOURCES: Dict[str, Dict[str, KindSpec]] = {
     "camera":    CAMERA_KINDS,
     "screen":    SCREEN_KINDS,
     "mic":       MIC_KINDS,
     "clipboard": CLIPBOARD_KINDS,
     "system":    SYSTEM_KINDS,
+    "email":     EMAIL_KINDS,
 }
 
 

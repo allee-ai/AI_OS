@@ -34,6 +34,13 @@ from sensory.schema import (  # noqa: E402
 )
 
 
+# Map (source, feed_kind) → sensory kinds that workers in this category write.
+# Used by --enable --with-consent to auto-grant consent for a feed's writes.
+_FEED_WRITES = {
+    ("email", "imap"): ["inbound"],
+}
+
+
 def cmd_list() -> int:
     init_sensory_feeds_table()
     feeds = get_feeds()
@@ -76,13 +83,38 @@ def cmd_register(source: str, kind: str, name: str, config_json: str, enabled: b
     return 0
 
 
-def cmd_set_enabled(feed_id: int, enabled: bool) -> int:
+def cmd_set_enabled(feed_id: int, enabled: bool, with_consent: bool = False) -> int:
     init_sensory_feeds_table()
-    if set_feed_enabled(feed_id, enabled):
-        print(f"feed #{feed_id} {'enabled' if enabled else 'disabled'}")
-        return 0
-    print(f"feed #{feed_id} not found", file=sys.stderr)
-    return 1
+    if not set_feed_enabled(feed_id, enabled):
+        print(f"feed #{feed_id} not found", file=sys.stderr)
+        return 1
+    print(f"feed #{feed_id} {'enabled' if enabled else 'disabled'}")
+
+    if with_consent:
+        # Look up the feed to learn its (source, feed_kind), then grant consent
+        # for each sensory kind this category of worker writes.
+        from sensory.consent import set_consent
+        feeds = [f for f in get_feeds() if f["id"] == feed_id]
+        if not feeds:
+            return 0
+        f = feeds[0]
+        kinds = _FEED_WRITES.get((f["source"], f["feed_kind"]))
+        if not kinds:
+            print(
+                f"  (no auto-consent mapping for {f['source']}/{f['feed_kind']}; "
+                "grant consent manually if needed)",
+                file=sys.stderr,
+            )
+            return 0
+        for k in kinds:
+            res = set_consent(
+                f["source"], k, enabled,
+                actor="cli:sensory_feeds",
+                notes=f"auto-grant on feed #{feed_id} {'enable' if enabled else 'disable'}",
+            )
+            tag = "granted" if enabled else "revoked"
+            print(f"  consent {tag}: {res['source']}/{res['kind']}")
+    return 0
 
 
 def main() -> int:
@@ -102,6 +134,11 @@ def main() -> int:
         action="store_true",
         help="enable on register (default: register disabled)",
     )
+    ap.add_argument(
+        "--with-consent",
+        action="store_true",
+        help="on --enable/--disable, also flip sensory_consent for the kinds this feed writes",
+    )
     args = ap.parse_args()
 
     if args.list:
@@ -114,9 +151,9 @@ def main() -> int:
             args.source, args.kind, args.name, args.config, args.start_enabled
         )
     if args.enable is not None:
-        return cmd_set_enabled(args.enable, True)
+        return cmd_set_enabled(args.enable, True, with_consent=args.with_consent)
     if args.disable is not None:
-        return cmd_set_enabled(args.disable, False)
+        return cmd_set_enabled(args.disable, False, with_consent=args.with_consent)
     return 0
 
 
