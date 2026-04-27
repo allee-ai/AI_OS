@@ -140,12 +140,31 @@ class OllamaProvider(LLMProvider):
         except ImportError:
             raise RuntimeError("ollama not installed. Run: pip install ollama")
 
+        # Cloud Ollama (https://ollama.com) — same protocol, just an auth
+        # header. Trigger: OLLAMA_HOST set to a non-localhost URL OR
+        # OLLAMA_API_KEY present. Falls back to bare module call (default
+        # localhost daemon) when neither is set.
+        host = os.getenv("OLLAMA_HOST", "").strip()
+        api_key = os.getenv("OLLAMA_API_KEY", "").strip()
         try:
-            response = _ollama.chat(
-                model=model,
-                messages=messages,
-                options={"temperature": temperature, "num_predict": max_tokens},
-            )
+            if host or api_key:
+                client_kwargs: Dict[str, Any] = {}
+                if host:
+                    client_kwargs["host"] = host
+                if api_key:
+                    client_kwargs["headers"] = {"Authorization": f"Bearer {api_key}"}
+                client = _ollama.Client(**client_kwargs)
+                response = client.chat(
+                    model=model,
+                    messages=messages,
+                    options={"temperature": temperature, "num_predict": max_tokens},
+                )
+            else:
+                response = _ollama.chat(
+                    model=model,
+                    messages=messages,
+                    options={"temperature": temperature, "num_predict": max_tokens},
+                )
             return response["message"]["content"].strip()
         except Exception as e:
             try:
@@ -153,7 +172,10 @@ class OllamaProvider(LLMProvider):
                 log_event(
                     event_type="error:model_routing",
                     data=f"Ollama generate failed: {e}",
-                    metadata={"model": model, "provider": "ollama", "error": str(e)},
+                    metadata={
+                        "model": model, "provider": "ollama",
+                        "host": host or "local", "error": str(e),
+                    },
                     source="llm.ollama",
                 )
             except Exception:

@@ -50,8 +50,12 @@ def resolve_role(role: str, legacy_prefix: str = "EXTRACT") -> RoleConfig:
         4. hard-coded boot defaults
 
     *role* should be one of CHAT, NAMING, SUMMARY, MEMORY,
-    CONSOLIDATION, THOUGHT, CONVO_CONCEPTS, GOAL, TASK_PLANNER,
+    CONSOLIDATION, THOUGHT, CONVO_CONCEPTS, GOAL, TASK_PLANNER, WORKER,
     SELF_IMPROVE, DEMO_AUDIT, WORKSPACE_QA, TRAINING_GEN, EVOLVE, SYNC.
+
+    WORKER is the per-step executor inside the task planner. The
+    convention is PLANNER=large (decomposes), WORKER=small/cloud
+    (executes each step), SYNTHESIZER=PLANNER again.
     Unknown roles still work — they just skip straight to the legacy tier.
 
     Pass legacy_prefix="" to disable the legacy tier (e.g. for CHAT/NAMING
@@ -90,7 +94,7 @@ def resolve_debug() -> dict:
     roles = [
         "CHAT", "NAMING", "SUMMARY",
         "MEMORY", "CONSOLIDATION", "THOUGHT", "CONVO_CONCEPTS",
-        "GOAL", "TASK_PLANNER", "SELF_IMPROVE", "DEMO_AUDIT",
+        "GOAL", "TASK_PLANNER", "WORKER", "SELF_IMPROVE", "DEMO_AUDIT",
         "WORKSPACE_QA", "TRAINING_GEN", "EVOLVE", "SYNC",
     ]
     out = {}
