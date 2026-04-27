@@ -538,8 +538,45 @@ def record_cooccurrence(key_a: str, key_b: str) -> None:
                 count = count + 1,
                 last_seen = CURRENT_TIMESTAMP
         """, (key_a, key_b))
-        
+
+
+def record_cooccurrence_batch(pairs):
+    """Record many key-pair co-occurrences in a single transaction.
+
+    Args:
+        pairs: iterable of (key_a, key_b) tuples. Order normalised internally.
+
+    Returns:
+        Number of upserts attempted (after dedup of identical pairs in input).
+    """
+    seen = set()
+    canonical = []
+    for a, b in pairs:
+        if not a or not b or a == b:
+            continue
+        if a > b:
+            a, b = b, a
+        if (a, b) in seen:
+            continue
+        seen.add((a, b))
+        canonical.append((a, b))
+    if not canonical:
+        return 0
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        init_cooccurrence_table(conn)
+        cur.executemany(
+            """
+            INSERT INTO key_cooccurrence (key_a, key_b, count)
+            VALUES (?, ?, 1)
+            ON CONFLICT(key_a, key_b) DO UPDATE SET
+                count = count + 1,
+                last_seen = CURRENT_TIMESTAMP
+            """,
+            canonical,
+        )
         conn.commit()
+    return len(canonical)
 
 
 def record_concept_cooccurrence(concepts: List[str], learning_rate: float = 0.1) -> int:

@@ -46,6 +46,7 @@ from .schema import (
     # Co-occurrence
     get_cooccurrence_score,
     record_cooccurrence,
+    record_cooccurrence_batch,
     record_concept_cooccurrence,
     # Fact retrieval
     get_keys_for_concepts,
@@ -82,6 +83,7 @@ __all__ = [
     "extract_concepts_from_value",
     "get_cooccurrence_score",
     "record_cooccurrence",
+    "record_cooccurrence_batch",
     "record_concept_cooccurrence",
     "get_keys_for_concepts",
     "index_key_in_concept_graph",

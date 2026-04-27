@@ -30,6 +30,7 @@ Architecture:
 from typing import Dict, List, Any, Optional, Tuple
 from datetime import datetime, timezone
 import json
+import re
 
 
 # Thread list - linking_core included for UI visibility
@@ -47,6 +48,42 @@ SCORE_THRESHOLDS = {
     "L2": 7.0,   # 3.5 - 7: L2 (medium)
     "L3": 10.0,  # 7 - 10: L3 (full)
 }
+
+# ---------------------------------------------------------------------------
+# Co-activation extraction (used by build_state to feed key_cooccurrence)
+# ---------------------------------------------------------------------------
+
+# Matches a leading namespaced fact key like:
+#   identity.primary_user.name: ...
+#   goals.open.#32 [H]: ...
+#   docs.agent/threads/linking_core/IMPLEMENTATION.md: ...
+# Skips:
+#   "  - rule lines"
+#   "  context_level: 3"   (no dot in token)
+#   "[identity] header"
+_FACT_KEY_RE = re.compile(r"^\s*([a-z_][a-z_]*\.[A-Za-z0-9_./#\-]+)(?=[\s:\[]|$)")
+
+# Cap how many keys we record co-activations for in a single turn.
+# 80 keys → ~3160 pairs, well within a fast single-transaction batch.
+_MAX_COACTIVATION_KEYS = 80
+
+
+def _extract_fact_keys(lines: List[str]) -> List[str]:
+    """Pull namespaced fact keys from STATE lines, in order, deduped."""
+    seen = set()
+    keys: List[str] = []
+    for line in lines:
+        m = _FACT_KEY_RE.match(line)
+        if not m:
+            continue
+        k = m.group(1)
+        if k in seen:
+            continue
+        seen.add(k)
+        keys.append(k)
+        if len(keys) >= _MAX_COACTIVATION_KEYS:
+            break
+    return keys
 
 # Context-window aware budget allocation.
 # Total STATE budget = STATE_FRACTION of the target context window.
@@ -245,7 +282,7 @@ class Subconscious:
 
         return scores
     
-    def build_state(self, scores: Dict[str, float], query: str = "") -> str:
+    def build_state(self, scores: Dict[str, float], query: str = "", record_activations: bool = True) -> str:
         """
         Build STATE block from scored threads AND modules.
         
@@ -259,6 +296,10 @@ class Subconscious:
         Args:
             scores: Source relevance scores from score()
             query: Optional query for filtering
+            record_activations: When True (default), record namespaced fact
+                keys that co-appeared in this STATE into key_cooccurrence.
+                Pass False for previews / hypothetical builds (dashboard,
+                debugging) so they don't pollute Hebbian counts.
         
         Returns:
             Formatted STATE block string
@@ -336,7 +377,31 @@ class Subconscious:
 
         lines.append("")
         lines.append("== END STATE ==")
-        
+
+        # Hebbian co-activation: every fact_key that lit up in this STATE is a
+        # co-activation event. Pair them up and increment counts in
+        # key_cooccurrence so the relevance scorer learns from real STATE
+        # assembly, not from a separate text-extraction pipeline.
+        if record_activations:
+            try:
+                fact_keys = _extract_fact_keys(lines)
+                if len(fact_keys) >= 2:
+                    pairs = [
+                        (fact_keys[i], fact_keys[j])
+                        for i in range(len(fact_keys))
+                        for j in range(i + 1, len(fact_keys))
+                    ]
+                    from agent.threads.linking_core import record_cooccurrence_batch
+                    n_recorded = record_cooccurrence_batch(pairs)
+                    trace_bus.publish(
+                        "cooccurrence_recorded",
+                        keys=len(fact_keys),
+                        pairs=n_recorded,
+                    )
+            except Exception as e:
+                # Never let co-activation recording break STATE assembly
+                trace_bus.publish("cooccurrence_error", error=str(e)[:200])
+
         self._last_context_time = datetime.now(timezone.utc).isoformat()
         self._last_query = query
         
@@ -986,7 +1051,7 @@ class Subconscious:
         sending anything to the LLM. Used by the dashboard test panel.
         """
         scores = self.score(query)
-        state_block = self.build_state(scores, query)
+        state_block = self.build_state(scores, query, record_activations=False)
         # Rough token estimate: ~0.75 tokens per word
         token_est = len(state_block.split()) * 0.75
         budgets = allocate_budgets(scores)

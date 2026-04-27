@@ -204,7 +204,28 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         # Always explain what linking_core does
         facts.append("linking_core.function: Scores facts by relevance using spread activation")
         facts.append("linking_core.mechanism: Extracts concepts from query, finds connected concepts in graph")
-        
+
+        # Top co-activated fact-key pairs from key_cooccurrence.
+        # These are namespaced keys that lit up TOGETHER in past STATE
+        # assemblies — Hebbian signal at the level the system actually
+        # operates on (not raw text). Surfaced at every level because
+        # this is the substrate of learned associations.
+        try:
+            from data.db import get_connection
+            from contextlib import closing
+            with closing(get_connection(readonly=True)) as conn:
+                cur = conn.cursor()
+                cur.execute(
+                    "SELECT key_a, key_b, count FROM key_cooccurrence "
+                    "WHERE count >= 2 "
+                    "ORDER BY count DESC, last_seen DESC LIMIT 5"
+                )
+                rows = cur.fetchall()
+            for ka, kb, n in rows:
+                facts.append(f"linking_core.cooccur.{ka}__{kb}: fired_together={n}")
+        except Exception:
+            pass
+
         if level >= 2:
             # Add graph stats
             try:
@@ -214,6 +235,7 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
                 facts.append(f"linking_core.links: {stats.get('link_count', 0)}")
             except Exception:
                 pass
+
             
             # Show current focus topics (self-attention)
             try:
