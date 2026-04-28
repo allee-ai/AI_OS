@@ -32,6 +32,7 @@ class ToolCategory(Enum):
     FILES = "files"
     AUTOMATION = "automation"
     INTERNAL = "internal"
+    INTROSPECTION = "introspection"
     MCP = "mcp"
 
 
@@ -376,6 +377,19 @@ TOOLS: List[ToolDefinition] = [
         requires_env=[],
         weight=0.6,
     ),
+
+    # --- Introspection (self-as-read) -------------------------------------
+    ToolDefinition(
+        name="read_me",
+        description="Read-only sense for examining my own running state. Use when STATE doesn't already surface what I need: services/loops, tools catalog, thread health, recent events, full identity+affect, goals, errors, or workspace surface.",
+        category=ToolCategory.INTROSPECTION,
+        actions=["services", "tools", "threads", "recent", "self", "goals", "errors", "surface"],
+        run_file="read_me.py",
+        run_type=RunType.PYTHON,
+        requires_env=[],
+        weight=0.6,
+        enabled=True,
+    ),
 ]
 
 
@@ -443,6 +457,7 @@ SAFE_ACTIONS: Dict[str, List[str]] = {
     "cli_command": ["run", "list_commands", "help"],
     "notify": ["alert", "remind", "confirm", "list", "dismiss"],
     "code_edit": ["read_file", "search_code", "list_files"],
+    "read_me": ["services", "tools", "threads", "recent", "self", "goals", "errors", "surface"],
 }
 
 # Actions that are blocked by default (require user to toggle allowed)
@@ -549,6 +564,16 @@ _ACTION_PARAM_SCHEMAS: Dict[str, Dict[str, str]] = {
     "workspace_write__move_file":       {"old_path": "Current path of file/folder to move",
                                          "new_path": "Destination path (e.g. /organized/file.txt)"},
     "workspace_write__delete_file":     {"path": "File or folder path to delete from workspace DB"},
+    # read_me (introspection sense — all read-only)
+    "read_me__services":  {},
+    "read_me__tools":     {},
+    "read_me__threads":   {},
+    "read_me__recent":    {"n": "Number of events (default 20, max 50)",
+                           "event_type": "Optional event_type prefix to filter"},
+    "read_me__self":      {},
+    "read_me__goals":     {},
+    "read_me__errors":    {"n": "Number of error events (default 20, max 50)"},
+    "read_me__surface":   {},
 }
 
 
