@@ -131,7 +131,7 @@ def _services(params: dict) -> str:
 
     # Loop heartbeats from unified_events (event_type starts with 'loop:')
     loop_rows = _try_query(
-        "SELECT event_type, MAX(created_at) as last_ts, COUNT(*) as n "
+        "SELECT event_type, MAX(timestamp) as last_ts, COUNT(*) as n "
         "FROM unified_events WHERE event_type LIKE 'loop:%' "
         "GROUP BY event_type ORDER BY event_type"
     )
@@ -144,15 +144,15 @@ def _services(params: dict) -> str:
 
     # Recent service-level errors
     err_rows = _try_query(
-        "SELECT event_type, data, created_at FROM unified_events "
+        "SELECT event_type, data, timestamp FROM unified_events "
         "WHERE event_type LIKE 'error:%' OR event_type LIKE 'warn:%' "
-        "ORDER BY created_at DESC LIMIT 5"
+        "ORDER BY timestamp DESC LIMIT 5"
     )
     if err_rows:
         lines.append("  recent_errors:")
         for r in err_rows:
             d = (r["data"] or "")[:80].replace("\n", " ")
-            lines.append(f"    [{_age(r['created_at']):>6}] {r['event_type']}: {d}")
+            lines.append(f"    [{_age(r['timestamp']):>6}] {r['event_type']}: {d}")
 
     return "\n".join(lines)
 
@@ -228,15 +228,15 @@ def _recent(params: dict) -> str:
     event_type = params.get("event_type", "")
     if event_type:
         rows = _try_query(
-            "SELECT event_type, data, source, created_at FROM unified_events "
-            "WHERE event_type LIKE ? ORDER BY created_at DESC LIMIT ?",
+            "SELECT event_type, data, source, timestamp FROM unified_events "
+            "WHERE event_type LIKE ? ORDER BY timestamp DESC LIMIT ?",
             (f"{event_type}%", n),
         )
         header = f"[recent] last {n} events matching '{event_type}*'"
     else:
         rows = _try_query(
-            "SELECT event_type, data, source, created_at FROM unified_events "
-            "ORDER BY created_at DESC LIMIT ?",
+            "SELECT event_type, data, source, timestamp FROM unified_events "
+            "ORDER BY timestamp DESC LIMIT ?",
             (n,),
         )
         header = f"[recent] last {n} events"
@@ -246,7 +246,7 @@ def _recent(params: dict) -> str:
     for r in rows:
         d = (r["data"] or "")[:80].replace("\n", " ")
         src = (r["source"] or "")[:14]
-        lines.append(f"  [{_age(r['created_at']):>6}] {r['event_type']:24} <{src}> {d}")
+        lines.append(f"  [{_age(r['timestamp']):>6}] {r['event_type']:24} <{src}> {d}")
     return "\n".join(lines)
 
 
@@ -288,29 +288,32 @@ def _self(params: dict) -> str:
 
 
 def _goals(params: dict) -> str:
-    """Open and recent goals."""
+    """Open and recent goals (from proposed_goals table)."""
     rows = _try_query(
-        "SELECT id, status, priority, title, created_at FROM goals "
+        "SELECT id, status, priority, goal, risk FROM proposed_goals "
         "WHERE status IN ('pending','approved','in_progress','paused') "
-        "ORDER BY priority DESC, id"
+        "ORDER BY "
+        "  CASE priority WHEN 'urgent' THEN 0 WHEN 'high' THEN 1 "
+        "               WHEN 'medium' THEN 2 WHEN 'low' THEN 3 ELSE 4 END, "
+        "  id DESC"
     )
     lines = [f"[goals] {len(rows)} open"]
     for r in rows:
-        title = (r["title"] or "")[:80]
-        lines.append(f"  #{r['id']} [{r['status']:11}] p={r['priority']} {title}")
+        title = (r["goal"] or "")[:80]
+        risk = f" risk={r['risk']}" if r["risk"] else ""
+        lines.append(f"  #{r['id']} [{r['status']:11}] {r['priority']:6}{risk}: {title}")
     if not rows:
         lines.append("  (none open)")
 
-    # Recent closed
     closed = _try_query(
-        "SELECT id, status, title FROM goals "
+        "SELECT id, status, goal FROM proposed_goals "
         "WHERE status IN ('completed','rejected','dismissed') "
         "ORDER BY id DESC LIMIT 5"
     )
     if closed:
         lines.append("  recently closed:")
         for r in closed:
-            lines.append(f"    #{r['id']} [{r['status']}] {(r['title'] or '')[:60]}")
+            lines.append(f"    #{r['id']} [{r['status']}] {(r['goal'] or '')[:60]}")
     return "\n".join(lines)
 
 
@@ -319,10 +322,10 @@ def _errors(params: dict) -> str:
     n = int(params.get("n", 20))
     n = max(1, min(n, 50))
     rows = _try_query(
-        "SELECT event_type, data, source, created_at FROM unified_events "
+        "SELECT event_type, data, source, timestamp FROM unified_events "
         "WHERE event_type LIKE 'error:%' OR event_type LIKE 'warn:%' "
         "OR event_type LIKE 'fail:%' "
-        "ORDER BY created_at DESC LIMIT ?",
+        "ORDER BY timestamp DESC LIMIT ?",
         (n,),
     )
     if not rows:
@@ -331,7 +334,7 @@ def _errors(params: dict) -> str:
     for r in rows:
         d = (r["data"] or "")[:120].replace("\n", " ")
         src = (r["source"] or "")[:14]
-        lines.append(f"  [{_age(r['created_at']):>6}] {r['event_type']:20} <{src}> {d}")
+        lines.append(f"  [{_age(r['timestamp']):>6}] {r['event_type']:20} <{src}> {d}")
     return "\n".join(lines)
 
 
