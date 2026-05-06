@@ -571,6 +571,15 @@ def run_once() -> Dict[str, Any]:
     summary["facts_decayed"] = maybe_decay_facts()
     summary["fts_added"] = refresh_recall_index()
     summary["seq_mined"] = maybe_mine_sequences()
+    summary["slots_touched"] = _refresh_slots_safe()
+    if _HEARTBEAT_COUNT == 0 or _HEARTBEAT_COUNT % 12 == 0:
+        summary["seq_predictions_added"] = _register_seq_predictions_safe()
+    else:
+        summary["seq_predictions_added"] = 0
+    if _HEARTBEAT_COUNT == 0 or _HEARTBEAT_COUNT % 6 == 0:
+        summary["contradictions_emitted"] = _emit_contradictions_safe()
+    else:
+        summary["contradictions_emitted"] = 0
     fp = detect_state_change()
     summary["state_changed"] = bool(fp)
     if fp:
@@ -578,6 +587,32 @@ def run_once() -> Dict[str, Any]:
 
     _LAST_RUN_SUMMARY = summary
     return summary
+
+
+def _refresh_slots_safe() -> int:
+    try:
+        from agent.subconscious.slots import refresh_slots
+        return refresh_slots()
+    except Exception:
+        return 0
+
+
+def _register_seq_predictions_safe() -> int:
+    try:
+        from agent.subconscious.seq_predictions import mine_and_register
+        return mine_and_register()
+    except Exception:
+        return 0
+
+
+def _emit_contradictions_safe() -> int:
+    try:
+        from agent.threads.philosophy.contradictions import (
+            emit_contradiction_meta_thoughts,
+        )
+        return emit_contradiction_meta_thoughts()
+    except Exception:
+        return 0
 
 
 def last_summary() -> Dict[str, Any]:

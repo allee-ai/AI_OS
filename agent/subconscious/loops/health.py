@@ -94,6 +94,12 @@ class HealthLoop(BackgroundLoop):
                     bits.append(f"fts+={csum['fts_added']}")
                 if csum.get("seq_mined"):
                     bits.append("seq=yes")
+                if csum.get("slots_touched"):
+                    bits.append(f"slots+={csum['slots_touched']}")
+                if csum.get("seq_predictions_added"):
+                    bits.append(f"seq_pred+={csum['seq_predictions_added']}")
+                if csum.get("contradictions_emitted"):
+                    bits.append(f"contra={csum['contradictions_emitted']}")
                 if csum.get("state_changed"):
                     bits.append(f"state_fp={csum.get('state_fp', '')}")
                 self_info = csum.get("self") or {}

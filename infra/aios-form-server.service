@@ -1,0 +1,26 @@
+[Unit]
+Description=AIOS form-server (Proton SMTP submission relay)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=root
+Group=root
+WorkingDirectory=/opt/aios-form-server
+EnvironmentFile=/etc/aios/form-server.env
+ExecStart=/opt/aios-form-server/venv/bin/python /opt/aios-form-server/form_server_droplet.py
+Restart=on-failure
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+# Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/var/log
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

@@ -712,6 +712,12 @@ class LogThreadAdapter(BaseThreadAdapter):
                         bits.append(f"pruned={cs['graph_pruned']}")
                     if cs.get("fts_added"):
                         bits.append(f"fts+={cs['fts_added']}")
+                    if cs.get("slots_touched"):
+                        bits.append(f"slots+={cs['slots_touched']}")
+                    if cs.get("seq_predictions_added"):
+                        bits.append(f"seq_pred+={cs['seq_predictions_added']}")
+                    if cs.get("contradictions_emitted"):
+                        bits.append(f"contra={cs['contradictions_emitted']}")
                     if cs.get("state_changed"):
                         bits.append(f"state_fp={cs.get('state_fp', '')}")
                     if bits:

@@ -1,0 +1,60 @@
+# Caddy site template for static apex domains hosted on the AI_OS droplet.
+#
+# Usage:
+#   1. Copy this block into /etc/caddy/Caddyfile on the droplet
+#   2. Replace EVERY occurrence of <DOMAIN> with the apex domain (e.g. allee-ai.com)
+#   3. Ensure /var/www/<DOMAIN>/public exists and contains index.html
+#   4. sudo caddy validate --config /etc/caddy/Caddyfile
+#   5. sudo systemctl reload caddy
+#
+# Caddy auto-issues + auto-renews Let's Encrypt certs for any domain whose
+# A record points at this droplet. No certbot needed.
+#
+# DNS prerequisites at Namecheap (per domain):
+#   A   @     24.144.115.72
+#   A   www   24.144.115.72
+#
+# The www → apex redirect is handled inside the block.
+
+<DOMAIN>, www.<DOMAIN> {
+    root * /var/www/<DOMAIN>/public
+    encode gzip zstd
+
+    # Redirect www to apex (canonical)
+    @www host www.<DOMAIN>
+    redir @www https://<DOMAIN>{uri} permanent
+
+    # Cache static assets for a week
+    @static {
+        path *.css *.js *.png *.jpg *.jpeg *.gif *.ico *.svg *.woff *.woff2
+    }
+    header @static Cache-Control "public, max-age=604800, immutable"
+
+    # Never cache service workers
+    @sw path /mobile-demo-sw.js *-sw.js /sw.js
+    header @sw Cache-Control "no-cache, no-store, must-revalidate"
+
+    # CSV files served as text with short cache (hire.html / marketplace.html)
+    @csv path *.csv
+    header @csv Content-Type "text/csv; charset=utf-8"
+    header @csv Cache-Control "public, max-age=300"
+
+    # Security headers (safe defaults for a static site)
+    header {
+        X-Content-Type-Options "nosniff"
+        X-Frame-Options "SAMEORIGIN"
+        Referrer-Policy "strict-origin-when-cross-origin"
+        # Remove the Server header so we don't advertise Caddy version
+        -Server
+    }
+
+    # Try /foo, /foo/, /foo.html, then 404 (matches GitHub Pages behavior)
+    try_files {path} {path}/ {path}.html
+
+    file_server
+
+    log {
+        output file /var/log/caddy/<DOMAIN>.log
+        format console
+    }
+}

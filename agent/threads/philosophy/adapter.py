@@ -174,6 +174,20 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
                     lines.append(f"  recently_invoked: {', '.join(parts)}")
             except Exception:
                 pass
+            # Contradictions: same key, different value across profiles.
+            try:
+                from agent.threads.philosophy.contradictions import (
+                    contradictions_summary,
+                )
+                cs = contradictions_summary()
+                if cs.get("n_contradictions"):
+                    keys = ", ".join(cs.get("top_keys") or [])
+                    lines.append(
+                        f"  contradictions: {cs['n_contradictions']} "
+                        f"(top_tension={cs['top_tension']}; keys: {keys})"
+                    )
+            except Exception:
+                pass
             return lines
         except Exception:
             return []
