@@ -388,6 +388,16 @@ def _build_entity_registry() -> Tuple[Dict[str, List[str]], set]:
         for (key,) in rows:
             names.add(key)
 
+        # Philosophy stance keys (parallel first-class thread)
+        try:
+            rows = conn.execute(
+                "SELECT DISTINCT key FROM philosophy_profile_facts"
+            ).fetchall()
+            for (key,) in rows:
+                names.add(key)
+        except Exception:
+            pass  # table may not exist yet
+
         # Profiles
         rows = conn.execute("SELECT profile_id, display_name FROM profiles").fetchall()
         for pid, dname in rows:
