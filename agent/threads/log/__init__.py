@@ -25,6 +25,7 @@ from .schema import (
     # Table init
     init_event_log_table,
     init_log_module_table,
+    init_task_queue_table,
     # Event operations
     log_event,
     get_events,
@@ -33,6 +34,14 @@ from .schema import (
     get_user_timeline,
     get_system_log,
     search_events,
+    # Task queue
+    enqueue_task,
+    claim_next_task,
+    complete_task,
+    fail_task,
+    list_pending_tasks,
+    list_recent_tasks,
+    task_counts,
     # Log module operations
     pull_log_events,
     push_log_entry,

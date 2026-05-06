@@ -57,19 +57,181 @@ def init_event_log_table(conn: Optional[sqlite3.Connection] = None) -> None:
             
             -- Optional linking
             related_key TEXT,
-            related_table TEXT
+            related_table TEXT,
+
+            -- Thread + tag layer (added 2026-04-29 for timeline queries + training data)
+            thread_subject TEXT,
+            tags_json TEXT
         )
     """)
-    
+
+    # Idempotent migration: add columns if table predates them
+    cur.execute("PRAGMA table_info(unified_events)")
+    existing_cols = {row[1] for row in cur.fetchall()}
+    if "thread_subject" not in existing_cols:
+        cur.execute("ALTER TABLE unified_events ADD COLUMN thread_subject TEXT")
+    if "tags_json" not in existing_cols:
+        cur.execute("ALTER TABLE unified_events ADD COLUMN tags_json TEXT")
+
     # Indexes for fast queries
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_type ON unified_events(event_type)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_time ON unified_events(timestamp DESC)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_session ON unified_events(session_id)")
     cur.execute("CREATE INDEX IF NOT EXISTS idx_events_source ON unified_events(source)")
-    
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_events_thread ON unified_events(thread_subject)")
+
     if own_conn:
         conn.commit()
         conn.close()
+
+
+def init_task_queue_table(conn: Optional[sqlite3.Connection] = None) -> None:
+    """Create the task_queue table.
+
+    A task is a structured request for the AIOS subconscious (or a worker)
+    to do *one unit of thinking* via cloud LLM. The Copilot agent (or any
+    surface) drops a row in `pending`. A worker claims it, runs it, writes
+    result/cost/error back. Status flows:
+        pending -> running -> done | failed | rate_limited
+    """
+    own_conn = conn is None
+    conn = conn or get_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        CREATE TABLE IF NOT EXISTS task_queue (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            kind TEXT NOT NULL,                    -- e.g. 'summarize', 'extract', 'plan', 'classify'
+            prompt TEXT NOT NULL,
+            role TEXT DEFAULT 'PLANNER',           -- maps to agent.services.role_model
+            params_json TEXT,                      -- max_tokens, temperature, system, etc.
+            requested_by TEXT DEFAULT 'copilot',   -- who queued it
+            business_id TEXT,                      -- multi-tenant tag (vanguard, aios, etc.)
+            status TEXT DEFAULT 'pending',         -- pending|running|done|failed|rate_limited
+            result TEXT,
+            error TEXT,
+            model_used TEXT,
+            duration_ms INTEGER,
+            tokens_in INTEGER,
+            tokens_out INTEGER,
+            attempts INTEGER DEFAULT 0,
+            created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+            claimed_at TEXT,
+            finished_at TEXT
+        )
+    """)
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_task_status ON task_queue(status, created_at)")
+    cur.execute("CREATE INDEX IF NOT EXISTS idx_task_business ON task_queue(business_id)")
+    if own_conn:
+        conn.commit()
+        conn.close()
+
+
+def enqueue_task(
+    kind: str,
+    prompt: str,
+    role: str = "PLANNER",
+    params: Optional[Dict[str, Any]] = None,
+    requested_by: str = "copilot",
+    business_id: Optional[str] = None,
+) -> int:
+    """Drop a task into the queue. Returns task id."""
+    init_task_queue_table()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("""
+            INSERT INTO task_queue (kind, prompt, role, params_json, requested_by, business_id)
+            VALUES (?, ?, ?, ?, ?, ?)
+        """, (kind, prompt, role, json.dumps(params or {}), requested_by, business_id))
+        conn.commit()
+        return cur.lastrowid
+
+
+def claim_next_task() -> Optional[Dict[str, Any]]:
+    """Atomically claim the oldest pending task. Returns row or None."""
+    init_task_queue_table()
+    with closing(get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("BEGIN IMMEDIATE")
+        row = cur.execute("""
+            SELECT * FROM task_queue
+            WHERE status = 'pending'
+            ORDER BY id ASC LIMIT 1
+        """).fetchone()
+        if not row:
+            conn.commit()
+            return None
+        cur.execute("""
+            UPDATE task_queue
+            SET status = 'running',
+                claimed_at = CURRENT_TIMESTAMP,
+                attempts = attempts + 1
+            WHERE id = ?
+        """, (row["id"],))
+        conn.commit()
+        return dict(row)
+
+
+def complete_task(
+    task_id: int,
+    result: str,
+    model_used: Optional[str] = None,
+    duration_ms: Optional[int] = None,
+    tokens_in: Optional[int] = None,
+    tokens_out: Optional[int] = None,
+) -> None:
+    with closing(get_connection()) as conn:
+        conn.execute("""
+            UPDATE task_queue
+            SET status='done', result=?, model_used=?, duration_ms=?,
+                tokens_in=?, tokens_out=?, finished_at=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (result, model_used, duration_ms, tokens_in, tokens_out, task_id))
+        conn.commit()
+
+
+def fail_task(task_id: int, error: str, rate_limited: bool = False) -> None:
+    status = "rate_limited" if rate_limited else "failed"
+    with closing(get_connection()) as conn:
+        conn.execute("""
+            UPDATE task_queue
+            SET status=?, error=?, finished_at=CURRENT_TIMESTAMP
+            WHERE id=?
+        """, (status, error[:1000], task_id))
+        conn.commit()
+
+
+def list_pending_tasks(limit: int = 20) -> List[Dict[str, Any]]:
+    init_task_queue_table()
+    with closing(get_connection(readonly=True)) as conn:
+        rows = conn.execute("""
+            SELECT id, kind, role, requested_by, business_id, created_at, attempts
+            FROM task_queue WHERE status='pending'
+            ORDER BY id ASC LIMIT ?
+        """, (limit,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def list_recent_tasks(limit: int = 10) -> List[Dict[str, Any]]:
+    init_task_queue_table()
+    with closing(get_connection(readonly=True)) as conn:
+        rows = conn.execute("""
+            SELECT id, kind, status, role, business_id, model_used, duration_ms,
+                   created_at, finished_at,
+                   substr(coalesce(result, error, ''), 1, 120) AS preview
+            FROM task_queue
+            WHERE status IN ('done','failed','rate_limited')
+            ORDER BY id DESC LIMIT ?
+        """, (limit,)).fetchall()
+        return [dict(r) for r in rows]
+
+
+def task_counts() -> Dict[str, int]:
+    init_task_queue_table()
+    with closing(get_connection(readonly=True)) as conn:
+        rows = conn.execute("""
+            SELECT status, COUNT(*) c FROM task_queue GROUP BY status
+        """).fetchall()
+        return {r["status"]: r["c"] for r in rows}
 
 
 def init_system_log_table(conn: Optional[sqlite3.Connection] = None) -> None:
@@ -177,43 +339,72 @@ def log_event(
     source: str = "system",
     session_id: str = None,
     related_key: str = None,
-    related_table: str = None
+    related_table: str = None,
+    thread_subject: str = None,
+    tags: Optional[List[str]] = None,
+    timestamp: Optional[str] = None,
 ) -> int:
     """
     Log an event to the unified timeline.
-    
+
     Args:
         event_type: "convo" | "system" | "user_action" | "file" | "memory" | "activation"
         data: User-facing description (what happened)
         metadata: Program-facing context (why/how, internal state)
-        source: Where this came from ("local", "web_public", "daemon", "agent")
+        source: "system" | "machine" | "user" | "local" | "web_public" | "daemon" | "agent"
         session_id: Groups related events
         related_key: Optional link to a fact/identity key
         related_table: Optional link to source table
-    
+        thread_subject: Thread/topic this event belongs to (e.g. "jake_retainer").
+            Lets a stored arc be reconstructed via query rather than a metadata blob.
+        tags: Flat list of lightweight tags (e.g. ["jake", "pitch", "money_neg"]).
+            Stored as JSON, queryable via tag-any-match.
+        timestamp: Optional explicit timestamp (ISO string). Used for predated
+            user-added events. If None, defaults to CURRENT_TIMESTAMP.
+
     Returns:
         Event ID
-    
+
     Examples:
-        log_event("convo", "Conversation started with Jordan", 
+        log_event("convo", "Conversation started with Jordan",
                   {"context_level": 2}, source="local", session_id="abc123")
-        
-        log_event("memory", "Learned: Sarah likes coffee",
-                  {"hier_key": "sarah.likes.coffee", "score": 0.72}, 
-                  related_key="sarah.likes.coffee")
+
+        log_event("milestone", "pitch 2 sent to jake",
+                  thread_subject="jake_retainer",
+                  tags=["jake", "pitch_sent", "money_neg"],
+                  source="machine")
+
+        # User-added predated event (factual history recall)
+        log_event("user_action", "sent retainer pitch v1",
+                  thread_subject="jake_retainer",
+                  tags=["jake", "pitch_sent"],
+                  source="user",
+                  timestamp="2026-04-28T19:03:00")
     """
     with closing(get_connection()) as conn:
         cur = conn.cursor()
         init_event_log_table(conn)
-        
+
         metadata_json = json.dumps(metadata) if metadata else None
-        
-        cur.execute("""
-            INSERT INTO unified_events 
-            (event_type, data, metadata_json, source, session_id, related_key, related_table)
-            VALUES (?, ?, ?, ?, ?, ?, ?)
-        """, (event_type, data, metadata_json, source, session_id, related_key, related_table))
-        
+        tags_json = json.dumps(tags) if tags else None
+
+        if timestamp is not None:
+            cur.execute("""
+                INSERT INTO unified_events
+                (timestamp, event_type, data, metadata_json, source, session_id,
+                 related_key, related_table, thread_subject, tags_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (timestamp, event_type, data, metadata_json, source, session_id,
+                  related_key, related_table, thread_subject, tags_json))
+        else:
+            cur.execute("""
+                INSERT INTO unified_events
+                (event_type, data, metadata_json, source, session_id,
+                 related_key, related_table, thread_subject, tags_json)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+            """, (event_type, data, metadata_json, source, session_id,
+                  related_key, related_table, thread_subject, tags_json))
+
         event_id = cur.lastrowid
         conn.commit()
     return event_id
@@ -224,30 +415,38 @@ def get_events(
     source: str = None,
     session_id: str = None,
     since: str = None,
-    limit: int = 100
+    until: str = None,
+    thread_subject: str = None,
+    tags_any: Optional[List[str]] = None,
+    order: str = "DESC",
+    limit: int = 100,
 ) -> List[Dict[str, Any]]:
     """
     Query events from the unified log.
-    
+
     Args:
         event_type: Filter by type
-        source: Filter by source
+        source: Filter by source ("system" | "machine" | "user" | ...)
         session_id: Filter by session
-        since: ISO timestamp, get events after this time
+        since: ISO timestamp, get events strictly after this time
+        until: ISO timestamp, get events strictly before this time
+        thread_subject: Filter by thread (exact match)
+        tags_any: List of tag strings; matches if event has ANY of them in tags_json
+        order: "DESC" (newest first, default) or "ASC" (chronological reconstruction)
         limit: Max events to return
-    
+
     Returns:
-        List of event dicts with parsed metadata
+        List of event dicts with parsed metadata + tags
     """
     with closing(get_connection(readonly=True)) as conn:
         cur = conn.cursor()
-        
+
         # Ensure table exists
         init_event_log_table(conn)
-        
+
         query = "SELECT * FROM unified_events WHERE 1=1"
-        params = []
-        
+        params: List[Any] = []
+
         if event_type:
             query += " AND event_type = ?"
             params.append(event_type)
@@ -260,26 +459,49 @@ def get_events(
         if since:
             query += " AND timestamp > ?"
             params.append(since)
-        
-        query += " ORDER BY timestamp DESC LIMIT ?"
+        if until:
+            query += " AND timestamp < ?"
+            params.append(until)
+        if thread_subject:
+            query += " AND thread_subject = ?"
+            params.append(thread_subject)
+        if tags_any:
+            # any-match: OR a LIKE per tag against the json string
+            tag_clauses = " OR ".join(["tags_json LIKE ?"] * len(tags_any))
+            query += f" AND ({tag_clauses})"
+            for t in tags_any:
+                # tags are stored as JSON arrays, so look for the quoted string
+                params.append(f'%"{t}"%')
+
+        order_sql = "ASC" if str(order).upper() == "ASC" else "DESC"
+        query += f" ORDER BY timestamp {order_sql} LIMIT ?"
         params.append(limit)
-        
+
         try:
             cur.execute(query, params)
-            
+
             results = []
             for row in cur.fetchall():
                 event = dict(row)
                 if event.get("metadata_json"):
                     try:
                         event["metadata"] = json.loads(event["metadata_json"])
-                    except:
+                    except Exception:
                         event["metadata"] = {}
                 else:
                     event["metadata"] = {}
                 del event["metadata_json"]
+
+                if event.get("tags_json"):
+                    try:
+                        event["tags"] = json.loads(event["tags_json"])
+                    except Exception:
+                        event["tags"] = []
+                else:
+                    event["tags"] = []
+                del event["tags_json"]
                 results.append(event)
-            
+
             return results
         except sqlite3.OperationalError:
             return []

@@ -39,6 +39,11 @@ class EventCreate(BaseModel):
     session_id: Optional[str] = None
     related_key: Optional[str] = None
     related_table: Optional[str] = None
+    # Thread + tag layer
+    thread_subject: Optional[str] = None
+    tags: Optional[List[str]] = None
+    # Predated timestamp (ISO string). When omitted server uses CURRENT_TIMESTAMP.
+    timestamp: Optional[str] = None
 
 
 class LogEntryCreate(BaseModel):
@@ -64,30 +69,41 @@ async def list_events(
     source: Optional[str] = None,
     session_id: Optional[str] = None,
     since: Optional[str] = None,
-    limit: int = Query(100, ge=1, le=1000)
+    until: Optional[str] = None,
+    thread_subject: Optional[str] = None,
+    tag: Optional[List[str]] = Query(None, description="Repeat ?tag=foo&tag=bar for any-match"),
+    order: str = Query("DESC", pattern="^(?i)(ASC|DESC)$"),
+    limit: int = Query(100, ge=1, le=1000),
 ):
     """
     Query events from the unified log.
-    
+
     Filters:
-    - event_type: convo, system, user_action, file, memory, activation
-    - source: local, web_public, daemon, agent
+    - event_type: convo, system, user_action, file, memory, activation, milestone, ...
+    - source: system | machine | user | local | web_public | daemon | agent | api
     - session_id: Group by session
-    - since: ISO timestamp
+    - since / until: ISO timestamp range
+    - thread_subject: exact match on thread name (e.g. "jake_retainer")
+    - tag: any-match against tags_json (repeatable query param)
+    - order: ASC for chronological reconstruction, DESC for newest-first (default)
     """
     events = get_events(
         event_type=event_type,
         source=source,
         session_id=session_id,
         since=since,
-        limit=limit
+        until=until,
+        thread_subject=thread_subject,
+        tags_any=tag,
+        order=order,
+        limit=limit,
     )
     return {"events": events, "count": len(events)}
 
 
 @router.post("/events")
 async def create_event(event: EventCreate):
-    """Log a new event."""
+    """Log a new event. Supports thread_subject, tags, and predated timestamp."""
     event_id = log_event(
         event_type=event.event_type,
         data=event.data,
@@ -95,7 +111,10 @@ async def create_event(event: EventCreate):
         source=event.source,
         session_id=event.session_id,
         related_key=event.related_key,
-        related_table=event.related_table
+        related_table=event.related_table,
+        thread_subject=event.thread_subject,
+        tags=event.tags,
+        timestamp=event.timestamp,
     )
     return {"status": "created", "event_id": event_id}
 
