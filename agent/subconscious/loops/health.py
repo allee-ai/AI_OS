@@ -90,6 +90,12 @@ class HealthLoop(BackgroundLoop):
                     bits.append(f"facts_decayed={csum['facts_decayed']}")
                 if csum.get("compression_written"):
                     bits.append("compression=yes")
+                if csum.get("fts_added"):
+                    bits.append(f"fts+={csum['fts_added']}")
+                if csum.get("seq_mined"):
+                    bits.append("seq=yes")
+                if csum.get("state_changed"):
+                    bits.append(f"state_fp={csum.get('state_fp', '')}")
                 self_info = csum.get("self") or {}
                 if self_info:
                     bits.append(

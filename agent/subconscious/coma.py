@@ -35,7 +35,7 @@ from __future__ import annotations
 import time
 from contextlib import closing
 from datetime import datetime, timezone
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Optional
 
 from data.db import get_connection
 
@@ -50,6 +50,7 @@ _LAST_TOUCH_EVENT_ID = 0
 _LAST_GRAPH_DECAY_AT = 0.0
 _LAST_FACT_DECAY_AT = 0.0
 _LAST_RUN_SUMMARY: Dict[str, Any] = {}
+_LAST_STATE_FINGERPRINT: Optional[str] = None
 
 
 def _now() -> float:
@@ -430,6 +431,116 @@ def maybe_decay_facts() -> int:
 
 
 # ─────────────────────────────────────────────────────────────────────
+# FTS5 recall index — sync new events on the heartbeat
+# ─────────────────────────────────────────────────────────────────────
+
+def refresh_recall_index() -> int:
+    """Incrementally sync unified_events into the FTS5 recall index."""
+    try:
+        from agent.threads.log.recall import ensure_fts_index
+        return ensure_fts_index()
+    except Exception:
+        return 0
+
+
+# ─────────────────────────────────────────────────────────────────────
+# Sequence mining — surface habit patterns
+# ─────────────────────────────────────────────────────────────────────
+
+def maybe_mine_sequences(every_nth: int = 12) -> bool:
+    """Mine event-type n-grams and write a compression meta-thought.
+
+    Runs every Nth heartbeat (default ~1 hour at 5-min cadence).
+    """
+    if _HEARTBEAT_COUNT == 0 or _HEARTBEAT_COUNT % every_nth != 0:
+        return False
+    try:
+        from agent.subconscious.sequences import (
+            mine_sequences, write_sequence_compression,
+        )
+        result = mine_sequences()
+        return write_sequence_compression(result)
+    except Exception:
+        return False
+
+
+# ─────────────────────────────────────────────────────────────────────
+# STATE self-similarity — change detection without an LLM
+# ─────────────────────────────────────────────────────────────────────
+
+def state_fingerprint() -> str:
+    """Cheap deterministic fingerprint of the current high-weight fact set.
+
+    Hashes (profile_id, key, l1_value, weight bucket) for the top
+    profile_facts. Tick-over-tick this changes only when content the
+    agent considers important changes — a structural derivative.
+    """
+    import hashlib
+    h = hashlib.blake2b(digest_size=12)
+    try:
+        with closing(get_connection(readonly=True)) as conn:
+            rows = conn.execute(
+                """
+                SELECT profile_id, key, l1_value, weight
+                FROM profile_facts
+                WHERE protected = 1 OR weight >= 0.5
+                ORDER BY profile_id, key
+                LIMIT 200
+                """
+            ).fetchall()
+            for r in rows:
+                bucket = round(float(r["weight"] or 0.0) * 10) / 10.0
+                h.update(
+                    f"{r['profile_id']}|{r['key']}|{(r['l1_value'] or '')[:120]}|{bucket}\n".encode("utf-8", "ignore")
+                )
+            # Mix in goals open + tasks pending counts so big workflow
+            # shifts also flip the fingerprint.
+            try:
+                gr = conn.execute(
+                    "SELECT COUNT(*) AS n FROM proposed_goals "
+                    "WHERE status IN ('pending','approved','in_progress')"
+                ).fetchone()
+                tr = conn.execute(
+                    "SELECT COUNT(*) AS n FROM task_queue WHERE status='pending'"
+                ).fetchone()
+                h.update(f"goals_open={int(gr['n']) if gr else 0}\n".encode())
+                h.update(f"tasks_pending={int(tr['n']) if tr else 0}\n".encode())
+            except Exception:
+                pass
+    except Exception:
+        return ""
+    return h.hexdigest()
+
+
+def detect_state_change() -> Optional[str]:
+    """Compare current fingerprint to previous; on change emit a
+    meta-thought and return the new fingerprint. Returns None if same."""
+    global _LAST_STATE_FINGERPRINT
+    fp = state_fingerprint()
+    if not fp:
+        return None
+    if _LAST_STATE_FINGERPRINT is None:
+        _LAST_STATE_FINGERPRINT = fp
+        return None  # first run — no prior to compare against
+    if fp == _LAST_STATE_FINGERPRINT:
+        return None
+    prev = _LAST_STATE_FINGERPRINT
+    _LAST_STATE_FINGERPRINT = fp
+    try:
+        from agent.threads.reflex.schema import add_meta_thought
+        add_meta_thought(
+            kind="compression",
+            content=f"state shifted: {prev[:8]} -> {fp[:8]}",
+            source="system",
+            confidence=1.0,
+            weight=0.45,
+        )
+    except Exception:
+        pass
+    return fp
+
+
+# ─────────────────────────────────────────────────────────────────────
 # Tick
 # ─────────────────────────────────────────────────────────────────────
 
@@ -458,6 +569,12 @@ def run_once() -> Dict[str, Any]:
     summary["self"] = update_self_facts()
     summary["graph_pruned"] = maybe_decay_links()
     summary["facts_decayed"] = maybe_decay_facts()
+    summary["fts_added"] = refresh_recall_index()
+    summary["seq_mined"] = maybe_mine_sequences()
+    fp = detect_state_change()
+    summary["state_changed"] = bool(fp)
+    if fp:
+        summary["state_fp"] = fp[:8]
 
     _LAST_RUN_SUMMARY = summary
     return summary
@@ -476,4 +593,8 @@ __all__ = [
     "update_self_facts",
     "maybe_decay_links",
     "maybe_decay_facts",
+    "refresh_recall_index",
+    "maybe_mine_sequences",
+    "state_fingerprint",
+    "detect_state_change",
 ]

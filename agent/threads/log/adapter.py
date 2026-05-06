@@ -710,6 +710,10 @@ class LogThreadAdapter(BaseThreadAdapter):
                         bits.append(f"edges={cs['edges_touched']}")
                     if cs.get("graph_pruned"):
                         bits.append(f"pruned={cs['graph_pruned']}")
+                    if cs.get("fts_added"):
+                        bits.append(f"fts+={cs['fts_added']}")
+                    if cs.get("state_changed"):
+                        bits.append(f"state_fp={cs.get('state_fp', '')}")
                     if bits:
                         lines.append("  coma: " + ", ".join(bits))
             except Exception:
