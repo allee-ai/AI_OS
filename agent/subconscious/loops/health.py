@@ -54,8 +54,55 @@ class HealthLoop(BackgroundLoop):
                     lines.append(f"{name}: {current_status}")
                 
                 self._last_status[name] = current_status
-            
+
+            # ── Predictive pulse ──────────────────────────────────────
+            # Cheap forward-model checks: each registered prediction asks
+            # "what should be true right now?" and emits prediction_error
+            # events when it isn't. Runs every heartbeat. No LLM.
+            try:
+                from agent.subconscious import predictions as _pred
+                violations = _pred.check_all(emit_events=True)
+                if violations:
+                    lines.append(
+                        f"predictions: {len(violations)} violation(s) — "
+                        + ", ".join(f"{v.prediction}({v.severity})" for v in violations[:3])
+                    )
+                else:
+                    lines.append("predictions: ok")
+            except Exception as _pe:
+                lines.append(f"predictions: error: {_pe}")
+
+            # ── Coma-mode programmatic substrate ──────────────────────
+            # Every heartbeat: graph touch from new events, periodic
+            # outcome tally, self-fact refresh, throttled decay. No LLM.
+            # Lets STATE evolve when every loop is gated.
+            try:
+                from agent.subconscious import coma as _coma
+                csum = _coma.run_once()
+                bits = []
+                if csum.get("events_touched"):
+                    bits.append(
+                        f"touched={csum['events_touched']}/edges={csum.get('edges_touched', 0)}"
+                    )
+                if csum.get("graph_pruned"):
+                    bits.append(f"graph_pruned={csum['graph_pruned']}")
+                if csum.get("facts_decayed"):
+                    bits.append(f"facts_decayed={csum['facts_decayed']}")
+                if csum.get("compression_written"):
+                    bits.append("compression=yes")
+                self_info = csum.get("self") or {}
+                if self_info:
+                    bits.append(
+                        f"uptime={self_info.get('uptime_h', 0)}h "
+                        f"hb={self_info.get('heartbeats', 0)}"
+                    )
+                lines.append(
+                    "coma: " + (", ".join(bits) if bits else "idle")
+                )
+            except Exception as _ce:
+                lines.append(f"coma: error: {_ce}")
+
             return "\n".join(lines) if lines else "No threads registered"
-                
+
         except Exception as e:
             return f"Health check error: {e}"
