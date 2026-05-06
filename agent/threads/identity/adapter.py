@@ -347,12 +347,19 @@ class IdentityThreadAdapter(BaseThreadAdapter):
         # Convert 0-10 threshold to 0-1 weight scale
         min_weight = threshold / 10.0
 
+        # When a query is set, pull a larger pool so the relevance boost
+        # has material to rerank — otherwise weight-0.9 facts get evicted
+        # by the top-50 cut before they're ever scored against the query.
+        pool_limit = 200 if query else 50
+
         # Get raw facts with all value tiers
-        raw = self._get_raw_facts(min_weight=min_weight)
+        raw = self._get_raw_facts(min_weight=min_weight, limit=pool_limit)
 
         # If query provided, boost relevant facts via weight bump
         if query:
             raw, relevant_concepts = self._relevance_boost(raw, query)
+            # Re-sort after boost so promoted facts win the budget fill
+            raw.sort(key=lambda f: f.get("weight", 0), reverse=True)
 
         # Pack into token budget at the right detail level
         facts = self._budget_fill(raw, context_level, query=query)
@@ -383,26 +390,42 @@ class IdentityThreadAdapter(BaseThreadAdapter):
             )
 
             query_concepts = extract_concepts_from_text(query)
-            if not query_concepts:
-                return raw_facts, []
-
-            activated = spread_activate(
-                input_concepts=query_concepts,
-                activation_threshold=0.1,
-                max_hops=1,
-                limit=20,
-            )
             relevant = set(query_concepts)
-            for a in activated:
-                relevant.add(a.get("concept", ""))
 
-            # Boost weight of matching facts so they sort first
+            if query_concepts:
+                activated = spread_activate(
+                    input_concepts=query_concepts,
+                    activation_threshold=0.1,
+                    max_hops=1,
+                    limit=20,
+                )
+                for a in activated:
+                    relevant.add(a.get("concept", ""))
+
+            # Literal-token fallback: when the concept graph hasn't yet
+            # learned a query word (new fact, no edges), still let raw
+            # query tokens score against fact text. Keeps newly-written
+            # facts surfaceable on their first mention.
+            import re as _re
+            literal_tokens = {
+                t for t in _re.findall(r"\b[a-z][a-z0-9]{2,}\b", query.lower())
+                if t not in {"the", "and", "for", "what", "who", "how",
+                             "does", "are", "was", "they", "this", "that",
+                             "with", "from", "into", "run", "work", "you",
+                             "your", "have", "has"}
+            }
+            relevant.update(literal_tokens)
+
+            # Boost weight of matching facts so they sort first.
+            # Boost EXCEEDS the natural 1.0 ceiling on purpose: query-
+            # relevant facts must rank above pre-existing weight-1.0 facts
+            # to win the tight budget that the orchestrator imposes.
             for fact in raw_facts:
                 text = f"{fact.get('profile_id', '')} {fact.get('key', '')} " \
                        f"{fact.get('l1_value', '')} {fact.get('l2_value', '')}".lower()
                 for concept in relevant:
-                    if concept.lower() in text:
-                        fact["weight"] = min(1.0, fact.get("weight", 0.5) + 0.3)
+                    if concept and concept.lower() in text:
+                        fact["weight"] = fact.get("weight", 0.5) + 0.5
                         break
 
             return raw_facts, list(relevant)

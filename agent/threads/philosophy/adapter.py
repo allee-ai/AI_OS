@@ -91,30 +91,55 @@ class PhilosophyThreadAdapter(BaseThreadAdapter):
         return [f for f in all_facts if any(x in (f.get('fact_type') or '').lower() for x in ['reasoning', 'style', 'approach'])]
     
     def _filter_by_relevance(self, facts: List[Dict], query: str, top_k: int = 10) -> List[Dict]:
-        """Filter facts by relevance to query using linking_core concepts."""
+        """Filter facts by relevance to query using linking_core concepts.
+
+        Falls back to literal-token matching when the concept graph hasn't
+        yet learned the query terms (e.g. new facts with no edges).
+        """
         if not query or not facts:
             return facts[:top_k]
-        
+
         try:
             query_concepts = extract_concepts_from_text(query)
-            if not query_concepts:
-                return facts[:top_k]
-            
             query_concept_set = set(query_concepts)
+
+            # Literal-token fallback for newly-written facts
+            import re as _re
+            literal_tokens = {
+                t for t in _re.findall(r"\b[a-z][a-z0-9]{2,}\b", query.lower())
+                if t not in {"the", "and", "for", "what", "who", "how",
+                             "does", "are", "was", "they", "this", "that",
+                             "with", "from", "into", "run", "work", "you",
+                             "your", "have", "has"}
+            }
+
             scored = []
-            
             for fact in facts:
-                # Extract concepts from fact content
-                fact_text = f"{fact.get('key', '')} {fact.get('l2_value', '')} {fact.get('l3_value', '')}"
+                fact_text = (
+                    f"{fact.get('key', '')} "
+                    f"{fact.get('l1_value', '')} "
+                    f"{fact.get('l2_value', '')} "
+                    f"{fact.get('l3_value', '')}"
+                ).lower()
+
+                # Concept overlap score
                 fact_concepts = extract_concepts_from_text(fact_text)
-                
-                # Score by concept overlap
-                overlap = len(set(fact_concepts) & query_concept_set)
-                scored.append((overlap, fact))
-            
-            scored.sort(key=lambda x: x[0], reverse=True)
-            return [f for _, f in scored[:top_k]]
-            
+                concept_overlap = len(set(fact_concepts) & query_concept_set)
+
+                # Literal-token overlap (each hit worth 1)
+                literal_overlap = sum(1 for t in literal_tokens if t in fact_text)
+
+                score = concept_overlap * 2 + literal_overlap
+                scored.append((score, fact))
+
+            # Keep only positively-scoring facts; if none, return original head
+            positive = [(s, f) for s, f in scored if s > 0]
+            if not positive:
+                return facts[:top_k]
+
+            positive.sort(key=lambda x: x[0], reverse=True)
+            return [f for _, f in positive[:top_k]]
+
         except Exception:
             return facts[:top_k]
     

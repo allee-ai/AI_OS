@@ -250,7 +250,14 @@ class LogThreadAdapter(BaseThreadAdapter):
                 "weight": 0.8,
             })
 
-        # Events — convert to l1/l2/l3 dicts
+        # Events — convert to l1/l2/l3 dicts. Age-decay weights so an event
+        # from 11 days ago doesn't compete with one from 11 minutes ago.
+        # Half-life = 24h: a day-old event has its weight halved.
+        import math as _math
+        from datetime import datetime as _dt, timezone as _tz
+        _now = _dt.now(_tz.utc)
+        _HALF_LIFE_HOURS = 24.0
+
         events = self.get_recent_events(limit)
         for i, evt in enumerate(events):
             meta = evt.get("metadata", {})
@@ -261,7 +268,7 @@ class LogThreadAdapter(BaseThreadAdapter):
             source = meta.get("source", "")
             data = evt.get("data", {})
             msg = data.get("message", "")
-            timestamp = data.get("timestamp", "")
+            timestamp = data.get("timestamp", "") or evt.get("timestamp", "")
             stored_weight = evt.get("weight", 0.3)
 
             if not msg or stored_weight < min_weight:
@@ -270,6 +277,25 @@ class LogThreadAdapter(BaseThreadAdapter):
             # Blend stored weight with event-type relevance
             type_relevance = EVENT_TYPE_RELEVANCE.get(event_type_clean, 3) / 10.0
             weight = max(stored_weight, type_relevance)
+
+            # Age decay
+            age_hours: Optional[float] = None
+            if timestamp:
+                try:
+                    ts_str = str(timestamp).replace("Z", "+00:00")
+                    if "+" not in ts_str and "T" in ts_str:
+                        ts_str += "+00:00"
+                    ts = _dt.fromisoformat(ts_str)
+                    if ts.tzinfo is None:
+                        ts = ts.replace(tzinfo=_tz.utc)
+                    age_hours = max(0.0, (_now - ts).total_seconds() / 3600.0)
+                except Exception:
+                    age_hours = None
+            if age_hours is not None:
+                decay = _math.exp(-age_hours / _HALF_LIFE_HOURS)
+                weight = weight * decay
+                if weight < min_weight:
+                    continue
 
             raw.append({
                 "path": f"log.events.{i}",
@@ -280,6 +306,61 @@ class LogThreadAdapter(BaseThreadAdapter):
                 ),
                 "weight": weight,
             })
+
+        # Task queue — pending and recently-finished cloud-LLM jobs
+        # queued by Copilot (or any surface) for AIOS to do the thinking.
+        # High weight so they show up in lean STATE too.
+        try:
+            from agent.threads.log.schema import (
+                list_pending_tasks, list_recent_tasks
+            )
+            for t in list_pending_tasks(limit=5):
+                preview = (t.get("kind", "") + ": " + str(t.get("requested_by", "")))
+                raw.append({
+                    "path": f"log.tasks.pending.#{t['id']}",
+                    "l1_value": f"#{t['id']} {t['kind']}",
+                    "l2_value": f"#{t['id']} {t['kind']} (role={t['role']}, by={t['requested_by']})",
+                    "l3_value": (
+                        f"#{t['id']} kind={t['kind']} role={t['role']} "
+                        f"by={t['requested_by']} biz={t.get('business_id') or '-'} "
+                        f"queued={t.get('created_at')} attempts={t.get('attempts',0)}"
+                    ),
+                    "weight": 0.85,
+                })
+            for t in list_recent_tasks(limit=5):
+                status = t.get("status", "?")
+                tag = "[ok]" if status == "done" else f"[{status}]"
+                # Age-decay finished tasks (4h half-life — they're stale fast).
+                # Failures decay slower (24h) so they stay visible.
+                w_base = 0.7 if status == "done" else 0.85
+                fin = t.get("finished_at") or t.get("created_at")
+                if fin:
+                    try:
+                        ts_str = str(fin).replace("Z", "+00:00")
+                        if "+" not in ts_str and "T" in ts_str:
+                            ts_str += "+00:00"
+                        ts = _dt.fromisoformat(ts_str)
+                        if ts.tzinfo is None:
+                            ts = ts.replace(tzinfo=_tz.utc)
+                        age_h = max(0.0, (_now - ts).total_seconds() / 3600.0)
+                        hl = 4.0 if status == "done" else 24.0
+                        w_base *= _math.exp(-age_h / hl)
+                    except Exception:
+                        pass
+                raw.append({
+                    "path": f"log.tasks.recent.#{t['id']}",
+                    "l1_value": f"#{t['id']} {t['kind']} {tag}",
+                    "l2_value": f"#{t['id']} {t['kind']} {tag} -> {t.get('preview','')[:60]}",
+                    "l3_value": (
+                        f"#{t['id']} kind={t['kind']} status={status} "
+                        f"model={t.get('model_used') or '-'} "
+                        f"dur_ms={t.get('duration_ms') or 0} "
+                        f"finished={t.get('finished_at')} :: {t.get('preview','')[:200]}"
+                    ),
+                    "weight": w_base,
+                })
+        except Exception:
+            pass
 
         return raw[:limit]
     
@@ -517,6 +598,120 @@ class LogThreadAdapter(BaseThreadAdapter):
                     lines.append(
                         f"  last_checkpoint: {cp['age_human']} ago [{cp['status_label']}]"
                     )
+            except Exception:
+                pass
+            # Task queue — pending/running cloud-LLM jobs queued by the
+            # Copilot agent (or other surfaces) for AIOS to think on.
+            # Surfacing here means the next turn-start sees what's in flight,
+            # what just finished, and any rate-limit drag.
+            try:
+                from agent.threads.log.schema import task_counts
+                counts = task_counts()
+                if counts:
+                    parts = [f"{k}={v}" for k, v in counts.items()]
+                    lines.append(f"  tasks: {', '.join(parts)}")
+            except Exception:
+                pass
+            # Loop scheduler — single-flight + idle awareness
+            try:
+                from agent.subconscious.loops import scheduler as _sched
+                s = _sched.summary()
+                if s.get("current_loop"):
+                    lines.append(
+                        f"  loop_running: {s['current_loop']} "
+                        f"({s.get('current_age', 0)}s)"
+                    )
+                if s.get("user_active"):
+                    lines.append(
+                        f"  user_active: yes "
+                        f"(idle={int(s.get('user_idle_seconds') or 0)}s)"
+                    )
+                skips = s.get("skip_counts") or {}
+                if skips:
+                    skip_parts = [
+                        f"{n}={c}" for n, c in sorted(
+                            skips.items(), key=lambda kv: -kv[1]
+                        )[:3]
+                    ]
+                    lines.append(f"  loop_skips: {', '.join(skip_parts)}")
+            except Exception:
+                pass
+            # Rate gate — provider cooldowns
+            try:
+                from agent.services import rate_gate as _rg
+                rg = _rg.status()
+                gc = rg.get("global_cooldown_remaining") or 0
+                if gc and gc > 0:
+                    lines.append(f"  global_cooldown: {int(gc)}s")
+                providers = rg.get("providers") or {}
+                cooling = [
+                    (n, p) for n, p in providers.items()
+                    if (p.get("cooldown_remaining") or 0) > 0
+                ]
+                if cooling:
+                    parts = [
+                        f"{n}={int(p['cooldown_remaining'])}s" for n, p in cooling
+                    ]
+                    lines.append(f"  cooling: {', '.join(parts)}")
+                # Total 429s last hour-ish (running counter)
+                total_429 = sum(
+                    int(p.get("total_429s") or 0) for p in providers.values()
+                )
+                if total_429:
+                    lines.append(f"  total_429s_session: {total_429}")
+            except Exception:
+                pass
+            # Predictive reflex — last heartbeat's forward-model violations
+            try:
+                from agent.subconscious import predictions as _pred
+                viols = _pred.last_violations()
+                # Fresh process (e.g. turn_start.py CLI) has no cache —
+                # do a cheap dry-run so STATE always reflects reality.
+                if not viols:
+                    try:
+                        viols = _pred.check_all(emit_events=False)
+                    except Exception:
+                        viols = []
+                if viols:
+                    by_sev: Dict[str, int] = {}
+                    for v in viols:
+                        by_sev[v.severity] = by_sev.get(v.severity, 0) + 1
+                    sev_str = ", ".join(
+                        f"{s}={c}" for s, c in sorted(
+                            by_sev.items(),
+                            key=lambda kv: {"high": 0, "medium": 1, "low": 2}.get(kv[0], 9),
+                        )
+                    )
+                    lines.append(f"  prediction_errors: {len(viols)} ({sev_str})")
+                    # Surface top 3 in detail so the agent can act
+                    for v in viols[:3]:
+                        lines.append(
+                            f"    - [{v.severity}] {v.prediction}: {v.detail[:120]}"
+                        )
+            except Exception:
+                pass
+            # Coma substrate — last heartbeat's programmatic touches.
+            # Surfaces the system breathing without LLM calls.
+            try:
+                from agent.subconscious import coma as _coma
+                cs = _coma.last_summary()
+                if cs:
+                    self_info = cs.get("self") or {}
+                    bits = []
+                    if self_info.get("uptime_h") is not None:
+                        bits.append(f"uptime={self_info['uptime_h']}h")
+                    if self_info.get("heartbeats"):
+                        bits.append(f"hb={self_info['heartbeats']}")
+                    if self_info.get("last_llm_age_h") is not None:
+                        bits.append(f"last_llm={self_info['last_llm_age_h']}h")
+                    if cs.get("events_touched"):
+                        bits.append(f"touched={cs['events_touched']}")
+                    if cs.get("edges_touched"):
+                        bits.append(f"edges={cs['edges_touched']}")
+                    if cs.get("graph_pruned"):
+                        bits.append(f"pruned={cs['graph_pruned']}")
+                    if bits:
+                        lines.append("  coma: " + ", ".join(bits))
             except Exception:
                 pass
             # Session topic — rolling compression from reflex_meta_thoughts

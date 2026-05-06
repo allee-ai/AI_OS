@@ -472,13 +472,20 @@ def _sync_to_chat(query: str, state_snapshot: str, delta: dict, residue: dict) -
         ))
         metadata = {
             "source": "vscode_copilot",
-            "state_snapshot": state_snapshot,
             "state_len": len(state_snapshot),
             "files_touched_at_start": touched[:50],
             "files_touched_count": len(touched),
             "agent_turn_event_id": residue.get("event_id"),
             "reflex_meta_thought_id": residue.get("meta_thought_id"),
             "outcome_filled": False,
+        }
+        # Store the rendered STATE block on the dedicated column so coding
+        # and conversational turns share one canonical persistence layer.
+        turn_state_snapshot = {
+            "state_block": state_snapshot,
+            "context_level": 2,
+            "feed_type": "coding",
+            "source": "scripts.turn_start",
         }
         # Placeholder assistant message — the NEXT turn-start will rewrite
         # this once the outcome is known.
@@ -489,6 +496,7 @@ def _sync_to_chat(query: str, state_snapshot: str, delta: dict, residue: dict) -
             feed_type="coding",
             context_level=2,
             metadata=metadata,
+            state_snapshot=turn_state_snapshot,
         )
         out["convo_turn_id"] = turn_index
     except Exception as exc:  # pragma: no cover
