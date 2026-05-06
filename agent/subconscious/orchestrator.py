@@ -398,6 +398,17 @@ class Subconscious:
         
         # Self-awareness header — injected once at top
         lines.extend(self._build_self_awareness_block())
+
+        # Salience hot block — pre-baked top-K from continuous meditation.
+        # If the meditator daemon is running, this reflects an up-to-the-
+        # second view of "what's on her mind"; otherwise it's empty.
+        try:
+            hot_block = self._build_salience_hot_block(query=query, limit=8)
+            if hot_block:
+                lines.append("")
+                lines.extend(hot_block)
+        except Exception:
+            pass
         
         for source_name, score in ordered_sources:
             # Determine level from score
@@ -771,6 +782,71 @@ class Subconscious:
                 return []
 
         return []
+
+    def _build_salience_hot_block(self, query: str = "", limit: int = 8) -> List[str]:
+        """Pre-baked top-salient facts from the continuous meditation cache.
+
+        Returns a small block surfacing the highest-salience facts the
+        substrate currently holds. When the meditator daemon is active,
+        these reflect ongoing activation flow — what's actually 'on her
+        mind' right now, not just static high-weight facts.
+
+        Returns empty list if the cache is missing or empty (e.g. fresh
+        DB, daemon never run). Always cheap: one indexed SELECT.
+        """
+        try:
+            from agent.subconscious.meditation import top_salient, hot_concepts
+        except Exception:
+            return []
+        rows = top_salient(limit=int(limit))
+        if not rows:
+            return []
+        # Skip if salience boost is negligible (no active concepts) — the
+        # ranking is then identical to plain weight, no signal to surface.
+        max_sal = max((r.get("salience") or 0.0) for r in rows)
+        max_w = max((r.get("weight") or 0.0) for r in rows)
+        if max_sal <= max_w * 1.05:
+            return []
+        out = ["== HOT (continuous meditation, top salience) =="]
+        for r in rows:
+            sal = float(r.get("salience") or 0.0)
+            w = float(r.get("weight") or 0.0)
+            val = (r.get("value") or "")[:120].replace("\n", " ")
+            out.append(
+                f"  {sal:.2f} ({w:.2f}*lift)  {r.get('profile_id')}.{r.get('key')}: {val}"
+            )
+        # Also surface top hot concepts so the LLM can see what's primed.
+        hot = hot_concepts(limit=8)
+        if hot:
+            top_terms = ", ".join(
+                f"{h['concept']}({h['activation']:.2f})" for h in hot[:6]
+            )
+            out.append(f"  on-mind: {top_terms}")
+        # Goal salience + readiness — let the assembler see live priorities.
+        try:
+            from agent.subconscious.salience_overlay import (
+                goal_salience, readiness,
+            )
+            top_goals = goal_salience(limit=3)
+            if top_goals:
+                lines = [
+                    f"  goal#{g['id']} sal={g['salience']:.2f} "
+                    f"({g['priority']}/{g['urgency'] or 0}) {g['goal'][:90]}"
+                    for g in top_goals
+                ]
+                out.append("  live-goals:")
+                out.extend(lines)
+            r = readiness()
+            if r.get("score") is not None:
+                flag = "READY" if r.get("ready") else "idle"
+                out.append(
+                    f"  readiness: {r['score']:.2f} [{flag}] "
+                    f"intensity={r.get('intensity')} vol={r.get('volatility')} "
+                    f"recency={r.get('recency')}"
+                )
+        except Exception:
+            pass
+        return out
 
     def _build_self_awareness_block(self) -> List[str]:
         """Build the self-awareness metadata for the top of STATE.

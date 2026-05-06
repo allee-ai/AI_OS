@@ -316,6 +316,15 @@ def tick(now: Optional[float] = None) -> Dict[str, Any]:
     except Exception as e:
         summary["error"] = f"{type(e).__name__}: {e}"
 
+    # 6) Cheap overlays (separate connection — read-only).
+    try:
+        from agent.subconscious.salience_overlay import readiness
+        r = readiness()
+        summary["readiness"] = r.get("score", 0.0)
+        summary["ready"] = r.get("ready", False)
+    except Exception:
+        pass
+
     summary["elapsed_ms"] = round((time.time() - t0) * 1000, 2)
     return summary
 
