@@ -125,7 +125,7 @@ def create_default_loops() -> LoopManager:
 
     # ── Tier 1 — operational  (health auto-starts, task paused) ─────
     health = HealthLoop(
-        interval=float(os.getenv("AIOS_HEALTH_INTERVAL", str(DAY))),  # 1 day
+        interval=float(os.getenv("AIOS_HEALTH_INTERVAL", "300")),  # 5 min pulse
     )
     health.config.initial_delay = 10  # fire ~10s after boot
     manager.add(health)
@@ -144,7 +144,7 @@ def create_default_loops() -> LoopManager:
     manager.add(mem)
 
     consol = ConsolidationLoop()
-    consol.config.interval_seconds = float(os.getenv("AIOS_CONSOLIDATION_INTERVAL", str(DAY)))  # 1 day
+    consol.config.interval_seconds = float(os.getenv("AIOS_CONSOLIDATION_INTERVAL", str(4 * 3600)))  # 4 hours
     consol.config.initial_delay = 900  # +15 min
     manager.add(consol)
 

@@ -81,6 +81,15 @@ class ConsolidationLoop(BackgroundLoop):
                 parts.append(promoted)
             if contradictions_summary:
                 parts.append(contradictions_summary)
+
+            # Auto-dismiss aged-out un-acted thoughts so STATE stays current.
+            try:
+                from agent.subconscious.loops.thought import decay_old_thoughts
+                n = decay_old_thoughts()
+                if n:
+                    parts.append(f"Decayed {n} stale thoughts")
+            except Exception:
+                pass
             return "\n".join(parts) if parts else "No pending facts to process"
         finally:
             release_ollama_gate()

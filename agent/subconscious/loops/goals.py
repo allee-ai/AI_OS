@@ -177,6 +177,42 @@ def propose_goal(goal: str, rationale: str = "", priority: str = "medium",
             # else: not forwarded (rate-limited or unknown source).
         except Exception:
             pass
+        # Auto-bridge to task_queue: high/urgent goals from non-user sources
+        # (system, goal_loop, copilot proposals) get a cheap "next-step"
+        # draft so output is sitting in STATE for review on next turn.
+        # User-sourced goals are NOT auto-enqueued — Cade drives those.
+        try:
+            p = (priority or "medium").lower()
+            src_list2 = [str(s).lower() for s in (sources or [])]
+            is_user2 = any(
+                s in src_list2 for s in (
+                    "user", "user_vscode", "user_mobile", "cade",
+                    "phone", "manual",
+                )
+            )
+            if p in ("high", "urgent") and not is_user2:
+                from agent.threads.log.schema import enqueue_task
+                rat = f"\nRationale: {rationale}" if rationale else ""
+                enqueue_task(
+                    kind="goal_next_step",
+                    prompt=(
+                        f"Open goal #{new_id} (priority={p}, "
+                        f"sources={src_list2 or ['system']}):\n"
+                        f"  {goal}{rat}\n\n"
+                        "Propose ONE concrete next step (≤80 words). "
+                        "Format: '1. <action>' then a 1-line why. "
+                        "No preamble, no caveats."
+                    ),
+                    role="PLANNER",
+                    params={
+                        "dedup_key": f"goal:{new_id}",
+                        "max_tokens": 250,
+                        "temperature": 0.4,
+                    },
+                    requested_by="goal_loop",
+                )
+        except Exception:
+            pass
         return new_id
     except Exception as e:
         print(f"[GoalLoop] Failed to propose goal: {e}")

@@ -101,6 +101,33 @@ def save_thought(thought: str, category: str = "insight", priority: str = "low",
             )
         except Exception:
             pass
+        # Auto-bridge to task_queue: high/urgent actionable thoughts become
+        # cheap LLM tasks the worker grinds through. Idempotent on
+        # (thought_id), so the same thought can't enqueue twice.
+        try:
+            p = (priority or "low").lower()
+            if p in ("high", "urgent") and category in (
+                "alert", "suggestion", "reminder",
+            ):
+                from agent.threads.log.schema import enqueue_task
+                enqueue_task(
+                    kind="thought_action",
+                    prompt=(
+                        f"Proactive thought (priority={p}, category={category}):\n"
+                        f"  {thought}\n\n"
+                        "Output ONE concrete next action (≤50 words). "
+                        "Be specific: who/what/when. No preamble."
+                    ),
+                    role="PLANNER",
+                    params={
+                        "dedup_key": f"thought:{new_id}",
+                        "max_tokens": 200,
+                        "temperature": 0.4,
+                    },
+                    requested_by="thought_loop",
+                )
+        except Exception:
+            pass
         return new_id
     except Exception as e:
         print(f"[ThoughtLoop] Failed to save thought: {e}")
@@ -119,6 +146,50 @@ def mark_thought_acted(thought_id: int) -> bool:
             return True
     except Exception:
         return False
+
+
+def decay_old_thoughts(
+    low_age_hours: int = 48,
+    high_age_hours: int = 168,
+) -> int:
+    """
+    Auto-dismiss un-acted thoughts that have aged past their priority's
+    half-life. Prevents the thought_log from accumulating noise that
+    nobody will ever look at.
+
+    - low / medium priority: dismissed after `low_age_hours`  (default 48 h)
+    - high / urgent: dismissed after `high_age_hours`         (default 7 d)
+
+    Sets acted_on = 1 so they stop appearing in active STATE but remain
+    queryable in history. Returns rows affected.
+    """
+    _ensure_thought_log_table()
+    try:
+        from data.db import get_connection
+        from contextlib import closing
+        with closing(get_connection()) as conn:
+            cur = conn.cursor()
+            cur.execute(
+                "UPDATE thought_log SET acted_on = 1 "
+                "WHERE acted_on = 0 "
+                "AND priority IN ('low','medium') "
+                "AND created_at <= datetime('now', ?)",
+                (f"-{low_age_hours} hours",),
+            )
+            n_low = cur.rowcount
+            cur.execute(
+                "UPDATE thought_log SET acted_on = 1 "
+                "WHERE acted_on = 0 "
+                "AND priority IN ('high','urgent') "
+                "AND created_at <= datetime('now', ?)",
+                (f"-{high_age_hours} hours",),
+            )
+            n_high = cur.rowcount
+            conn.commit()
+            return (n_low or 0) + (n_high or 0)
+    except Exception as e:
+        print(f"[ThoughtLoop] decay_old_thoughts failed: {e}")
+        return 0
 
 
 THOUGHT_CATEGORIES = ["insight", "alert", "reminder", "suggestion", "question"]
