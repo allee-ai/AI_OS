@@ -1,0 +1,21 @@
+[Unit]
+Description=AI_OS continuous loops (meditation + coma + task worker)
+After=network.target aios.service
+Wants=aios.service
+
+[Service]
+Type=simple
+WorkingDirectory=/opt/aios
+EnvironmentFile=/opt/aios/.env
+Environment=PYTHONPATH=/opt/aios
+Environment=AIOS_LOOP_MEDITATE_S=2.0
+Environment=AIOS_LOOP_COMA_S=60.0
+Environment=AIOS_LOOP_TASK_S=10.0
+ExecStart=/opt/aios/.venv/bin/python /opt/aios/scripts/run_loops.py
+Restart=always
+RestartSec=5
+StandardOutput=append:/var/log/aios-loops.log
+StandardError=append:/var/log/aios-loops.log
+
+[Install]
+WantedBy=multi-user.target
