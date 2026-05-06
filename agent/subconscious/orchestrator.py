@@ -808,6 +808,12 @@ class Subconscious:
         if max_sal <= max_w * 1.05:
             return []
         out = ["== HOT (continuous meditation, top salience) =="]
+        # Liveness banner — is the body breathing?
+        try:
+            from agent.subconscious.liveness import alive_summary
+            out.append(f"  alive: {alive_summary()}")
+        except Exception:
+            pass
         for r in rows:
             sal = float(r.get("salience") or 0.0)
             w = float(r.get("weight") or 0.0)
