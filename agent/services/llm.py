@@ -826,4 +826,40 @@ def generate(prompt: Optional[str] = None,
         env_provider = os.getenv("AIOS_MODEL_PROVIDER", "ollama").lower()
         p = get_provider(env_provider)
 
-    return p.generate(messages, model=model, temperature=temperature, max_tokens=max_tokens)
+    # Cross-provider rate gate: skip if cooling down. CHAT bypasses the
+    # gate (user is interacting; let it fail loudly). Background roles
+    # respect the gate to avoid worsening the cooldown.
+    try:
+        from agent.services import rate_gate as _rg
+        is_chat = (role or "").upper() == "CHAT"
+        if not is_chat:
+            skip, reason = _rg.should_skip(p.name)
+            if skip:
+                raise RuntimeError(
+                    f"rate_gate:{reason} — provider {p.name} is cooling down"
+                )
+    except RuntimeError:
+        raise
+    except Exception:
+        pass  # rate_gate unavailable — fall through
+
+    import time as _time
+    _t0 = _time.monotonic()
+    try:
+        out = p.generate(messages, model=model, temperature=temperature, max_tokens=max_tokens)
+    except BaseException as _err:
+        try:
+            from agent.services import rate_gate as _rg
+            if _rg.is_rate_limit_error(_err):
+                _rg.record_429(p.name, str(_err))
+            else:
+                _rg.record_other_error(p.name)
+        except Exception:
+            pass
+        raise
+    try:
+        from agent.services import rate_gate as _rg
+        _rg.record_success(p.name, duration_seconds=_time.monotonic() - _t0)
+    except Exception:
+        pass
+    return out

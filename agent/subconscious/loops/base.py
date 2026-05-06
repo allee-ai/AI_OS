@@ -285,6 +285,17 @@ class BackgroundLoop:
     def _execute_task(self) -> None:
         """Run the task on a pool worker thread (niced, with stats bookkeeping)."""
         _nice_thread()
+        # Single-flight + idle + rate-gate check via scheduler.
+        # Health / sync are flagged "cheap" inside scheduler and bypass.
+        try:
+            from agent.subconscious.loops import scheduler as _sched
+            acquired, reason = _sched.acquire_for(self.config.name, timeout=0.5)
+        except Exception:
+            acquired, reason = True, "scheduler_unavailable"
+        if not acquired:
+            # Skipped this tick — record the reason but DON'T count as error.
+            self._last_result = f"[skipped: {reason}]"
+            return
         self._busy.set()
         t0 = time.monotonic()
         try:
@@ -306,3 +317,8 @@ class BackgroundLoop:
             raise
         finally:
             self._busy.clear()
+            try:
+                from agent.subconscious.loops import scheduler as _sched
+                _sched.release()
+            except Exception:
+                pass

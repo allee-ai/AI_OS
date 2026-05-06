@@ -232,7 +232,16 @@ class AgentService:
                     )
                 
                 # Persist to Feeds/conversations/
-                await self._save_conversation_turn(user_message, response_text, feed_type)
+                # Pass the actual STATE string the model saw — same source as the
+                # chat sidebar (/api/subconscious/build_state). Saved on the row
+                # so any past turn can be replayed with its exact context.
+                await self._save_conversation_turn(
+                    user_message,
+                    response_text,
+                    feed_type,
+                    consciousness_context=consciousness_context,
+                    context_level=context_level if _HAS_SUBCONSCIOUS else self.context_manager.current_level,
+                )
 
                 # Record concept co-occurrences every 5 turns
                 # Full-conversation extraction captures cross-turn context
@@ -440,41 +449,65 @@ class AgentService:
         return assistant_msg
 
     
-    async def _save_conversation_turn(self, user_msg: str, assistant_msg: str, feed_type: str):
-        """Persist conversation turn to database."""
+    async def _save_conversation_turn(
+        self,
+        user_msg: str,
+        assistant_msg: str,
+        feed_type: str,
+        consciousness_context: str = "",
+        context_level: int | None = None,
+    ):
+        """Persist conversation turn to database.
+
+        ``consciousness_context`` is the exact STATE string that was sent to
+        the model for this turn (same source as the chat sidebar's State tab).
+        Stored on the row so any past turn can be replayed with its context.
+        """
         if not _HAS_CHAT_SCHEMA:
             return
-        
+
+        ctx_level = context_level if context_level is not None else self.context_manager.current_level
+
         try:
             # Check if this is first turn (for auto-naming)
             existing = get_conversation(self.session_id)
             is_first_turn = existing is None or len(existing.get("turns", [])) == 0
-            
+
             # If first turn, create conversation with state snapshot
             if is_first_turn:
                 state_snapshot = {}
                 if self.agent:
                     state_snapshot = self._capture_state_snapshot(feed_type)
-                
+
                 save_conversation(
                     session_id=self.session_id,
                     channel="react-chat",
                     state_snapshot=state_snapshot
                 )
-            
-            # Add the turn (with per-turn STATE snapshot for training signal)
-            turn_state_snapshot = None
-            try:
-                if self.agent:
-                    turn_state_snapshot = self._capture_state_snapshot(feed_type)
-            except Exception:
-                turn_state_snapshot = None
+
+            # Per-turn STATE snapshot — store the actual rendered block the
+            # model saw, not a re-built dict. Falls back to the legacy
+            # _capture_state_snapshot only if the live string is missing.
+            turn_state_snapshot: dict | None = None
+            if consciousness_context:
+                turn_state_snapshot = {
+                    "state_block": consciousness_context,
+                    "context_level": ctx_level,
+                    "feed_type": feed_type,
+                    "source": "agent_service.process_message",
+                }
+            else:
+                try:
+                    if self.agent:
+                        turn_state_snapshot = self._capture_state_snapshot(feed_type)
+                except Exception:
+                    turn_state_snapshot = None
             add_turn(
                 session_id=self.session_id,
                 user_message=user_msg,
                 assistant_message=assistant_msg,
                 feed_type=feed_type,
-                context_level=self.context_manager.current_level,
+                context_level=ctx_level,
                 state_snapshot=turn_state_snapshot,
             )
 
