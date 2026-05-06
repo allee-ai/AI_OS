@@ -149,7 +149,7 @@ def emit_contradiction_meta_thoughts(limit: int = 5) -> int:
         with closing(get_connection(readonly=True)) as conn:
             rows = conn.execute(
                 """
-                SELECT content FROM meta_thoughts
+                SELECT content FROM reflex_meta_thoughts
                 WHERE kind = 'contradiction'
                   AND created_at >= datetime('now','-7 days')
                 LIMIT 200

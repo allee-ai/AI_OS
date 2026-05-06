@@ -846,6 +846,32 @@ class Subconscious:
                 )
         except Exception:
             pass
+
+        # Recent meta-thoughts — what the substrate has been noticing about
+        # itself. Cheap; one indexed SELECT. Limited to last 24h, top weight.
+        try:
+            from contextlib import closing as _closing
+            from data.db import get_connection as _gc
+            with _closing(_gc(readonly=True)) as _conn:
+                _rows = _conn.execute(
+                    """
+                    SELECT kind, content, weight, created_at
+                    FROM reflex_meta_thoughts
+                    WHERE created_at >= datetime('now','-1 day')
+                      AND weight >= 0.5
+                    ORDER BY weight DESC, id DESC
+                    LIMIT 6
+                    """
+                ).fetchall()
+            if _rows:
+                out.append("  recent meta-thoughts:")
+                for _r in _rows:
+                    _txt = (_r["content"] or "")[:140].replace("\n", " ")
+                    out.append(
+                        f"    [{_r['kind']} w={_r['weight']:.2f}] {_txt}"
+                    )
+        except Exception:
+            pass
         return out
 
     def _build_self_awareness_block(self) -> List[str]:

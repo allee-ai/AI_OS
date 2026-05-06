@@ -325,6 +325,20 @@ def tick(now: Optional[float] = None) -> Dict[str, Any]:
     except Exception:
         pass
 
+    # 7) Session-shift emit (rate-limited to once per ~5 min).
+    try:
+        with closing(get_connection()) as conn:
+            now_s = time.time()
+            last_emit = float(_meta_get(conn, "last_shift_emit_at", "0") or 0)
+            if now_s - last_emit >= 300.0:
+                mt_id = detect_session_shift(min_facts=3)
+                if mt_id:
+                    _meta_set(conn, "last_shift_emit_at", str(now_s))
+                    summary["shift_meta_id"] = int(mt_id)
+                    conn.commit()
+    except Exception:
+        pass
+
     summary["elapsed_ms"] = round((time.time() - t0) * 1000, 2)
     return summary
 
@@ -376,6 +390,80 @@ def top_salient(limit: int = 25, profile_prefix: Optional[str] = None) -> List[D
         return []
 
 
+def detect_session_shift(window_minutes: int = 60, min_facts: int = 3) -> Optional[int]:
+    """Emit a meta-thought when the substrate has shifted meaningfully.
+
+    A "shift" = N≥min_facts new high-weight (>=0.7) profile_facts/
+    philosophy_profile_facts written since our last shift watermark.
+
+    Idempotent via meditation_meta key 'last_shift_fact_ts'. Returns the
+    new meta_thought id or None.
+
+    This is the bridge that turns "what just happened in the DB" into
+    "what the next turn will see in HOT". Without it, big architectural
+    sessions like this one slip past meta_thoughts entirely.
+    """
+    try:
+        with closing(get_connection()) as conn:
+            _ensure_schema(conn)
+            last_ts = _meta_get(conn, "last_shift_fact_ts", "1970-01-01 00:00:00")
+
+            # Pull recent high-weight facts from both fact tables.
+            rows_pf = conn.execute(
+                """
+                SELECT 'pf' AS src, profile_id, key, value, weight, updated_at
+                FROM profile_facts
+                WHERE updated_at > ? AND weight >= 0.7
+                ORDER BY updated_at ASC
+                LIMIT 50
+                """,
+                (last_ts,),
+            ).fetchall()
+            try:
+                rows_ph = conn.execute(
+                    """
+                    SELECT 'ph' AS src, profile_id, key, l1_value AS value, weight, updated_at
+                    FROM philosophy_profile_facts
+                    WHERE updated_at > ? AND weight >= 0.7
+                    ORDER BY updated_at ASC
+                    LIMIT 50
+                    """,
+                    (last_ts,),
+                ).fetchall()
+            except Exception:
+                rows_ph = []
+            rows = list(rows_pf) + list(rows_ph)
+            if len(rows) < int(min_facts):
+                return None
+
+            # Advance watermark unconditionally so we don't re-scan.
+            new_ts = max(r["updated_at"] for r in rows)
+            _meta_set(conn, "last_shift_fact_ts", str(new_ts))
+            conn.commit()
+
+        # Build a compact shift summary.
+        keys = []
+        for r in rows[:10]:
+            k = (r["key"] or "?")[:40]
+            v = (r["value"] or "")[:60].replace("\n", " ")
+            keys.append(f"{r['profile_id']}.{k}={v}")
+        summary = (
+            f"session shift: {len(rows)} new high-weight facts "
+            f"in last window — " + " | ".join(keys)
+        )[:500]
+
+        from agent.threads.reflex.schema import add_meta_thought
+        return int(add_meta_thought(
+            kind="compression",
+            content=summary,
+            source="system",
+            confidence=0.8,
+            weight=0.65,
+        ))
+    except Exception:
+        return None
+
+
 def meditation_stats() -> Dict[str, Any]:
     try:
         with closing(get_connection(readonly=True)) as conn:
@@ -398,4 +486,4 @@ def meditation_stats() -> Dict[str, Any]:
         return {}
 
 
-__all__ = ["tick", "hot_concepts", "top_salient", "meditation_stats"]
+__all__ = ["tick", "hot_concepts", "top_salient", "meditation_stats", "detect_session_shift"]
