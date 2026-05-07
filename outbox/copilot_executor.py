@@ -59,7 +59,7 @@ EXECUTOR_ENABLED = os.getenv("AIOS_EXEC_ENABLED", "1") == "1"
 # MAX_CARDS_PER_PASS=1 + a 15s tick = at most 4 calls/min from the
 # executor lane. Background reflection loops (separate, future) need
 # their own slower budget.
-EXEC_MODEL = os.getenv("AIOS_EXEC_MODEL", "kimi-k2:1t-cloud")
+EXEC_MODEL = os.getenv("AIOS_EXEC_MODEL", "gpt-oss:120b-cloud")
 
 # Heuristic classifier signals. Anything matching CODE_SIGNALS gets routed
 # to the PLAN lane no matter what; the EXECUTE lane is only for
