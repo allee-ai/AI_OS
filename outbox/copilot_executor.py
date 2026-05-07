@@ -67,12 +67,14 @@ CODE_SIGNALS = (
 )
 
 PROSE_SIGNALS = (
-    r"\bdraft\b|\brewrite\b|\bsummari[sz]e\b|\bcondense\b",
-    r"\bnotes?\b|\bcheatsheet\b|\bone[- ]pager\b|\bbrief\b",
-    r"\bemail\b.*\b(to|for)\b",
+    r"\bdraft\b|\brewrite\b|\bsummari[sz]e\b|\bsummary\b|\bcondense\b",
+    r"\bnotes?\b|\bcheatsheet\b|\bone[- ]pager\b|\bbrief\b|\bjournal\b",
+    r"\bemail\b.*\b(to|for)\b|\breply\b|\bmessage\b",
     r"\bedit\b.*\b\.md\b",
-    r"\bappend\b|\badd a (line|note|entry)\b",
+    r"\bappend\b|\badd a (line|note|entry|section|paragraph|bullet)\b",
     r"\bclean up\b.*\b(text|copy|wording)\b",
+    r"\b(\d+[- ])?bullet(s)?\b|\blist( of)?\b",
+    r"\boutline\b|\bagenda\b|\btalking points\b|\bscript\b",
 )
 
 
@@ -149,6 +151,10 @@ def _find_target_file(card: Dict[str, Any]) -> Optional[Path]:
 def _execute_prose(card: Dict[str, Any]) -> Dict[str, Any]:
     """Run a prose-shaped task with Ollama. Writes the result to a file
     in workspace/ and returns metadata about what changed.
+
+    Provider is hard-pinned to ``ollama`` here (not role-resolved) so a
+    misconfigured PLANNER/MEMORY role default can never accidentally
+    burn cloud credits on phone-submitted prose work.
     """
     from agent.services.llm import generate
 
@@ -173,7 +179,7 @@ def _execute_prose(card: Dict[str, Any]) -> Dict[str, Any]:
             f"fences, no explanation — output only what the file should be "
             f"after your edit. Preserve the existing structure and tone."
         )
-        result = generate(prompt, role="MEMORY", max_tokens=2048,
+        result = generate(prompt, provider="ollama", max_tokens=2048,
                           temperature=0.4)
         # Strip wrapping code fences if the model added them anyway.
         result = re.sub(r"^```[a-z]*\n", "", result.strip())
@@ -202,7 +208,7 @@ def _execute_prose(card: Dict[str, Any]) -> Dict[str, Any]:
         f"Produce the artifact he's asking for in clean Markdown. No "
         f"meta-commentary, no 'here is your...' framing — just the work."
     )
-    result = generate(prompt, role="MEMORY", max_tokens=2048, temperature=0.5)
+    result = generate(prompt, provider="ollama", max_tokens=2048, temperature=0.5)
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:50] or "result"
     out_path = RESULTS_DIR / f"{int(card['id']):04d}-{slug}.md"
     header = (
@@ -227,6 +233,8 @@ def _plan_for_laptop(card: Dict[str, Any]) -> Dict[str, Any]:
     so when laptop opens, Copilot-in-VS-Code sees the plan and can
     execute it. Card stays open under status='pending'; we add a
     resolution_note marker indicating a plan was drafted.
+
+    Provider hard-pinned to ``ollama`` — same reason as _execute_prose.
     """
     from agent.services.llm import generate
 
@@ -248,7 +256,7 @@ def _plan_for_laptop(card: Dict[str, Any]) -> Dict[str, Any]:
         "  5. Risk level: low | medium | high (with one-line reason)\n\n"
         "Be terse. Do not write code. Output Markdown."
     )
-    plan_md = generate(prompt, role="PLANNER", max_tokens=1200,
+    plan_md = generate(prompt, provider="ollama", max_tokens=1200,
                        temperature=0.3)
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:50] or "plan"
     out = PLANS_DIR / f"{int(card['id']):04d}-{slug}.md"
