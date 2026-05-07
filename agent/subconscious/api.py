@@ -502,6 +502,49 @@ async def resume_loop(loop_name: str):
     return {"status": "resumed", "loop": loop_name}
 
 
+@router.post("/loops/{loop_name}/start")
+async def start_loop(loop_name: str):
+    """Start a stopped loop.
+
+    Default loops boot in STOPPED state (only `health` auto-starts), so
+    /resume is a no-op until /start has been called once. This is the
+    symmetric counterpart to /pause+/resume for the stopped→running
+    transition.
+    """
+    from . import _loop_manager
+
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+
+    loop.start()
+    return {"status": "started", "loop": loop_name,
+            "current_status": loop._status.value}
+
+
+@router.post("/loops/{loop_name}/stop")
+async def stop_loop(loop_name: str):
+    """Stop a running loop (graceful — joins the worker thread)."""
+    from . import _loop_manager
+
+    if _loop_manager is None:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=503, detail="Loops not started")
+
+    loop = _loop_manager.get_loop(loop_name)
+    if not loop:
+        from fastapi import HTTPException
+        raise HTTPException(status_code=404, detail=f"Loop '{loop_name}' not found")
+
+    loop.stop()
+    return {"status": "stopped", "loop": loop_name}
+
+
 @router.put("/loops/{loop_name}/context-aware")
 async def set_loop_context_aware(loop_name: str, body: dict):
     """Toggle context_aware (orchestrator STATE injection) for a loop.
