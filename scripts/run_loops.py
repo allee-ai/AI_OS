@@ -168,6 +168,19 @@ def _task_once(logf, max_per_pass: int = 5) -> None:
         _heartbeat_write({"loop": "tasks", "err": 1})
 
 
+def _exec_once(logf) -> None:
+    """Run the copilot_executor: pick up pending phone-submitted requests
+    and act on them (prose-execute or plan-for-laptop)."""
+    try:
+        from outbox.copilot_executor import tick_once
+        result = tick_once()
+        _log(logf, "exec", result)
+        _heartbeat_write({"loop": "exec", **result})
+    except Exception as e:
+        _log(logf, "exec", {"ERR": f"{type(e).__name__}: {e}"})
+        _heartbeat_write({"loop": "exec", "err": 1})
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--meditate-s", type=float,
@@ -176,11 +189,15 @@ def main() -> int:
                    default=float(os.getenv("AIOS_LOOP_COMA_S", "60.0")))
     p.add_argument("--task-s", type=float,
                    default=float(os.getenv("AIOS_LOOP_TASK_S", "10.0")))
+    p.add_argument("--exec-s", type=float,
+                   default=float(os.getenv("AIOS_LOOP_EXEC_S", "15.0")),
+                   help="copilot_executor cadence (phone request acting)")
     p.add_argument("--once", action="store_true",
                    help="run each loop once and exit")
     p.add_argument("--no-meditate", action="store_true")
     p.add_argument("--no-coma", action="store_true")
     p.add_argument("--no-tasks", action="store_true")
+    p.add_argument("--no-exec", action="store_true")
     args = p.parse_args()
 
     if not _acquire_lock():
@@ -197,17 +214,19 @@ def main() -> int:
         "meditate_s": args.meditate_s,
         "coma_s": args.coma_s,
         "task_s": args.task_s,
+        "exec_s": args.exec_s,
         "once": args.once,
     })
     print(
         f"[run_loops] pid={os.getpid()} "
         f"meditate={args.meditate_s}s coma={args.coma_s}s tasks={args.task_s}s "
-        f"once={args.once}"
+        f"exec={args.exec_s}s once={args.once}"
     )
 
     next_med = 0.0
     next_coma = 0.0
     next_task = 0.0
+    next_exec = 0.0
 
     try:
         while _RUN:
@@ -221,10 +240,13 @@ def main() -> int:
             if not args.no_tasks and now >= next_task:
                 _task_once(logf)
                 next_task = now + args.task_s
+            if not args.no_exec and now >= next_exec:
+                _exec_once(logf)
+                next_exec = now + args.exec_s
             if args.once:
                 break
             # Sleep until the soonest deadline, but wake every 200ms for signals.
-            until = min(next_med, next_coma, next_task) - time.time()
+            until = min(next_med, next_coma, next_task, next_exec) - time.time()
             if until > 0.2:
                 until = 0.2
             if until > 0:

@@ -22,6 +22,7 @@ from .schema import (
     count_pending,
 )
 from . import copilot_inbox
+from . import copilot_executor
 
 __all__ = [
     "router",
@@ -32,4 +33,5 @@ __all__ = [
     "resolve_card",
     "count_pending",
     "copilot_inbox",
+    "copilot_executor",
 ]
