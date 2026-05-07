@@ -6,32 +6,100 @@ Pure functions for relevance scoring. No state, no side effects.
 Data in → scores out.
 
 These functions use embeddings when available, with keyword fallback.
+
+Provider selection is env-driven so the same code runs on a laptop
+(local Ollama nomic-embed-text) and on a 1GB VM that can't host the
+local model (cloud OpenAI text-embedding-3-small):
+
+    AIOS_EMBED_PROVIDER   ollama (default) | openai | none
+    AIOS_EMBED_MODEL      override (default per-provider)
+
+`none` skips embeddings entirely \u2014 every call falls through to keyword
+overlap scoring.
 """
 
+import os
 from typing import List, Dict, Any, Tuple, Optional
 import numpy as np
 
 # Cache for embeddings during a session
 _EMBEDDING_CACHE: Dict[str, np.ndarray] = {}
-_OLLAMA_CHECKED: bool = False
-_OLLAMA_AVAILABLE: bool = False
+# (provider, available) memo \u2014 set on first probe.
+_PROBE_DONE: bool = False
+_PROBE_OK: bool = False
+_PROBE_PROVIDER: str = ""
+
+_DEFAULT_MODELS = {
+    "ollama": "nomic-embed-text",
+    "openai": "text-embedding-3-small",
+}
 
 
-def _check_ollama() -> bool:
-    """Check if Ollama embedding model is available."""
-    global _OLLAMA_CHECKED, _OLLAMA_AVAILABLE
-    if _OLLAMA_CHECKED:
-        return _OLLAMA_AVAILABLE
-    
+def _provider() -> str:
+    """Return active embed provider, lower-cased. Empty string means
+    embeddings are disabled."""
+    p = os.getenv("AIOS_EMBED_PROVIDER", "ollama").strip().lower()
+    if p in ("none", "off", "disabled", ""):
+        return ""
+    return p
+
+
+def _model_for(provider: str) -> str:
+    override = os.getenv("AIOS_EMBED_MODEL", "").strip()
+    if override:
+        return override
+    return _DEFAULT_MODELS.get(provider, "")
+
+
+def _probe() -> bool:
+    """One-shot availability probe. Result memoized for the process.
+
+    Returns True iff the configured provider can actually produce an
+    embedding for a trivial input.
+    """
+    global _PROBE_DONE, _PROBE_OK, _PROBE_PROVIDER
+    p = _provider()
+    if _PROBE_DONE and _PROBE_PROVIDER == p:
+        return _PROBE_OK
+    _PROBE_DONE = True
+    _PROBE_PROVIDER = p
+    _PROBE_OK = False
+
+    if not p:
+        return False
+
     try:
-        import ollama
-        response = ollama.embeddings(model="nomic-embed-text", prompt="test")
-        _OLLAMA_AVAILABLE = "embedding" in response
+        emb = _embed_raw("probe")
+        _PROBE_OK = emb is not None and len(emb) > 0
     except Exception:
-        _OLLAMA_AVAILABLE = False
-    
-    _OLLAMA_CHECKED = True
-    return _OLLAMA_AVAILABLE
+        _PROBE_OK = False
+    return _PROBE_OK
+
+
+def _embed_raw(text: str) -> Optional[np.ndarray]:
+    """Provider-dispatched embedding call. No cache, no probe \u2014 just
+    raw call. Returns None on any failure."""
+    p = _provider()
+    if not p:
+        return None
+    model = _model_for(p)
+    try:
+        if p == "ollama":
+            import ollama
+            resp = ollama.embeddings(model=model, prompt=text)
+            return np.array(resp["embedding"])
+        if p == "openai":
+            # Use the same key the rest of the system already uses.
+            from openai import OpenAI
+            api_key = os.getenv("OPENAI_API_KEY", "").strip()
+            if not api_key:
+                return None
+            client = OpenAI(api_key=api_key)
+            resp = client.embeddings.create(model=model, input=text)
+            return np.array(resp.data[0].embedding)
+    except Exception:
+        return None
+    return None
 
 
 def get_embedding(text: str, use_cache: bool = True) -> Optional[np.ndarray]:
@@ -52,20 +120,16 @@ def get_embedding(text: str, use_cache: bool = True) -> Optional[np.ndarray]:
     if use_cache and text in _EMBEDDING_CACHE:
         return _EMBEDDING_CACHE[text]
     
-    if not _check_ollama():
+    if not _probe():
         return None
-    
-    try:
-        import ollama
-        response = ollama.embeddings(model="nomic-embed-text", prompt=text)
-        embedding = np.array(response["embedding"])
-        
-        if use_cache:
-            _EMBEDDING_CACHE[text] = embedding
-        
-        return embedding
-    except Exception:
+
+    embedding = _embed_raw(text)
+    if embedding is None:
         return None
+
+    if use_cache:
+        _EMBEDDING_CACHE[text] = embedding
+    return embedding
 
 
 def cosine_similarity(a: np.ndarray, b: np.ndarray) -> float:

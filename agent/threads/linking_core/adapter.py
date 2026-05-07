@@ -847,12 +847,17 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
         return scored[:top_k]
     
     def _check_ollama(self) -> bool:
-        """Check if Ollama embedding model is available."""
+        """Check whether the configured embedding provider works.
+
+        Name kept for back-compat (other code reads
+        ``self._ollama_available`` and the introspect facts use the
+        same key). Delegates to scoring._probe() so this respects the
+        AIOS_EMBED_PROVIDER env var \u2014 on a 1GB VM that is set to
+        'openai' and uses the OpenAI key, on laptop it stays 'ollama'.
+        """
         try:
-            import ollama
-            # Try to embed a test string
-            response = ollama.embeddings(model="nomic-embed-text", prompt="test")
-            return "embedding" in response
+            from agent.threads.linking_core import scoring
+            return scoring._probe()
         except Exception:
             return False
     
