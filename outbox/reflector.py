@@ -45,8 +45,9 @@ THOUGHTS_DIR = WORKSPACE / "_aios_thoughts"
 
 REFLECT_ENABLED = os.getenv("AIOS_REFLECT_ENABLED", "1") == "1"
 REFLECT_MODEL = os.getenv("AIOS_REFLECT_MODEL", "gpt-oss:120b-cloud")
-# Tight token budget — one thought, not an essay.
-REFLECT_MAX_TOKENS = int(os.getenv("AIOS_REFLECT_MAX_TOKENS", "240"))
+# Token budget — one thought, not an essay. 600 leaves room for ~5
+# sentences without truncation; smoke #1 hit the 240 cap mid-word.
+REFLECT_MAX_TOKENS = int(os.getenv("AIOS_REFLECT_MAX_TOKENS", "600"))
 REFLECT_TEMP = float(os.getenv("AIOS_REFLECT_TEMP", "0.6"))
 # Optional query the subconscious uses to bias which threads score
 # relevant. Empty = the default "what's going on right now" assembly.
