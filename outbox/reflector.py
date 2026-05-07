@@ -49,6 +49,11 @@ REFLECT_MODEL = os.getenv("AIOS_REFLECT_MODEL", "gpt-oss:120b-cloud")
 # sentences without truncation; smoke #1 hit the 240 cap mid-word.
 REFLECT_MAX_TOKENS = int(os.getenv("AIOS_REFLECT_MAX_TOKENS", "600"))
 REFLECT_TEMP = float(os.getenv("AIOS_REFLECT_TEMP", "0.6"))
+# Backpressure: pause emitting when this many prior thoughts are still
+# unread+undismissed. State doesn't move that fast; if you haven't
+# looked at the last 3 thoughts the next one will likely be redundant.
+# Set AIOS_REFLECT_PAUSE_AT=0 to disable.
+REFLECT_PAUSE_AT = int(os.getenv("AIOS_REFLECT_PAUSE_AT", "3"))
 # Optional query the subconscious uses to bias which threads score
 # relevant. Empty = the default "what's going on right now" assembly.
 REFLECT_QUERY = os.getenv("AIOS_REFLECT_QUERY", "")
@@ -136,6 +141,19 @@ def tick_once() -> Dict[str, Any]:
     """
     if not REFLECT_ENABLED:
         return {"emitted": 0, "skipped_disabled": True, "elapsed_s": 0.0,
+                "path": None, "error": None}
+
+    # Backpressure: don't keep ticking when prior thoughts are still
+    # unresolved. State barely moves between 5min ticks, so the next
+    # thought would just be a re-skin of the unread ones — noise.
+    from .backpressure import should_pause
+    pause_reason = should_pause(
+        notif_type="aios_thought",
+        threshold=REFLECT_PAUSE_AT,
+    )
+    if pause_reason:
+        return {"emitted": 0, "skipped_disabled": False,
+                "paused": pause_reason, "elapsed_s": 0.0,
                 "path": None, "error": None}
 
     t0 = time.monotonic()
