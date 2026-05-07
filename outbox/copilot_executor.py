@@ -50,6 +50,17 @@ MAX_CARDS_PER_PASS = int(os.getenv("AIOS_EXEC_MAX_CARDS", "1"))
 PER_CARD_TIMEOUT_S = float(os.getenv("AIOS_EXEC_TIMEOUT_S", "60"))
 EXECUTOR_ENABLED = os.getenv("AIOS_EXEC_ENABLED", "1") == "1"
 
+# Cloud-tagged Ollama model. Routes through the local Ollama daemon
+# (which forwards :*-cloud tags to Ollama Cloud — already signed in on
+# the droplet), so we still call generate(provider="ollama", ...) but
+# never burn the small VM CPU. Override with AIOS_EXEC_MODEL.
+#
+# Rate-limit awareness: Ollama Cloud has its own per-account caps.
+# MAX_CARDS_PER_PASS=1 + a 15s tick = at most 4 calls/min from the
+# executor lane. Background reflection loops (separate, future) need
+# their own slower budget.
+EXEC_MODEL = os.getenv("AIOS_EXEC_MODEL", "kimi-k2:1t-cloud")
+
 # Heuristic classifier signals. Anything matching CODE_SIGNALS gets routed
 # to the PLAN lane no matter what; the EXECUTE lane is only for
 # prose-shaped work the small models can actually do well.
@@ -179,8 +190,8 @@ def _execute_prose(card: Dict[str, Any]) -> Dict[str, Any]:
             f"fences, no explanation — output only what the file should be "
             f"after your edit. Preserve the existing structure and tone."
         )
-        result = generate(prompt, provider="ollama", max_tokens=2048,
-                          temperature=0.4)
+        result = generate(prompt, provider="ollama", model=EXEC_MODEL,
+                          max_tokens=2048, temperature=0.4)
         # Strip wrapping code fences if the model added them anyway.
         result = re.sub(r"^```[a-z]*\n", "", result.strip())
         result = re.sub(r"\n```$", "", result.strip())
@@ -208,7 +219,8 @@ def _execute_prose(card: Dict[str, Any]) -> Dict[str, Any]:
         f"Produce the artifact he's asking for in clean Markdown. No "
         f"meta-commentary, no 'here is your...' framing — just the work."
     )
-    result = generate(prompt, provider="ollama", max_tokens=2048, temperature=0.5)
+    result = generate(prompt, provider="ollama", model=EXEC_MODEL,
+                      max_tokens=2048, temperature=0.5)
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:50] or "result"
     out_path = RESULTS_DIR / f"{int(card['id']):04d}-{slug}.md"
     header = (
@@ -256,8 +268,8 @@ def _plan_for_laptop(card: Dict[str, Any]) -> Dict[str, Any]:
         "  5. Risk level: low | medium | high (with one-line reason)\n\n"
         "Be terse. Do not write code. Output Markdown."
     )
-    plan_md = generate(prompt, provider="ollama", max_tokens=1200,
-                       temperature=0.3)
+    plan_md = generate(prompt, provider="ollama", model=EXEC_MODEL,
+                       max_tokens=1200, temperature=0.3)
     slug = re.sub(r"[^a-z0-9]+", "-", title.lower()).strip("-")[:50] or "plan"
     out = PLANS_DIR / f"{int(card['id']):04d}-{slug}.md"
     header = (
