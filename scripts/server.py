@@ -41,6 +41,7 @@ from agent.core.mcp_api import router as mcp_router
 # Self-contained the agent modules with routers
 from chat import router as chat_router, websocket_manager
 from workspace import router as workspace_router
+from outbox import router as outbox_router, init_outbox_table
 from agent.services import router as services_router
 from agent.services.mobile_api import router as mobile_router
 from agent.services.mobile_voice_api import router as mobile_voice_router
@@ -220,6 +221,7 @@ if os.getenv("AIOS_DEMO_LLM_CHAT_ONLY", "").lower() in ("1", "true", "yes"):
 # the agent modules
 app.include_router(chat_router)
 app.include_router(workspace_router)
+app.include_router(outbox_router)
 app.include_router(services_router)
 app.include_router(feeds_router)
 app.include_router(models_router)
@@ -361,6 +363,13 @@ async def startup_event():
             print("[Startup] Field thread initialized")
         except Exception as e:
             print(f"[Startup] Field init skipped: {e}")
+
+        # Outbox: motor-approval surface (the partnership joint)
+        try:
+            init_outbox_table()
+            print("[Startup] Outbox initialized")
+        except Exception as e:
+            print(f"[Startup] Outbox init skipped: {e}")
 
         # Per-thread affect store (feelings.py registry + shared table)
         try:

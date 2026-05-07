@@ -731,6 +731,40 @@ def main() -> int:
     except Exception:
         pass
 
+    # Phone → Copilot inbox: pull pending copilot_requests from the droplet
+    # (always-on) and mirror them as workspace files so the VS Code file
+    # explorer surfaces them on the next folder refresh. Best-effort —
+    # silently no-op if the droplet is unreachable or AIOS_DROPLET_URL
+    # isn't set.
+    try:
+        from outbox import copilot_inbox as _cinbox
+        droplet_cards = _cinbox.sync_from_droplet()
+        local_cards = _cinbox.pending(limit=20)
+        all_titles: list[tuple[int, str, str]] = []
+        for c in droplet_cards:
+            all_titles.append((
+                int(c.get("droplet_id") or c.get("id") or 0),
+                "droplet",
+                (c.get("title") or "")[:80],
+            ))
+        for c in local_cards:
+            all_titles.append((
+                int(c.get("id") or 0),
+                "local",
+                (c.get("title") or "")[:80],
+            ))
+        if all_titles:
+            print("")
+            print(f"📨 copilot inbox: {len(all_titles)} pending request(s) from phone:")
+            for cid, src, title in all_titles[:8]:
+                tag = "droplet" if src == "droplet" else "local"
+                print(f"   #{cid} [{tag}]  {title}")
+            print("   (mirrors written to workspace/_copilot_inbox/)")
+            print("   close with: python scripts/copilot_inbox_done.py <id>")
+    except Exception as _e:  # noqa: BLE001
+        # Never let inbox sync break the ritual.
+        pass
+
     print(banner)
     print(state)
     print(banner)
