@@ -181,6 +181,19 @@ def _exec_once(logf) -> None:
         _heartbeat_write({"loop": "exec", "err": 1})
 
 
+def _reflect_once(logf) -> None:
+    """Run the reflector: emit one grounded thought based on STATE.
+    Slow cadence (default 5min) so cloud rate budget stays healthy."""
+    try:
+        from outbox.reflector import tick_once
+        result = tick_once()
+        _log(logf, "reflect", result)
+        _heartbeat_write({"loop": "reflect", **result})
+    except Exception as e:
+        _log(logf, "reflect", {"ERR": f"{type(e).__name__}: {e}"})
+        _heartbeat_write({"loop": "reflect", "err": 1})
+
+
 def main() -> int:
     p = argparse.ArgumentParser()
     p.add_argument("--meditate-s", type=float,
@@ -192,12 +205,16 @@ def main() -> int:
     p.add_argument("--exec-s", type=float,
                    default=float(os.getenv("AIOS_LOOP_EXEC_S", "15.0")),
                    help="copilot_executor cadence (phone request acting)")
+    p.add_argument("--reflect-s", type=float,
+                   default=float(os.getenv("AIOS_LOOP_REFLECT_S", "300.0")),
+                   help="reflector cadence — one grounded thought per tick")
     p.add_argument("--once", action="store_true",
                    help="run each loop once and exit")
     p.add_argument("--no-meditate", action="store_true")
     p.add_argument("--no-coma", action="store_true")
     p.add_argument("--no-tasks", action="store_true")
     p.add_argument("--no-exec", action="store_true")
+    p.add_argument("--no-reflect", action="store_true")
     args = p.parse_args()
 
     if not _acquire_lock():
@@ -215,18 +232,20 @@ def main() -> int:
         "coma_s": args.coma_s,
         "task_s": args.task_s,
         "exec_s": args.exec_s,
+        "reflect_s": args.reflect_s,
         "once": args.once,
     })
     print(
         f"[run_loops] pid={os.getpid()} "
         f"meditate={args.meditate_s}s coma={args.coma_s}s tasks={args.task_s}s "
-        f"exec={args.exec_s}s once={args.once}"
+        f"exec={args.exec_s}s reflect={args.reflect_s}s once={args.once}"
     )
 
     next_med = 0.0
     next_coma = 0.0
     next_task = 0.0
     next_exec = 0.0
+    next_reflect = 0.0
 
     try:
         while _RUN:
@@ -243,10 +262,13 @@ def main() -> int:
             if not args.no_exec and now >= next_exec:
                 _exec_once(logf)
                 next_exec = now + args.exec_s
+            if not args.no_reflect and now >= next_reflect:
+                _reflect_once(logf)
+                next_reflect = now + args.reflect_s
             if args.once:
                 break
             # Sleep until the soonest deadline, but wake every 200ms for signals.
-            until = min(next_med, next_coma, next_task, next_exec) - time.time()
+            until = min(next_med, next_coma, next_task, next_exec, next_reflect) - time.time()
             if until > 0.2:
                 until = 0.2
             if until > 0:

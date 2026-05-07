@@ -23,6 +23,7 @@ from .schema import (
 )
 from . import copilot_inbox
 from . import copilot_executor
+from . import reflector
 
 __all__ = [
     "router",
