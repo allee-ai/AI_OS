@@ -20,11 +20,17 @@ Run:
 """
 from __future__ import annotations
 
+import json
 import os
 import logging
 import smtplib
+import ssl
 import subprocess
-from datetime import datetime, timezone
+import urllib.request
+import urllib.error
+from datetime import datetime, timezone, date
+
+import certifi
 from email.mime.application import MIMEApplication
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -42,6 +48,13 @@ PROTON_SERVICE = "AIOS-Proton-Bridge"
 PROTON_ACCOUNT = "alleeroden@pm.me"
 SMTP_HOST = "127.0.0.1"
 SMTP_PORT = 1025
+
+# Jake-app CRM webhook target — fire-and-forget on every instant-quote submit.
+# Token is a long-lived JWT for the `sales` user (id=3), stored in keychain.
+JAKE_SERVICE = "AIOS-Jake-Token"
+JAKE_ACCOUNT = "sales"
+JAKE_URL = "https://bycade.com/api/sales/leads"
+JAKE_TIMEOUT_S = 4
 
 # Where each site's form submissions go.
 ROUTES: dict[str, str] = {
@@ -78,6 +91,48 @@ def _keychain_password() -> str:
         stderr=subprocess.DEVNULL,
     )
     return out.decode().strip()
+
+
+def _jake_token() -> str | None:
+    """Read the long-lived sales JWT from keychain. None if not set."""
+    try:
+        out = subprocess.check_output(
+            ["security", "find-generic-password",
+             "-s", JAKE_SERVICE, "-a", JAKE_ACCOUNT, "-w"],
+            stderr=subprocess.DEVNULL,
+        )
+        return out.decode().strip()
+    except Exception:
+        return None
+
+
+def _push_lead_to_jake(lead: dict) -> None:
+    """POST a LeadCreate payload to jake-app. Fire-and-forget — any failure is
+    logged but never propagated. We do not want CRM hiccups to break the
+    customer-facing quote flow.
+    """
+    token = _jake_token()
+    if not token:
+        log.warning("jake: no token in keychain, skipping push")
+        return
+    try:
+        req = urllib.request.Request(
+            JAKE_URL,
+            data=json.dumps(lead, default=str).encode(),
+            method="POST",
+            headers={
+                "Authorization": f"Bearer {token}",
+                "Content-Type": "application/json",
+            },
+        )
+        with urllib.request.urlopen(req, timeout=JAKE_TIMEOUT_S, context=ssl.create_default_context(cafile=certifi.where())) as resp:
+            body = resp.read().decode(errors="replace")[:200]
+            log.info(f"jake: lead pushed ({resp.status}) {body}")
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")[:200] if e.fp else ""
+        log.error(f"jake: HTTP {e.code} pushing lead: {detail}")
+    except Exception as e:
+        log.error(f"jake: push failed: {type(e).__name__}: {e}")
 
 
 def _resolve_destination(site: str) -> str | None:
@@ -342,6 +397,35 @@ async def instant_quote_submit(request: Request):
             log.error(f"auto-reply failed for {customer_email}: {e}")
 
     log.info(f"instant-quote {bid_id} ({track}) {target_site} -> {to_addr}; reply -> {customer_email}")
+
+    # ── 3) fire-and-forget push into jake-app CRM ─────────────────
+    # Never blocks or fails the request — CRM downtime can't break quoting.
+    try:
+        site_tag = (target_site or "vre").split(".")[0].replace("-", "")
+        notes_block = (
+            f"bid_id: {bid_id}\n"
+            f"track: {track}\n"
+            f"property: {prop_label}\n"
+            f"total: ${total_low:,}–${total_high:,}\n"
+            f"items: {len(items)}\n"
+            f"site: {target_site}\n"
+            f"\ncustomer notes:\n{contact.get('notes') or '(none)'}"
+        )
+        lead = {
+            "contact_name": customer_name or "(no name)",
+            "phone": contact.get("phone") or None,
+            "email": customer_email or None,
+            "address": contact.get("address") or None,
+            "contact_role": "investor" if track == "investor" else "owner",
+            "source": f"instant-quote-{site_tag}",
+            "notes": notes_block,
+            "next_action": "Text within 1 business day",
+            "next_action_date": date.today().isoformat(),
+        }
+        _push_lead_to_jake(lead)
+    except Exception as e:
+        log.error(f"jake: lead-build failed: {type(e).__name__}: {e}")
+
     return JSONResponse({"ok": True, "bid_id": bid_id, "track": track})
 
 
