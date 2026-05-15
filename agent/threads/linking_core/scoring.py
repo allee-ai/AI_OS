@@ -11,11 +11,16 @@ Provider selection is env-driven so the same code runs on a laptop
 (local Ollama nomic-embed-text) and on a 1GB VM that can't host the
 local model (cloud OpenAI text-embedding-3-small):
 
-    AIOS_EMBED_PROVIDER   ollama (default) | openai | none
+    AIOS_EMBED_PROVIDER   ollama (default) | openai | sentence_transformers | none
     AIOS_EMBED_MODEL      override (default per-provider)
 
-`none` skips embeddings entirely \u2014 every call falls through to keyword
+`none` skips embeddings entirely — every call falls through to keyword
 overlap scoring.
+
+The ``sentence_transformers`` provider runs a small CPU model locally
+(default all-MiniLM-L6-v2, ~80MB on disk, ~150MB resident, dim=384).
+It's the right choice on a low-RAM VM where local Ollama can't host
+an embed model and the OpenAI key isn't available.
 """
 
 import os
@@ -32,7 +37,11 @@ _PROBE_PROVIDER: str = ""
 _DEFAULT_MODELS = {
     "ollama": "nomic-embed-text",
     "openai": "text-embedding-3-small",
+    "sentence_transformers": "all-MiniLM-L6-v2",
 }
+
+# Cached sentence-transformers model handle (lazy-loaded).
+_ST_MODEL: Optional[Any] = None  # type: ignore[name-defined]
 
 
 def _provider() -> str:
@@ -97,6 +106,13 @@ def _embed_raw(text: str) -> Optional[np.ndarray]:
             client = OpenAI(api_key=api_key)
             resp = client.embeddings.create(model=model, input=text)
             return np.array(resp.data[0].embedding)
+        if p in ("sentence_transformers", "st", "sbert"):
+            global _ST_MODEL
+            if _ST_MODEL is None:
+                from sentence_transformers import SentenceTransformer
+                _ST_MODEL = SentenceTransformer(model)
+            vec = _ST_MODEL.encode(text, convert_to_numpy=True, show_progress_bar=False)
+            return np.asarray(vec)
     except Exception:
         return None
     return None
