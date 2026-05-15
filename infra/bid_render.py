@@ -30,7 +30,9 @@ import weasyprint  # noqa: E402  — must come after env var set
 
 
 ROOT = Path(__file__).resolve().parents[1]
-SRC = ROOT / "workspace" / "vre-construction-src"
+# Allow override so the droplet can point at /opt/aios-form-server/vre-src
+# without dragging the whole repo onto it.
+SRC = Path(os.environ.get("VRE_SRC_DIR") or (ROOT / "workspace" / "vre-construction-src"))
 
 
 # --- helpers -----------------------------------------------------------------
