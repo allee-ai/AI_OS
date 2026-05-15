@@ -1,0 +1,1278 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instant quote — Vanguard Reconstruction</title>
+<meta name="description" content="Build a real, itemized electrical estimate in three minutes. Same prices we publish on our pricing page. We send the PDF to your inbox.">
+<link rel="canonical" href="https://vre-construction.com/instant-quote.html">
+<meta name="theme-color" content="#7c3aed">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vre-construction.com/instant-quote.html">
+<meta property="og:title" content="Instant quote — Vanguard Reconstruction">
+<meta property="og:description" content="Build a real, itemized electrical estimate in three minutes. Same prices we publish on our pricing page. We send the PDF to your inbox.">
+<meta property="og:site_name" content="Vanguard Reconstruction">
+
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,ital,wght@9..144,0,500;9..144,0,600;9..144,1,500;9..144,1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+
+<style>
+/* ===== Design tokens =================================================== */
+:root{
+  --bg:#ffffff;
+  --bg-2:#faf7f2;            /* warm cream alt band */
+  --bg-3:#1a1429;            /* deep ink inverted band */
+  --fg:#1a1429;              /* deep ink, not pure black */
+  --fg-on-dark:#f7f4fb;
+  --mute:#5b5478;
+  --mute-on-dark:#b8b0d0;
+  --dim:#8c849f;
+  --accent:#7c3aed;
+  --accent-hover:#6d28d9;
+  --accent-2:#ec4899;
+  --amber:#f59e0b;
+  --rule:rgba(26,20,41,0.08);
+  --rule-strong:rgba(26,20,41,0.16);
+  --card:#ffffff;
+  --card-shadow:0 1px 2px rgba(26,20,41,0.04), 0 8px 24px rgba(26,20,41,0.05);
+  --card-shadow-hover:0 2px 4px rgba(124,58,237,0.08), 0 16px 40px rgba(26,20,41,0.10);
+  /* 5-stop structural gradient — topbar only */
+  --grad-topbar:linear-gradient(90deg,#7c3aed 0%,#c026d3 30%,#ec4899 55%,#f59e0b 80%,#22d3ee 100%);
+  /* 3-stop warm gradient — body usage (underlines, accents, CTA hover) */
+  --grad:linear-gradient(90deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  --grad-soft:linear-gradient(90deg,rgba(124,58,237,0.14) 0%,rgba(236,72,153,0.14) 55%,rgba(245,158,11,0.14) 100%);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --maxw:64rem;
+  --maxw-narrow:48rem;
+}
+
+/* ===== Reset / base ==================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:17px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+a{color:var(--accent);text-decoration:none;transition:color .15s ease, opacity .15s ease}
+a:hover{color:var(--accent-hover)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+/* Tabular numerals everywhere a number appears in tables/stats/prices */
+.mono, .num, td.price, .stat-num, .price-inline{
+  font-family:var(--mono);font-feature-settings:"tnum","ss01";
+}
+
+/* ===== Topbar (structural 5-stop gradient, always present) ============= */
+.topbar{height:3px;background:var(--grad-topbar);width:100%;position:relative;z-index:50}
+
+/* ===== Sticky nav ===================================================== */
+.nav-shell{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .2s ease, background .2s ease, padding .2s ease;
+}
+.nav-shell.scrolled{
+  background:rgba(255,255,255,0.94);
+  border-bottom-color:var(--rule);
+}
+.nav{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 1.5rem;
+  transition:padding .2s ease;
+}
+.nav-shell.scrolled .nav{padding:.7rem 1.5rem}
+.brand-mark{display:flex;align-items:center;gap:.65rem;color:var(--fg)}
+.brand-mark:hover{color:var(--fg)}
+.brand-mark .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--grad);
+  box-shadow:0 0 0 4px rgba(124,58,237,0.10);
+  flex-shrink:0;
+}
+.brand-mark .name{font-weight:700;letter-spacing:-0.01em;font-size:1rem;line-height:1.1}
+.brand-mark .name small{
+  display:block;color:var(--mute);font-weight:500;font-size:0.7rem;
+  letter-spacing:0.10em;text-transform:uppercase;margin-top:0.15rem;
+}
+.nav-links{display:flex;align-items:center;gap:1.6rem}
+.nav-links a{color:var(--mute);font-size:.94rem;font-weight:500}
+.nav-links a:hover,.nav-links a.on{color:var(--fg)}
+.nav-links a.on{position:relative}
+.nav-links a.on::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;
+  background:var(--grad);border-radius:2px;
+}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:var(--fg);color:#fff;padding:.55rem 1rem;border-radius:8px;
+  font-size:.88rem;font-weight:600;letter-spacing:.005em;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.nav-cta:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,0.25)}
+.nav-cta::after{content:"→";transition:transform .15s ease}
+.nav-cta:hover::after{transform:translateX(2px)}
+@media (max-width:720px){
+  .nav-links{gap:1rem}
+  .nav-links a:not(.nav-cta){display:none}
+}
+
+/* ===== Layout ========================================================== */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.5rem}
+.wrap-narrow{max-width:var(--maxw-narrow);margin:0 auto;padding:0 1.5rem}
+.band{padding:5rem 0}
+.band-tight{padding:3.5rem 0}
+.band-2{background:var(--bg-2)}
+.band-dark{background:var(--bg-3);color:var(--fg-on-dark)}
+.band-dark a{color:#fff}
+.band-dark .sub{color:var(--mute-on-dark)}
+
+/* ===== Type =========================================================== */
+h1,h2,h3,h4{margin:0;letter-spacing:-0.02em}
+h1{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(2.4rem,6vw,4rem);line-height:1.05;letter-spacing:-0.035em;
+}
+h2{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.15;
+  margin-bottom:.6rem;
+  scroll-margin-top:6rem;
+}
+h3{
+  font-family:var(--sans);font-weight:600;
+  font-size:1.05rem;color:var(--accent);
+  letter-spacing:.005em;
+  margin:1.75rem 0 .5rem;
+}
+h4{
+  font-family:var(--sans);font-weight:600;
+  font-size:.78rem;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--accent);
+}
+p{margin:0 0 1rem}
+.lede{font-size:1.2rem;line-height:1.6;color:var(--fg);max-width:42rem}
+.sub{color:var(--mute)}
+.eyebrow{
+  display:inline-block;font-family:var(--sans);font-weight:600;
+  font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:1rem;
+}
+.eyebrow::before{content:"";display:inline-block;width:1.5rem;height:2px;background:var(--grad);vertical-align:middle;margin-right:.6rem;border-radius:2px}
+
+/* Underlined gradient accent — replaces fill gradient on words */
+.grad-under{
+  font-family:var(--serif);font-style:italic;font-weight:500;
+  position:relative;display:inline-block;white-space:nowrap;
+}
+.grad-under::after{
+  content:"";position:absolute;left:-0.05em;right:-0.05em;bottom:0.10em;
+  height:0.28em;background:var(--grad);
+  z-index:-1;border-radius:3px;opacity:.85;
+}
+/* Pure-gradient text — used sparingly (CTA word, footer mark) */
+.grad-text{
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* Headline-anchor copy-link affordance */
+h2[id]{position:relative}
+h2[id] .anchor{
+  position:absolute;left:-1.4em;top:0;opacity:0;color:var(--accent);
+  font-family:var(--sans);font-weight:500;text-decoration:none;
+  transition:opacity .15s ease;
+}
+h2[id]:hover .anchor,h2[id] .anchor:focus-visible{opacity:.6}
+
+/* ===== Buttons ======================================================== */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.95rem 1.5rem;border-radius:10px;
+  font-family:var(--sans);font-weight:600;font-size:1rem;letter-spacing:.005em;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+.btn-primary{background:var(--fg);color:#fff}
+.btn-primary:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 10px 24px rgba(124,58,237,0.28)}
+.btn-primary::after{content:"→";transition:transform .15s ease}
+.btn-primary:hover::after{transform:translateX(3px)}
+.btn-ghost{background:transparent;color:var(--fg);border-color:var(--rule-strong)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* CTA cluster (button + microcopy underneath) */
+.cta-cluster{display:flex;flex-direction:column;align-items:flex-start;gap:.55rem}
+.cta-cluster.center{align-items:center;text-align:center}
+.cta-micro{color:var(--mute);font-size:.85rem;letter-spacing:.005em}
+
+/* ===== Hero =========================================================== */
+.hero{padding:5.5rem 0 4rem;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 0%,rgba(245,158,11,0.10) 0%,transparent 60%),
+    radial-gradient(ellipse 70% 60% at 0% 30%,rgba(124,58,237,0.10) 0%,transparent 65%);
+  z-index:-1;
+}
+.hero h1{max-width:18ch;margin-bottom:1.25rem}
+.hero .lede{margin-bottom:2rem}
+.hero-cta-row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.5rem}
+
+/* ===== Stat strip ===================================================== */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  margin:3rem 0 0;padding:1.6rem 0;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+}
+.stats .stat{padding:.25rem 1.25rem;border-left:1px solid var(--rule)}
+.stats .stat:first-child{border-left:0;padding-left:0}
+.stat-num{font-family:var(--mono);font-weight:600;font-size:1.6rem;color:var(--fg);letter-spacing:-.02em;line-height:1.1}
+.stat-label{font-size:.82rem;color:var(--mute);margin-top:.25rem;letter-spacing:.01em}
+@media (max-width:680px){
+  .stats{grid-template-columns:repeat(2,1fr);gap:1.25rem 0;padding:1.25rem 0}
+  .stats .stat{padding:.5rem 1rem;border-left:0;border-top:1px solid var(--rule);padding-top:1rem}
+  .stats .stat:first-child,.stats .stat:nth-child(2){border-top:0;padding-top:.5rem}
+}
+
+/* ===== Three-step "How it works" ====================================== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
+@media (max-width:760px){.steps{grid-template-columns:1fr;gap:1.5rem}}
+.step{padding:0}
+.step .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:2.4rem;height:2.4rem;border-radius:50%;
+  background:var(--grad-soft);color:var(--accent);
+  font-family:var(--mono);font-weight:600;font-size:1rem;
+  margin-bottom:1rem;
+  border:1px solid rgba(124,58,237,0.18);
+}
+.step h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.25rem;margin:.25rem 0 .5rem;letter-spacing:-.01em}
+.step p{color:var(--mute);font-size:.96rem;margin:0}
+
+/* ===== Service pillars (3-up) ======================================== */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2.5rem}
+@media (max-width:840px){.pillars{grid-template-columns:1fr}}
+.pillar{
+  display:flex;flex-direction:column;
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.pillar:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover);border-color:rgba(124,58,237,0.25)}
+.pillar h3{font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.3rem;color:var(--fg);margin:0 0 .5rem;letter-spacing:-.01em}
+.pillar p{color:var(--mute);font-size:.95rem;flex:1;margin:0 0 1rem}
+.pillar .price-inline{color:var(--accent);font-weight:600;font-size:.95rem;margin-bottom:1rem}
+.pillar .more{color:var(--accent);font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.35rem;align-self:flex-start}
+.pillar .more::after{content:"→";transition:transform .15s ease}
+.pillar:hover .more::after{transform:translateX(3px)}
+
+/* ===== Photo band ===================================================== */
+.photo-band{position:relative;height:clamp(280px,38vw,440px);overflow:hidden;margin:0}
+.photo-band img{width:100%;height:100%;object-fit:cover;filter:saturate(0.85) contrast(1.05)}
+.photo-band::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(26,20,41,0.05) 0%,rgba(26,20,41,0.35) 100%),
+             linear-gradient(120deg,rgba(124,58,237,0.20) 0%,transparent 50%,rgba(245,158,11,0.18) 100%);
+  mix-blend-mode:multiply;
+}
+.photo-band .photo-caption{
+  position:absolute;left:0;right:0;bottom:0;padding:1.25rem 1.5rem;
+  color:#fff;font-size:.85rem;letter-spacing:.03em;
+  z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.4);
+  max-width:var(--maxw);margin:0 auto;
+}
+
+/* ===== Testimonials =================================================== */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
+@media (max-width:840px){.quotes{grid-template-columns:1fr}}
+.quote{
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.quote blockquote{margin:0 0 1rem;color:var(--fg);font-size:1.02rem;line-height:1.55;font-family:var(--serif);font-weight:500;font-style:italic;letter-spacing:-.005em}
+.quote blockquote::before{content:"\201C";font-size:2.2rem;color:var(--accent);line-height:0;vertical-align:-0.35em;margin-right:.2rem;font-family:var(--serif);font-style:normal}
+.quote .who{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);border-top:1px solid var(--rule);padding-top:.85rem}
+.quote .who strong{color:var(--fg);font-weight:600}
+
+/* ===== Promise / values band ========================================= */
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2rem}
+@media (max-width:760px){.values{grid-template-columns:1fr;gap:1.25rem}}
+.value h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.2rem;margin:0 0 .5rem;letter-spacing:-.01em}
+.value p{color:var(--mute);font-size:.95rem;margin:0}
+
+/* ===== Bottom CTA band =============================================== */
+.cta-band{padding:4.5rem 0;text-align:center}
+.cta-band h2{font-size:clamp(1.8rem,4vw,2.6rem);max-width:24ch;margin:0 auto .8rem;color:#fff}
+.cta-band .lede{color:var(--mute-on-dark);max-width:36rem;margin:0 auto 2rem}
+.cta-band .btn-primary{background:#fff;color:var(--fg)}
+.cta-band .btn-primary:hover{background:var(--accent);color:#fff}
+.cta-band .cta-micro{color:var(--mute-on-dark)}
+
+/* ===== Footer ======================================================== */
+footer.site{
+  border-top:1px solid var(--rule);
+  padding:2.5rem 0 3rem;
+  background:var(--bg);
+  font-size:.88rem;color:var(--mute);
+}
+footer.site .row{
+  max-width:var(--maxw);margin:0 auto;padding:0 1.5rem;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:2rem;flex-wrap:wrap;
+}
+footer.site .meta{display:flex;flex-direction:column;gap:.35rem}
+footer.site .meta strong{color:var(--fg);font-size:.95rem;font-weight:600}
+footer.site .links{display:flex;gap:1.25rem;flex-wrap:wrap}
+footer.site .links a{color:var(--mute);font-size:.88rem}
+footer.site .links a:hover{color:var(--accent)}
+footer.site .credit{flex-basis:100%;border-top:1px solid var(--rule);padding-top:1rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;color:var(--dim);font-size:.8rem}
+footer.site .credit a{color:var(--mute)}
+
+/* ===== Content-page primitives (used by pricing.html & others) ======= */
+.content-h1-block h1{max-width:22ch;margin-bottom:1.25rem}
+.content-h1-block .lede{margin-bottom:1.5rem}
+
+.toc{
+  margin:2.5rem 0;padding:1.4rem 1.6rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+}
+.toc h4{margin:0 0 .6rem;color:var(--accent)}
+.toc ol{margin:0;padding-left:1.25rem;color:var(--mute);font-size:.95rem;columns:2;column-gap:2rem}
+.toc li{margin-bottom:.3rem;break-inside:avoid}
+.toc a{color:var(--mute);font-weight:500}
+.toc a:hover{color:var(--accent)}
+@media (max-width:560px){.toc ol{columns:1}}
+
+.section{padding:2.5rem 0;border-top:1px solid var(--rule)}
+.section:first-of-type{border-top:0;padding-top:1.5rem}
+.section h2 .num{
+  font-family:var(--mono);font-weight:500;font-style:normal;
+  color:var(--accent);font-size:.75em;
+  margin-right:.7rem;vertical-align:.15em;letter-spacing:.02em;
+}
+
+.callout{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+  font-size:.96rem;
+}
+.callout strong{color:var(--accent)}
+
+.warn{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:#fff7ed;border:1px solid #fed7aa;
+  border-left:3px solid var(--amber);border-radius:10px;
+  font-size:.96rem;color:#7c2d12;
+}
+.warn strong{color:#9a3412}
+
+.kv{
+  display:grid;grid-template-columns:max-content 1fr;
+  gap:.55rem 1.4rem;margin:1.2rem 0;padding:1.2rem 1.4rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  font-size:.96rem;
+}
+.kv dt{color:var(--accent);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;padding-top:.1rem}
+.kv dd{margin:0;color:var(--fg)}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:.15rem 0}.kv dt{margin-top:.6rem}.kv dt:first-child{margin-top:0}}
+
+ul.bullets,ol.bullets{margin:.5rem 0 1rem;padding-left:1.2rem;color:var(--fg)}
+ul.bullets li,ol.bullets li{margin-bottom:.45rem}
+ul.bullets li::marker,ol.bullets li::marker{color:var(--accent)}
+ul.bullets li strong,ol.bullets li strong{color:var(--fg)}
+
+.table-wrap{margin:1.5rem 0;overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);box-shadow:var(--card-shadow)}
+table{width:100%;border-collapse:collapse;font-size:.95rem;min-width:32rem}
+th,td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+th{background:var(--bg-2);color:var(--fg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+td:first-child{color:var(--fg);font-weight:500}
+td.price{color:var(--accent);font-weight:600;white-space:nowrap;font-family:var(--mono);font-feature-settings:"tnum"}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s ease}
+tbody tr:hover{background:var(--bg-2)}
+
+.cta-mini{
+  margin-top:1.5rem;padding:1.25rem 1.5rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:12px;font-size:1rem;
+}
+.cta-mini a{color:var(--accent);font-weight:600}
+
+.legend{
+  display:flex;flex-wrap:wrap;gap:1.6rem;
+  margin:1.5rem 0 0;padding:1rem 1.3rem;
+  background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;
+  font-size:.88rem;color:var(--mute);
+}
+.legend strong{color:var(--fg);font-weight:600}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+@media (max-width:640px){.two-col{grid-template-columns:1fr}}
+.two-col .col{padding:1.25rem 1.4rem;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--card-shadow)}
+.two-col .col h4{margin:0 0 .7rem;color:var(--accent)}
+.two-col .col.up h4{color:#be185d}
+.two-col .col.down h4{color:#047857}
+.two-col .col ul{margin:0;padding-left:1.1rem;font-size:.93rem;color:var(--fg)}
+.two-col .col li{margin-bottom:.35rem}
+
+.hero-promise{
+  margin:1.5rem 0 2rem;padding:1.5rem 1.7rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:14px;
+}
+.hero-promise h3{margin:0 0 .6rem}
+.hero-promise p{margin:0 0 .6rem;font-size:1rem}
+.hero-promise p:last-child{margin-bottom:0}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 1.5rem}
+.tag-row span{
+  font-size:.78rem;color:var(--mute);
+  background:var(--bg-2);border:1px solid var(--rule);
+  padding:.35rem .75rem;border-radius:999px;
+}
+.tag-row span strong{color:var(--fg);font-weight:600}
+
+/* ===== Print ========================================================= */
+@media print{
+  .nav-shell,.cta-band,footer.site,.photo-band{display:none !important}
+  body{background:#fff;color:#000}
+  a{color:#000;text-decoration:underline}
+  .topbar{height:2px;background:#000}
+  .table-wrap,.callout,.warn,.kv,.cta-mini,.hero-promise{box-shadow:none;background:#fff;border:1px solid #ccc}
+  h2,h3{page-break-after:avoid}
+  table,.table-wrap{page-break-inside:avoid}
+}
+
+.q-hero{padding:4rem 0 1.5rem}
+.q-hero h1{max-width:18ch}
+
+.stepper{padding:1rem 0 4rem}
+.steps-bar{
+  display:flex;gap:.5rem;flex-wrap:wrap;
+  margin:0 0 2.5rem;padding:0;list-style:none;
+  font-family:var(--mono);font-size:.78rem;
+  color:var(--mute);
+}
+.steps-bar li{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.5rem .85rem;border-radius:999px;
+  background:var(--bg-2);border:1px solid var(--rule);
+  letter-spacing:.04em;
+}
+.steps-bar li.on{background:var(--grad-soft);border-color:rgba(124,58,237,0.35);color:var(--accent)}
+.steps-bar li.done{color:var(--fg);border-color:var(--rule-strong)}
+.steps-bar li .n{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.4rem;height:1.4rem;border-radius:50%;
+  background:#fff;border:1px solid var(--rule-strong);
+  font-size:.72rem;font-weight:600;
+}
+.steps-bar li.on .n{background:var(--accent);color:#fff;border-color:var(--accent)}
+.steps-bar li.done .n{background:var(--fg);color:#fff;border-color:var(--fg)}
+
+.q-panel{display:none}
+.q-panel.on{display:block}
+.q-panel h2{margin-bottom:.4rem}
+.q-panel .lede{margin-bottom:1.75rem}
+
+/* property type cards */
+.prop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem}
+@media (max-width:640px){.prop-grid{grid-template-columns:1fr}}
+.prop-card{
+  text-align:left;cursor:pointer;
+  padding:1.4rem 1.5rem;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  font-family:var(--sans);width:100%;display:block;
+}
+.prop-card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover);border-color:rgba(124,58,237,0.35)}
+.prop-card.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,0.15), var(--card-shadow-hover)}
+.prop-card .ic{font-size:1.6rem;line-height:1;margin-bottom:.6rem}
+.prop-card .lbl{font-family:var(--serif);font-weight:600;font-size:1.15rem;color:var(--fg);margin-bottom:.3rem;letter-spacing:-.01em}
+.prop-card .ds{color:var(--mute);font-size:.92rem;margin:0}
+
+/* category grid */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}
+@media (max-width:760px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:480px){.cat-grid{grid-template-columns:1fr}}
+.cat-tile{
+  text-align:left;cursor:pointer;
+  padding:1.1rem 1.2rem;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:12px;
+  display:flex;align-items:center;gap:.8rem;
+  font-family:var(--sans);font-size:.96rem;color:var(--fg);font-weight:500;
+  transition:border-color .15s ease, background .15s ease;
+  width:100%;
+}
+.cat-tile:hover{border-color:rgba(124,58,237,0.35)}
+.cat-tile.on{border-color:var(--accent);background:var(--grad-soft)}
+.cat-tile .ic{font-size:1.3rem;line-height:1;flex-shrink:0}
+
+/* line-item editor (step 3) */
+.cat-block{
+  margin:1.25rem 0;padding:1.4rem 1.5rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.cat-block h3{
+  margin:0 0 1rem;color:var(--fg);font-family:var(--serif);font-style:normal;
+  font-weight:600;font-size:1.2rem;letter-spacing:-.01em;
+  display:flex;align-items:center;gap:.6rem;
+}
+.cat-block h3 .ic{font-size:1.2rem}
+.line{
+  display:grid;grid-template-columns:1fr auto auto;gap:.85rem 1rem;
+  align-items:center;padding:.7rem 0;
+  border-top:1px solid var(--rule);
+}
+.line:first-of-type{border-top:0}
+.line .info{min-width:0}
+.line .nm{font-size:.95rem;color:var(--fg);font-weight:500;line-height:1.35}
+.line .nt{font-size:.78rem;color:var(--mute);margin-top:.2rem;line-height:1.4}
+.line .pr{font-family:var(--mono);font-size:.85rem;color:var(--accent);font-weight:600;white-space:nowrap}
+.qty{
+  display:inline-flex;align-items:center;
+  border:1px solid var(--rule-strong);border-radius:8px;
+  background:#fff;overflow:hidden;
+}
+.qty button{
+  width:2rem;height:2rem;border:0;background:transparent;
+  font-family:var(--mono);font-weight:600;color:var(--accent);font-size:1rem;
+  cursor:pointer;line-height:1;
+  transition:background .12s ease;
+}
+.qty button:hover{background:var(--bg-2)}
+.qty button:disabled{color:var(--rule-strong);cursor:not-allowed}
+.qty input{
+  width:2.5rem;height:2rem;border:0;background:transparent;
+  text-align:center;font-family:var(--mono);font-weight:600;font-size:.92rem;color:var(--fg);
+  -moz-appearance:textfield;
+}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* modifiers (step 4) */
+.mod-list{display:grid;grid-template-columns:1fr;gap:.6rem;margin-top:1rem}
+.mod{
+  display:flex;align-items:flex-start;gap:.85rem;
+  padding:1rem 1.2rem;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:12px;cursor:pointer;
+  transition:border-color .15s ease, background .15s ease;
+}
+.mod:hover{border-color:rgba(124,58,237,0.3)}
+.mod.on{border-color:var(--accent);background:var(--grad-soft)}
+.mod input[type=checkbox]{
+  appearance:none;-webkit-appearance:none;
+  width:1.2rem;height:1.2rem;border-radius:5px;
+  border:1.5px solid var(--rule-strong);background:#fff;
+  cursor:pointer;flex-shrink:0;margin-top:.15rem;position:relative;
+  transition:background .12s ease, border-color .12s ease;
+}
+.mod input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+.mod input[type=checkbox]:checked::after{
+  content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;
+  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);
+}
+.mod-text{flex:1;min-width:0}
+.mod-lbl{font-size:.96rem;color:var(--fg);font-weight:500}
+.mod-pct{font-family:var(--mono);font-size:.78rem;color:var(--accent);font-weight:600;margin-left:.5rem}
+.mod-ds{font-size:.83rem;color:var(--mute);margin-top:.25rem;line-height:1.4}
+
+/* contact form (step 5) */
+form.q-form{display:flex;flex-direction:column;gap:1rem;margin-top:1rem}
+form.q-form .field{display:flex;flex-direction:column;gap:.4rem}
+form.q-form label{font-size:.82rem;font-weight:600;color:var(--fg);letter-spacing:.005em}
+form.q-form label .req{color:var(--accent);margin-left:.2rem}
+form.q-form input,form.q-form textarea{
+  width:100%;padding:.85rem 1rem;
+  background:#fff;border:1.5px solid var(--rule-strong);border-radius:10px;
+  font-family:var(--sans);font-size:1rem;color:var(--fg);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+form.q-form input:focus,form.q-form textarea:focus{
+  outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(124,58,237,0.15);
+}
+form.q-form textarea{resize:vertical;min-height:5rem;font-family:var(--sans)}
+form.q-form .privacy{font-size:.83rem;color:var(--mute);margin-top:.25rem}
+
+/* nav buttons */
+.q-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:2.25rem;padding-top:1.5rem;border-top:1px solid var(--rule);
+  gap:1rem;flex-wrap:wrap;
+}
+.q-nav .total{
+  font-family:var(--mono);font-size:.92rem;color:var(--fg);
+  display:flex;flex-direction:column;gap:.15rem;
+}
+.q-nav .total span{font-size:.7rem;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.q-nav .total strong{font-size:1.15rem;color:var(--accent);font-weight:700}
+.q-nav-btns{display:flex;gap:.6rem}
+
+/* result panel */
+.result-card{
+  margin-top:1rem;padding:1.6rem 1.75rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.result-card h3{color:var(--fg);font-family:var(--serif);font-style:normal;font-size:1.25rem;font-weight:600;margin:0 0 1rem;letter-spacing:-.01em}
+.result-table{width:100%;font-size:.93rem;border-collapse:collapse;margin-bottom:.5rem}
+.result-table td{padding:.55rem 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.result-table td:last-child{text-align:right;font-family:var(--mono);font-weight:600;color:var(--accent);white-space:nowrap}
+.result-table tr.q td:first-child{padding-left:1rem;color:var(--mute);font-size:.85rem}
+.result-table tr.cat-row td{color:var(--fg);font-weight:600;border-bottom:0;padding-top:1rem}
+.result-table tr.cat-row td:last-child{color:var(--mute);font-family:var(--sans);font-weight:500;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.result-totals{
+  margin-top:1rem;padding:1.1rem 1.4rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:10px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;
+}
+.result-totals .lbl{font-size:.78rem;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.result-totals .val{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--accent);letter-spacing:-.01em}
+.result-cta{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem}
+.result-cta .btn{flex:1;justify-content:center;min-width:14rem}
+.result-followup{margin-top:1rem;font-size:.88rem;color:var(--mute)}
+
+.empty-hint{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;
+  font-size:.92rem;color:var(--mute);
+}
+
+.sent-banner{
+  display:none;margin:1.5rem 0;padding:1.25rem 1.5rem;
+  background:#ecfdf5;border:1px solid #a7f3d0;border-left:3px solid #10b981;
+  border-radius:10px;color:#065f46;
+}
+.sent-banner.on{display:block}
+.sent-banner strong{color:#047857}
+
+</style>
+</head>
+<body class="">
+<div class="topbar"></div>
+
+<div class="nav-shell" id="nav-shell">
+  <div class="nav">
+    <a href="index.html" class="brand-mark">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="name">Vanguard Reconstruction<small>Cincinnati Residential Electric</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      <a href="instant-quote.html" class="nav-cta">Get an instant quote</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<section class="band q-hero">
+  <div class="wrap-narrow">
+    <span class="eyebrow">Instant quote</span>
+    <h1>Build a real bid in <span class="grad-under">three minutes.</span></h1>
+    <p class="lede">We publish our prices. So we wired them into a calculator. Click what you need, see the range live, get the PDF in your inbox. No salesperson. No callback wait.</p>
+    <p class="sub" style="font-size:.9rem;margin-top:.5rem">This produces a written estimate, not a final invoice. We confirm everything on a 15-minute walkthrough before any work starts.</p>
+  </div>
+</section>
+
+<section class="band-tight stepper">
+  <div class="wrap-narrow">
+
+    <div class="sent-banner" id="sent-banner">
+      <strong>Thanks — your estimate is on its way.</strong> Check your inbox in the next minute or two for the PDF. We'll text you to confirm the walkthrough.
+    </div>
+
+    <ol class="steps-bar" id="steps-bar">
+      <li data-s="1"><span class="n">1</span> Property</li>
+      <li data-s="2"><span class="n">2</span> Categories</li>
+      <li data-s="3"><span class="n">3</span> Items</li>
+      <li data-s="4"><span class="n">4</span> What changes the number</li>
+      <li data-s="5"><span class="n">5</span> Send it</li>
+      <li data-s="6"><span class="n">✓</span> Estimate</li>
+    </ol>
+
+    <!-- Step 1: property type -->
+    <div class="q-panel" data-panel="1">
+      <h2>What's the property?</h2>
+      <p class="lede sub">No wrong answer. This just tells us how to write the bid.</p>
+      <div class="prop-grid">
+        
+        <button type="button" class="prop-card" data-prop="home">
+          <div class="ic">🏠</div>
+          <div class="lbl">My home</div>
+          <p class="ds">I live here. No rush, real walkthrough, explain everything.</p>
+        </button>
+        
+        <button type="button" class="prop-card" data-prop="rental">
+          <div class="ic">🔑</div>
+          <div class="lbl">A rental I own</div>
+          <p class="ds">Tenants in or moving in soon. Bid first, schedule second.</p>
+        </button>
+        
+        <button type="button" class="prop-card" data-prop="flip">
+          <div class="ic">🔨</div>
+          <div class="lbl">Flip in progress</div>
+          <p class="ds">On the clock. Want a draw schedule and a firm date.</p>
+        </button>
+        
+        <button type="button" class="prop-card" data-prop="walkthrough">
+          <div class="ic">🔍</div>
+          <div class="lbl">Pre-purchase walkthrough</div>
+          <p class="ds">Under contract or considering. Want to know what you're buying before close.</p>
+        </button>
+        
+      </div>
+    </div>
+
+    <!-- Step 2: category multi-select -->
+    <div class="q-panel" data-panel="2">
+      <h2>What kind of work?</h2>
+      <p class="lede sub">Pick everything that might apply. We'll narrow it down on the next step.</p>
+      <div class="cat-grid">
+        
+        <button type="button" class="cat-tile" data-cat="outlets_switches">
+          <span class="ic">🔌</span> Outlets & switches
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="lighting">
+          <span class="ic">💡</span> Lighting & fans
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="panel">
+          <span class="ic">⚡</span> Panel & service upgrade
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="circuits">
+          <span class="ic">🔋</span> Circuits & dedicated loads
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="ev">
+          <span class="ic">🚗</span> EV charging
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="safety">
+          <span class="ic">🛟</span> Smoke, CO & safety
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="remodel">
+          <span class="ic">🛁</span> Bath / kitchen remodel
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="rewire">
+          <span class="ic">🏚️</span> Whole-home rewire
+        </button>
+        
+        <button type="button" class="cat-tile" data-cat="diag">
+          <span class="ic">🔧</span> Diagnostic / troubleshooting
+        </button>
+        
+      </div>
+    </div>
+
+    <!-- Step 3: line items (rendered dynamically) -->
+    <div class="q-panel" data-panel="3">
+      <h2>How much of each?</h2>
+      <p class="lede sub">Click + or − to add quantity. Hover the price to see what's included.</p>
+      <div id="line-items"></div>
+      <div class="empty-hint" id="empty-hint" style="display:none">
+        Pick at least one category to see line items.
+      </div>
+    </div>
+
+    <!-- Step 4: modifiers -->
+    <div class="q-panel" data-panel="4">
+      <h2>What changes the number?</h2>
+      <p class="lede sub">Honest variables we won't pretend don't exist. Leave blank if you don't know — we'll catch them on the walkthrough.</p>
+      <div class="mod-list">
+        
+        <label class="mod" data-mod="plaster">
+          <input type="checkbox" data-mod-input="plaster">
+          <div class="mod-text">
+            <span class="mod-lbl">Plaster & lath walls (pre-1940 home)<span class="mod-pct">+25%</span></span>
+            <p class="mod-ds">Slower, more careful work. Adds about 25% to wall-cut items.</p>
+          </div>
+        </label>
+        
+        <label class="mod" data-mod="panel_full">
+          <input type="checkbox" data-mod-input="panel_full">
+          <div class="mod-text">
+            <span class="mod-lbl">Existing panel is more than 80% full<span class="mod-pct">+15%</span></span>
+            <p class="mod-ds">Adds may need a panel-feed analysis or load-management device first.</p>
+          </div>
+        </label>
+        
+        <label class="mod" data-mod="long_run">
+          <input type="checkbox" data-mod-input="long_run">
+          <div class="mod-text">
+            <span class="mod-lbl">Most runs are 25+ ft from the panel<span class="mod-pct">+20%</span></span>
+            <p class="mod-ds">Adds about 20% on circuit / EV runs.</p>
+          </div>
+        </label>
+        
+        <label class="mod" data-mod="knob_tube">
+          <input type="checkbox" data-mod-input="knob_tube">
+          <div class="mod-text">
+            <span class="mod-lbl">Knob & tube still in the walls</span>
+            <p class="mod-ds">We'll add a K&T conversation to the walkthrough — see Knowledge for the strategy.</p>
+          </div>
+        </label>
+        
+        <label class="mod" data-mod="insurance">
+          <input type="checkbox" data-mod-input="insurance">
+          <div class="mod-text">
+            <span class="mod-lbl">Insurance is requiring this work</span>
+            <p class="mod-ds">We write the bid in the language insurers and underwriters expect.</p>
+          </div>
+        </label>
+        
+        <label class="mod" data-mod="occupied">
+          <input type="checkbox" data-mod-input="occupied">
+          <div class="mod-text">
+            <span class="mod-lbl">Tenants occupying during the work<span class="mod-pct">+10%</span></span>
+            <p class="mod-ds">Lower-impact scheduling, more cleanup. About +10%.</p>
+          </div>
+        </label>
+        
+      </div>
+    </div>
+
+    <!-- Step 5: contact -->
+    <div class="q-panel" data-panel="5">
+      <h2>Where do we send the estimate?</h2>
+      <p class="lede sub">PDF goes to your inbox in about a minute. We text the morning of the walkthrough — and again when we're parked out front.</p>
+      <form class="q-form" id="quote-form" novalidate>
+        
+        <div class="field">
+          <label for="qf-name">Your name<span class="req">*</span></label>
+          
+          <input id="qf-name" type="text" name="name" required>
+          
+        </div>
+        
+        <div class="field">
+          <label for="qf-email">Email<span class="req">*</span></label>
+          
+          <input id="qf-email" type="email" name="email" required>
+          
+        </div>
+        
+        <div class="field">
+          <label for="qf-phone">Phone (we'll text)<span class="req">*</span></label>
+          
+          <input id="qf-phone" type="tel" name="phone" required>
+          
+        </div>
+        
+        <div class="field">
+          <label for="qf-address">Property address (so we can route the right crew)</label>
+          
+          <input id="qf-address" type="text" name="address">
+          
+        </div>
+        
+        <div class="field">
+          <label for="qf-notes">Anything else we should know? Photos? Deadlines?</label>
+          
+          <textarea id="qf-notes" name="notes" rows="3"></textarea>
+          
+        </div>
+        
+        <p class="privacy">We don't share your info. Ever. No mailing list. No sales calls.</p>
+      </form>
+    </div>
+
+    <!-- Step 6: result -->
+    <div class="q-panel" data-panel="6">
+      <h2>Your estimate</h2>
+      <p class="lede sub">Itemized below. Total reflects your modifiers. Range is honest — the lower number is best-case access, the upper is the kind of surprises older homes hand us.</p>
+      <div class="result-card">
+        <h3>Line items</h3>
+        <table class="result-table" id="result-table"><tbody></tbody></table>
+        <div class="result-totals">
+          <div>
+            <div class="lbl">Estimate range</div>
+            <div class="val" id="result-range">$0 – $0</div>
+          </div>
+          <div style="text-align:right">
+            <div class="lbl">Midpoint</div>
+            <div class="val" id="result-mid">$0</div>
+          </div>
+        </div>
+        <div class="result-cta">
+          <button type="button" class="btn btn-primary" id="cta-email">Email me the PDF estimate</button>
+          <a href="sms:+15135550118" class="btn btn-ghost">Text me to book the walkthrough</a>
+        </div>
+        <p class="result-followup">If your scope shifts on the walkthrough — and it usually does — the bid moves with it. Walkthrough is free.</p>
+      </div>
+    </div>
+
+    <!-- nav -->
+    <div class="q-nav" id="q-nav">
+      <div class="total">
+        <span>Running estimate</span>
+        <strong id="running-total">$0 – $0</strong>
+      </div>
+      <div class="q-nav-btns">
+        <button type="button" class="btn btn-ghost" id="btn-back">Back</button>
+        <button type="button" class="btn btn-primary" id="btn-next">Next</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script id="quote-data" type="application/json">
+{"categories": [{"id": "outlets_switches", "label": "Outlets & switches", "icon": "🔌", "items": [{"id": "outlet_replace", "label": "Replace standard outlet", "low": 115, "high": 185, "tier_note": "5+ at one visit drops to $95 ea. 10+: $85 ea. We adjust the bid automatically."}, {"id": "outlet_gfci", "label": "Replace / install GFCI outlet", "low": 145, "high": 215}, {"id": "outlet_add_accessible", "label": "Add new outlet (basement / accessible)", "low": 175, "high": 295}, {"id": "outlet_add_finished", "label": "Add new outlet (finished wall, fish from below)", "low": 275, "high": 475}, {"id": "outlet_2to3", "label": "2-prong → 3-prong (with real ground)", "low": 185, "high": 285}, {"id": "outlet_ext", "label": "Exterior weatherproof outlet", "low": 285, "high": 475}, {"id": "switch_replace", "label": "Replace standard switch", "low": 95, "high": 165, "tier_note": "5+ at one visit: $80 ea. 10+: $70 ea."}, {"id": "switch_dimmer", "label": "Replace with LED-rated dimmer", "low": 155, "high": 235}, {"id": "switch_3way", "label": "Convert single-pole to 3-way", "low": 285, "high": 525}, {"id": "switch_smart", "label": "Smart switch install (your device)", "low": 135, "high": 235}]}, {"id": "lighting", "label": "Lighting & fans", "icon": "💡", "items": [{"id": "light_swap", "label": "Swap light fixture (existing box)", "low": 135, "high": 235}, {"id": "chandelier_std", "label": "Chandelier install (under 50 lbs, 9 ft)", "low": 235, "high": 425}, {"id": "chandelier_vault", "label": "Chandelier in vaulted / 2-story foyer", "low": 485, "high": 985}, {"id": "fan_swap", "label": "Ceiling fan swap (existing fan-rated box)", "low": 185, "high": 295}, {"id": "fan_new_attic", "label": "New ceiling fan (attic access)", "low": 385, "high": 685}, {"id": "fan_new_noattic", "label": "New ceiling fan (no attic access)", "low": 585, "high": 985}, {"id": "can_attic", "label": "Recessed can light (attic access, each)", "low": 165, "high": 285}, {"id": "can_noattic", "label": "Recessed can light (no attic access, each)", "low": 285, "high": 485}, {"id": "under_cab", "label": "Under-cabinet LED run (per kitchen)", "low": 385, "high": 885}]}, {"id": "panel", "label": "Panel & service upgrade", "icon": "⚡", "items": [{"id": "panel_100", "label": "100A panel replacement (same location)", "low": 1685, "high": 2685}, {"id": "panel_150", "label": "150A panel replacement (same location)", "low": 2185, "high": 3185}, {"id": "panel_200", "label": "200A panel replacement (same location)", "low": 2485, "high": 3785}, {"id": "panel_200_full", "label": "200A full service upgrade (meter, mast, panel)", "low": 3285, "high": 5485}, {"id": "panel_overhead_under", "label": "Overhead → underground conversion", "low": 4485, "high": 7985, "tier_note": "Coordinated with Duke Energy. Trench + riser changes."}, {"id": "panel_relocate", "label": "Relocate panel from old spot to new", "low": 685, "high": 2485}, {"id": "panel_fpe", "label": "Federal Pacific / Zinsco replacement", "low": 2185, "high": 3985}, {"id": "surge", "label": "Whole-home surge protector (panel-mounted)", "low": 285, "high": 585, "tier_note": "Single biggest dollar-per-protection upgrade."}, {"id": "ground_rod", "label": "Driven ground rod (per rod)", "low": 185, "high": 385}, {"id": "bonding", "label": "Bond metallic systems (gas, water)", "low": 235, "high": 485}]}, {"id": "circuits", "label": "Circuits & dedicated loads", "icon": "🔋", "items": [{"id": "circ_basement", "label": "15A/20A circuit, panel to nearest wall (basement)", "low": 285, "high": 485}, {"id": "circ_kitchen", "label": "20A dedicated circuit to kitchen / room", "low": 485, "high": 985}, {"id": "circ_long", "label": "20A dedicated circuit, finished home, long run", "low": 685, "high": 1485}, {"id": "circ_240_30", "label": "240V / 30A circuit (window AC, water heater)", "low": 585, "high": 985}, {"id": "circ_240_50", "label": "240V / 50A circuit (range, EV, large load)", "low": 685, "high": 1485}, {"id": "subpanel_60", "label": "60A sub-panel, near main, short feeder", "low": 885, "high": 1485}, {"id": "subpanel_100", "label": "100A sub-panel, near main, short feeder", "low": 1185, "high": 1985}]}, {"id": "ev", "label": "EV charging", "icon": "🚗", "items": [{"id": "ev_1450_close", "label": "NEMA 14-50, <10 ft from panel, exposed", "low": 485, "high": 785}, {"id": "ev_1450_mid", "label": "NEMA 14-50, 10–25 ft, exposed conduit", "low": 685, "high": 1185}, {"id": "ev_1450_fish", "label": "NEMA 14-50, finished wall, fishing required", "low": 885, "high": 1485}, {"id": "ev_hardwired_40", "label": "Hardwired L2 charger, 40A circuit (you supply charger)", "low": 785, "high": 1385}, {"id": "ev_hardwired_60", "label": "Hardwired L2 charger, 48–60A circuit", "low": 985, "high": 1685}, {"id": "ev_outdoor", "label": "Outdoor weatherproof EV charger install", "low": 985, "high": 1985}, {"id": "ev_load_mgmt", "label": "Load management device (avoid panel upgrade)", "low": 485, "high": 885, "tier_note": "Adder. Lets a charger share the panel with your dryer/AC."}, {"id": "ev_combo", "label": "EV install requiring panel upgrade (combined)", "low": 3485, "high": 5985}]}, {"id": "safety", "label": "Smoke, CO & safety", "icon": "🛟", "items": [{"id": "smoke_swap", "label": "Hardwired smoke detector replacement (each)", "low": 155, "high": 235}, {"id": "smoke_co", "label": "Hardwired smoke / CO combo (each)", "low": 165, "high": 245}, {"id": "smoke_add", "label": "Add hardwired interconnected detector (no existing wire)", "low": 235, "high": 485}, {"id": "smoke_full", "label": "Full home retrofit (typical 3-bedroom)", "low": 685, "high": 1485}]}, {"id": "remodel", "label": "Bath / kitchen remodel", "icon": "🛁", "items": [{"id": "bath_basic", "label": "Bathroom remodel electrical (basic)", "low": 985, "high": 1985}, {"id": "bath_full", "label": "Bathroom remodel + heated floor", "low": 1485, "high": 3485}, {"id": "kitchen_basic", "label": "Kitchen remodel electrical (basic)", "low": 2485, "high": 4985}, {"id": "kitchen_full", "label": "Kitchen remodel (full reconfigure)", "low": 4985, "high": 9985}, {"id": "island_add", "label": "Add a kitchen island with electrical", "low": 685, "high": 1685}]}, {"id": "rewire", "label": "Whole-home rewire", "icon": "🏚️", "items": [{"id": "rewire_1200", "label": "Worked example: 1,200 sqft home", "low": 9800, "high": 14500, "tier_note": "Use this as your placeholder if you don't know exact sqft."}, {"id": "rewire_2000", "label": "Worked example: 2,000 sqft home", "low": 16000, "high": 24000}, {"id": "kt_attic", "label": "K&T: targeted attic abandonment", "low": 1485, "high": 3985}, {"id": "kt_second", "label": "K&T: 2nd floor + attic rewire", "low": 4985, "high": 9985}, {"id": "kt_full", "label": "K&T: full removal & rewire", "low": 9985, "high": 22000}]}, {"id": "diag", "label": "Diagnostic / troubleshooting", "icon": "🔧", "items": [{"id": "diag_std", "label": "Standard diagnostic visit", "low": 125, "high": 185, "tier_note": "First hour on site. Credits toward repair if booked."}, {"id": "diag_after", "label": "After-hours / weekend diagnostic", "low": 165, "high": 225}, {"id": "diag_emerg", "label": "Emergency same-day (power out, burning smell)", "low": 225, "high": 350}, {"id": "diag_dead_outlet", "label": "Dead outlet (trace and fix)", "low": 135, "high": 245}, {"id": "diag_flicker", "label": "Flickering lights (whole house)", "low": 385, "high": 985, "tier_note": "Often a loose neutral at the service. Serious. We prioritize."}]}], "modifiers": [{"id": "plaster", "label": "Plaster & lath walls (pre-1940 home)", "pct": 25, "desc": "Slower, more careful work. Adds about 25% to wall-cut items."}, {"id": "panel_full", "label": "Existing panel is more than 80% full", "pct": 15, "desc": "Adds may need a panel-feed analysis or load-management device first."}, {"id": "long_run", "label": "Most runs are 25+ ft from the panel", "pct": 20, "desc": "Adds about 20% on circuit / EV runs."}, {"id": "knob_tube", "label": "Knob & tube still in the walls", "pct": 0, "desc": "We'll add a K&T conversation to the walkthrough — see Knowledge for the strategy."}, {"id": "insurance", "label": "Insurance is requiring this work", "pct": 0, "desc": "We write the bid in the language insurers and underwriters expect."}, {"id": "occupied", "label": "Tenants occupying during the work", "pct": 10, "desc": "Lower-impact scheduling, more cleanup. About +10%."}]}
+</script>
+
+<script>
+(function(){
+  var DATA = JSON.parse(document.getElementById('quote-data').textContent);
+  var fmt = function(n){ return '$' + Math.round(n).toLocaleString(); };
+
+  var state = {
+    step: 1,
+    property: null,
+    cats: {},        // {catId: true}
+    qtys: {},        // {itemId: int}
+    mods: {},        // {modId: true}
+    contact: {},
+    submitted: false
+  };
+
+  // --- step navigation ---
+  function showStep(n){
+    state.step = n;
+    document.querySelectorAll('.q-panel').forEach(function(p){
+      p.classList.toggle('on', +p.dataset.panel === n);
+    });
+    document.querySelectorAll('#steps-bar li').forEach(function(li){
+      var s = +li.dataset.s;
+      li.classList.toggle('on', s === n);
+      li.classList.toggle('done', s < n);
+    });
+    document.getElementById('btn-back').style.visibility = (n === 1 || n === 6) ? 'hidden' : 'visible';
+    var next = document.getElementById('btn-next');
+    if(n === 5){ next.textContent = 'See my estimate →'; }
+    else if(n === 6){ next.style.display = 'none'; document.getElementById('q-nav').style.display = 'none'; }
+    else { next.textContent = 'Next'; next.style.display = ''; document.getElementById('q-nav').style.display = ''; }
+    if(n === 3) renderLineItems();
+    if(n === 6) renderResult();
+    window.scrollTo({top: document.querySelector('.stepper').offsetTop - 80, behavior: 'smooth'});
+  }
+
+  function canAdvance(){
+    if(state.step === 1) return !!state.property;
+    if(state.step === 2) return Object.keys(state.cats).length > 0;
+    if(state.step === 5){
+      var f = document.getElementById('quote-form');
+      // basic html5 validity check
+      if(!f.checkValidity()){ f.reportValidity(); return false; }
+      return true;
+    }
+    return true;
+  }
+
+  document.getElementById('btn-next').addEventListener('click', function(){
+    if(!canAdvance()) return;
+    if(state.step === 5){
+      // capture contact
+      var f = document.getElementById('quote-form');
+      state.contact = {};
+      Array.from(f.elements).forEach(function(el){
+        if(el.name) state.contact[el.name] = el.value;
+      });
+      submitQuote();
+    }
+    if(state.step < 6) showStep(state.step + 1);
+  });
+  document.getElementById('btn-back').addEventListener('click', function(){
+    if(state.step > 1) showStep(state.step - 1);
+  });
+
+  // --- step 1 ---
+  document.querySelectorAll('.prop-card').forEach(function(c){
+    c.addEventListener('click', function(){
+      document.querySelectorAll('.prop-card').forEach(function(x){ x.classList.remove('on'); });
+      c.classList.add('on');
+      state.property = c.dataset.prop;
+      // small delay for the visual to land
+      setTimeout(function(){ showStep(2); }, 200);
+    });
+  });
+
+  // --- step 2 ---
+  document.querySelectorAll('.cat-tile').forEach(function(t){
+    t.addEventListener('click', function(){
+      var id = t.dataset.cat;
+      if(state.cats[id]){ delete state.cats[id]; t.classList.remove('on'); }
+      else { state.cats[id] = true; t.classList.add('on'); }
+    });
+  });
+
+  // --- step 3: render line items for selected categories ---
+  function renderLineItems(){
+    var host = document.getElementById('line-items');
+    host.innerHTML = '';
+    var any = false;
+    DATA.categories.forEach(function(cat){
+      if(!state.cats[cat.id]) return;
+      any = true;
+      var block = document.createElement('div');
+      block.className = 'cat-block';
+      var h = '<h3><span class="ic">'+cat.icon+'</span> '+cat.label+'</h3>';
+      cat.items.forEach(function(it){
+        var q = state.qtys[it.id] || 0;
+        h += '<div class="line">'
+          + '<div class="info">'
+          + '<div class="nm">'+it.label+'</div>'
+          + (it.tier_note ? '<div class="nt">'+it.tier_note+'</div>' : '')
+          + '</div>'
+          + '<div class="pr">'+fmt(it.low)+'–'+fmt(it.high)+'</div>'
+          + '<div class="qty" data-item="'+it.id+'">'
+          +   '<button type="button" data-act="dec"'+(q===0?' disabled':'')+'>−</button>'
+          +   '<input type="number" min="0" max="99" value="'+q+'">'
+          +   '<button type="button" data-act="inc">+</button>'
+          + '</div>'
+          + '</div>';
+      });
+      block.innerHTML = h;
+      host.appendChild(block);
+    });
+    document.getElementById('empty-hint').style.display = any ? 'none' : 'block';
+    // wire qty buttons
+    host.querySelectorAll('.qty').forEach(function(qty){
+      var id = qty.dataset.item;
+      var input = qty.querySelector('input');
+      var dec = qty.querySelector('[data-act=dec]');
+      var inc = qty.querySelector('[data-act=inc]');
+      function set(n){
+        n = Math.max(0, Math.min(99, n|0));
+        state.qtys[id] = n;
+        input.value = n;
+        dec.disabled = (n === 0);
+        updateRunningTotal();
+      }
+      dec.addEventListener('click', function(){ set((state.qtys[id]||0) - 1); });
+      inc.addEventListener('click', function(){ set((state.qtys[id]||0) + 1); });
+      input.addEventListener('input', function(){ set(+input.value); });
+    });
+    updateRunningTotal();
+  }
+
+  // --- step 4: modifiers ---
+  document.querySelectorAll('.mod').forEach(function(m){
+    var id = m.dataset.mod;
+    var cb = m.querySelector('input');
+    cb.addEventListener('change', function(){
+      if(cb.checked){ state.mods[id] = true; m.classList.add('on'); }
+      else { delete state.mods[id]; m.classList.remove('on'); }
+      updateRunningTotal();
+    });
+  });
+
+  // --- totals ---
+  function modPctMultiplier(){
+    var pct = 0;
+    DATA.modifiers.forEach(function(m){
+      if(state.mods[m.id]) pct += (m.pct || 0);
+    });
+    return 1 + (pct / 100);
+  }
+  function computeTotals(){
+    var low = 0, high = 0;
+    DATA.categories.forEach(function(cat){
+      cat.items.forEach(function(it){
+        var q = state.qtys[it.id] || 0;
+        if(q > 0){
+          low  += it.low  * q;
+          high += it.high * q;
+        }
+      });
+    });
+    var mult = modPctMultiplier();
+    return { low: low * mult, high: high * mult };
+  }
+  function updateRunningTotal(){
+    var t = computeTotals();
+    var el = document.getElementById('running-total');
+    if(t.low === 0 && t.high === 0){ el.textContent = '$0'; }
+    else { el.textContent = fmt(t.low) + ' – ' + fmt(t.high); }
+  }
+
+  // --- step 6: itemized result ---
+  function renderResult(){
+    var tbody = document.querySelector('#result-table tbody');
+    tbody.innerHTML = '';
+    DATA.categories.forEach(function(cat){
+      var rows = [];
+      cat.items.forEach(function(it){
+        var q = state.qtys[it.id] || 0;
+        if(q > 0) rows.push({ it: it, q: q });
+      });
+      if(rows.length === 0) return;
+      var head = document.createElement('tr');
+      head.className = 'cat-row';
+      head.innerHTML = '<td>'+cat.label+'</td><td>'+rows.length+' item'+(rows.length===1?'':'s')+'</td>';
+      tbody.appendChild(head);
+      rows.forEach(function(r){
+        var row = document.createElement('tr');
+        var sub = '<tr class="q"><td>× '+r.q+' @ '+fmt(r.it.low)+'–'+fmt(r.it.high)+' ea</td><td>'+fmt(r.it.low * r.q)+' – '+fmt(r.it.high * r.q)+'</td></tr>';
+        row.innerHTML = '<td>'+r.it.label+'</td><td></td>';
+        tbody.appendChild(row);
+        var subRow = document.createElement('tr');
+        subRow.className = 'q';
+        subRow.innerHTML = '<td>× '+r.q+' @ '+fmt(r.it.low)+'–'+fmt(r.it.high)+' ea</td><td>'+fmt(r.it.low * r.q)+' – '+fmt(r.it.high * r.q)+'</td>';
+        tbody.appendChild(subRow);
+      });
+    });
+    // mods row
+    var modIds = Object.keys(state.mods);
+    if(modIds.length){
+      var modNames = DATA.modifiers.filter(function(m){ return state.mods[m.id]; }).map(function(m){
+        return m.label + (m.pct > 0 ? ' (+'+m.pct+'%)' : '');
+      });
+      var mr = document.createElement('tr');
+      mr.className = 'cat-row';
+      mr.innerHTML = '<td>Adjustments</td><td></td>';
+      tbody.appendChild(mr);
+      modNames.forEach(function(n){
+        var r = document.createElement('tr');
+        r.className = 'q';
+        r.innerHTML = '<td>'+n+'</td><td></td>';
+        tbody.appendChild(r);
+      });
+    }
+    var t = computeTotals();
+    document.getElementById('result-range').textContent = fmt(t.low) + ' – ' + fmt(t.high);
+    document.getElementById('result-mid').textContent = fmt((t.low + t.high) / 2);
+  }
+
+  // --- submit ---
+  function submitQuote(){
+    var t = computeTotals();
+    var payload = {
+      site: 'vre-construction.com',
+      property: state.property,
+      cats: Object.keys(state.cats),
+      items: Object.entries(state.qtys).filter(function(e){ return e[1] > 0; }).map(function(e){
+        var it = null, catLabel = '';
+        DATA.categories.forEach(function(c){
+          c.items.forEach(function(i){
+            if(i.id === e[0]){ it = i; catLabel = c.label; }
+          });
+        });
+        return { id: e[0], label: it ? it.label : e[0], cat: catLabel, qty: e[1], low: it ? it.low : 0, high: it ? it.high : 0 };
+      }),
+      mods: Object.keys(state.mods).map(function(id){
+        var m = DATA.modifiers.find(function(x){ return x.id === id; });
+        return { id: id, label: m ? m.label : id, pct: m ? m.pct : 0 };
+      }),
+      total_low: Math.round(t.low),
+      total_high: Math.round(t.high),
+      contact: state.contact
+    };
+    state.submitted = true;
+    // POST to form server (wired up in form_server.py)
+    fetch('/instant-quote-submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if(r.ok){
+        document.getElementById('sent-banner').classList.add('on');
+      }
+    }).catch(function(){ /* fail quietly; the result is still on screen */ });
+  }
+
+  document.getElementById('cta-email').addEventListener('click', function(){
+    if(!state.submitted) submitQuote();
+    var btn = this;
+    btn.textContent = 'Sent — check your inbox';
+    btn.disabled = true;
+    document.getElementById('sent-banner').classList.add('on');
+  });
+
+  // boot
+  showStep(1);
+})();
+</script>
+
+</main>
+
+<section class="band band-dark cta-band">
+  <div class="wrap-narrow">
+    <h2>Want a human in the loop sooner?</h2>
+    <p class="lede">Skip the calculator and just text us a couple of photos. Same answer, less clicking.</p>
+    <div class="cta-cluster center">
+      <a href="instant-quote.html" class="btn btn-primary">Get an instant quote</a>
+      <span class="cta-micro">Itemized PDF in your inbox in three minutes. No sales call.</span>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="row">
+    <div class="meta">
+      <strong>Vanguard Reconstruction</strong>
+      <span>Cincinnati, Ohio</span>
+      <span><a href="tel:+15135550118">(513) 555-0118</a> · <a href="mailto:hello@vre-construction.com">hello@vre-construction.com</a></span>
+    </div>
+    <div class="links">
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      
+    </div>
+    <div class="credit">
+      <span>Vanguard Reconstruction · Cincinnati · Family-owned, fully insured, background-checked crew.</span>
+      <span>© 2026 <a href="https://allee-ai.com">Allee AI</a>. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav = document.getElementById('nav-shell');
+  if(!nav) return;
+  var ticking = false;
+  function update(){
+    nav.classList.toggle('scrolled', window.scrollY > 8);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+  update();
+})();
+</script>
+</body>
+</html>
