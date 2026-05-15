@@ -34,7 +34,7 @@ from email.mime.text import MIMEText
 from typing import Optional
 
 import certifi
-from fastapi import FastAPI, Form, Request, HTTPException
+from fastapi import FastAPI, Form, Request, HTTPException, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import RedirectResponse, JSONResponse
 
@@ -201,7 +201,7 @@ def _send_email_smtp(
         part.add_header("Content-Disposition", "attachment", filename=filename)
         msg.attach(part)
 
-    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=20) as s:
+    with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=8) as s:
         s.starttls()
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
@@ -382,7 +382,7 @@ async def contact_submit(
 
 
 @app.post("/instant-quote-submit")
-async def instant_quote_submit(request: Request):
+async def instant_quote_submit(request: Request, background: BackgroundTasks):
     """Render itemized bid PDF, send two emails, push lead into jake-app CRM."""
     try:
         payload = await request.json()
@@ -454,50 +454,12 @@ async def instant_quote_submit(request: Request):
         f"Customer notes:\n{contact.get('notes') or '  (none)'}\n\n"
         f"PDF attached.\n"
     )
-    try:
-        _send_email(
-            to_addr,
-            lead_subject,
-            lead_body,
-            reply_to=customer_email or SMTP_USER,
-            attachments=[(f"{bid_id}.pdf", pdf_bytes, "pdf")],
-            from_addr=_resolve_from(target_site),
-        )
-    except Exception as e:
-        log.error("lead notify failed for %s: %s", target_site, e)
-        raise HTTPException(502, f"lead notify failed: {type(e).__name__}")
-
-    # ── 2) auto-reply to the customer with PDF attached ───────────
-    if customer_email:
-        body_tmpl = _INVESTOR_BODY if track == "investor" else _HOMEOWNER_BODY
-        site_phone = "(513) 555-0118"
-        site_email = "hello@vre-construction.com"
-        reply_subject = f"Your estimate from VRE Construction — {bid_id}"
-        reply_body = body_tmpl.format(
-            name=customer_name.split()[0] if customer_name else "there",
-            bid_id=bid_id,
-            prop_label_lower=prop_label.lower(),
-            phone=site_phone,
-            email_brand=site_email,
-        )
-        try:
-            _send_email(
-                customer_email,
-                reply_subject,
-                reply_body,
-                reply_to=to_addr,
-                attachments=[(f"{bid_id}.pdf", pdf_bytes, "pdf")],
-                from_addr=_resolve_from(target_site),
-            )
-        except Exception as e:
-            log.error("auto-reply failed for %s: %s", customer_email, e)
-
-    log.info(
-        "instant-quote %s (%s) %s -> %s; reply -> %s",
-        bid_id, track, target_site, to_addr, customer_email,
-    )
-
-    # ── 3) fire-and-forget push into jake-app CRM ─────────────────
+    # ── 1) push into jake-app CRM FIRST (the load-bearing signal) ──
+    # Lead capture must succeed even if outbound mail is blocked
+    # (DigitalOcean blocks SMTP egress; Resend is the workaround).
+    # The CRM push is the load-bearing path: as long as bycade receives
+    # the lead, the manager will see it in the dashboard and we don't
+    # lose the customer.
     try:
         site_tag = (target_site or "vre").split(".")[0].replace("-", "")
         notes_block = (
@@ -524,7 +486,68 @@ async def instant_quote_submit(request: Request):
     except Exception as e:
         log.error("jake: lead-build failed: %s: %s", type(e).__name__, e)
 
-    return JSONResponse({"ok": True, "bid_id": bid_id, "track": track})
+    # ── 2) emails (background — never block customer response) ────
+    # SMTP egress is blocked on DigitalOcean; if backend is SMTP, sends
+    # will time out 20+ seconds each. Push them to a worker thread so
+    # the customer gets their PDF / confirmation immediately. Resend
+    # backend (HTTPS) returns fast and works fine in background too.
+    def _send_lead_email() -> None:
+        try:
+            _send_email(
+                to_addr,
+                lead_subject,
+                lead_body,
+                reply_to=customer_email or SMTP_USER,
+                attachments=[(f"{bid_id}.pdf", pdf_bytes, "pdf")],
+                from_addr=_resolve_from(target_site),
+            )
+            log.info("lead email sent for %s -> %s", bid_id, to_addr)
+        except Exception as exc:
+            log.error("lead notify failed for %s: %s", target_site, exc)
+
+    background.add_task(_send_lead_email)
+
+    # Customer auto-reply (also background)
+    if customer_email:
+        body_tmpl = _INVESTOR_BODY if track == "investor" else _HOMEOWNER_BODY
+        site_phone = "(513) 555-0118"
+        site_email = "hello@vre-construction.com"
+        reply_subject = f"Your estimate from VRE Construction — {bid_id}"
+        reply_body = body_tmpl.format(
+            name=customer_name.split()[0] if customer_name else "there",
+            bid_id=bid_id,
+            prop_label_lower=prop_label.lower(),
+            phone=site_phone,
+            email_brand=site_email,
+        )
+
+        def _send_auto_reply() -> None:
+            try:
+                _send_email(
+                    customer_email,
+                    reply_subject,
+                    reply_body,
+                    reply_to=to_addr,
+                    attachments=[(f"{bid_id}.pdf", pdf_bytes, "pdf")],
+                    from_addr=_resolve_from(target_site),
+                )
+                log.info("auto-reply sent for %s -> %s", bid_id, customer_email)
+            except Exception as exc:
+                log.error("auto-reply failed for %s: %s", customer_email, exc)
+
+        background.add_task(_send_auto_reply)
+
+    log.info(
+        "instant-quote %s (%s) %s lead pushed; emails queued (to=%s reply=%s)",
+        bid_id, track, target_site, to_addr, customer_email,
+    )
+
+    return JSONResponse({
+        "ok": True,
+        "bid_id": bid_id,
+        "track": track,
+        "mail": "queued",
+    })
 
 
 if __name__ == "__main__":
