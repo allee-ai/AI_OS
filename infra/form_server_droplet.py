@@ -125,7 +125,16 @@ def _resolve_destination(site: str) -> Optional[str]:
 
 
 def _resolve_from(site: str) -> str:
-    """Per-site From address. Falls back to SMTP_FROM / allee@."""
+    """Per-site From address. Falls back to SMTP_FROM / allee@.
+
+    RESEND_FROM_OVERRIDE wins when set — useful before per-site domains
+    are verified in the Resend dashboard, so we can still send from a
+    known-verified address (e.g. onboarding@resend.dev) while we DNS-set
+    SPF/DKIM/DMARC for the real brand domains.
+    """
+    override = os.environ.get("RESEND_FROM_OVERRIDE", "").strip()
+    if override and MAIL_BACKEND == "resend":
+        return override
     if site:
         addr = FROM_ROUTES.get(_normalize_site(site))
         if addr:
@@ -166,6 +175,8 @@ def _send_email_resend(
         headers={
             "Authorization": f"Bearer {RESEND_API_KEY}",
             "Content-Type": "application/json",
+            "User-Agent": "aios-form-server/1.0 (+https://allee-ai.com)",
+            "Accept": "application/json",
         },
     )
     ctx = ssl.create_default_context(cafile=certifi.where())
