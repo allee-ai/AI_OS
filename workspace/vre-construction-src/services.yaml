@@ -84,27 +84,23 @@ flow:
       title: "Walkthrough before we leave"
       body: "We walk you through what we did, what we found that wasn't in the quote (and why we didn't change it), and what to watch for. You sign off; the bill is exactly the quote."
 
-# Meet the crew (humanizing — women buy from people they can picture)
+# How the crew is structured (no fake names/photos until real ones go up)
 crew:
-  title: "Meet the crew"
-  intro: "Four of us total. The person who answered your text is the person who walked the job. Nobody on our payroll has ever called a customer \"sweetheart.\""
+  title: "How our crew is structured"
+  intro: "Family-owned, four-person crew. Real names and faces go up here once everyone signs off on a photo — until then, here's the structure of who's doing what."
   members:
-    - name: "Cade"
-      role: "Owner · runs the shop"
-      bio: "Started Vanguard after fifteen years across the trades, tired of watching customers get talked down to. Answers texts after 6pm; sleeps eventually."
-      photo: "https://picsum.photos/seed/vre-crew-cade/600/600"
-    - name: "Jordan"
-      role: "Field manager · scheduling & quotes"
-      bio: "Walks every job before we quote it. The voice on the other end of the phone. Has explained what a breaker does to more first-time homebuyers than she can count."
-      photo: "https://picsum.photos/seed/vre-crew-jordan/600/600"
-    - name: "Marcus"
-      role: "Lead electrician"
-      bio: "Twelve years on residential. Panels and rewires are his thing. Will absolutely take his shoes off without being asked."
-      photo: "https://picsum.photos/seed/vre-crew-marcus/600/600"
-    - name: "Devon"
-      role: "Electrician"
-      bio: "Newest on the crew, sharpest with troubleshooting. Apprenticed under Marcus. Background-checked the same week he was hired."
-      photo: "https://picsum.photos/seed/vre-crew-devon/600/600"
+    - role: "Owner"
+      tag: "Runs the shop"
+      bio: "Fifteen years across the trades. Answers texts after 6pm. The person who decided we'd publish our prices."
+    - role: "Field manager"
+      tag: "Scheduling & on-site quotes"
+      bio: "Walks every job before we quote it. The voice on the other end of the phone. Bilingual — text in Spanish if that's easier."
+    - role: "Lead electrician"
+      tag: "Panels & rewires"
+      bio: "Twelve years on residential. Owns the hard installs — service upgrades, sub-panels, whole-home rewires."
+    - role: "Electrician"
+      tag: "Diagnostics & finish work"
+      bio: "Troubleshooting, circuit adds, fixture and outlet installs. Background-checked the same week of hire."
 
 # Service area + pricing pointer + how-we-bill clarity
 specifics:

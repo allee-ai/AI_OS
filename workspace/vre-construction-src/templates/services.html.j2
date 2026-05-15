@@ -14,11 +14,11 @@
   transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .crew-card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover);border-color:var(--rule-strong)}
-.crew-card .photo{aspect-ratio:1/1;background:var(--bg-2);overflow:hidden}
-.crew-card .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.crew-card .tile{aspect-ratio:1/1;background:linear-gradient(135deg,#f7c89a 0%,#e89bb4 25%,#c9a3d9 50%,#9bbede 75%,#a7d8c9 100%);display:flex;align-items:center;justify-content:center;padding:1.5rem;text-align:center}
+.crew-card .tile-role{font-family:var(--serif);font-weight:600;font-size:1.6rem;line-height:1.1;letter-spacing:-.01em;color:rgba(40,30,55,.86)}
 .crew-card .body{padding:1.2rem 1.25rem 1.4rem}
-.crew-card .name{font-family:var(--serif);font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--fg);margin:0 0 .15rem}
-.crew-card .role{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.7rem}
+.crew-card .role{font-family:var(--serif);font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--fg);margin:0 0 .15rem}
+.crew-card .tag{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.7rem}
 .crew-card .bio{font-size:.92rem;color:var(--mute);line-height:1.55;margin:0}
 
 .scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:2rem}
@@ -103,10 +103,10 @@
     <div class="crew">
       {% for m in crew['members'] %}
       <article class="crew-card">
-        <div class="photo"><img src="{{ m.photo }}" alt="{{ m.name }}, {{ m.role }}" loading="lazy"></div>
+        <div class="tile"><span class="tile-role">{{ m.role }}</span></div>
         <div class="body">
-          <p class="name">{{ m.name }}</p>
           <p class="role">{{ m.role }}</p>
+          <p class="tag">{{ m.tag }}</p>
           <p class="bio">{{ m.bio }}</p>
         </div>
       </article>

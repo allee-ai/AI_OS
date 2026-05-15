@@ -30,14 +30,14 @@ primary:
       label: "Call"
       value: "(513) 555-0118"
       href: "tel:+15135550118"
-      sub: "Mon–Fri, 8am–6pm. Jordan picks up."
+      sub: "Mon–Fri, 8am–6pm. The field manager picks up."
     - icon: "✉️"
       label: "Email"
       value: "hello@vre-construction.com"
       href: "mailto:hello@vre-construction.com"
       sub: "Same-day response on business days."
   micro_notes:
-    - "Spanish-speaking? Just text in Spanish — Jordan replies in Spanish."
+    - "Spanish-speaking? Just text in Spanish — we'll reply in Spanish."
     - "Hard-of-hearing? Text is the easiest way to reach us anytime."
     - "After-hours emergency (no power, burning smell, sparking)? Call and let it ring — calls outside business hours route to Cade's cell."
 

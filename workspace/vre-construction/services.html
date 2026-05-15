@@ -480,11 +480,11 @@ tbody tr:hover{background:var(--bg-2)}
   transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
 }
 .crew-card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover);border-color:var(--rule-strong)}
-.crew-card .photo{aspect-ratio:1/1;background:var(--bg-2);overflow:hidden}
-.crew-card .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.crew-card .tile{aspect-ratio:1/1;background:linear-gradient(135deg,#f7c89a 0%,#e89bb4 25%,#c9a3d9 50%,#9bbede 75%,#a7d8c9 100%);display:flex;align-items:center;justify-content:center;padding:1.5rem;text-align:center}
+.crew-card .tile-role{font-family:var(--serif);font-weight:600;font-size:1.6rem;line-height:1.1;letter-spacing:-.01em;color:rgba(40,30,55,.86)}
 .crew-card .body{padding:1.2rem 1.25rem 1.4rem}
-.crew-card .name{font-family:var(--serif);font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--fg);margin:0 0 .15rem}
-.crew-card .role{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.7rem}
+.crew-card .role{font-family:var(--serif);font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--fg);margin:0 0 .15rem}
+.crew-card .tag{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.7rem}
 .crew-card .bio{font-size:.92rem;color:var(--mute);line-height:1.55;margin:0}
 
 .scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:2rem}
@@ -625,43 +625,43 @@ tbody tr:hover{background:var(--bg-2)}
 
 <section class="band band-2">
   <div class="wrap">
-    <h2>Meet the crew</h2>
-    <p class="lede sub">Four of us total. The person who answered your text is the person who walked the job. Nobody on our payroll has ever called a customer "sweetheart."</p>
+    <h2>How our crew is structured</h2>
+    <p class="lede sub">Family-owned, four-person crew. Real names and faces go up here once everyone signs off on a photo — until then, here's the structure of who's doing what.</p>
     <div class="crew">
       
       <article class="crew-card">
-        <div class="photo"><img src="https://picsum.photos/seed/vre-crew-cade/600/600" alt="Cade, Owner · runs the shop" loading="lazy"></div>
+        <div class="tile"><span class="tile-role">Owner</span></div>
         <div class="body">
-          <p class="name">Cade</p>
-          <p class="role">Owner · runs the shop</p>
-          <p class="bio">Started Vanguard after fifteen years across the trades, tired of watching customers get talked down to. Answers texts after 6pm; sleeps eventually.</p>
+          <p class="role">Owner</p>
+          <p class="tag">Runs the shop</p>
+          <p class="bio">Fifteen years across the trades. Answers texts after 6pm. The person who decided we'd publish our prices.</p>
         </div>
       </article>
       
       <article class="crew-card">
-        <div class="photo"><img src="https://picsum.photos/seed/vre-crew-jordan/600/600" alt="Jordan, Field manager · scheduling & quotes" loading="lazy"></div>
+        <div class="tile"><span class="tile-role">Field manager</span></div>
         <div class="body">
-          <p class="name">Jordan</p>
-          <p class="role">Field manager · scheduling & quotes</p>
-          <p class="bio">Walks every job before we quote it. The voice on the other end of the phone. Has explained what a breaker does to more first-time homebuyers than she can count.</p>
+          <p class="role">Field manager</p>
+          <p class="tag">Scheduling & on-site quotes</p>
+          <p class="bio">Walks every job before we quote it. The voice on the other end of the phone. Bilingual — text in Spanish if that's easier.</p>
         </div>
       </article>
       
       <article class="crew-card">
-        <div class="photo"><img src="https://picsum.photos/seed/vre-crew-marcus/600/600" alt="Marcus, Lead electrician" loading="lazy"></div>
+        <div class="tile"><span class="tile-role">Lead electrician</span></div>
         <div class="body">
-          <p class="name">Marcus</p>
           <p class="role">Lead electrician</p>
-          <p class="bio">Twelve years on residential. Panels and rewires are his thing. Will absolutely take his shoes off without being asked.</p>
+          <p class="tag">Panels & rewires</p>
+          <p class="bio">Twelve years on residential. Owns the hard installs — service upgrades, sub-panels, whole-home rewires.</p>
         </div>
       </article>
       
       <article class="crew-card">
-        <div class="photo"><img src="https://picsum.photos/seed/vre-crew-devon/600/600" alt="Devon, Electrician" loading="lazy"></div>
+        <div class="tile"><span class="tile-role">Electrician</span></div>
         <div class="body">
-          <p class="name">Devon</p>
           <p class="role">Electrician</p>
-          <p class="bio">Newest on the crew, sharpest with troubleshooting. Apprenticed under Marcus. Background-checked the same week he was hired.</p>
+          <p class="tag">Diagnostics & finish work</p>
+          <p class="bio">Troubleshooting, circuit adds, fixture and outlet installs. Background-checked the same week of hire.</p>
         </div>
       </article>
       
@@ -712,7 +712,7 @@ tbody tr:hover{background:var(--bg-2)}
       
     </div>
     <div class="credit">
-      <span>Vanguard Reconstruction · Cincinnati · Family-owned, fully insured, background-checked crew.</span>
+      <span>VRE Construction · Cincinnati · Family-owned, fully insured, background-checked crew.</span>
       <span>© 2026 <a href="https://allee-ai.com">Allee AI</a>. All rights reserved.</span>
     </div>
   </div>

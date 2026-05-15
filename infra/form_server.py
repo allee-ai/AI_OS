@@ -199,11 +199,10 @@ A few honest notes:
     written sign-off.
   • The estimate is good for 30 days.
 
-Next step: I'll text you within one business day to schedule the walkthrough.
+Next step: we'll text you within one business day to schedule the walkthrough.
 If you'd rather, you can text us first at {phone} — same number, faster.
 
-— Jordan
-   Field manager · Vanguard Reconstruction
+— The VRE Construction team
    {phone} · {email_brand}
    vre-construction.com
 """
@@ -229,11 +228,10 @@ that won't be on the homeowner version of this email:
     voltage, generator gas-side, solar tie-in), tell us and we'll bring
     the trade or tell you which one to call.
 
-Next step: I'll text you within one business day. If you have a closing
+Next step: we'll text you within one business day. If you have a closing
 or draw deadline, reply with it and we'll move the walkthrough up.
 
-— Cade
-   Owner · Vanguard Reconstruction
+— The VRE Construction team
    {phone} · {email_brand}
    vre-construction.com
 """
