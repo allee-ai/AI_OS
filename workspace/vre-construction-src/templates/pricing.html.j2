@@ -1,0 +1,127 @@
+{% extends "_base.html.j2" %}
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block canonical %}{{ meta.canonical }}{% endblock %}
+{% block jsonld %}{% if jsonld %}<script type="application/ld+json">
+{{ jsonld | safe }}
+</script>{% endif %}{% endblock %}
+
+{% block content %}
+<section class="band band-tight">
+  <div class="wrap-narrow content-h1-block">
+    <span class="eyebrow">Pricing guide</span>
+    <h1>{{ hero.h1 }} <span class="grad-under">{{ hero.h1_accent }}</span></h1>
+    <p class="lede">{{ hero.lede }}</p>
+
+    {% if hero.tags %}
+    <div class="tag-row">
+      {% for tag in hero.tags -%}
+      <span>{{ tag | md_inline | safe }}</span>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if hero.promise %}
+    <div class="hero-promise">
+      <h4>{{ hero.promise_title }}</h4>
+      {% for p in hero.promise -%}
+      <p>{{ p | md_inline | safe }}</p>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if hero.legend %}
+    <div class="legend">
+      {% for item in hero.legend -%}
+      <div>{{ item | md_inline | safe }}</div>
+      {% endfor %}
+    </div>
+    {% endif %}
+
+    {% if toc_title %}
+    <div class="toc">
+      <h4>{{ toc_title }}</h4>
+      <ol>
+        {% for s in sections -%}
+        <li><a href="#{{ s.id }}">{{ s.title | replace('&', '&amp;') | safe }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+    {% endif %}
+  </div>
+</section>
+
+<section class="band-tight">
+  <div class="wrap-narrow">
+    {% for s in sections %}
+    <section class="section" id="{{ s.id }}">
+      <h2 id="{{ s.id }}-h"><a href="#{{ s.id }}" class="anchor" aria-hidden="true">#</a>{% if s.num %}<span class="num">{{ s.num }}</span>{% endif %}{{ s.title | md_inline | safe }}</h2>
+      {% for b in s.blocks %}
+        {%- if b.type == "text" %}
+        {{ b.md | md_block | safe }}
+        {%- elif b.type == "kv" %}
+        <div class="kv">
+          {% for pair in b['items'] -%}
+          <dt>{{ pair[0] }}</dt><dd>{{ pair[1] | md_inline | safe }}</dd>
+          {% endfor %}
+        </div>
+        {%- elif b.type == "bullets" %}
+        <ul class="bullets">
+          {% for item in b['items'] -%}
+          <li>{{ item | md_inline | safe }}</li>
+          {% endfor %}
+        </ul>
+        {%- elif b.type == "bullets_ordered" %}
+        <ol class="bullets">
+          {% for item in b['items'] -%}
+          <li>{{ item | md_inline | safe }}</li>
+          {% endfor %}
+        </ol>
+        {%- elif b.type == "h3" %}
+        <h3>{{ b.text }}</h3>
+        {%- elif b.type == "table" %}
+        {% set t = csv_tables[b.csv] %}
+        <div class="table-wrap"><table>
+          <thead><tr>{% for col in t.headers %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+          <tbody>
+          {% for row in t.rows -%}
+          <tr>{% for i in range(t.headers|length) -%}
+            <td{% if t.price_cols[i] %} class="price"{% endif %}>{{ row[i] | md_inline | safe }}</td>
+          {%- endfor %}</tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+        {%- elif b.type == "callout" %}
+        <div class="callout">{{ b.md | md_inline | safe }}</div>
+        {%- elif b.type == "warn" %}
+        <div class="warn">{{ b.md | md_inline | safe }}</div>
+        {%- elif b.type == "cta_mini" %}
+        <div class="cta-mini">{{ b.md | md_inline | safe }}</div>
+        {%- elif b.type == "twocol" %}
+        <div class="two-col">
+          <div class="col up">
+            <h4>{{ b.up_title }}</h4>
+            <ul>{% for item in b.up %}<li>{{ item | md_inline | safe }}</li>{% endfor %}</ul>
+          </div>
+          <div class="col down">
+            <h4>{{ b.down_title }}</h4>
+            <ul>{% for item in b.down %}<li>{{ item | md_inline | safe }}</li>{% endfor %}</ul>
+          </div>
+        </div>
+        {%- endif %}
+      {% endfor %}
+    </section>
+    {% endfor %}
+
+    {% if outro %}
+    <section class="section">
+      <h2>{{ outro.title }}</h2>
+      {% for p in outro.paragraphs -%}
+      <p>{{ p | md_inline | safe }}</p>
+      {% endfor %}
+      {% if outro.footer_note %}<p class="sub" style="font-size:.85rem;margin-top:1.5rem">{{ outro.footer_note }}</p>{% endif %}
+    </section>
+    {% endif %}
+  </div>
+</section>
+{% endblock %}

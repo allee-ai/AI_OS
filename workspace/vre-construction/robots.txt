@@ -1,0 +1,6 @@
+User-agent: *
+Allow: /
+Disallow: /sales/
+Disallow: /marketing/
+
+Sitemap: https://vre-construction.com/sitemap.xml

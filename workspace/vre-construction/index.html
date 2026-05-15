@@ -1,0 +1,713 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Vanguard Reconstruction — Cincinnati Residential Electric</title>
+<meta name="description" content="Residential electrical work in Cincinnati and Hamilton County, done thoughtfully. Written quotes in 24 hours. Panels, EV chargers, rewires, lighting, the strange flickering thing nobody else could figure out. Family-owned, fully insured.">
+<link rel="canonical" href="https://vre-construction.com/">
+<meta name="theme-color" content="#7c3aed">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vre-construction.com/index.html">
+<meta property="og:title" content="Vanguard Reconstruction — Cincinnati Residential Electric">
+<meta property="og:description" content="Residential electrical work in Cincinnati and Hamilton County, done thoughtfully. Written quotes in 24 hours. Panels, EV chargers, rewires, lighting, the strange flickering thing nobody else could figure out. Family-owned, fully insured.">
+<meta property="og:site_name" content="Vanguard Reconstruction">
+
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,ital,wght@9..144,0,500;9..144,0,600;9..144,1,500;9..144,1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Electrician",
+  "@id": "https://vre-construction.com/#business",
+  "name": "Vanguard Reconstruction",
+  "url": "https://vre-construction.com/",
+  "telephone": "+15135550118",
+  "email": "hello@vre-construction.com",
+  "address": { "@type": "PostalAddress", "addressLocality": "Cincinnati", "addressRegion": "OH", "addressCountry": "US" },
+  "areaServed": { "@type": "AdministrativeArea", "name": "Hamilton County, Ohio" },
+  "description": "Residential electrical work in Cincinnati and Hamilton County, done thoughtfully. Written quotes in 24 hours. Panels, EV chargers, rewires, lighting, the strange flickering thing nobody else could figure out. Family-owned, fully insured."
+}
+</script>
+<style>
+/* ===== Design tokens =================================================== */
+:root{
+  --bg:#ffffff;
+  --bg-2:#faf7f2;            /* warm cream alt band */
+  --bg-3:#1a1429;            /* deep ink inverted band */
+  --fg:#1a1429;              /* deep ink, not pure black */
+  --fg-on-dark:#f7f4fb;
+  --mute:#5b5478;
+  --mute-on-dark:#b8b0d0;
+  --dim:#8c849f;
+  --accent:#7c3aed;
+  --accent-hover:#6d28d9;
+  --accent-2:#ec4899;
+  --amber:#f59e0b;
+  --rule:rgba(26,20,41,0.08);
+  --rule-strong:rgba(26,20,41,0.16);
+  --card:#ffffff;
+  --card-shadow:0 1px 2px rgba(26,20,41,0.04), 0 8px 24px rgba(26,20,41,0.05);
+  --card-shadow-hover:0 2px 4px rgba(124,58,237,0.08), 0 16px 40px rgba(26,20,41,0.10);
+  /* 5-stop structural gradient — topbar only */
+  --grad-topbar:linear-gradient(90deg,#7c3aed 0%,#c026d3 30%,#ec4899 55%,#f59e0b 80%,#22d3ee 100%);
+  /* 3-stop warm gradient — body usage (underlines, accents, CTA hover) */
+  --grad:linear-gradient(90deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  --grad-soft:linear-gradient(90deg,rgba(124,58,237,0.14) 0%,rgba(236,72,153,0.14) 55%,rgba(245,158,11,0.14) 100%);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --maxw:64rem;
+  --maxw-narrow:48rem;
+}
+
+/* ===== Reset / base ==================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:17px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+a{color:var(--accent);text-decoration:none;transition:color .15s ease, opacity .15s ease}
+a:hover{color:var(--accent-hover)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+/* Tabular numerals everywhere a number appears in tables/stats/prices */
+.mono, .num, td.price, .stat-num, .price-inline{
+  font-family:var(--mono);font-feature-settings:"tnum","ss01";
+}
+
+/* ===== Topbar (structural 5-stop gradient, always present) ============= */
+.topbar{height:3px;background:var(--grad-topbar);width:100%;position:relative;z-index:50}
+
+/* ===== Sticky nav ===================================================== */
+.nav-shell{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .2s ease, background .2s ease, padding .2s ease;
+}
+.nav-shell.scrolled{
+  background:rgba(255,255,255,0.94);
+  border-bottom-color:var(--rule);
+}
+.nav{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 1.5rem;
+  transition:padding .2s ease;
+}
+.nav-shell.scrolled .nav{padding:.7rem 1.5rem}
+.brand-mark{display:flex;align-items:center;gap:.65rem;color:var(--fg)}
+.brand-mark:hover{color:var(--fg)}
+.brand-mark .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--grad);
+  box-shadow:0 0 0 4px rgba(124,58,237,0.10);
+  flex-shrink:0;
+}
+.brand-mark .name{font-weight:700;letter-spacing:-0.01em;font-size:1rem;line-height:1.1}
+.brand-mark .name small{
+  display:block;color:var(--mute);font-weight:500;font-size:0.7rem;
+  letter-spacing:0.10em;text-transform:uppercase;margin-top:0.15rem;
+}
+.nav-links{display:flex;align-items:center;gap:1.6rem}
+.nav-links a{color:var(--mute);font-size:.94rem;font-weight:500}
+.nav-links a:hover,.nav-links a.on{color:var(--fg)}
+.nav-links a.on{position:relative}
+.nav-links a.on::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;
+  background:var(--grad);border-radius:2px;
+}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:var(--fg);color:#fff;padding:.55rem 1rem;border-radius:8px;
+  font-size:.88rem;font-weight:600;letter-spacing:.005em;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.nav-cta:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,0.25)}
+.nav-cta::after{content:"→";transition:transform .15s ease}
+.nav-cta:hover::after{transform:translateX(2px)}
+@media (max-width:720px){
+  .nav-links{gap:1rem}
+  .nav-links a:not(.nav-cta){display:none}
+}
+
+/* ===== Layout ========================================================== */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.5rem}
+.wrap-narrow{max-width:var(--maxw-narrow);margin:0 auto;padding:0 1.5rem}
+.band{padding:5rem 0}
+.band-tight{padding:3.5rem 0}
+.band-2{background:var(--bg-2)}
+.band-dark{background:var(--bg-3);color:var(--fg-on-dark)}
+.band-dark a{color:#fff}
+.band-dark .sub{color:var(--mute-on-dark)}
+
+/* ===== Type =========================================================== */
+h1,h2,h3,h4{margin:0;letter-spacing:-0.02em}
+h1{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(2.4rem,6vw,4rem);line-height:1.05;letter-spacing:-0.035em;
+}
+h2{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.15;
+  margin-bottom:.6rem;
+  scroll-margin-top:6rem;
+}
+h3{
+  font-family:var(--sans);font-weight:600;
+  font-size:1.05rem;color:var(--accent);
+  letter-spacing:.005em;
+  margin:1.75rem 0 .5rem;
+}
+h4{
+  font-family:var(--sans);font-weight:600;
+  font-size:.78rem;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--accent);
+}
+p{margin:0 0 1rem}
+.lede{font-size:1.2rem;line-height:1.6;color:var(--fg);max-width:42rem}
+.sub{color:var(--mute)}
+.eyebrow{
+  display:inline-block;font-family:var(--sans);font-weight:600;
+  font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:1rem;
+}
+.eyebrow::before{content:"";display:inline-block;width:1.5rem;height:2px;background:var(--grad);vertical-align:middle;margin-right:.6rem;border-radius:2px}
+
+/* Underlined gradient accent — replaces fill gradient on words */
+.grad-under{
+  font-family:var(--serif);font-style:italic;font-weight:500;
+  position:relative;display:inline-block;white-space:nowrap;
+}
+.grad-under::after{
+  content:"";position:absolute;left:-0.05em;right:-0.05em;bottom:0.10em;
+  height:0.28em;background:var(--grad);
+  z-index:-1;border-radius:3px;opacity:.85;
+}
+/* Pure-gradient text — used sparingly (CTA word, footer mark) */
+.grad-text{
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* Headline-anchor copy-link affordance */
+h2[id]{position:relative}
+h2[id] .anchor{
+  position:absolute;left:-1.4em;top:0;opacity:0;color:var(--accent);
+  font-family:var(--sans);font-weight:500;text-decoration:none;
+  transition:opacity .15s ease;
+}
+h2[id]:hover .anchor,h2[id] .anchor:focus-visible{opacity:.6}
+
+/* ===== Buttons ======================================================== */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.95rem 1.5rem;border-radius:10px;
+  font-family:var(--sans);font-weight:600;font-size:1rem;letter-spacing:.005em;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+.btn-primary{background:var(--fg);color:#fff}
+.btn-primary:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 10px 24px rgba(124,58,237,0.28)}
+.btn-primary::after{content:"→";transition:transform .15s ease}
+.btn-primary:hover::after{transform:translateX(3px)}
+.btn-ghost{background:transparent;color:var(--fg);border-color:var(--rule-strong)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* CTA cluster (button + microcopy underneath) */
+.cta-cluster{display:flex;flex-direction:column;align-items:flex-start;gap:.55rem}
+.cta-cluster.center{align-items:center;text-align:center}
+.cta-micro{color:var(--mute);font-size:.85rem;letter-spacing:.005em}
+
+/* ===== Hero =========================================================== */
+.hero{padding:5.5rem 0 4rem;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 0%,rgba(245,158,11,0.10) 0%,transparent 60%),
+    radial-gradient(ellipse 70% 60% at 0% 30%,rgba(124,58,237,0.10) 0%,transparent 65%);
+  z-index:-1;
+}
+.hero h1{max-width:18ch;margin-bottom:1.25rem}
+.hero .lede{margin-bottom:2rem}
+.hero-cta-row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.5rem}
+
+/* ===== Stat strip ===================================================== */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  margin:3rem 0 0;padding:1.6rem 0;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+}
+.stats .stat{padding:.25rem 1.25rem;border-left:1px solid var(--rule)}
+.stats .stat:first-child{border-left:0;padding-left:0}
+.stat-num{font-family:var(--mono);font-weight:600;font-size:1.6rem;color:var(--fg);letter-spacing:-.02em;line-height:1.1}
+.stat-label{font-size:.82rem;color:var(--mute);margin-top:.25rem;letter-spacing:.01em}
+@media (max-width:680px){
+  .stats{grid-template-columns:repeat(2,1fr);gap:1.25rem 0;padding:1.25rem 0}
+  .stats .stat{padding:.5rem 1rem;border-left:0;border-top:1px solid var(--rule);padding-top:1rem}
+  .stats .stat:first-child,.stats .stat:nth-child(2){border-top:0;padding-top:.5rem}
+}
+
+/* ===== Three-step "How it works" ====================================== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
+@media (max-width:760px){.steps{grid-template-columns:1fr;gap:1.5rem}}
+.step{padding:0}
+.step .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:2.4rem;height:2.4rem;border-radius:50%;
+  background:var(--grad-soft);color:var(--accent);
+  font-family:var(--mono);font-weight:600;font-size:1rem;
+  margin-bottom:1rem;
+  border:1px solid rgba(124,58,237,0.18);
+}
+.step h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.25rem;margin:.25rem 0 .5rem;letter-spacing:-.01em}
+.step p{color:var(--mute);font-size:.96rem;margin:0}
+
+/* ===== Service pillars (3-up) ======================================== */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2.5rem}
+@media (max-width:840px){.pillars{grid-template-columns:1fr}}
+.pillar{
+  display:flex;flex-direction:column;
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.pillar:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover);border-color:rgba(124,58,237,0.25)}
+.pillar h3{font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.3rem;color:var(--fg);margin:0 0 .5rem;letter-spacing:-.01em}
+.pillar p{color:var(--mute);font-size:.95rem;flex:1;margin:0 0 1rem}
+.pillar .price-inline{color:var(--accent);font-weight:600;font-size:.95rem;margin-bottom:1rem}
+.pillar .more{color:var(--accent);font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.35rem;align-self:flex-start}
+.pillar .more::after{content:"→";transition:transform .15s ease}
+.pillar:hover .more::after{transform:translateX(3px)}
+
+/* ===== Photo band ===================================================== */
+.photo-band{position:relative;height:clamp(280px,38vw,440px);overflow:hidden;margin:0}
+.photo-band img{width:100%;height:100%;object-fit:cover;filter:saturate(0.85) contrast(1.05)}
+.photo-band::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(26,20,41,0.05) 0%,rgba(26,20,41,0.35) 100%),
+             linear-gradient(120deg,rgba(124,58,237,0.20) 0%,transparent 50%,rgba(245,158,11,0.18) 100%);
+  mix-blend-mode:multiply;
+}
+.photo-band .photo-caption{
+  position:absolute;left:0;right:0;bottom:0;padding:1.25rem 1.5rem;
+  color:#fff;font-size:.85rem;letter-spacing:.03em;
+  z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.4);
+  max-width:var(--maxw);margin:0 auto;
+}
+
+/* ===== Testimonials =================================================== */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
+@media (max-width:840px){.quotes{grid-template-columns:1fr}}
+.quote{
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.quote blockquote{margin:0 0 1rem;color:var(--fg);font-size:1.02rem;line-height:1.55;font-family:var(--serif);font-weight:500;font-style:italic;letter-spacing:-.005em}
+.quote blockquote::before{content:"\201C";font-size:2.2rem;color:var(--accent);line-height:0;vertical-align:-0.35em;margin-right:.2rem;font-family:var(--serif);font-style:normal}
+.quote .who{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);border-top:1px solid var(--rule);padding-top:.85rem}
+.quote .who strong{color:var(--fg);font-weight:600}
+
+/* ===== Promise / values band ========================================= */
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2rem}
+@media (max-width:760px){.values{grid-template-columns:1fr;gap:1.25rem}}
+.value h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.2rem;margin:0 0 .5rem;letter-spacing:-.01em}
+.value p{color:var(--mute);font-size:.95rem;margin:0}
+
+/* ===== Bottom CTA band =============================================== */
+.cta-band{padding:4.5rem 0;text-align:center}
+.cta-band h2{font-size:clamp(1.8rem,4vw,2.6rem);max-width:24ch;margin:0 auto .8rem;color:#fff}
+.cta-band .lede{color:var(--mute-on-dark);max-width:36rem;margin:0 auto 2rem}
+.cta-band .btn-primary{background:#fff;color:var(--fg)}
+.cta-band .btn-primary:hover{background:var(--accent);color:#fff}
+.cta-band .cta-micro{color:var(--mute-on-dark)}
+
+/* ===== Footer ======================================================== */
+footer.site{
+  border-top:1px solid var(--rule);
+  padding:2.5rem 0 3rem;
+  background:var(--bg);
+  font-size:.88rem;color:var(--mute);
+}
+footer.site .row{
+  max-width:var(--maxw);margin:0 auto;padding:0 1.5rem;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:2rem;flex-wrap:wrap;
+}
+footer.site .meta{display:flex;flex-direction:column;gap:.35rem}
+footer.site .meta strong{color:var(--fg);font-size:.95rem;font-weight:600}
+footer.site .links{display:flex;gap:1.25rem;flex-wrap:wrap}
+footer.site .links a{color:var(--mute);font-size:.88rem}
+footer.site .links a:hover{color:var(--accent)}
+footer.site .credit{flex-basis:100%;border-top:1px solid var(--rule);padding-top:1rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;color:var(--dim);font-size:.8rem}
+footer.site .credit a{color:var(--mute)}
+
+/* ===== Content-page primitives (used by pricing.html & others) ======= */
+.content-h1-block h1{max-width:22ch;margin-bottom:1.25rem}
+.content-h1-block .lede{margin-bottom:1.5rem}
+
+.toc{
+  margin:2.5rem 0;padding:1.4rem 1.6rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+}
+.toc h4{margin:0 0 .6rem;color:var(--accent)}
+.toc ol{margin:0;padding-left:1.25rem;color:var(--mute);font-size:.95rem;columns:2;column-gap:2rem}
+.toc li{margin-bottom:.3rem;break-inside:avoid}
+.toc a{color:var(--mute);font-weight:500}
+.toc a:hover{color:var(--accent)}
+@media (max-width:560px){.toc ol{columns:1}}
+
+.section{padding:2.5rem 0;border-top:1px solid var(--rule)}
+.section:first-of-type{border-top:0;padding-top:1.5rem}
+.section h2 .num{
+  font-family:var(--mono);font-weight:500;font-style:normal;
+  color:var(--accent);font-size:.75em;
+  margin-right:.7rem;vertical-align:.15em;letter-spacing:.02em;
+}
+
+.callout{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+  font-size:.96rem;
+}
+.callout strong{color:var(--accent)}
+
+.warn{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:#fff7ed;border:1px solid #fed7aa;
+  border-left:3px solid var(--amber);border-radius:10px;
+  font-size:.96rem;color:#7c2d12;
+}
+.warn strong{color:#9a3412}
+
+.kv{
+  display:grid;grid-template-columns:max-content 1fr;
+  gap:.55rem 1.4rem;margin:1.2rem 0;padding:1.2rem 1.4rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  font-size:.96rem;
+}
+.kv dt{color:var(--accent);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;padding-top:.1rem}
+.kv dd{margin:0;color:var(--fg)}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:.15rem 0}.kv dt{margin-top:.6rem}.kv dt:first-child{margin-top:0}}
+
+ul.bullets,ol.bullets{margin:.5rem 0 1rem;padding-left:1.2rem;color:var(--fg)}
+ul.bullets li,ol.bullets li{margin-bottom:.45rem}
+ul.bullets li::marker,ol.bullets li::marker{color:var(--accent)}
+ul.bullets li strong,ol.bullets li strong{color:var(--fg)}
+
+.table-wrap{margin:1.5rem 0;overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);box-shadow:var(--card-shadow)}
+table{width:100%;border-collapse:collapse;font-size:.95rem;min-width:32rem}
+th,td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+th{background:var(--bg-2);color:var(--fg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+td:first-child{color:var(--fg);font-weight:500}
+td.price{color:var(--accent);font-weight:600;white-space:nowrap;font-family:var(--mono);font-feature-settings:"tnum"}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s ease}
+tbody tr:hover{background:var(--bg-2)}
+
+.cta-mini{
+  margin-top:1.5rem;padding:1.25rem 1.5rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:12px;font-size:1rem;
+}
+.cta-mini a{color:var(--accent);font-weight:600}
+
+.legend{
+  display:flex;flex-wrap:wrap;gap:1.6rem;
+  margin:1.5rem 0 0;padding:1rem 1.3rem;
+  background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;
+  font-size:.88rem;color:var(--mute);
+}
+.legend strong{color:var(--fg);font-weight:600}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+@media (max-width:640px){.two-col{grid-template-columns:1fr}}
+.two-col .col{padding:1.25rem 1.4rem;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--card-shadow)}
+.two-col .col h4{margin:0 0 .7rem;color:var(--accent)}
+.two-col .col.up h4{color:#be185d}
+.two-col .col.down h4{color:#047857}
+.two-col .col ul{margin:0;padding-left:1.1rem;font-size:.93rem;color:var(--fg)}
+.two-col .col li{margin-bottom:.35rem}
+
+.hero-promise{
+  margin:1.5rem 0 2rem;padding:1.5rem 1.7rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:14px;
+}
+.hero-promise h3{margin:0 0 .6rem}
+.hero-promise p{margin:0 0 .6rem;font-size:1rem}
+.hero-promise p:last-child{margin-bottom:0}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 1.5rem}
+.tag-row span{
+  font-size:.78rem;color:var(--mute);
+  background:var(--bg-2);border:1px solid var(--rule);
+  padding:.35rem .75rem;border-radius:999px;
+}
+.tag-row span strong{color:var(--fg);font-weight:600}
+
+/* ===== Print ========================================================= */
+@media print{
+  .nav-shell,.cta-band,footer.site,.photo-band{display:none !important}
+  body{background:#fff;color:#000}
+  a{color:#000;text-decoration:underline}
+  .topbar{height:2px;background:#000}
+  .table-wrap,.callout,.warn,.kv,.cta-mini,.hero-promise{box-shadow:none;background:#fff;border:1px solid #ccc}
+  h2,h3{page-break-after:avoid}
+  table,.table-wrap{page-break-inside:avoid}
+}
+
+</style>
+</head>
+<body class="">
+<div class="topbar"></div>
+
+<div class="nav-shell" id="nav-shell">
+  <div class="nav">
+    <a href="index.html" class="brand-mark">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="name">Vanguard Reconstruction<small>Cincinnati Residential Electric</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html" class="on" aria-current="page">Home</a>
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      <a href="instant-quote.html" class="nav-cta">Get an instant quote</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+
+<section class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">Cincinnati residential electric</span>
+    <h1>Electrical work <span class="grad-under">without the runaround.</span> </h1>
+    <p class="lede">You shouldn't have to call three companies, get talked down to twice, and wait a week for someone to even quote you. We answer the phone. We text when we're on the way. We explain the work like you're going to read the quote — because you are.</p>
+    <div class="hero-cta-row">
+      <a href="contact.html" class="btn btn-primary">Start a quote</a>
+      <a href="pricing.html" class="btn btn-ghost">See pricing</a>
+      <span class="cta-micro">Photo-quote in 24 hours. We text. No sales calls.</span>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">24h</div>
+        <div class="stat-label">Written quote, in your inbox</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">On-time</div>
+        <div class="stat-label">Or we text before we're not</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">Insured</div>
+        <div class="stat-label">& background-checked crew</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">1–3</div>
+        <div class="stat-label">Weeks out, usually</div>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <span class="eyebrow">How this goes</span>
+    <h2>Three steps, and we mean it.</h2>
+    <p class="lede sub">Most electrical companies make this part vague on purpose. We'd rather just tell you.</p>
+    <div class="steps">
+      
+      <div class="step">
+        <div class="num">01</div>
+        <h3>Text us a few photos</h3>
+        <p>Text is honestly easier than the phone for most of this. A picture of the panel, the room, the problem. A sentence about what you want done is plenty — you don't need to know the words.</p>
+      </div>
+      
+      <div class="step">
+        <div class="num">02</div>
+        <h3>We send a written quote</h3>
+        <p>Within 24 hours, in your inbox. Line items, materials, labor, permit, total. Good for 30 days. We won't follow up unless you tell us you want us to.</p>
+      </div>
+      
+      <div class="step">
+        <div class="num">03</div>
+        <h3>We show up when we said</h3>
+        <p>Usually 1–3 weeks out, same-day if your power's out or something smells wrong. We text the morning of, and again when we're parked. The number on the quote is the number on the bill.</p>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<figure class="photo-band">
+  <img src="https://picsum.photos/seed/vre-craft-1/2000/1100" alt="A Cincinnati home, the kind we work in every day" loading="lazy">
+  <figcaption class="photo-caption">For the homes we live in · Cincinnati · 2026</figcaption>
+</figure>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">What we do most</span>
+    <h2>Residential, the whole house.</h2>
+    <p class="lede sub">Single-family through 3-family. If it has a panel and a meter, we can probably help — and if we can't, we'll tell you who can.</p>
+    <div class="pillars">
+      
+      <article class="pillar">
+        <h3>Panels & service upgrades</h3>
+        <p>The Federal Pacific in the basement that the inspector flagged. The 100A that can't handle one more thing. Meter-to-panel rebuilds, coordinated with Duke Energy and the City so you don't have to.</p>
+        <div class="price-inline">$1,685 – $5,485</div>
+        <a href="pricing.html#panels" class="more">See pricing</a>
+      </article>
+      
+      <article class="pillar">
+        <h3>EV chargers</h3>
+        <p>Outlet or hardwired, indoors or out. If your panel's tight, we'll usually find a way without an upgrade — and if we can't, we'll tell you on the phone, before anyone gets a quote that surprises them.</p>
+        <div class="price-inline">$485 – $1,985</div>
+        <a href="pricing.html#ev" class="more">See pricing</a>
+      </article>
+      
+      <article class="pillar">
+        <h3>The strange stuff</h3>
+        <p>Flickering lights, dead outlets, breakers that won't stay set, that one room nobody can figure out. Flat-rate diagnostics that credit toward the fix. Most of it gets solved in one visit.</p>
+        <div class="price-inline">$95 – $485</div>
+        <a href="pricing.html#trouble" class="more">See pricing</a>
+      </article>
+      
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <span class="eyebrow">How we work</span>
+    <h2>The way we'd want it, if it were our house.</h2>
+    <div class="values">
+      
+      <div class="value">
+        <h3>We explain the work</h3>
+        <p>We talk to whoever's standing there. We don't ask if someone else makes the decisions. We won't make you feel small for asking what a breaker does. If you want the deep version, we'll give it. If you want the short version, we'll give that too.</p>
+      </div>
+      
+      <div class="value">
+        <h3>We respect your home</h3>
+        <p>Drop cloths down. Vacuum out. Shoes off when you ask. We text when we're on the way and again when we're parked, so nobody answers the door surprised. Fully insured. Background-checked crew. The basics, done every time.</p>
+      </div>
+      
+      <div class="value">
+        <h3>Every neighbor</h3>
+        <p>We work for the home, not the homeowner's politics. Family-owned, Cincinnati-based, here for the long run. You don't have to explain yourself to us.</p>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">From folks we've worked for</span>
+    <h2>What people say.</h2>
+    <div class="quotes">
+      
+      <div class="quote">
+        <blockquote>They quoted in writing the same day, showed up exactly when they said, and the price didn't move a dollar. After three other electricians who acted like I wasn't going to understand — this was honestly such a relief.</blockquote>
+        <div class="who">
+          <strong>Sarah K.</strong>
+          <span>Hyde Park · panel upgrade</span>
+        </div>
+      </div>
+      
+      <div class="quote">
+        <blockquote>Walked me through what was actually wrong versus what could wait. Didn't try to sell me a full rewire I didn't need. Fixed the dangerous part for under $300 and explained it without being weird about it.</blockquote>
+        <div class="who">
+          <strong>Danielle B.</strong>
+          <span>Northside · troubleshooting</span>
+        </div>
+      </div>
+      
+      <div class="quote">
+        <blockquote>Installed our charger and explained the math behind the breaker size. First contractor in years who treated me like I could understand my own house. I've already sent two friends their way.</blockquote>
+        <div class="who">
+          <strong>Priya D.</strong>
+          <span>Oakley · EV install</span>
+        </div>
+      </div>
+      
+    </div>
+  </div>
+</section>
+
+
+</main>
+
+<section class="band band-dark cta-band">
+  <div class="wrap-narrow">
+    <h2>Want a written quote you can actually trust?</h2>
+    <p class="lede">Text us a couple of photos and a sentence about what you want done. We'll have a real number in your inbox within 24 hours — and no, we won't call you twenty times after.</p>
+    <div class="cta-cluster center">
+      <a href="instant-quote.html" class="btn btn-primary">Get an instant quote</a>
+      <span class="cta-micro">Itemized PDF in your inbox in three minutes. No sales call.</span>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="row">
+    <div class="meta">
+      <strong>Vanguard Reconstruction</strong>
+      <span>Cincinnati, Ohio</span>
+      <span><a href="tel:+15135550118">(513) 555-0118</a> · <a href="mailto:hello@vre-construction.com">hello@vre-construction.com</a></span>
+    </div>
+    <div class="links">
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      
+    </div>
+    <div class="credit">
+      <span>Vanguard Reconstruction · Cincinnati · Family-owned, fully insured, background-checked crew.</span>
+      <span>© 2026 <a href="https://allee-ai.com">Allee AI</a>. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav = document.getElementById('nav-shell');
+  if(!nav) return;
+  var ticking = false;
+  function update(){
+    nav.classList.toggle('scrolled', window.scrollY > 8);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+  update();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,829 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Knowledge — Vanguard Reconstruction</title>
+<meta name="description" content="Plain-English answers to Cincinnati electrical questions: panel sizing, EV chargers, knob-and-tube, breaker trips, what photos help us quote, and the questions worth asking before you hire anyone.">
+<link rel="canonical" href="https://vre-construction.com/knowledge.html">
+<meta name="theme-color" content="#7c3aed">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vre-construction.com/knowledge.html">
+<meta property="og:title" content="Knowledge — Vanguard Reconstruction">
+<meta property="og:description" content="Plain-English answers to Cincinnati electrical questions: panel sizing, EV chargers, knob-and-tube, breaker trips, what photos help us quote, and the questions worth asking before you hire anyone.">
+<meta property="og:site_name" content="Vanguard Reconstruction">
+
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,ital,wght@9..144,0,500;9..144,0,600;9..144,1,500;9..144,1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">{
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "about": { "@id": "https://vre-construction.com/#business" },
+  "mainEntity": [
+    { "@type": "Question", "name": "What size electrical panel do I need?",
+      "acceptedAnswer": { "@type": "Answer", "text": "For most single-family homes in Cincinnati, 200-amp service is the modern standard. 100-amp is fine for a small all-gas home with no central AC and no EV. Add an EV charger, a heat pump, or an induction range and you usually want 200-amp." } },
+    { "@type": "Question", "name": "Why does my breaker keep tripping?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Three reasons in order of likelihood: too much load on the circuit, a failing device on the circuit, or a worn-out breaker. AFCI/GFCI breakers also trip on things a regular breaker would ignore." } },
+    { "@type": "Question", "name": "Is knob-and-tube wiring dangerous?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Knob-and-tube installed correctly and left alone is not inherently dangerous. The problems are insulation packed against it, no ground conductor, brittle cloth insulation, and insurance refusing to write policies on homes with active K&T." } },
+    { "@type": "Question", "name": "Can I install an EV charger on my existing panel?",
+      "acceptedAnswer": { "@type": "Answer", "text": "Sometimes. A Level 2 home charger is typically a 40-60 amp 240V circuit. If your panel has a free 2-pole slot and the main service has headroom, you can add the circuit. If the panel is full or undersized, you need an upgrade or a load-management device." } }
+  ]
+}
+</script>
+<style>
+/* ===== Design tokens =================================================== */
+:root{
+  --bg:#ffffff;
+  --bg-2:#faf7f2;            /* warm cream alt band */
+  --bg-3:#1a1429;            /* deep ink inverted band */
+  --fg:#1a1429;              /* deep ink, not pure black */
+  --fg-on-dark:#f7f4fb;
+  --mute:#5b5478;
+  --mute-on-dark:#b8b0d0;
+  --dim:#8c849f;
+  --accent:#7c3aed;
+  --accent-hover:#6d28d9;
+  --accent-2:#ec4899;
+  --amber:#f59e0b;
+  --rule:rgba(26,20,41,0.08);
+  --rule-strong:rgba(26,20,41,0.16);
+  --card:#ffffff;
+  --card-shadow:0 1px 2px rgba(26,20,41,0.04), 0 8px 24px rgba(26,20,41,0.05);
+  --card-shadow-hover:0 2px 4px rgba(124,58,237,0.08), 0 16px 40px rgba(26,20,41,0.10);
+  /* 5-stop structural gradient — topbar only */
+  --grad-topbar:linear-gradient(90deg,#7c3aed 0%,#c026d3 30%,#ec4899 55%,#f59e0b 80%,#22d3ee 100%);
+  /* 3-stop warm gradient — body usage (underlines, accents, CTA hover) */
+  --grad:linear-gradient(90deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  --grad-soft:linear-gradient(90deg,rgba(124,58,237,0.14) 0%,rgba(236,72,153,0.14) 55%,rgba(245,158,11,0.14) 100%);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --maxw:64rem;
+  --maxw-narrow:48rem;
+}
+
+/* ===== Reset / base ==================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:17px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+a{color:var(--accent);text-decoration:none;transition:color .15s ease, opacity .15s ease}
+a:hover{color:var(--accent-hover)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+/* Tabular numerals everywhere a number appears in tables/stats/prices */
+.mono, .num, td.price, .stat-num, .price-inline{
+  font-family:var(--mono);font-feature-settings:"tnum","ss01";
+}
+
+/* ===== Topbar (structural 5-stop gradient, always present) ============= */
+.topbar{height:3px;background:var(--grad-topbar);width:100%;position:relative;z-index:50}
+
+/* ===== Sticky nav ===================================================== */
+.nav-shell{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .2s ease, background .2s ease, padding .2s ease;
+}
+.nav-shell.scrolled{
+  background:rgba(255,255,255,0.94);
+  border-bottom-color:var(--rule);
+}
+.nav{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 1.5rem;
+  transition:padding .2s ease;
+}
+.nav-shell.scrolled .nav{padding:.7rem 1.5rem}
+.brand-mark{display:flex;align-items:center;gap:.65rem;color:var(--fg)}
+.brand-mark:hover{color:var(--fg)}
+.brand-mark .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--grad);
+  box-shadow:0 0 0 4px rgba(124,58,237,0.10);
+  flex-shrink:0;
+}
+.brand-mark .name{font-weight:700;letter-spacing:-0.01em;font-size:1rem;line-height:1.1}
+.brand-mark .name small{
+  display:block;color:var(--mute);font-weight:500;font-size:0.7rem;
+  letter-spacing:0.10em;text-transform:uppercase;margin-top:0.15rem;
+}
+.nav-links{display:flex;align-items:center;gap:1.6rem}
+.nav-links a{color:var(--mute);font-size:.94rem;font-weight:500}
+.nav-links a:hover,.nav-links a.on{color:var(--fg)}
+.nav-links a.on{position:relative}
+.nav-links a.on::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;
+  background:var(--grad);border-radius:2px;
+}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:var(--fg);color:#fff;padding:.55rem 1rem;border-radius:8px;
+  font-size:.88rem;font-weight:600;letter-spacing:.005em;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.nav-cta:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,0.25)}
+.nav-cta::after{content:"→";transition:transform .15s ease}
+.nav-cta:hover::after{transform:translateX(2px)}
+@media (max-width:720px){
+  .nav-links{gap:1rem}
+  .nav-links a:not(.nav-cta){display:none}
+}
+
+/* ===== Layout ========================================================== */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.5rem}
+.wrap-narrow{max-width:var(--maxw-narrow);margin:0 auto;padding:0 1.5rem}
+.band{padding:5rem 0}
+.band-tight{padding:3.5rem 0}
+.band-2{background:var(--bg-2)}
+.band-dark{background:var(--bg-3);color:var(--fg-on-dark)}
+.band-dark a{color:#fff}
+.band-dark .sub{color:var(--mute-on-dark)}
+
+/* ===== Type =========================================================== */
+h1,h2,h3,h4{margin:0;letter-spacing:-0.02em}
+h1{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(2.4rem,6vw,4rem);line-height:1.05;letter-spacing:-0.035em;
+}
+h2{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.15;
+  margin-bottom:.6rem;
+  scroll-margin-top:6rem;
+}
+h3{
+  font-family:var(--sans);font-weight:600;
+  font-size:1.05rem;color:var(--accent);
+  letter-spacing:.005em;
+  margin:1.75rem 0 .5rem;
+}
+h4{
+  font-family:var(--sans);font-weight:600;
+  font-size:.78rem;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--accent);
+}
+p{margin:0 0 1rem}
+.lede{font-size:1.2rem;line-height:1.6;color:var(--fg);max-width:42rem}
+.sub{color:var(--mute)}
+.eyebrow{
+  display:inline-block;font-family:var(--sans);font-weight:600;
+  font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:1rem;
+}
+.eyebrow::before{content:"";display:inline-block;width:1.5rem;height:2px;background:var(--grad);vertical-align:middle;margin-right:.6rem;border-radius:2px}
+
+/* Underlined gradient accent — replaces fill gradient on words */
+.grad-under{
+  font-family:var(--serif);font-style:italic;font-weight:500;
+  position:relative;display:inline-block;white-space:nowrap;
+}
+.grad-under::after{
+  content:"";position:absolute;left:-0.05em;right:-0.05em;bottom:0.10em;
+  height:0.28em;background:var(--grad);
+  z-index:-1;border-radius:3px;opacity:.85;
+}
+/* Pure-gradient text — used sparingly (CTA word, footer mark) */
+.grad-text{
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* Headline-anchor copy-link affordance */
+h2[id]{position:relative}
+h2[id] .anchor{
+  position:absolute;left:-1.4em;top:0;opacity:0;color:var(--accent);
+  font-family:var(--sans);font-weight:500;text-decoration:none;
+  transition:opacity .15s ease;
+}
+h2[id]:hover .anchor,h2[id] .anchor:focus-visible{opacity:.6}
+
+/* ===== Buttons ======================================================== */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.95rem 1.5rem;border-radius:10px;
+  font-family:var(--sans);font-weight:600;font-size:1rem;letter-spacing:.005em;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+.btn-primary{background:var(--fg);color:#fff}
+.btn-primary:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 10px 24px rgba(124,58,237,0.28)}
+.btn-primary::after{content:"→";transition:transform .15s ease}
+.btn-primary:hover::after{transform:translateX(3px)}
+.btn-ghost{background:transparent;color:var(--fg);border-color:var(--rule-strong)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* CTA cluster (button + microcopy underneath) */
+.cta-cluster{display:flex;flex-direction:column;align-items:flex-start;gap:.55rem}
+.cta-cluster.center{align-items:center;text-align:center}
+.cta-micro{color:var(--mute);font-size:.85rem;letter-spacing:.005em}
+
+/* ===== Hero =========================================================== */
+.hero{padding:5.5rem 0 4rem;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 0%,rgba(245,158,11,0.10) 0%,transparent 60%),
+    radial-gradient(ellipse 70% 60% at 0% 30%,rgba(124,58,237,0.10) 0%,transparent 65%);
+  z-index:-1;
+}
+.hero h1{max-width:18ch;margin-bottom:1.25rem}
+.hero .lede{margin-bottom:2rem}
+.hero-cta-row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.5rem}
+
+/* ===== Stat strip ===================================================== */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  margin:3rem 0 0;padding:1.6rem 0;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+}
+.stats .stat{padding:.25rem 1.25rem;border-left:1px solid var(--rule)}
+.stats .stat:first-child{border-left:0;padding-left:0}
+.stat-num{font-family:var(--mono);font-weight:600;font-size:1.6rem;color:var(--fg);letter-spacing:-.02em;line-height:1.1}
+.stat-label{font-size:.82rem;color:var(--mute);margin-top:.25rem;letter-spacing:.01em}
+@media (max-width:680px){
+  .stats{grid-template-columns:repeat(2,1fr);gap:1.25rem 0;padding:1.25rem 0}
+  .stats .stat{padding:.5rem 1rem;border-left:0;border-top:1px solid var(--rule);padding-top:1rem}
+  .stats .stat:first-child,.stats .stat:nth-child(2){border-top:0;padding-top:.5rem}
+}
+
+/* ===== Three-step "How it works" ====================================== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
+@media (max-width:760px){.steps{grid-template-columns:1fr;gap:1.5rem}}
+.step{padding:0}
+.step .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:2.4rem;height:2.4rem;border-radius:50%;
+  background:var(--grad-soft);color:var(--accent);
+  font-family:var(--mono);font-weight:600;font-size:1rem;
+  margin-bottom:1rem;
+  border:1px solid rgba(124,58,237,0.18);
+}
+.step h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.25rem;margin:.25rem 0 .5rem;letter-spacing:-.01em}
+.step p{color:var(--mute);font-size:.96rem;margin:0}
+
+/* ===== Service pillars (3-up) ======================================== */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2.5rem}
+@media (max-width:840px){.pillars{grid-template-columns:1fr}}
+.pillar{
+  display:flex;flex-direction:column;
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.pillar:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover);border-color:rgba(124,58,237,0.25)}
+.pillar h3{font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.3rem;color:var(--fg);margin:0 0 .5rem;letter-spacing:-.01em}
+.pillar p{color:var(--mute);font-size:.95rem;flex:1;margin:0 0 1rem}
+.pillar .price-inline{color:var(--accent);font-weight:600;font-size:.95rem;margin-bottom:1rem}
+.pillar .more{color:var(--accent);font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.35rem;align-self:flex-start}
+.pillar .more::after{content:"→";transition:transform .15s ease}
+.pillar:hover .more::after{transform:translateX(3px)}
+
+/* ===== Photo band ===================================================== */
+.photo-band{position:relative;height:clamp(280px,38vw,440px);overflow:hidden;margin:0}
+.photo-band img{width:100%;height:100%;object-fit:cover;filter:saturate(0.85) contrast(1.05)}
+.photo-band::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(26,20,41,0.05) 0%,rgba(26,20,41,0.35) 100%),
+             linear-gradient(120deg,rgba(124,58,237,0.20) 0%,transparent 50%,rgba(245,158,11,0.18) 100%);
+  mix-blend-mode:multiply;
+}
+.photo-band .photo-caption{
+  position:absolute;left:0;right:0;bottom:0;padding:1.25rem 1.5rem;
+  color:#fff;font-size:.85rem;letter-spacing:.03em;
+  z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.4);
+  max-width:var(--maxw);margin:0 auto;
+}
+
+/* ===== Testimonials =================================================== */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
+@media (max-width:840px){.quotes{grid-template-columns:1fr}}
+.quote{
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.quote blockquote{margin:0 0 1rem;color:var(--fg);font-size:1.02rem;line-height:1.55;font-family:var(--serif);font-weight:500;font-style:italic;letter-spacing:-.005em}
+.quote blockquote::before{content:"\201C";font-size:2.2rem;color:var(--accent);line-height:0;vertical-align:-0.35em;margin-right:.2rem;font-family:var(--serif);font-style:normal}
+.quote .who{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);border-top:1px solid var(--rule);padding-top:.85rem}
+.quote .who strong{color:var(--fg);font-weight:600}
+
+/* ===== Promise / values band ========================================= */
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2rem}
+@media (max-width:760px){.values{grid-template-columns:1fr;gap:1.25rem}}
+.value h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.2rem;margin:0 0 .5rem;letter-spacing:-.01em}
+.value p{color:var(--mute);font-size:.95rem;margin:0}
+
+/* ===== Bottom CTA band =============================================== */
+.cta-band{padding:4.5rem 0;text-align:center}
+.cta-band h2{font-size:clamp(1.8rem,4vw,2.6rem);max-width:24ch;margin:0 auto .8rem;color:#fff}
+.cta-band .lede{color:var(--mute-on-dark);max-width:36rem;margin:0 auto 2rem}
+.cta-band .btn-primary{background:#fff;color:var(--fg)}
+.cta-band .btn-primary:hover{background:var(--accent);color:#fff}
+.cta-band .cta-micro{color:var(--mute-on-dark)}
+
+/* ===== Footer ======================================================== */
+footer.site{
+  border-top:1px solid var(--rule);
+  padding:2.5rem 0 3rem;
+  background:var(--bg);
+  font-size:.88rem;color:var(--mute);
+}
+footer.site .row{
+  max-width:var(--maxw);margin:0 auto;padding:0 1.5rem;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:2rem;flex-wrap:wrap;
+}
+footer.site .meta{display:flex;flex-direction:column;gap:.35rem}
+footer.site .meta strong{color:var(--fg);font-size:.95rem;font-weight:600}
+footer.site .links{display:flex;gap:1.25rem;flex-wrap:wrap}
+footer.site .links a{color:var(--mute);font-size:.88rem}
+footer.site .links a:hover{color:var(--accent)}
+footer.site .credit{flex-basis:100%;border-top:1px solid var(--rule);padding-top:1rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;color:var(--dim);font-size:.8rem}
+footer.site .credit a{color:var(--mute)}
+
+/* ===== Content-page primitives (used by pricing.html & others) ======= */
+.content-h1-block h1{max-width:22ch;margin-bottom:1.25rem}
+.content-h1-block .lede{margin-bottom:1.5rem}
+
+.toc{
+  margin:2.5rem 0;padding:1.4rem 1.6rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+}
+.toc h4{margin:0 0 .6rem;color:var(--accent)}
+.toc ol{margin:0;padding-left:1.25rem;color:var(--mute);font-size:.95rem;columns:2;column-gap:2rem}
+.toc li{margin-bottom:.3rem;break-inside:avoid}
+.toc a{color:var(--mute);font-weight:500}
+.toc a:hover{color:var(--accent)}
+@media (max-width:560px){.toc ol{columns:1}}
+
+.section{padding:2.5rem 0;border-top:1px solid var(--rule)}
+.section:first-of-type{border-top:0;padding-top:1.5rem}
+.section h2 .num{
+  font-family:var(--mono);font-weight:500;font-style:normal;
+  color:var(--accent);font-size:.75em;
+  margin-right:.7rem;vertical-align:.15em;letter-spacing:.02em;
+}
+
+.callout{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+  font-size:.96rem;
+}
+.callout strong{color:var(--accent)}
+
+.warn{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:#fff7ed;border:1px solid #fed7aa;
+  border-left:3px solid var(--amber);border-radius:10px;
+  font-size:.96rem;color:#7c2d12;
+}
+.warn strong{color:#9a3412}
+
+.kv{
+  display:grid;grid-template-columns:max-content 1fr;
+  gap:.55rem 1.4rem;margin:1.2rem 0;padding:1.2rem 1.4rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  font-size:.96rem;
+}
+.kv dt{color:var(--accent);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;padding-top:.1rem}
+.kv dd{margin:0;color:var(--fg)}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:.15rem 0}.kv dt{margin-top:.6rem}.kv dt:first-child{margin-top:0}}
+
+ul.bullets,ol.bullets{margin:.5rem 0 1rem;padding-left:1.2rem;color:var(--fg)}
+ul.bullets li,ol.bullets li{margin-bottom:.45rem}
+ul.bullets li::marker,ol.bullets li::marker{color:var(--accent)}
+ul.bullets li strong,ol.bullets li strong{color:var(--fg)}
+
+.table-wrap{margin:1.5rem 0;overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);box-shadow:var(--card-shadow)}
+table{width:100%;border-collapse:collapse;font-size:.95rem;min-width:32rem}
+th,td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+th{background:var(--bg-2);color:var(--fg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+td:first-child{color:var(--fg);font-weight:500}
+td.price{color:var(--accent);font-weight:600;white-space:nowrap;font-family:var(--mono);font-feature-settings:"tnum"}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s ease}
+tbody tr:hover{background:var(--bg-2)}
+
+.cta-mini{
+  margin-top:1.5rem;padding:1.25rem 1.5rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:12px;font-size:1rem;
+}
+.cta-mini a{color:var(--accent);font-weight:600}
+
+.legend{
+  display:flex;flex-wrap:wrap;gap:1.6rem;
+  margin:1.5rem 0 0;padding:1rem 1.3rem;
+  background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;
+  font-size:.88rem;color:var(--mute);
+}
+.legend strong{color:var(--fg);font-weight:600}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+@media (max-width:640px){.two-col{grid-template-columns:1fr}}
+.two-col .col{padding:1.25rem 1.4rem;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--card-shadow)}
+.two-col .col h4{margin:0 0 .7rem;color:var(--accent)}
+.two-col .col.up h4{color:#be185d}
+.two-col .col.down h4{color:#047857}
+.two-col .col ul{margin:0;padding-left:1.1rem;font-size:.93rem;color:var(--fg)}
+.two-col .col li{margin-bottom:.35rem}
+
+.hero-promise{
+  margin:1.5rem 0 2rem;padding:1.5rem 1.7rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:14px;
+}
+.hero-promise h3{margin:0 0 .6rem}
+.hero-promise p{margin:0 0 .6rem;font-size:1rem}
+.hero-promise p:last-child{margin-bottom:0}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 1.5rem}
+.tag-row span{
+  font-size:.78rem;color:var(--mute);
+  background:var(--bg-2);border:1px solid var(--rule);
+  padding:.35rem .75rem;border-radius:999px;
+}
+.tag-row span strong{color:var(--fg);font-weight:600}
+
+/* ===== Print ========================================================= */
+@media print{
+  .nav-shell,.cta-band,footer.site,.photo-band{display:none !important}
+  body{background:#fff;color:#000}
+  a{color:#000;text-decoration:underline}
+  .topbar{height:2px;background:#000}
+  .table-wrap,.callout,.warn,.kv,.cta-mini,.hero-promise{box-shadow:none;background:#fff;border:1px solid #ccc}
+  h2,h3{page-break-after:avoid}
+  table,.table-wrap{page-break-inside:avoid}
+}
+
+.tldr{
+  margin:.4rem 0 1.5rem;padding:1.1rem 1.4rem;
+  background:linear-gradient(135deg,rgba(124,58,237,0.06) 0%,rgba(236,72,153,0.06) 100%);
+  border:1px solid var(--rule);border-left:3px solid var(--accent-2);
+  border-radius:10px;font-size:1rem;color:var(--fg);line-height:1.6;
+}
+.tldr::before{
+  content:"Short answer";display:block;
+  font-family:var(--sans);font-weight:600;font-size:.72rem;
+  letter-spacing:.10em;text-transform:uppercase;color:var(--accent);
+  margin-bottom:.4rem;
+}
+
+</style>
+</head>
+<body class="">
+<div class="topbar"></div>
+
+<div class="nav-shell" id="nav-shell">
+  <div class="nav">
+    <a href="index.html" class="brand-mark">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="name">Vanguard Reconstruction<small>Cincinnati Residential Electric</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html" class="on" aria-current="page">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      <a href="instant-quote.html" class="nav-cta">Get an instant quote</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<section class="band band-tight">
+  <div class="wrap-narrow content-h1-block">
+    <p class="eyebrow">Knowledge base</p>
+    <h1>The questions you'd rather <span class="grad-under">not feel dumb asking.</span></h1>
+    <p class="lede">Plain-English answers to the electrical questions we hear most. No condescension, no jargon walls, no "well, technically." Skim it, screenshot what you need, send it to whoever's helping you decide. Then text us the ones we didn't answer.</p>
+
+    <div class="toc">
+      <h4>What's in here</h4>
+      <ol>
+        <li><a href="#panels">Panel sizing &amp; service</a></li>
+        <li><a href="#ev">EV chargers at home</a></li>
+        <li><a href="#trips">Why breakers trip</a></li>
+        <li><a href="#kt">Knob-and-tube reality</a></li>
+        <li><a href="#gfci">GFCI &amp; AFCI in plain English</a></li>
+        <li><a href="#photos">What photos help us quote</a></li>
+        <li><a href="#prepurchase">Buying a house: what to check</a></li>
+        <li><a href="#prices">Price ranges to expect</a></li>
+        <li><a href="#hire">Questions to ask anyone you hire</a></li>
+        <li><a href="#safety">Safety: when to flip the main</a></li>
+        
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="band-tight">
+  <div class="wrap-narrow">
+    
+    <section class="section" id="panels">
+      <h2><a href="#panels" class="anchor" aria-hidden="true">#</a><span class="num">01</span>Panel sizing & service</h2>
+      <div class="tldr">Most Cincinnati single-family homes want 200-amp service. 100-amp is fine if your house is all-gas with no EV. The number on your meter and the number on your main breaker aren't always the same — your real ceiling is the smaller of the two.</div>
+      
+        <p>The panel is the heart. Everything else is plumbing for electrons.</p>
+      
+        <h3>The number you actually need</h3>
+      
+        <div class="kv">
+          <dt>100A</dt><dd>Older homes, gas heat, gas range, window units. Fine until you add anything modern.</dd>
+          <dt>150A</dt><dd>Compromise size, common in 70s/80s homes. Often the panel that's full and tripping today.</dd>
+          <dt>200A</dt><dd>Default for new and modernized homes. Room for EV, heat pump, future expansion.</dd>
+          <dt>400A</dt><dd>Larger homes, ADU plus main house, two EVs plus heat pump plus hot tub. Rarely needed for a single dwelling unit.</dd>
+          
+        </div>
+      
+        <div class="callout"><strong>Trick:</strong> The number on the meter and the number on your main breaker are not always the same. Your real ceiling is the <em>smaller</em> of the two. A 200-amp meter with a 100-amp main is still a 100-amp service.</div>
+      
+        <h3>Signs your panel is at end of life</h3>
+      
+        <ul class="bullets">
+          <li><strong>Federal Pacific Stab-Lok</strong> or <strong>Zinsco</strong> branding. Well-documented failure modes; insurance companies often flag them. Replacement is the right call regardless of current behavior.</li>
+          <li>Rust on the bottom of the cabinet. Means water got in. Even if it's dry now, the bus bars may be compromised.</li>
+          <li>Breakers warm to the touch under normal load.</li>
+          <li>A burnt smell, ever. Once is enough.</li>
+          <li>Two wires under one breaker terminal that wasn't designed for tandem.</li>
+          <li>Aluminum branch wiring (not service entrance, branch). Different beast than knob-and-tube; needs special handling at every connection.</li>
+          
+        </ul>
+      
+    </section>
+    
+    <section class="section" id="ev">
+      <h2><a href="#ev" class="anchor" aria-hidden="true">#</a><span class="num">02</span>EV chargers at home</h2>
+      <div class="tldr">A Level 2 home charger is a 240V, 40–60 amp circuit. Whether your panel can handle one is a math question, not a guess. If the panel is full or undersized, you can upgrade the service or add a load-management device that pauses the car when the dryer kicks on.</div>
+      
+        <p>Probably the most-asked question of the last three years. Short version:</p>
+      
+        <div class="table-wrap"><table>
+          <thead><tr><th>Level</th><th>Voltage / amps</th><th>Miles per hour</th><th>Reality check</th></tr></thead>
+          <tbody>
+          <tr><td>L1</td><td>120V / 12A</td><td>~3–5</td><td>The cable that came with the car. Fine for a plug-in hybrid or short commutes.</td></tr>
+          <tr><td>L2 (low)</td><td>240V / 32A</td><td>~25</td><td>Smallest "real" home charger. Full charge overnight on most cars.</td></tr>
+          <tr><td>L2 (high)</td><td>240V / 48–60A</td><td>~35–45</td><td>What most modern EVs can accept. Future-proof.</td></tr>
+          <tr><td>DC fast</td><td>400–800V</td><td>~250+</td><td>Not residential. Don't.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <h3>Will my panel handle it?</h3>
+      
+        <p>The honest answer is "do the math, don't guess." A proper load calculation looks at your panel size, your existing load (heat, AC, water heater, range, dryer), and adds the new charger. If you're already running heat pump plus electric range plus dryer on a 100-amp panel, an EV charger probably wants either a panel upgrade or a smart load-management device that pauses the car when the dryer kicks on.</p>
+      
+        <div class="callout"><strong>The cheap fix that's not cheap:</strong> A 40A circuit run from a panel that doesn't really have the headroom <em>will</em> work for a while. It will also trip your main on a hot July day with the AC, the dryer, and the car all running. That's not a code violation; it's a math violation.</div>
+      
+        <h3>Hardwired vs. plug-in (NEMA 14-50)</h3>
+      
+        <p>Hardwired chargers are slightly more efficient and don't depend on a $40 outlet's contact integrity over ten years. Plug-in chargers are portable if you move and easier to swap if the charger itself fails. Either is fine. Don't use a plain dryer cord on a charger meant to be hardwired — the duty cycle is different.</p>
+      
+    </section>
+    
+    <section class="section" id="trips">
+      <h2><a href="#trips" class="anchor" aria-hidden="true">#</a><span class="num">03</span>Why breakers trip</h2>
+      <div class="tldr">Three reasons, in order of likelihood: too much load on one circuit, a failing device, or a worn-out breaker. AFCI/GFCI breakers are <em>supposed</em> to trip on things a regular breaker would ignore — that's a feature.</div>
+      
+        <p>Three reasons in order of likelihood:</p>
+      
+        <ol class="bullets">
+          <li><strong>Too much on one circuit.</strong> A 15-amp kitchen circuit with the toaster, the microwave, and the air fryer is going to trip. Not a problem with the wiring — the breaker did its job.</li>
+          <li><strong>A failing device.</strong> Old motors, damaged extension cords, a fridge whose compressor is on its last legs. Unplug everything on the circuit. If it stops tripping, plug back in one at a time.</li>
+          <li><strong>A failing breaker.</strong> Breakers wear out, especially the ones that trip often. They become more sensitive over time and eventually trip with no real fault. Replacement is cheap.</li>
+          
+        </ol>
+      
+        <h3>Nuisance trips from AFCI/GFCI</h3>
+      
+        <p>Arc-fault and ground-fault breakers (AFCI/GFCI) trip on things a regular breaker would ignore — a slightly leaky neutral, a worn brush in a motor, a hair dryer that's about to die. That's a feature, not a bug. It means the breaker caught something before it became a fire. But older appliances on a newly-AFCI-protected circuit will sometimes trip. The fix is usually the appliance, not the breaker.</p>
+      
+        <div class="warn"><strong>Don't:</strong> Replace an AFCI or GFCI breaker with a standard one to stop nuisance trips. You're disabling a safety device that exists because data on house fires said it should.</div>
+      
+    </section>
+    
+    <section class="section" id="kt">
+      <h2><a href="#kt" class="anchor" aria-hidden="true">#</a><span class="num">04</span>Knob-and-tube reality</h2>
+      <div class="tldr">K&T installed correctly and left alone isn't inherently dangerous. The problems are: insulation packed against it (the big one), no ground wire, brittle cloth jackets, and insurance refusing to write policies on it. Options range from targeted abandonment to full rewire.</div>
+      
+        <p>Cincinnati has a lot of pre-1940 houses, and a lot of them still have knob-and-tube somewhere. Here's the honest picture:</p>
+      
+        <h3>What it is</h3>
+      
+        <p>Two separate conductors (hot and neutral) run through porcelain knobs and tubes, with cloth and rubber insulation. No ground wire. When installed correctly in open air, it stays cool because it can dissipate heat in all directions.</p>
+      
+        <h3>Why it's actually a problem</h3>
+      
+        <ul class="bullets">
+          <li><strong>Insulation buried it.</strong> 1980s blown-in attic insulation packed against the wires traps heat. That's the single biggest fire risk.</li>
+          <li><strong>The cloth is brittle.</strong> Anyone bumping a junction in the attic can crumble decades-old insulation off the conductor.</li>
+          <li><strong>Three-prong outlets on it are lying.</strong> The ground pin isn't connected to anything. Surge protectors plug in but don't actually protect.</li>
+          <li><strong>Insurance.</strong> Many companies won't write a new policy on a house with active knob-and-tube. Some will, with conditions and a higher premium.</li>
+          <li><strong>Splices.</strong> Decades of homeowners cutting in new outlets created untold numbers of in-wall splices that are no longer code-compliant.</li>
+          
+        </ul>
+      
+        <h3>Options, cheapest to most thorough</h3>
+      
+        <ol class="bullets">
+          <li><strong>Targeted abandonment.</strong> Identify the specific circuits still on K&T, kill them at the panel, run new replacement circuits to the rooms they served. Doable in stages.</li>
+          <li><strong>Full attic and second floor rewire.</strong> The high-risk zones. Often what insurance asks for.</li>
+          <li><strong>Whole-house rewire.</strong> The durable answer. Disruptive but final.</li>
+          
+        </ol>
+      
+    </section>
+    
+    <section class="section" id="gfci">
+      <h2><a href="#gfci" class="anchor" aria-hidden="true">#</a><span class="num">05</span>GFCI & AFCI in plain English</h2>
+      <div class="tldr">GFCI = shock protection (trips on current leaking to ground). AFCI = fire protection (trips on arcing connections). Required in different rooms by current code. If a GFCI somewhere trips, every outlet downstream goes dead too — check upstream before you call.</div>
+      
+        <h3>GFCI — Ground Fault Circuit Interrupter</h3>
+      
+        <p>Compares the current going out the hot wire with the current coming back on the neutral. If they differ by more than ~5 milliamps, it trips, because that current is leaking to ground — possibly through a person. Required in bathrooms, kitchens, garages, outdoors, basements, and anywhere near water.</p>
+      
+        <h3>AFCI — Arc Fault Circuit Interrupter</h3>
+      
+        <p>Listens for the electrical signature of an arc — the rapid on-off-on of a loose connection or damaged wire. Arcing is the proximate cause of a huge percentage of residential fires. Required in most living-space circuits in modern installs.</p>
+      
+        <h3>Combination AFCI/GFCI breakers</h3>
+      
+        <p>A single breaker that does both. More expensive, takes one slot in the panel, common in newer kitchen and laundry circuits where both protections are required.</p>
+      
+        <div class="callout"><strong>If a GFCI outlet trips and nothing reset it, the whole downstream chain is dead.</strong> Check upstream outlets in bathrooms, garages, outdoor outlets, and the basement before you call. Half of "no power to this outlet" calls are a tripped GFCI two rooms away.</div>
+      
+    </section>
+    
+    <section class="section" id="photos">
+      <h2><a href="#photos" class="anchor" aria-hidden="true">#</a><span class="num">06</span>What photos help us quote</h2>
+      <div class="tldr">Closed panel cover with the sticker visible, panel door open with breakers visible, the meter outside, and a wide shot of the room or fixture in question. That's usually 90% of what we need to quote without a site visit.</div>
+      
+        <p>If you can safely take these, we can usually quote without a site visit:</p>
+      
+        <ul class="bullets">
+          <li>The panel with the door closed (so we can read the sticker).</li>
+          <li>The panel with the door open (so we can read the breakers).</li>
+          <li>The panel with the cover off, <strong>only if you're comfortable</strong>. Flashlight, no contact with anything inside.</li>
+          <li>The meter outside (so we can see service size and condition of the entrance cable).</li>
+          <li>The room or area where the new work is going — wide shot.</li>
+          <li>A close-up of any specific outlet, switch, or fixture in question.</li>
+          
+        </ul>
+      
+        <div class="warn"><strong>Don't take the panel cover off if you're not sure.</strong> Energized bus bars are right there. A clear photo of the closed panel with door open is enough for 90% of quotes.</div>
+      
+    </section>
+    
+    <section class="section" id="prepurchase">
+      <h2><a href="#prepurchase" class="anchor" aria-hidden="true">#</a><span class="num">07</span>Buying a house: what to check</h2>
+      <div class="tldr">Home inspectors cover a lot, but rarely in enough detail. Have someone look at the panel make and age, the service entrance cable, the grounding system, any K&T, GFCI/AFCI coverage, and any visible DIY work. A pre-purchase walkthrough takes about an hour.</div>
+      
+        <p>The inspector's report covers a lot, but rarely in enough detail to know what you're really buying. Things we look at on a pre-purchase walkthrough:</p>
+      
+        <ul class="bullets">
+          <li><strong>Panel make and age.</strong> Federal Pacific or Zinsco changes the math on the offer.</li>
+          <li><strong>Service entrance cable.</strong> Frayed or sun-cracked insulation outside is a near-term replacement.</li>
+          <li><strong>Grounding system.</strong> Two ground rods, bonded water pipe, bonded gas line. Often missing in older homes.</li>
+          <li><strong>Knob-and-tube presence and extent.</strong> Attic and basement reveal most of it.</li>
+          <li><strong>GFCI/AFCI coverage.</strong> Bathrooms, kitchens, outdoor outlets at minimum.</li>
+          <li><strong>Smoke and CO detectors.</strong> Hardwired and interconnected vs. battery-only.</li>
+          <li><strong>Outdoor lighting and outlets.</strong> Often the most weather-damaged and most overlooked.</li>
+          <li><strong>Any visible DIY work.</strong> Backstabbed outlets, missing junction box covers, unprotected splices, switches that don't switch what they're labeled to switch.</li>
+          
+        </ul>
+      
+        <p>A walkthrough takes about an hour and gives you a written summary you can bring to negotiation.</p>
+      
+    </section>
+    
+    <section class="section" id="prices">
+      <h2><a href="#prices" class="anchor" aria-hidden="true">#</a><span class="num">08</span>Price ranges to expect</h2>
+      <div class="tldr">We publish real Cincinnati numbers, not vague "$$$" tiers. Flat rate when we can, capped time-and-materials when we can't. No memberships, no trip fees, no surprises.</div>
+      
+        <p>This page used to have rough tiers ($, $$, $$$) because most electricians won't put real numbers in public. We decided that wasn't enough.</p>
+      
+        <div class="cta-mini"><strong>The full pricing guide is its own page now.</strong> Real Cincinnati dollar ranges for every common residential job: outlets, switches, lighting, panels, service upgrades, EV chargers, rewires, knob-and-tube remediation, generators, kitchen and bath remodels, troubleshooting flat-rates, and the things that move a quote up or down. <a href="pricing.html">Read the full pricing guide →</a></div>
+      
+        <p>Short version: we quote real numbers up front, in writing. Flat rate for defined work, capped time-and-materials for diagnostics. No memberships, no trip charges, no surprise add-ons after the fact. Permit fees included. Materials at cost on jobs over $1,500.</p>
+      
+    </section>
+    
+    <section class="section" id="hire">
+      <h2><a href="#hire" class="anchor" aria-hidden="true">#</a><span class="num">09</span>Questions to ask anyone you hire</h2>
+      <div class="tldr">Whether it's us or someone else: what's included and what would change it, who's actually doing the work, what happens if something goes wrong, do they pull permits, will they walk you through the change. Hedging on any of these is a red flag.</div>
+      
+        <p>Whether it's us or someone else, these are worth asking before you sign anything:</p>
+      
+        <ul class="bullets">
+          <li>"What's included in the price, and what would change it?"</li>
+          <li>"Who's actually doing the work — the person I'm talking to, or a sub I haven't met?"</li>
+          <li>"What happens if something goes wrong six months from now?"</li>
+          <li>"Do you pull permits when permits are needed?"</li>
+          <li>"Can you walk me through the change once it's done?"</li>
+          <li>"What's the soonest you can start, and how long will it take?"</li>
+          
+        </ul>
+      
+        <p>An honest contractor answers all of these without hedging. A red flag is the answer "depends" to the first question with no follow-up about what specifically depends on what.</p>
+      
+    </section>
+    
+    <section class="section" id="safety">
+      <h2><a href="#safety" class="anchor" aria-hidden="true">#</a><span class="num">10</span>Safety: when to flip the main</h2>
+      <div class="tldr">You're not overreacting. Flip the main and call us (or 911 if there's smoke or fire) for: burnt smell, sparking, smoke, buzzing or crackling from the panel, water in the panel, or lights pulsing together (loose neutral).</div>
+      
+        <p>You're not overreacting. Flip the main breaker, then call:</p>
+      
+        <ul class="bullets">
+          <li>Burnt or melted-plastic smell coming from any outlet, switch, or the panel itself.</li>
+          <li>Sparking from an outlet, switch, or fixture.</li>
+          <li>Visible smoke from anywhere electrical.</li>
+          <li>Buzzing or crackling from the panel, even faint.</li>
+          <li>Water actively entering the panel or running down service entrance cable.</li>
+          <li>Lights pulsing in sync with each other (often a loose neutral at the service — utility-side problem).</li>
+          
+        </ul>
+      
+        <div class="warn"><strong>Loose neutral note.</strong> If lights brighten and dim together when an appliance starts, that's a service-neutral fault. It can fry sensitive electronics. The utility owns the fix up to the meter; we can verify it's not on the house side before you call them.</div>
+      
+        <div class="cta-mini">Question this page didn't answer? <strong><a href="contact.html">Text it to us</a></strong> and we'll add the answer here for the next person who asks.</div>
+      
+    </section>
+    
+  </div>
+</section>
+
+</main>
+
+<section class="band band-dark cta-band">
+  <div class="wrap-narrow">
+    <h2>Question we didn't answer?</h2>
+    <p class="lede">Text it to us. We'll write back with a real answer, no condescension, and we'll add it to this page for the next person who asks the same thing.</p>
+    <div class="cta-cluster center">
+      <a href="instant-quote.html" class="btn btn-primary">Get an instant quote</a>
+      <span class="cta-micro">Itemized PDF in your inbox in three minutes. No sales call.</span>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="row">
+    <div class="meta">
+      <strong>Vanguard Reconstruction</strong>
+      <span>Cincinnati, Ohio</span>
+      <span><a href="tel:+15135550118">(513) 555-0118</a> · <a href="mailto:hello@vre-construction.com">hello@vre-construction.com</a></span>
+    </div>
+    <div class="links">
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      
+    </div>
+    <div class="credit">
+      <span>Vanguard Reconstruction · Cincinnati · Family-owned, fully insured, background-checked crew.</span>
+      <span>© 2026 <a href="https://allee-ai.com">Allee AI</a>. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav = document.getElementById('nav-shell');
+  if(!nav) return;
+  var ticking = false;
+  function update(){
+    nav.classList.toggle('scrolled', window.scrollY > 8);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+  update();
+})();
+</script>
+</body>
+</html>

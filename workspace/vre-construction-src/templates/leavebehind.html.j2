@@ -1,0 +1,187 @@
+{# One-page printable investor leave-behind. Letter, full-bleed brand bar,
+   prints clean B&W if needed. Hands out at flip meetups, agents, lenders. #}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>{{ site.brand.name }} — for real-estate investors</title>
+<style>
+@page { size: Letter; margin: 0; }
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10.5pt; line-height: 1.5; color: #1a1429;
+}
+.brandbar { height: 6pt; background: linear-gradient(90deg,#7c3aed 0%,#c026d3 30%,#ec4899 55%,#f59e0b 80%,#22d3ee 100%); }
+.page { padding: 0.55in 0.55in 0.45in; }
+
+.head { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 14pt; }
+.head .brand strong {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 18pt; font-weight: 600; letter-spacing: -0.01em;
+  display: block; line-height: 1.05;
+}
+.head .brand .tag {
+  font-size: 8pt; color: #5b5478; text-transform: uppercase;
+  letter-spacing: 0.10em; margin-top: 2pt;
+}
+.head .for-tag {
+  text-align: right; padding: 4pt 10pt;
+  background: #faf7f2; border: 1px solid rgba(26,20,41,0.12); border-radius: 6pt;
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.10em;
+  color: #7c3aed; font-weight: 700;
+}
+
+h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500; font-size: 26pt; letter-spacing: -0.02em;
+  margin: 0 0 6pt; line-height: 1.05; max-width: 6in;
+}
+h1 em {
+  font-style: italic; position: relative; display: inline-block;
+}
+h1 em::after {
+  content: ""; position: absolute; left: -0.05em; right: -0.05em; bottom: 0.10em;
+  height: 0.28em; background: linear-gradient(90deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  z-index: -1; border-radius: 2pt; opacity: 0.85;
+}
+.lede { font-size: 11pt; color: #1a1429; margin: 0 0 14pt; max-width: 5.8in; }
+
+.bullet-grid {
+  display: grid; grid-template-columns: 1fr 1fr; gap: 10pt 16pt;
+  margin: 4pt 0 14pt;
+}
+.b {
+  padding: 9pt 12pt; background: #faf7f2;
+  border-left: 2pt solid #7c3aed; border-radius: 4pt;
+  font-size: 9.5pt;
+}
+.b strong { color: #7c3aed; display: block; font-size: 8pt;
+  text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 3pt; }
+
+h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600; font-size: 13pt; margin: 14pt 0 6pt;
+  letter-spacing: -0.01em;
+}
+
+table.svc { width: 100%; border-collapse: collapse; font-size: 9pt; margin: 4pt 0 0; }
+table.svc th {
+  background: #faf7f2; text-align: left;
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.08em; font-weight: 600;
+  padding: 5pt 8pt; border-bottom: 1pt solid rgba(26,20,41,0.16);
+}
+table.svc th.num { text-align: right; }
+table.svc td {
+  padding: 5pt 8pt; border-bottom: 1px solid rgba(26,20,41,0.08);
+  vertical-align: top;
+}
+table.svc td.num {
+  text-align: right; white-space: nowrap; color: #7c3aed; font-weight: 600;
+  font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum";
+}
+
+.pitch {
+  margin: 14pt 0 0; padding: 12pt 16pt;
+  background: linear-gradient(135deg, #faf7f2 0%, #ffffff 100%);
+  border: 1pt solid rgba(26,20,41,0.16); border-radius: 8pt;
+}
+.pitch p { margin: 0; font-family: 'Fraunces', Georgia, serif; font-style: italic;
+  font-size: 11pt; line-height: 1.5; color: #1a1429; }
+.pitch p strong { color: #7c3aed; font-style: normal; font-weight: 600; }
+
+.foot {
+  margin: 14pt 0 0; padding: 12pt 0 0;
+  border-top: 2pt solid; border-image: linear-gradient(90deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%) 1;
+  display: flex; justify-content: space-between; align-items: flex-end; gap: 16pt;
+}
+.foot .left strong {
+  display: block; font-family: 'Fraunces', Georgia, serif;
+  font-size: 11pt; font-weight: 600; color: #1a1429;
+}
+.foot .left .sub { font-size: 8.5pt; color: #5b5478; margin-top: 2pt; }
+.foot .right { text-align: right; }
+.foot .url {
+  font-family: 'JetBrains Mono', monospace; font-size: 11pt;
+  color: #7c3aed; font-weight: 600; letter-spacing: -0.01em;
+}
+.foot .contact {
+  font-size: 8.5pt; color: #5b5478; margin-top: 2pt;
+}
+</style>
+</head>
+<body>
+
+<div class="brandbar"></div>
+
+<div class="page">
+
+<div class="head">
+  <div class="brand">
+    <strong>{{ site.brand.name }}</strong>
+    <div class="tag">{{ site.brand.tagline }}</div>
+  </div>
+  <div class="for-tag">For real-estate investors</div>
+</div>
+
+<h1>The only Cincinnati electrical crew that <em>publishes our prices.</em></h1>
+<p class="lede">If you flip, BRRRR, or run a small portfolio, you've already done the math on what surprise electrical costs do to a deal. We took that math off the table. Every service we offer is priced — out loud — at <strong>vre-construction.com/pricing</strong>. You get an itemized written bid in your inbox, often before the walkthrough. We pull permits in our name. Our crew of four does whole rehabs.</p>
+
+<div class="bullet-grid">
+  <div class="b">
+    <strong>Predictable</strong>
+    Range bid up front. Firm number after a 15-minute walkthrough. We don't change it without your written sign-off.
+  </div>
+  <div class="b">
+    <strong>Permit-pulling crew</strong>
+    All permitted work pulled in our name. Inspection coordination included — you don't chase it.
+  </div>
+  <div class="b">
+    <strong>$2M general liability</strong>
+    Background-checked crew. Family-owned. We text you the morning of, and again when we're parked out front.
+  </div>
+  <div class="b">
+    <strong>Quiet investor rebate</strong>
+    8–12% off labor as a credit on your next bid after three booked jobs. We don't publish it. We just apply it.
+  </div>
+</div>
+
+<h2>What we typically run on a flip or BRRRR</h2>
+<table class="svc">
+  <thead><tr>
+    <th>Scope</th>
+    <th class="num">Typical range</th>
+  </tr></thead>
+  <tbody>
+    <tr><td>200A panel replacement (same location)</td><td class="num">$2,485 – $3,785</td></tr>
+    <tr><td>200A full service upgrade (meter, mast, panel)</td><td class="num">$3,285 – $5,485</td></tr>
+    <tr><td>Federal Pacific / Zinsco replacement (we never just rebalance these)</td><td class="num">$2,185 – $3,985</td></tr>
+    <tr><td>K&amp;T 2nd-floor + attic rewire (most common Cincinnati scope)</td><td class="num">$4,985 – $9,985</td></tr>
+    <tr><td>Whole-home rewire — 1,200 sqft worked example</td><td class="num">$9,800 – $14,500</td></tr>
+    <tr><td>Whole-home rewire — 2,000 sqft worked example</td><td class="num">$16,000 – $24,000</td></tr>
+    <tr><td>Kitchen remodel electrical (basic)</td><td class="num">$2,485 – $4,985</td></tr>
+    <tr><td>Bathroom remodel electrical (full)</td><td class="num">$1,485 – $3,485</td></tr>
+    <tr><td>NEMA 14-50 EV outlet, exposed conduit, &lt;25 ft</td><td class="num">$685 – $1,185</td></tr>
+    <tr><td>Outlet replacement, 10+ at one visit</td><td class="num">$85 ea</td></tr>
+  </tbody>
+</table>
+
+<div class="pitch">
+  <p>"<strong>Send me the address before you close.</strong> I'll text you a number for the panel and a number for the full electrical scope inside 24 hours. If the deal works, we book the walkthrough. If it doesn't, you've spent zero." — Cade, owner</p>
+</div>
+
+<div class="foot">
+  <div class="left">
+    <strong>Three minutes to a written bid → vre-construction.com/instant-quote</strong>
+    <div class="sub">Or text us a couple of photos at {{ site.brand.phone_display }}. Spanish: ask for Jordan.</div>
+  </div>
+  <div class="right">
+    <div class="url">vre-construction.com</div>
+    <div class="contact">{{ site.brand.phone_display }} · {{ site.brand.email }}</div>
+  </div>
+</div>
+
+</div>
+</body>
+</html>

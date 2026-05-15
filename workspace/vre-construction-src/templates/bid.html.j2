@@ -1,0 +1,341 @@
+{# Standalone print template for bid PDFs. No nav/footer. WeasyPrint-friendly. #}
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Estimate {{ bid_id }} — {{ site.brand.name }}</title>
+<style>
+@page {
+  size: Letter;
+  margin: 0.6in 0.6in 0.85in 0.6in;
+  @bottom-left {
+    content: "{{ site.brand.name }} · {{ site.brand.city }} · {{ site.brand.phone_display }}";
+    font-family: 'Inter', sans-serif; font-size: 8pt; color: #5b5478;
+  }
+  @bottom-right {
+    content: "Page " counter(page) " of " counter(pages);
+    font-family: 'JetBrains Mono', monospace; font-size: 8pt; color: #5b5478;
+  }
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; padding: 0; }
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  font-size: 10pt; line-height: 1.55; color: #1a1429;
+}
+.brandbar {
+  height: 4pt;
+  background: linear-gradient(90deg,#7c3aed 0%,#c026d3 30%,#ec4899 55%,#f59e0b 80%,#22d3ee 100%);
+  margin-bottom: 18pt;
+}
+.head {
+  display: flex; justify-content: space-between; align-items: flex-start;
+  margin-bottom: 22pt;
+}
+.head .brand strong {
+  font-family: 'Fraunces', Georgia, serif;
+  font-size: 16pt; font-weight: 600; letter-spacing: -0.01em;
+  display: block; line-height: 1.1;
+}
+.head .brand .tag {
+  font-size: 8pt; color: #5b5478; text-transform: uppercase;
+  letter-spacing: 0.10em; margin-top: 2pt;
+}
+.head .meta {
+  text-align: right; font-size: 9pt;
+}
+.head .meta .label {
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.10em;
+  color: #5b5478; font-weight: 600;
+}
+.head .meta .val {
+  font-family: 'JetBrains Mono', monospace; font-size: 10pt;
+  font-weight: 600; color: #1a1429;
+}
+.head .meta .id { color: #7c3aed; }
+
+h1 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 500; font-size: 22pt; letter-spacing: -0.02em;
+  margin: 0 0 4pt; line-height: 1.1;
+}
+.lede { font-size: 11pt; color: #5b5478; margin: 0 0 18pt; max-width: 5in; }
+
+.client-card {
+  display: flex; gap: 0;
+  margin: 0 0 18pt;
+  border: 1px solid rgba(26,20,41,0.12);
+  border-radius: 6pt;
+  overflow: hidden;
+}
+.client-card .cell {
+  flex: 1; padding: 10pt 14pt;
+  border-right: 1px solid rgba(26,20,41,0.08);
+}
+.client-card .cell:last-child { border-right: 0; }
+.client-card .label {
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.10em;
+  color: #7c3aed; font-weight: 600; margin-bottom: 3pt;
+}
+.client-card .val {
+  font-size: 10pt; color: #1a1429; font-weight: 500;
+}
+
+h2 {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600; font-size: 12pt; margin: 18pt 0 6pt;
+  letter-spacing: -0.01em;
+}
+h2 .num {
+  font-family: 'JetBrains Mono', monospace;
+  color: #7c3aed; font-size: 9pt; margin-right: 6pt; font-weight: 500;
+}
+
+table.items {
+  width: 100%; border-collapse: collapse; font-size: 9.5pt;
+  margin: 0 0 4pt;
+}
+table.items th {
+  background: #faf7f2; color: #1a1429; text-align: left;
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.08em;
+  font-weight: 600; padding: 6pt 8pt;
+  border-bottom: 1pt solid rgba(26,20,41,0.16);
+}
+table.items th.num { text-align: right; }
+table.items td {
+  padding: 6pt 8pt; vertical-align: top;
+  border-bottom: 1px solid rgba(26,20,41,0.08);
+}
+table.items td.num {
+  text-align: right; white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace; font-feature-settings: "tnum";
+}
+table.items td.qty {
+  text-align: center; white-space: nowrap;
+  font-family: 'JetBrains Mono', monospace; color: #5b5478;
+}
+table.items tr.cat-row td {
+  background: #faf7f2; font-weight: 600; padding-top: 8pt; padding-bottom: 4pt;
+  border-bottom: 1px solid rgba(26,20,41,0.16);
+}
+table.items tr.cat-row td.num { color: #5b5478; font-weight: 500; font-size: 7pt; text-transform: uppercase; letter-spacing: 0.06em; }
+table.items td.range { color: #7c3aed; font-weight: 600; }
+
+.subtotal-row td {
+  font-weight: 600; padding-top: 10pt;
+  border-top: 1pt solid rgba(26,20,41,0.16); border-bottom: 0;
+}
+
+.mods-list {
+  margin: 6pt 0 0; padding: 8pt 12pt;
+  background: #faf7f2; border-radius: 6pt;
+  font-size: 9pt;
+}
+.mods-list .row {
+  display: flex; justify-content: space-between; padding: 2pt 0;
+}
+.mods-list .row .pct {
+  font-family: 'JetBrains Mono', monospace; color: #7c3aed; font-weight: 600;
+}
+
+.totals-card {
+  margin: 14pt 0 0;
+  padding: 12pt 16pt;
+  background: linear-gradient(135deg, #faf7f2 0%, #ffffff 100%);
+  border: 1pt solid rgba(26,20,41,0.16);
+  border-radius: 8pt;
+  display: flex; justify-content: space-between; align-items: baseline; gap: 14pt;
+}
+.totals-card .col .label {
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.10em;
+  color: #5b5478; font-weight: 600; margin-bottom: 2pt;
+}
+.totals-card .range {
+  font-family: 'JetBrains Mono', monospace; font-size: 18pt;
+  color: #7c3aed; font-weight: 700; letter-spacing: -0.01em;
+}
+.totals-card .mid {
+  font-family: 'JetBrains Mono', monospace; font-size: 13pt;
+  color: #1a1429; font-weight: 600;
+}
+.totals-card .right { text-align: right; }
+
+.callout {
+  margin: 14pt 0; padding: 9pt 12pt;
+  background: #faf7f2; border-left: 2pt solid #7c3aed; border-radius: 4pt;
+  font-size: 9pt; color: #1a1429;
+}
+.callout strong { color: #7c3aed; }
+
+.warn {
+  margin: 10pt 0; padding: 9pt 12pt;
+  background: #fff7ed; border-left: 2pt solid #f59e0b; border-radius: 4pt;
+  font-size: 9pt; color: #7c2d12;
+}
+
+.next-steps {
+  margin: 14pt 0 0; font-size: 9.5pt;
+}
+.next-steps ol { margin: 6pt 0 0; padding-left: 18pt; }
+.next-steps li { margin-bottom: 4pt; }
+
+.fine-print {
+  margin: 22pt 0 0; padding: 12pt 0 0;
+  border-top: 1px solid rgba(26,20,41,0.12);
+  font-size: 8pt; color: #5b5478; line-height: 1.5;
+}
+.fine-print p { margin: 0 0 4pt; }
+
+.signature {
+  margin: 22pt 0 0; display: flex; gap: 24pt;
+}
+.signature .sig-block { flex: 1; }
+.signature .sig-line {
+  border-bottom: 1px solid rgba(26,20,41,0.4);
+  height: 28pt; margin-bottom: 4pt;
+}
+.signature .sig-label {
+  font-size: 7pt; text-transform: uppercase; letter-spacing: 0.10em;
+  color: #5b5478; font-weight: 600;
+}
+</style>
+</head>
+<body>
+
+<div class="brandbar"></div>
+
+<div class="head">
+  <div class="brand">
+    <strong>{{ site.brand.name }}</strong>
+    <div class="tag">{{ site.brand.tagline }}</div>
+  </div>
+  <div class="meta">
+    <div class="label">Estimate</div>
+    <div class="val id">#{{ bid_id }}</div>
+    <div class="label" style="margin-top:6pt">Issued</div>
+    <div class="val">{{ issued }}</div>
+    <div class="label" style="margin-top:6pt">Good through</div>
+    <div class="val">{{ valid_until }}</div>
+  </div>
+</div>
+
+<h1>Written estimate</h1>
+<p class="lede">An itemized estimate for the work you selected on our instant-quote tool. We confirm everything on a free 15-minute walkthrough before any work starts.</p>
+
+<div class="client-card">
+  <div class="cell">
+    <div class="label">Prepared for</div>
+    <div class="val">{{ client.name or "—" }}</div>
+    {% if client.email %}<div class="val" style="font-size:8.5pt;color:#5b5478">{{ client.email }}</div>{% endif %}
+    {% if client.phone %}<div class="val" style="font-size:8.5pt;color:#5b5478">{{ client.phone }}</div>{% endif %}
+  </div>
+  <div class="cell">
+    <div class="label">Property</div>
+    <div class="val">{{ property_label }}</div>
+    {% if client.address %}<div class="val" style="font-size:8.5pt;color:#5b5478">{{ client.address }}</div>{% endif %}
+  </div>
+</div>
+
+<h2><span class="num">01</span>Line items</h2>
+
+<table class="items">
+  <thead>
+    <tr>
+      <th>Item</th>
+      <th class="num">Qty</th>
+      <th class="num">Unit range</th>
+      <th class="num">Subtotal</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for cat in grouped %}
+    <tr class="cat-row">
+      <td colspan="3">{{ cat.label }}</td>
+      <td class="num">{{ cat['items']|length }} item{{ '' if cat['items']|length == 1 else 's' }}</td>
+    </tr>
+    {% for it in cat['items'] %}
+    <tr>
+      <td>{{ it.label }}</td>
+      <td class="qty">{{ it.qty }}</td>
+      <td class="num">${{ "{:,}".format(it.low) }}–${{ "{:,}".format(it.high) }}</td>
+      <td class="num range">${{ "{:,}".format(it.low * it.qty) }}–${{ "{:,}".format(it.high * it.qty) }}</td>
+    </tr>
+    {% endfor %}
+    {% endfor %}
+    <tr class="subtotal-row">
+      <td colspan="3">Items subtotal (before adjustments)</td>
+      <td class="num range">${{ "{:,}".format(items_low) }}–${{ "{:,}".format(items_high) }}</td>
+    </tr>
+  </tbody>
+</table>
+
+{% if mods %}
+<h2><span class="num">02</span>Adjustments</h2>
+<div class="mods-list">
+  {% for m in mods %}
+  <div class="row">
+    <div>{{ m.label }}</div>
+    <div class="pct">{% if m.pct > 0 %}+{{ m.pct }}%{% else %}note{% endif %}</div>
+  </div>
+  {% endfor %}
+</div>
+{% endif %}
+
+<div class="totals-card">
+  <div class="col">
+    <div class="label">Estimate range</div>
+    <div class="range">${{ "{:,}".format(total_low) }} – ${{ "{:,}".format(total_high) }}</div>
+  </div>
+  <div class="col right">
+    <div class="label">Midpoint</div>
+    <div class="mid">${{ "{:,}".format(total_mid) }}</div>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>Why a range?</strong> The lower number is best-case access — open walls, panel near the work, no surprises. The upper is what older Cincinnati homes often hand us. We confirm a single firm number on the walkthrough before we touch a tool.
+</div>
+
+{% if track == "investor" %}
+<div class="callout" style="border-left-color:#ec4899">
+  <strong>Investor note.</strong> We give a quiet rebate of 8–12% off labor after your third booked job, applied as a credit on the next bid. We don't publish this — it's our way of thanking the people who keep our crew busy. Mention this estimate when you book.
+</div>
+{% endif %}
+
+<h2><span class="num">{{ '03' if mods else '02' }}</span>What happens next</h2>
+<div class="next-steps">
+  <ol>
+    <li><strong>We text you within one business day</strong> to schedule the free walkthrough.</li>
+    <li><strong>15-minute walkthrough</strong> — we look at access, panel, scope, and confirm the number.</li>
+    <li><strong>Firm written quote</strong> arrives by email the same day. No surprises after this point.</li>
+    <li><strong>You pick a date.</strong> We text the morning of, and again when we're parked out front.</li>
+  </ol>
+</div>
+
+{% if client.notes %}
+<h2><span class="num">{{ '04' if mods else '03' }}</span>Your notes</h2>
+<div class="callout" style="background:#ffffff;border:1px solid rgba(26,20,41,0.12);border-left:2pt solid #7c3aed">
+  {{ client.notes }}
+</div>
+{% endif %}
+
+<div class="signature">
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Customer signature & date (collected at walkthrough)</div>
+  </div>
+  <div class="sig-block">
+    <div class="sig-line"></div>
+    <div class="sig-label">Vanguard Reconstruction representative</div>
+  </div>
+</div>
+
+<div class="fine-print">
+  <p><strong>This is an estimate, not a final invoice.</strong> Pricing reflects current published rates at vre-construction.com/pricing. Range accounts for access conditions and material variability. Final price set at walkthrough; we don't change it after that without your written sign-off.</p>
+  <p><strong>Insurance & permits.</strong> Vanguard Reconstruction carries $2M general liability. All work that requires a permit is pulled in our name and inspected by the City of Cincinnati Department of Buildings & Inspections.</p>
+  <p><strong>Timing.</strong> This estimate is good for 30 days from the issued date. Beyond that, material costs may move the upper bound; the lower bound holds as long as scope doesn't change.</p>
+  <p><strong>Questions?</strong> {{ site.brand.phone_display }} · <a href="mailto:{{ site.brand.email }}">{{ site.brand.email }}</a> · vre-construction.com</p>
+</div>
+
+</body>
+</html>

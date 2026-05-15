@@ -1,0 +1,92 @@
+{% extends "_base.html.j2" %}
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block jsonld %}{% if jsonld %}<script type="application/ld+json">{{ jsonld | safe }}</script>{% endif %}{% endblock %}
+
+{% block extra_css %}
+.tldr{
+  margin:.4rem 0 1.5rem;padding:1.1rem 1.4rem;
+  background:linear-gradient(135deg,rgba(124,58,237,0.06) 0%,rgba(236,72,153,0.06) 100%);
+  border:1px solid var(--rule);border-left:3px solid var(--accent-2);
+  border-radius:10px;font-size:1rem;color:var(--fg);line-height:1.6;
+}
+.tldr::before{
+  content:"Short answer";display:block;
+  font-family:var(--sans);font-weight:600;font-size:.72rem;
+  letter-spacing:.10em;text-transform:uppercase;color:var(--accent);
+  margin-bottom:.4rem;
+}
+{% endblock %}
+
+{% block content %}
+<section class="band band-tight">
+  <div class="wrap-narrow content-h1-block">
+    <p class="eyebrow">{{ hero.eyebrow }}</p>
+    <h1>{{ hero.h1_before }} <span class="grad-under">{{ hero.h1_accent }}</span>{% if hero.h1_after %} {{ hero.h1_after }}{% endif %}</h1>
+    <p class="lede">{{ hero.lede }}</p>
+
+    <div class="toc">
+      <h4>{{ toc.title }}</h4>
+      <ol>
+        {% for s in sections -%}
+        <li><a href="#{{ s.id }}">{{ s.title | replace('&', '&amp;') | safe }}</a></li>
+        {% endfor %}
+      </ol>
+    </div>
+  </div>
+</section>
+
+<section class="band-tight">
+  <div class="wrap-narrow">
+    {% for s in sections %}
+    <section class="section" id="{{ s.id }}">
+      <h2><a href="#{{ s.id }}" class="anchor" aria-hidden="true">#</a>{% if s.num %}<span class="num">{{ s.num }}</span>{% endif %}{{ s.title | md_inline | safe }}</h2>
+      {% if s.tldr %}<div class="tldr">{{ s.tldr | md_inline | safe }}</div>{% endif %}
+      {% for b in s['blocks'] %}
+        {%- if b.type == "text" %}
+        {{ b.md | md_block | safe }}
+        {%- elif b.type == "h3" %}
+        <h3>{{ b.text }}</h3>
+        {%- elif b.type == "kv" %}
+        <div class="kv">
+          {% for pair in b['items'] -%}
+          <dt>{{ pair.dt }}</dt><dd>{{ pair.dd | md_inline | safe }}</dd>
+          {% endfor %}
+        </div>
+        {%- elif b.type == "bullets" %}
+        <ul class="bullets">
+          {% for item in b['items'] -%}
+          <li>{{ item | md_inline | safe }}</li>
+          {% endfor %}
+        </ul>
+        {%- elif b.type == "bullets_ordered" %}
+        <ol class="bullets">
+          {% for item in b['items'] -%}
+          <li>{{ item | md_inline | safe }}</li>
+          {% endfor %}
+        </ol>
+        {%- elif b.type == "table" %}
+        <div class="table-wrap"><table>
+          <thead><tr>{% for col in b.headers %}<th>{{ col }}</th>{% endfor %}</tr></thead>
+          <tbody>
+          {% for row in b['rows'] -%}
+          <tr>{% for cell in row %}<td>{{ cell | md_inline | safe }}</td>{% endfor %}</tr>
+          {% endfor %}
+          </tbody>
+        </table></div>
+        {%- elif b.type == "callout" %}
+        <div class="callout">{{ b.md | md_inline | safe }}</div>
+        {%- elif b.type == "warn" %}
+        <div class="warn">{{ b.md | md_inline | safe }}</div>
+        {%- elif b.type == "cta_mini" %}
+        <div class="cta-mini">{{ b.md | md_inline | safe }}</div>
+        {%- endif %}
+      {% endfor %}
+    </section>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}
+
+{% block bottom_cta_h2 %}{{ outro_cta_h2 }}{% endblock %}
+{% block bottom_cta_lede %}{{ outro_cta_lede }}{% endblock %}

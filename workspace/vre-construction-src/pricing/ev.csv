@@ -1,0 +1,10 @@
+Work,Range,What it covers
+"NEMA 14-50 outlet, <10 ft from panel, exposed",$485–$785,"Garage with panel on adjacent wall. Conduit, breaker, outlet."
+"NEMA 14-50 outlet, 10–25 ft, exposed conduit","$685–$1,185","Across the garage, surface-run conduit."
+"NEMA 14-50 outlet, finished wall, fishing required","$885–$1,485",Drywall stays mostly closed; access holes patched.
+"Hardwired L2 charger, 40A circuit (you supply charger)","$785–$1,385","Most popular spec. Includes installing your charger, not buying it."
+"Hardwired L2 charger, 48–60A circuit","$985–$1,685",Future-proof. Pulls 4 gauge wire. Larger breaker.
+Outdoor weatherproof EV charger install,"$985–$1,985","Driveway-mount or exterior wall. Weather-rated disconnect, conduit."
+Load management device (no panel upgrade needed),+$485–$885,Adder. Lets you add a charger to a near-full panel by pausing it when the dryer or AC kicks on.
+EV install requiring panel upgrade,"$3,485–$5,985",Combined: panel upgrade + EV circuit. Common in homes built before 2000.
+Tesla wall connector commissioning,+$135–$235,"Wi-Fi setup, app pairing, power-sharing config if multiple."

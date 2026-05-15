@@ -1,0 +1,159 @@
+{% extends "_base.html.j2" %}
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block jsonld %}{% if jsonld %}<script type="application/ld+json">{{ jsonld | safe }}</script>{% endif %}{% endblock %}
+
+{% block extra_css %}
+.channels{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2rem}
+@media (max-width:820px){.channels{grid-template-columns:1fr}}
+.channel{
+  display:flex;flex-direction:column;gap:.4rem;
+  padding:1.5rem 1.5rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;box-shadow:var(--card-shadow);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+  text-decoration:none;color:inherit;
+}
+.channel:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover);border-color:var(--rule-strong);color:inherit}
+.channel .icon{font-size:1.7rem;line-height:1;margin-bottom:.3rem}
+.channel .ch-label{font-size:.74rem;color:var(--accent);text-transform:uppercase;letter-spacing:.10em;font-weight:600}
+.channel .ch-value{font-family:var(--serif);font-weight:600;font-size:1.35rem;color:var(--fg);letter-spacing:-.01em}
+.channel .ch-sub{font-size:.88rem;color:var(--mute);margin-top:.15rem}
+
+.micro-notes{margin-top:1.5rem;padding:1.2rem 1.5rem;background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;font-size:.92rem;color:var(--mute)}
+.micro-notes p{margin:0 0 .4rem}
+.micro-notes p:last-child{margin-bottom:0}
+.micro-notes strong{color:var(--fg)}
+
+form.contact-form{
+  display:grid;gap:1.1rem;margin:0;padding:2rem 2rem 2.2rem;
+  background:var(--card);border:1px solid var(--rule-strong);border-radius:16px;
+  box-shadow:var(--card-shadow);
+}
+form.contact-form label{display:flex;flex-direction:column;gap:.4rem;font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+form.contact-form input,form.contact-form textarea{
+  background:#fff;color:var(--fg);
+  border:1px solid var(--rule-strong);border-radius:8px;
+  padding:.85rem 1rem;font:inherit;font-size:1rem;font-weight:400;
+  text-transform:none;letter-spacing:0;transition:all .15s ease;
+}
+form.contact-form input::placeholder,form.contact-form textarea::placeholder{color:var(--dim)}
+form.contact-form input:focus,form.contact-form textarea:focus{outline:none;border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,0.15)}
+form.contact-form textarea{min-height:10rem;resize:vertical;line-height:1.55}
+form.contact-form .submit-row{display:flex;flex-direction:column;gap:.55rem;align-items:flex-start;margin-top:.3rem}
+form.contact-form button{
+  background:var(--fg);color:#fff;border:0;border-radius:10px;
+  padding:1rem 1.6rem;font:inherit;font-weight:600;font-size:1rem;cursor:pointer;
+  letter-spacing:.005em;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+  display:inline-flex;align-items:center;gap:.5rem;
+}
+form.contact-form button:hover{background:var(--accent);transform:translateY(-1px);box-shadow:0 8px 20px rgba(124,58,237,0.28)}
+form.contact-form button::after{content:"→";transition:transform .15s ease}
+form.contact-form button:hover::after{transform:translateX(3px)}
+form.contact-form .submit-micro{color:var(--mute);font-size:.84rem}
+.sent-banner{margin:0 0 1rem;padding:1.1rem 1.3rem;background:#ecfdf5;border:1px solid #a7f3d0;border-left:3px solid #10b981;border-radius:10px;color:#065f46;font-size:.95rem}
+.form-grid{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media (max-width:600px){.form-grid{grid-template-columns:1fr}}
+{% endblock %}
+
+{% block content %}
+<section class="band hero">
+  <div class="wrap">
+    <p class="eyebrow">{{ hero.eyebrow }}</p>
+    <h1>{{ hero.h1_before }} <span class="grad-under">{{ hero.h1_accent }}</span>{% if hero.h1_after %} {{ hero.h1_after }}{% endif %}</h1>
+    <p class="lede">{{ hero.lede }}</p>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <h2>{{ primary.title }}</h2>
+    <div class="channels">
+      {% for c in primary['channels'] %}
+      <a href="{{ c.href }}" class="channel">
+        <div class="icon" aria-hidden="true">{{ c.icon }}</div>
+        <div class="ch-label">{{ c.label }}</div>
+        <div class="ch-value">{{ c.value }}</div>
+        <div class="ch-sub">{{ c.sub }}</div>
+      </a>
+      {% endfor %}
+    </div>
+    <div class="micro-notes">
+      {% for n in primary['micro_notes'] %}<p>{{ n | md_inline | safe }}</p>{% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap-narrow">
+    <h2>{{ helps.title }}</h2>
+    <p class="lede sub">{{ helps.intro }}</p>
+    <ul class="bullets">
+      {% for i in helps['items'] %}<li>{{ i | md_inline | safe }}</li>{% endfor %}
+    </ul>
+    {% if helps.warn %}<div class="warn"><strong>Heads up:</strong> {{ helps.warn }}</div>{% endif %}
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap-narrow">
+    <h2>{{ form.title }}</h2>
+    <p class="lede sub">{{ form.sub }}</p>
+    <div id="sent-banner" class="sent-banner" style="display:none">{{ form.sent_message }}</div>
+    <form class="contact-form" method="post" action="/contact-submit">
+      <input type="hidden" name="site" value="vre-construction.com">
+      <div class="form-grid">
+        {% for f in form['fields'][:2] %}
+        <label>{{ f.label }}{% if f.required %} *{% endif %}
+          <input type="{{ f.type }}" name="{{ f.name }}"{% if f.required %} required{% endif %}{% if f.autocomplete %} autocomplete="{{ f.autocomplete }}"{% endif %}{% if f.placeholder %} placeholder="{{ f.placeholder }}"{% endif %}>
+        </label>
+        {% endfor %}
+      </div>
+      {% for f in form['fields'][2:] %}
+      <label>{{ f.label }}{% if f.required %} *{% endif %}
+        {% if f.type == 'textarea' %}
+        <textarea name="{{ f.name }}"{% if f.required %} required{% endif %}{% if f.placeholder %} placeholder="{{ f.placeholder }}"{% endif %}></textarea>
+        {% else %}
+        <input type="{{ f.type }}" name="{{ f.name }}"{% if f.required %} required{% endif %}{% if f.autocomplete %} autocomplete="{{ f.autocomplete }}"{% endif %}{% if f.placeholder %} placeholder="{{ f.placeholder }}"{% endif %}>
+        {% endif %}
+      </label>
+      {% endfor %}
+      <div class="submit-row">
+        <button type="submit">{{ form.submit_label }}</button>
+        <span class="submit-micro">{{ form.submit_micro }}</span>
+      </div>
+    </form>
+    <script>
+      if (new URLSearchParams(location.search).get('sent') === '1') {
+        document.getElementById('sent-banner').style.display = 'block';
+        history.replaceState(null, '', location.pathname);
+      }
+    </script>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>{{ expect.title }}</h2>
+    <p class="lede sub">{{ expect.intro }}</p>
+    <div class="steps" style="grid-template-columns:repeat(4,1fr)">
+      {% for s in expect['steps'] %}
+      <div class="step">
+        <span class="num">{{ s.num }}</span>
+        <h3>{{ s.title }}</h3>
+        <p>{{ s.body }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap-narrow">
+    <h2>{{ specifics.title }}</h2>
+    <p>{{ specifics.body }}</p>
+    <h3 style="margin-top:2rem">{{ specifics.outro_title }}</h3>
+    <p class="sub">{{ specifics.outro | md_inline | safe }}</p>
+  </div>
+</section>
+{% endblock %}

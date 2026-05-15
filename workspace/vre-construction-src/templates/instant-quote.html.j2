@@ -1,0 +1,633 @@
+{% extends "_base.html.j2" %}
+
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+
+{% block extra_css %}
+.q-hero{padding:4rem 0 1.5rem}
+.q-hero h1{max-width:18ch}
+
+.stepper{padding:1rem 0 4rem}
+.steps-bar{
+  display:flex;gap:.5rem;flex-wrap:wrap;
+  margin:0 0 2.5rem;padding:0;list-style:none;
+  font-family:var(--mono);font-size:.78rem;
+  color:var(--mute);
+}
+.steps-bar li{
+  display:flex;align-items:center;gap:.45rem;
+  padding:.5rem .85rem;border-radius:999px;
+  background:var(--bg-2);border:1px solid var(--rule);
+  letter-spacing:.04em;
+}
+.steps-bar li.on{background:var(--grad-soft);border-color:rgba(124,58,237,0.35);color:var(--accent)}
+.steps-bar li.done{color:var(--fg);border-color:var(--rule-strong)}
+.steps-bar li .n{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:1.4rem;height:1.4rem;border-radius:50%;
+  background:#fff;border:1px solid var(--rule-strong);
+  font-size:.72rem;font-weight:600;
+}
+.steps-bar li.on .n{background:var(--accent);color:#fff;border-color:var(--accent)}
+.steps-bar li.done .n{background:var(--fg);color:#fff;border-color:var(--fg)}
+
+.q-panel{display:none}
+.q-panel.on{display:block}
+.q-panel h2{margin-bottom:.4rem}
+.q-panel .lede{margin-bottom:1.75rem}
+
+/* property type cards */
+.prop-grid{display:grid;grid-template-columns:repeat(2,1fr);gap:1rem;margin-top:1rem}
+@media (max-width:640px){.prop-grid{grid-template-columns:1fr}}
+.prop-card{
+  text-align:left;cursor:pointer;
+  padding:1.4rem 1.5rem;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+  transition:transform .15s ease, box-shadow .15s ease, border-color .15s ease;
+  font-family:var(--sans);width:100%;display:block;
+}
+.prop-card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover);border-color:rgba(124,58,237,0.35)}
+.prop-card.on{border-color:var(--accent);box-shadow:0 0 0 3px rgba(124,58,237,0.15), var(--card-shadow-hover)}
+.prop-card .ic{font-size:1.6rem;line-height:1;margin-bottom:.6rem}
+.prop-card .lbl{font-family:var(--serif);font-weight:600;font-size:1.15rem;color:var(--fg);margin-bottom:.3rem;letter-spacing:-.01em}
+.prop-card .ds{color:var(--mute);font-size:.92rem;margin:0}
+
+/* category grid */
+.cat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-top:1rem}
+@media (max-width:760px){.cat-grid{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:480px){.cat-grid{grid-template-columns:1fr}}
+.cat-tile{
+  text-align:left;cursor:pointer;
+  padding:1.1rem 1.2rem;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:12px;
+  display:flex;align-items:center;gap:.8rem;
+  font-family:var(--sans);font-size:.96rem;color:var(--fg);font-weight:500;
+  transition:border-color .15s ease, background .15s ease;
+  width:100%;
+}
+.cat-tile:hover{border-color:rgba(124,58,237,0.35)}
+.cat-tile.on{border-color:var(--accent);background:var(--grad-soft)}
+.cat-tile .ic{font-size:1.3rem;line-height:1;flex-shrink:0}
+
+/* line-item editor (step 3) */
+.cat-block{
+  margin:1.25rem 0;padding:1.4rem 1.5rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.cat-block h3{
+  margin:0 0 1rem;color:var(--fg);font-family:var(--serif);font-style:normal;
+  font-weight:600;font-size:1.2rem;letter-spacing:-.01em;
+  display:flex;align-items:center;gap:.6rem;
+}
+.cat-block h3 .ic{font-size:1.2rem}
+.line{
+  display:grid;grid-template-columns:1fr auto auto;gap:.85rem 1rem;
+  align-items:center;padding:.7rem 0;
+  border-top:1px solid var(--rule);
+}
+.line:first-of-type{border-top:0}
+.line .info{min-width:0}
+.line .nm{font-size:.95rem;color:var(--fg);font-weight:500;line-height:1.35}
+.line .nt{font-size:.78rem;color:var(--mute);margin-top:.2rem;line-height:1.4}
+.line .pr{font-family:var(--mono);font-size:.85rem;color:var(--accent);font-weight:600;white-space:nowrap}
+.qty{
+  display:inline-flex;align-items:center;
+  border:1px solid var(--rule-strong);border-radius:8px;
+  background:#fff;overflow:hidden;
+}
+.qty button{
+  width:2rem;height:2rem;border:0;background:transparent;
+  font-family:var(--mono);font-weight:600;color:var(--accent);font-size:1rem;
+  cursor:pointer;line-height:1;
+  transition:background .12s ease;
+}
+.qty button:hover{background:var(--bg-2)}
+.qty button:disabled{color:var(--rule-strong);cursor:not-allowed}
+.qty input{
+  width:2.5rem;height:2rem;border:0;background:transparent;
+  text-align:center;font-family:var(--mono);font-weight:600;font-size:.92rem;color:var(--fg);
+  -moz-appearance:textfield;
+}
+.qty input::-webkit-outer-spin-button,.qty input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+
+/* modifiers (step 4) */
+.mod-list{display:grid;grid-template-columns:1fr;gap:.6rem;margin-top:1rem}
+.mod{
+  display:flex;align-items:flex-start;gap:.85rem;
+  padding:1rem 1.2rem;background:var(--card);
+  border:1.5px solid var(--rule);border-radius:12px;cursor:pointer;
+  transition:border-color .15s ease, background .15s ease;
+}
+.mod:hover{border-color:rgba(124,58,237,0.3)}
+.mod.on{border-color:var(--accent);background:var(--grad-soft)}
+.mod input[type=checkbox]{
+  appearance:none;-webkit-appearance:none;
+  width:1.2rem;height:1.2rem;border-radius:5px;
+  border:1.5px solid var(--rule-strong);background:#fff;
+  cursor:pointer;flex-shrink:0;margin-top:.15rem;position:relative;
+  transition:background .12s ease, border-color .12s ease;
+}
+.mod input[type=checkbox]:checked{background:var(--accent);border-color:var(--accent)}
+.mod input[type=checkbox]:checked::after{
+  content:"";position:absolute;left:5px;top:1px;width:4px;height:9px;
+  border:solid #fff;border-width:0 2px 2px 0;transform:rotate(45deg);
+}
+.mod-text{flex:1;min-width:0}
+.mod-lbl{font-size:.96rem;color:var(--fg);font-weight:500}
+.mod-pct{font-family:var(--mono);font-size:.78rem;color:var(--accent);font-weight:600;margin-left:.5rem}
+.mod-ds{font-size:.83rem;color:var(--mute);margin-top:.25rem;line-height:1.4}
+
+/* contact form (step 5) */
+form.q-form{display:flex;flex-direction:column;gap:1rem;margin-top:1rem}
+form.q-form .field{display:flex;flex-direction:column;gap:.4rem}
+form.q-form label{font-size:.82rem;font-weight:600;color:var(--fg);letter-spacing:.005em}
+form.q-form label .req{color:var(--accent);margin-left:.2rem}
+form.q-form input,form.q-form textarea{
+  width:100%;padding:.85rem 1rem;
+  background:#fff;border:1.5px solid var(--rule-strong);border-radius:10px;
+  font-family:var(--sans);font-size:1rem;color:var(--fg);
+  transition:border-color .15s ease, box-shadow .15s ease;
+}
+form.q-form input:focus,form.q-form textarea:focus{
+  outline:none;border-color:var(--accent);
+  box-shadow:0 0 0 3px rgba(124,58,237,0.15);
+}
+form.q-form textarea{resize:vertical;min-height:5rem;font-family:var(--sans)}
+form.q-form .privacy{font-size:.83rem;color:var(--mute);margin-top:.25rem}
+
+/* nav buttons */
+.q-nav{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-top:2.25rem;padding-top:1.5rem;border-top:1px solid var(--rule);
+  gap:1rem;flex-wrap:wrap;
+}
+.q-nav .total{
+  font-family:var(--mono);font-size:.92rem;color:var(--fg);
+  display:flex;flex-direction:column;gap:.15rem;
+}
+.q-nav .total span{font-size:.7rem;color:var(--mute);letter-spacing:.08em;text-transform:uppercase;font-weight:600}
+.q-nav .total strong{font-size:1.15rem;color:var(--accent);font-weight:700}
+.q-nav-btns{display:flex;gap:.6rem}
+
+/* result panel */
+.result-card{
+  margin-top:1rem;padding:1.6rem 1.75rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.result-card h3{color:var(--fg);font-family:var(--serif);font-style:normal;font-size:1.25rem;font-weight:600;margin:0 0 1rem;letter-spacing:-.01em}
+.result-table{width:100%;font-size:.93rem;border-collapse:collapse;margin-bottom:.5rem}
+.result-table td{padding:.55rem 0;border-bottom:1px solid var(--rule);vertical-align:top}
+.result-table td:last-child{text-align:right;font-family:var(--mono);font-weight:600;color:var(--accent);white-space:nowrap}
+.result-table tr.q td:first-child{padding-left:1rem;color:var(--mute);font-size:.85rem}
+.result-table tr.cat-row td{color:var(--fg);font-weight:600;border-bottom:0;padding-top:1rem}
+.result-table tr.cat-row td:last-child{color:var(--mute);font-family:var(--sans);font-weight:500;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em}
+.result-totals{
+  margin-top:1rem;padding:1.1rem 1.4rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:10px;
+  display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;
+}
+.result-totals .lbl{font-size:.78rem;color:var(--mute);text-transform:uppercase;letter-spacing:.08em;font-weight:600}
+.result-totals .val{font-family:var(--mono);font-size:1.5rem;font-weight:700;color:var(--accent);letter-spacing:-.01em}
+.result-cta{display:flex;gap:.75rem;flex-wrap:wrap;margin-top:1.5rem}
+.result-cta .btn{flex:1;justify-content:center;min-width:14rem}
+.result-followup{margin-top:1rem;font-size:.88rem;color:var(--mute)}
+
+.empty-hint{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;
+  font-size:.92rem;color:var(--mute);
+}
+
+.sent-banner{
+  display:none;margin:1.5rem 0;padding:1.25rem 1.5rem;
+  background:#ecfdf5;border:1px solid #a7f3d0;border-left:3px solid #10b981;
+  border-radius:10px;color:#065f46;
+}
+.sent-banner.on{display:block}
+.sent-banner strong{color:#047857}
+{% endblock %}
+
+{% block content %}
+<section class="band q-hero">
+  <div class="wrap-narrow">
+    <span class="eyebrow">{{ hero.eyebrow }}</span>
+    <h1>{{ hero.h1_before }} <span class="grad-under">{{ hero.h1_accent }}</span></h1>
+    <p class="lede">{{ hero.lede }}</p>
+    <p class="sub" style="font-size:.9rem;margin-top:.5rem">{{ hero.micro }}</p>
+  </div>
+</section>
+
+<section class="band-tight stepper">
+  <div class="wrap-narrow">
+
+    <div class="sent-banner" id="sent-banner">
+      <strong>Thanks — your estimate is on its way.</strong> Check your inbox in the next minute or two for the PDF. We'll text you to confirm the walkthrough.
+    </div>
+
+    <ol class="steps-bar" id="steps-bar">
+      <li data-s="1"><span class="n">1</span> Property</li>
+      <li data-s="2"><span class="n">2</span> Categories</li>
+      <li data-s="3"><span class="n">3</span> Items</li>
+      <li data-s="4"><span class="n">4</span> What changes the number</li>
+      <li data-s="5"><span class="n">5</span> Send it</li>
+      <li data-s="6"><span class="n">✓</span> Estimate</li>
+    </ol>
+
+    <!-- Step 1: property type -->
+    <div class="q-panel" data-panel="1">
+      <h2>What's the property?</h2>
+      <p class="lede sub">No wrong answer. This just tells us how to write the bid.</p>
+      <div class="prop-grid">
+        {% for p in property_types %}
+        <button type="button" class="prop-card" data-prop="{{ p.id }}">
+          <div class="ic">{{ p.icon }}</div>
+          <div class="lbl">{{ p.label }}</div>
+          <p class="ds">{{ p.desc }}</p>
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Step 2: category multi-select -->
+    <div class="q-panel" data-panel="2">
+      <h2>What kind of work?</h2>
+      <p class="lede sub">Pick everything that might apply. We'll narrow it down on the next step.</p>
+      <div class="cat-grid">
+        {% for c in categories %}
+        <button type="button" class="cat-tile" data-cat="{{ c.id }}">
+          <span class="ic">{{ c.icon }}</span> {{ c.label }}
+        </button>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Step 3: line items (rendered dynamically) -->
+    <div class="q-panel" data-panel="3">
+      <h2>How much of each?</h2>
+      <p class="lede sub">Click + or − to add quantity. Hover the price to see what's included.</p>
+      <div id="line-items"></div>
+      <div class="empty-hint" id="empty-hint" style="display:none">
+        Pick at least one category to see line items.
+      </div>
+    </div>
+
+    <!-- Step 4: modifiers -->
+    <div class="q-panel" data-panel="4">
+      <h2>What changes the number?</h2>
+      <p class="lede sub">Honest variables we won't pretend don't exist. Leave blank if you don't know — we'll catch them on the walkthrough.</p>
+      <div class="mod-list">
+        {% for m in modifiers %}
+        <label class="mod" data-mod="{{ m.id }}">
+          <input type="checkbox" data-mod-input="{{ m.id }}">
+          <div class="mod-text">
+            <span class="mod-lbl">{{ m.label }}{% if m.pct > 0 %}<span class="mod-pct">+{{ m.pct }}%</span>{% endif %}</span>
+            <p class="mod-ds">{{ m.desc }}</p>
+          </div>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Step 5: contact -->
+    <div class="q-panel" data-panel="5">
+      <h2>{{ contact.h2 }}</h2>
+      <p class="lede sub">{{ contact.lede }}</p>
+      <form class="q-form" id="quote-form" novalidate>
+        {% for f in contact.fields %}
+        <div class="field">
+          <label for="qf-{{ f.name }}">{{ f.label }}{% if f.required %}<span class="req">*</span>{% endif %}</label>
+          {% if f.type == "textarea" %}
+          <textarea id="qf-{{ f.name }}" name="{{ f.name }}" rows="3"{% if f.required %} required{% endif %}></textarea>
+          {% else %}
+          <input id="qf-{{ f.name }}" type="{{ f.type }}" name="{{ f.name }}"{% if f.required %} required{% endif %}>
+          {% endif %}
+        </div>
+        {% endfor %}
+        <p class="privacy">{{ contact.privacy }}</p>
+      </form>
+    </div>
+
+    <!-- Step 6: result -->
+    <div class="q-panel" data-panel="6">
+      <h2>Your estimate</h2>
+      <p class="lede sub">Itemized below. Total reflects your modifiers. Range is honest — the lower number is best-case access, the upper is the kind of surprises older homes hand us.</p>
+      <div class="result-card">
+        <h3>Line items</h3>
+        <table class="result-table" id="result-table"><tbody></tbody></table>
+        <div class="result-totals">
+          <div>
+            <div class="lbl">Estimate range</div>
+            <div class="val" id="result-range">$0 – $0</div>
+          </div>
+          <div style="text-align:right">
+            <div class="lbl">Midpoint</div>
+            <div class="val" id="result-mid">$0</div>
+          </div>
+        </div>
+        <div class="result-cta">
+          <button type="button" class="btn btn-primary" id="cta-email">{{ result.cta_primary.label }}</button>
+          <a href="sms:{{ site.brand.phone_tel }}" class="btn btn-ghost">{{ result.cta_secondary.label }}</a>
+        </div>
+        <p class="result-followup">{{ result.followup_micro }}</p>
+      </div>
+    </div>
+
+    <!-- nav -->
+    <div class="q-nav" id="q-nav">
+      <div class="total">
+        <span>Running estimate</span>
+        <strong id="running-total">$0 – $0</strong>
+      </div>
+      <div class="q-nav-btns">
+        <button type="button" class="btn btn-ghost" id="btn-back">Back</button>
+        <button type="button" class="btn btn-primary" id="btn-next">Next</button>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<script id="quote-data" type="application/json">
+{{ catalog_json | safe }}
+</script>
+
+<script>
+(function(){
+  var DATA = JSON.parse(document.getElementById('quote-data').textContent);
+  var fmt = function(n){ return '$' + Math.round(n).toLocaleString(); };
+
+  var state = {
+    step: 1,
+    property: null,
+    cats: {},        // {catId: true}
+    qtys: {},        // {itemId: int}
+    mods: {},        // {modId: true}
+    contact: {},
+    submitted: false
+  };
+
+  // --- step navigation ---
+  function showStep(n){
+    state.step = n;
+    document.querySelectorAll('.q-panel').forEach(function(p){
+      p.classList.toggle('on', +p.dataset.panel === n);
+    });
+    document.querySelectorAll('#steps-bar li').forEach(function(li){
+      var s = +li.dataset.s;
+      li.classList.toggle('on', s === n);
+      li.classList.toggle('done', s < n);
+    });
+    document.getElementById('btn-back').style.visibility = (n === 1 || n === 6) ? 'hidden' : 'visible';
+    var next = document.getElementById('btn-next');
+    if(n === 5){ next.textContent = 'See my estimate →'; }
+    else if(n === 6){ next.style.display = 'none'; document.getElementById('q-nav').style.display = 'none'; }
+    else { next.textContent = 'Next'; next.style.display = ''; document.getElementById('q-nav').style.display = ''; }
+    if(n === 3) renderLineItems();
+    if(n === 6) renderResult();
+    window.scrollTo({top: document.querySelector('.stepper').offsetTop - 80, behavior: 'smooth'});
+  }
+
+  function canAdvance(){
+    if(state.step === 1) return !!state.property;
+    if(state.step === 2) return Object.keys(state.cats).length > 0;
+    if(state.step === 5){
+      var f = document.getElementById('quote-form');
+      // basic html5 validity check
+      if(!f.checkValidity()){ f.reportValidity(); return false; }
+      return true;
+    }
+    return true;
+  }
+
+  document.getElementById('btn-next').addEventListener('click', function(){
+    if(!canAdvance()) return;
+    if(state.step === 5){
+      // capture contact
+      var f = document.getElementById('quote-form');
+      state.contact = {};
+      Array.from(f.elements).forEach(function(el){
+        if(el.name) state.contact[el.name] = el.value;
+      });
+      submitQuote();
+    }
+    if(state.step < 6) showStep(state.step + 1);
+  });
+  document.getElementById('btn-back').addEventListener('click', function(){
+    if(state.step > 1) showStep(state.step - 1);
+  });
+
+  // --- step 1 ---
+  document.querySelectorAll('.prop-card').forEach(function(c){
+    c.addEventListener('click', function(){
+      document.querySelectorAll('.prop-card').forEach(function(x){ x.classList.remove('on'); });
+      c.classList.add('on');
+      state.property = c.dataset.prop;
+      // small delay for the visual to land
+      setTimeout(function(){ showStep(2); }, 200);
+    });
+  });
+
+  // --- step 2 ---
+  document.querySelectorAll('.cat-tile').forEach(function(t){
+    t.addEventListener('click', function(){
+      var id = t.dataset.cat;
+      if(state.cats[id]){ delete state.cats[id]; t.classList.remove('on'); }
+      else { state.cats[id] = true; t.classList.add('on'); }
+    });
+  });
+
+  // --- step 3: render line items for selected categories ---
+  function renderLineItems(){
+    var host = document.getElementById('line-items');
+    host.innerHTML = '';
+    var any = false;
+    DATA.categories.forEach(function(cat){
+      if(!state.cats[cat.id]) return;
+      any = true;
+      var block = document.createElement('div');
+      block.className = 'cat-block';
+      var h = '<h3><span class="ic">'+cat.icon+'</span> '+cat.label+'</h3>';
+      cat.items.forEach(function(it){
+        var q = state.qtys[it.id] || 0;
+        h += '<div class="line">'
+          + '<div class="info">'
+          + '<div class="nm">'+it.label+'</div>'
+          + (it.tier_note ? '<div class="nt">'+it.tier_note+'</div>' : '')
+          + '</div>'
+          + '<div class="pr">'+fmt(it.low)+'–'+fmt(it.high)+'</div>'
+          + '<div class="qty" data-item="'+it.id+'">'
+          +   '<button type="button" data-act="dec"'+(q===0?' disabled':'')+'>−</button>'
+          +   '<input type="number" min="0" max="99" value="'+q+'">'
+          +   '<button type="button" data-act="inc">+</button>'
+          + '</div>'
+          + '</div>';
+      });
+      block.innerHTML = h;
+      host.appendChild(block);
+    });
+    document.getElementById('empty-hint').style.display = any ? 'none' : 'block';
+    // wire qty buttons
+    host.querySelectorAll('.qty').forEach(function(qty){
+      var id = qty.dataset.item;
+      var input = qty.querySelector('input');
+      var dec = qty.querySelector('[data-act=dec]');
+      var inc = qty.querySelector('[data-act=inc]');
+      function set(n){
+        n = Math.max(0, Math.min(99, n|0));
+        state.qtys[id] = n;
+        input.value = n;
+        dec.disabled = (n === 0);
+        updateRunningTotal();
+      }
+      dec.addEventListener('click', function(){ set((state.qtys[id]||0) - 1); });
+      inc.addEventListener('click', function(){ set((state.qtys[id]||0) + 1); });
+      input.addEventListener('input', function(){ set(+input.value); });
+    });
+    updateRunningTotal();
+  }
+
+  // --- step 4: modifiers ---
+  document.querySelectorAll('.mod').forEach(function(m){
+    var id = m.dataset.mod;
+    var cb = m.querySelector('input');
+    cb.addEventListener('change', function(){
+      if(cb.checked){ state.mods[id] = true; m.classList.add('on'); }
+      else { delete state.mods[id]; m.classList.remove('on'); }
+      updateRunningTotal();
+    });
+  });
+
+  // --- totals ---
+  function modPctMultiplier(){
+    var pct = 0;
+    DATA.modifiers.forEach(function(m){
+      if(state.mods[m.id]) pct += (m.pct || 0);
+    });
+    return 1 + (pct / 100);
+  }
+  function computeTotals(){
+    var low = 0, high = 0;
+    DATA.categories.forEach(function(cat){
+      cat.items.forEach(function(it){
+        var q = state.qtys[it.id] || 0;
+        if(q > 0){
+          low  += it.low  * q;
+          high += it.high * q;
+        }
+      });
+    });
+    var mult = modPctMultiplier();
+    return { low: low * mult, high: high * mult };
+  }
+  function updateRunningTotal(){
+    var t = computeTotals();
+    var el = document.getElementById('running-total');
+    if(t.low === 0 && t.high === 0){ el.textContent = '$0'; }
+    else { el.textContent = fmt(t.low) + ' – ' + fmt(t.high); }
+  }
+
+  // --- step 6: itemized result ---
+  function renderResult(){
+    var tbody = document.querySelector('#result-table tbody');
+    tbody.innerHTML = '';
+    DATA.categories.forEach(function(cat){
+      var rows = [];
+      cat.items.forEach(function(it){
+        var q = state.qtys[it.id] || 0;
+        if(q > 0) rows.push({ it: it, q: q });
+      });
+      if(rows.length === 0) return;
+      var head = document.createElement('tr');
+      head.className = 'cat-row';
+      head.innerHTML = '<td>'+cat.label+'</td><td>'+rows.length+' item'+(rows.length===1?'':'s')+'</td>';
+      tbody.appendChild(head);
+      rows.forEach(function(r){
+        var row = document.createElement('tr');
+        var sub = '<tr class="q"><td>× '+r.q+' @ '+fmt(r.it.low)+'–'+fmt(r.it.high)+' ea</td><td>'+fmt(r.it.low * r.q)+' – '+fmt(r.it.high * r.q)+'</td></tr>';
+        row.innerHTML = '<td>'+r.it.label+'</td><td></td>';
+        tbody.appendChild(row);
+        var subRow = document.createElement('tr');
+        subRow.className = 'q';
+        subRow.innerHTML = '<td>× '+r.q+' @ '+fmt(r.it.low)+'–'+fmt(r.it.high)+' ea</td><td>'+fmt(r.it.low * r.q)+' – '+fmt(r.it.high * r.q)+'</td>';
+        tbody.appendChild(subRow);
+      });
+    });
+    // mods row
+    var modIds = Object.keys(state.mods);
+    if(modIds.length){
+      var modNames = DATA.modifiers.filter(function(m){ return state.mods[m.id]; }).map(function(m){
+        return m.label + (m.pct > 0 ? ' (+'+m.pct+'%)' : '');
+      });
+      var mr = document.createElement('tr');
+      mr.className = 'cat-row';
+      mr.innerHTML = '<td>Adjustments</td><td></td>';
+      tbody.appendChild(mr);
+      modNames.forEach(function(n){
+        var r = document.createElement('tr');
+        r.className = 'q';
+        r.innerHTML = '<td>'+n+'</td><td></td>';
+        tbody.appendChild(r);
+      });
+    }
+    var t = computeTotals();
+    document.getElementById('result-range').textContent = fmt(t.low) + ' – ' + fmt(t.high);
+    document.getElementById('result-mid').textContent = fmt((t.low + t.high) / 2);
+  }
+
+  // --- submit ---
+  function submitQuote(){
+    var t = computeTotals();
+    var payload = {
+      site: 'vre-construction.com',
+      property: state.property,
+      cats: Object.keys(state.cats),
+      items: Object.entries(state.qtys).filter(function(e){ return e[1] > 0; }).map(function(e){
+        var it = null, catLabel = '';
+        DATA.categories.forEach(function(c){
+          c.items.forEach(function(i){
+            if(i.id === e[0]){ it = i; catLabel = c.label; }
+          });
+        });
+        return { id: e[0], label: it ? it.label : e[0], cat: catLabel, qty: e[1], low: it ? it.low : 0, high: it ? it.high : 0 };
+      }),
+      mods: Object.keys(state.mods).map(function(id){
+        var m = DATA.modifiers.find(function(x){ return x.id === id; });
+        return { id: id, label: m ? m.label : id, pct: m ? m.pct : 0 };
+      }),
+      total_low: Math.round(t.low),
+      total_high: Math.round(t.high),
+      contact: state.contact
+    };
+    state.submitted = true;
+    // POST to form server (wired up in form_server.py)
+    fetch('/instant-quote-submit', {
+      method: 'POST',
+      headers: {'Content-Type': 'application/json'},
+      body: JSON.stringify(payload)
+    }).then(function(r){
+      if(r.ok){
+        document.getElementById('sent-banner').classList.add('on');
+      }
+    }).catch(function(){ /* fail quietly; the result is still on screen */ });
+  }
+
+  document.getElementById('cta-email').addEventListener('click', function(){
+    if(!state.submitted) submitQuote();
+    var btn = this;
+    btn.textContent = 'Sent — check your inbox';
+    btn.disabled = true;
+    document.getElementById('sent-banner').classList.add('on');
+  });
+
+  // boot
+  showStep(1);
+})();
+</script>
+{% endblock %}
+
+{% block bottom_cta_h2 %}{{ outro_cta_h2 }}{% endblock %}
+{% block bottom_cta_lede %}{{ outro_cta_lede }}{% endblock %}

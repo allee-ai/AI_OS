@@ -1,0 +1,1113 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pricing — Vanguard Reconstruction</title>
+<meta name="description" content="The most comprehensive public electrician pricing guide in Cincinnati. Honest ranges for outlets, switches, lighting, panels, service upgrades, EV chargers, rewires, generators, and remodels. Updated 2026.">
+<link rel="canonical" href="https://vre-construction.com/pricing.html">
+<meta name="theme-color" content="#7c3aed">
+<meta name="robots" content="index, follow">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://vre-construction.com/pricing.html">
+<meta property="og:title" content="Pricing — Vanguard Reconstruction">
+<meta property="og:description" content="The most comprehensive public electrician pricing guide in Cincinnati. Honest ranges for outlets, switches, lighting, panels, service upgrades, EV chargers, rewires, generators, and remodels. Updated 2026.">
+<meta property="og:site_name" content="Vanguard Reconstruction">
+
+<meta name="twitter:card" content="summary_large_image">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,ital,wght@9..144,0,500;9..144,0,600;9..144,1,500;9..144,1,600&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "PriceSpecification",
+  "@id": "https://vre-construction.com/pricing.html#prices",
+  "name": "Vanguard Reconstruction Residential Electrical Pricing",
+  "description": "Public price ranges for residential electrical work in Cincinnati, Ohio. Materials at current market; final quote always in writing after we see the work.",
+  "priceCurrency": "USD",
+  "validFrom": "2026-01-01",
+  "areaServed": { "@type": "AdministrativeArea", "name": "Hamilton County, Ohio" },
+  "provider": { "@id": "https://vre-construction.com/#business" }
+}
+
+</script>
+<style>
+/* ===== Design tokens =================================================== */
+:root{
+  --bg:#ffffff;
+  --bg-2:#faf7f2;            /* warm cream alt band */
+  --bg-3:#1a1429;            /* deep ink inverted band */
+  --fg:#1a1429;              /* deep ink, not pure black */
+  --fg-on-dark:#f7f4fb;
+  --mute:#5b5478;
+  --mute-on-dark:#b8b0d0;
+  --dim:#8c849f;
+  --accent:#7c3aed;
+  --accent-hover:#6d28d9;
+  --accent-2:#ec4899;
+  --amber:#f59e0b;
+  --rule:rgba(26,20,41,0.08);
+  --rule-strong:rgba(26,20,41,0.16);
+  --card:#ffffff;
+  --card-shadow:0 1px 2px rgba(26,20,41,0.04), 0 8px 24px rgba(26,20,41,0.05);
+  --card-shadow-hover:0 2px 4px rgba(124,58,237,0.08), 0 16px 40px rgba(26,20,41,0.10);
+  /* 5-stop structural gradient — topbar only */
+  --grad-topbar:linear-gradient(90deg,#7c3aed 0%,#c026d3 30%,#ec4899 55%,#f59e0b 80%,#22d3ee 100%);
+  /* 3-stop warm gradient — body usage (underlines, accents, CTA hover) */
+  --grad:linear-gradient(90deg,#7c3aed 0%,#ec4899 55%,#f59e0b 100%);
+  --grad-soft:linear-gradient(90deg,rgba(124,58,237,0.14) 0%,rgba(236,72,153,0.14) 55%,rgba(245,158,11,0.14) 100%);
+  --mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+  --sans:'Inter',system-ui,-apple-system,Segoe UI,sans-serif;
+  --serif:'Fraunces',Georgia,serif;
+  --maxw:64rem;
+  --maxw-narrow:48rem;
+}
+
+/* ===== Reset / base ==================================================== */
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+@media (prefers-reduced-motion: reduce){
+  html{scroll-behavior:auto}
+  *,*::before,*::after{animation-duration:.001ms !important;transition-duration:.001ms !important}
+}
+html,body{margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--fg);
+  font-family:var(--sans);font-size:17px;line-height:1.7;
+  -webkit-font-smoothing:antialiased;text-rendering:optimizeLegibility;
+}
+img{max-width:100%;display:block}
+a{color:var(--accent);text-decoration:none;transition:color .15s ease, opacity .15s ease}
+a:hover{color:var(--accent-hover)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:3px}
+
+/* Tabular numerals everywhere a number appears in tables/stats/prices */
+.mono, .num, td.price, .stat-num, .price-inline{
+  font-family:var(--mono);font-feature-settings:"tnum","ss01";
+}
+
+/* ===== Topbar (structural 5-stop gradient, always present) ============= */
+.topbar{height:3px;background:var(--grad-topbar);width:100%;position:relative;z-index:50}
+
+/* ===== Sticky nav ===================================================== */
+.nav-shell{
+  position:sticky;top:0;z-index:40;
+  background:rgba(255,255,255,0.85);
+  backdrop-filter:saturate(160%) blur(14px);
+  -webkit-backdrop-filter:saturate(160%) blur(14px);
+  border-bottom:1px solid transparent;
+  transition:border-color .2s ease, background .2s ease, padding .2s ease;
+}
+.nav-shell.scrolled{
+  background:rgba(255,255,255,0.94);
+  border-bottom-color:var(--rule);
+}
+.nav{
+  max-width:var(--maxw);margin:0 auto;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:1.1rem 1.5rem;
+  transition:padding .2s ease;
+}
+.nav-shell.scrolled .nav{padding:.7rem 1.5rem}
+.brand-mark{display:flex;align-items:center;gap:.65rem;color:var(--fg)}
+.brand-mark:hover{color:var(--fg)}
+.brand-mark .dot{
+  width:10px;height:10px;border-radius:50%;
+  background:var(--grad);
+  box-shadow:0 0 0 4px rgba(124,58,237,0.10);
+  flex-shrink:0;
+}
+.brand-mark .name{font-weight:700;letter-spacing:-0.01em;font-size:1rem;line-height:1.1}
+.brand-mark .name small{
+  display:block;color:var(--mute);font-weight:500;font-size:0.7rem;
+  letter-spacing:0.10em;text-transform:uppercase;margin-top:0.15rem;
+}
+.nav-links{display:flex;align-items:center;gap:1.6rem}
+.nav-links a{color:var(--mute);font-size:.94rem;font-weight:500}
+.nav-links a:hover,.nav-links a.on{color:var(--fg)}
+.nav-links a.on{position:relative}
+.nav-links a.on::after{
+  content:"";position:absolute;left:0;right:0;bottom:-6px;height:2px;
+  background:var(--grad);border-radius:2px;
+}
+.nav-cta{
+  display:inline-flex;align-items:center;gap:.4rem;
+  background:var(--fg);color:#fff;padding:.55rem 1rem;border-radius:8px;
+  font-size:.88rem;font-weight:600;letter-spacing:.005em;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease;
+}
+.nav-cta:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 6px 16px rgba(124,58,237,0.25)}
+.nav-cta::after{content:"→";transition:transform .15s ease}
+.nav-cta:hover::after{transform:translateX(2px)}
+@media (max-width:720px){
+  .nav-links{gap:1rem}
+  .nav-links a:not(.nav-cta){display:none}
+}
+
+/* ===== Layout ========================================================== */
+.wrap{max-width:var(--maxw);margin:0 auto;padding:0 1.5rem}
+.wrap-narrow{max-width:var(--maxw-narrow);margin:0 auto;padding:0 1.5rem}
+.band{padding:5rem 0}
+.band-tight{padding:3.5rem 0}
+.band-2{background:var(--bg-2)}
+.band-dark{background:var(--bg-3);color:var(--fg-on-dark)}
+.band-dark a{color:#fff}
+.band-dark .sub{color:var(--mute-on-dark)}
+
+/* ===== Type =========================================================== */
+h1,h2,h3,h4{margin:0;letter-spacing:-0.02em}
+h1{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(2.4rem,6vw,4rem);line-height:1.05;letter-spacing:-0.035em;
+}
+h2{
+  font-family:var(--serif);font-weight:500;
+  font-size:clamp(1.6rem,3.4vw,2.2rem);line-height:1.15;
+  margin-bottom:.6rem;
+  scroll-margin-top:6rem;
+}
+h3{
+  font-family:var(--sans);font-weight:600;
+  font-size:1.05rem;color:var(--accent);
+  letter-spacing:.005em;
+  margin:1.75rem 0 .5rem;
+}
+h4{
+  font-family:var(--sans);font-weight:600;
+  font-size:.78rem;letter-spacing:.10em;text-transform:uppercase;
+  color:var(--accent);
+}
+p{margin:0 0 1rem}
+.lede{font-size:1.2rem;line-height:1.6;color:var(--fg);max-width:42rem}
+.sub{color:var(--mute)}
+.eyebrow{
+  display:inline-block;font-family:var(--sans);font-weight:600;
+  font-size:.74rem;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--accent);margin-bottom:1rem;
+}
+.eyebrow::before{content:"";display:inline-block;width:1.5rem;height:2px;background:var(--grad);vertical-align:middle;margin-right:.6rem;border-radius:2px}
+
+/* Underlined gradient accent — replaces fill gradient on words */
+.grad-under{
+  font-family:var(--serif);font-style:italic;font-weight:500;
+  position:relative;display:inline-block;white-space:nowrap;
+}
+.grad-under::after{
+  content:"";position:absolute;left:-0.05em;right:-0.05em;bottom:0.10em;
+  height:0.28em;background:var(--grad);
+  z-index:-1;border-radius:3px;opacity:.85;
+}
+/* Pure-gradient text — used sparingly (CTA word, footer mark) */
+.grad-text{
+  background:var(--grad);-webkit-background-clip:text;background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+
+/* Headline-anchor copy-link affordance */
+h2[id]{position:relative}
+h2[id] .anchor{
+  position:absolute;left:-1.4em;top:0;opacity:0;color:var(--accent);
+  font-family:var(--sans);font-weight:500;text-decoration:none;
+  transition:opacity .15s ease;
+}
+h2[id]:hover .anchor,h2[id] .anchor:focus-visible{opacity:.6}
+
+/* ===== Buttons ======================================================== */
+.btn{
+  display:inline-flex;align-items:center;gap:.5rem;
+  padding:.95rem 1.5rem;border-radius:10px;
+  font-family:var(--sans);font-weight:600;font-size:1rem;letter-spacing:.005em;
+  border:1px solid transparent;cursor:pointer;
+  transition:transform .15s ease, box-shadow .15s ease, background .15s ease, color .15s ease;
+}
+.btn-primary{background:var(--fg);color:#fff}
+.btn-primary:hover{background:var(--accent);color:#fff;transform:translateY(-1px);box-shadow:0 10px 24px rgba(124,58,237,0.28)}
+.btn-primary::after{content:"→";transition:transform .15s ease}
+.btn-primary:hover::after{transform:translateX(3px)}
+.btn-ghost{background:transparent;color:var(--fg);border-color:var(--rule-strong)}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent)}
+
+/* CTA cluster (button + microcopy underneath) */
+.cta-cluster{display:flex;flex-direction:column;align-items:flex-start;gap:.55rem}
+.cta-cluster.center{align-items:center;text-align:center}
+.cta-micro{color:var(--mute);font-size:.85rem;letter-spacing:.005em}
+
+/* ===== Hero =========================================================== */
+.hero{padding:5.5rem 0 4rem;position:relative;overflow:hidden}
+.hero::before{
+  content:"";position:absolute;inset:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 50% at 85% 0%,rgba(245,158,11,0.10) 0%,transparent 60%),
+    radial-gradient(ellipse 70% 60% at 0% 30%,rgba(124,58,237,0.10) 0%,transparent 65%);
+  z-index:-1;
+}
+.hero h1{max-width:18ch;margin-bottom:1.25rem}
+.hero .lede{margin-bottom:2rem}
+.hero-cta-row{display:flex;flex-wrap:wrap;gap:1rem;align-items:center;margin-top:1.5rem}
+
+/* ===== Stat strip ===================================================== */
+.stats{
+  display:grid;grid-template-columns:repeat(4,1fr);gap:0;
+  margin:3rem 0 0;padding:1.6rem 0;
+  border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);
+}
+.stats .stat{padding:.25rem 1.25rem;border-left:1px solid var(--rule)}
+.stats .stat:first-child{border-left:0;padding-left:0}
+.stat-num{font-family:var(--mono);font-weight:600;font-size:1.6rem;color:var(--fg);letter-spacing:-.02em;line-height:1.1}
+.stat-label{font-size:.82rem;color:var(--mute);margin-top:.25rem;letter-spacing:.01em}
+@media (max-width:680px){
+  .stats{grid-template-columns:repeat(2,1fr);gap:1.25rem 0;padding:1.25rem 0}
+  .stats .stat{padding:.5rem 1rem;border-left:0;border-top:1px solid var(--rule);padding-top:1rem}
+  .stats .stat:first-child,.stats .stat:nth-child(2){border-top:0;padding-top:.5rem}
+}
+
+/* ===== Three-step "How it works" ====================================== */
+.steps{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2.5rem}
+@media (max-width:760px){.steps{grid-template-columns:1fr;gap:1.5rem}}
+.step{padding:0}
+.step .num{
+  display:inline-flex;align-items:center;justify-content:center;
+  width:2.4rem;height:2.4rem;border-radius:50%;
+  background:var(--grad-soft);color:var(--accent);
+  font-family:var(--mono);font-weight:600;font-size:1rem;
+  margin-bottom:1rem;
+  border:1px solid rgba(124,58,237,0.18);
+}
+.step h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.25rem;margin:.25rem 0 .5rem;letter-spacing:-.01em}
+.step p{color:var(--mute);font-size:.96rem;margin:0}
+
+/* ===== Service pillars (3-up) ======================================== */
+.pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1.25rem;margin-top:2.5rem}
+@media (max-width:840px){.pillars{grid-template-columns:1fr}}
+.pillar{
+  display:flex;flex-direction:column;
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.pillar:hover{transform:translateY(-3px);box-shadow:var(--card-shadow-hover);border-color:rgba(124,58,237,0.25)}
+.pillar h3{font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.3rem;color:var(--fg);margin:0 0 .5rem;letter-spacing:-.01em}
+.pillar p{color:var(--mute);font-size:.95rem;flex:1;margin:0 0 1rem}
+.pillar .price-inline{color:var(--accent);font-weight:600;font-size:.95rem;margin-bottom:1rem}
+.pillar .more{color:var(--accent);font-weight:600;font-size:.9rem;display:inline-flex;align-items:center;gap:.35rem;align-self:flex-start}
+.pillar .more::after{content:"→";transition:transform .15s ease}
+.pillar:hover .more::after{transform:translateX(3px)}
+
+/* ===== Photo band ===================================================== */
+.photo-band{position:relative;height:clamp(280px,38vw,440px);overflow:hidden;margin:0}
+.photo-band img{width:100%;height:100%;object-fit:cover;filter:saturate(0.85) contrast(1.05)}
+.photo-band::after{
+  content:"";position:absolute;inset:0;
+  background:linear-gradient(180deg,rgba(26,20,41,0.05) 0%,rgba(26,20,41,0.35) 100%),
+             linear-gradient(120deg,rgba(124,58,237,0.20) 0%,transparent 50%,rgba(245,158,11,0.18) 100%);
+  mix-blend-mode:multiply;
+}
+.photo-band .photo-caption{
+  position:absolute;left:0;right:0;bottom:0;padding:1.25rem 1.5rem;
+  color:#fff;font-size:.85rem;letter-spacing:.03em;
+  z-index:2;text-shadow:0 1px 4px rgba(0,0,0,0.4);
+  max-width:var(--maxw);margin:0 auto;
+}
+
+/* ===== Testimonials =================================================== */
+.quotes{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2.5rem}
+@media (max-width:840px){.quotes{grid-template-columns:1fr}}
+.quote{
+  padding:1.75rem;background:var(--card);
+  border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);
+}
+.quote blockquote{margin:0 0 1rem;color:var(--fg);font-size:1.02rem;line-height:1.55;font-family:var(--serif);font-weight:500;font-style:italic;letter-spacing:-.005em}
+.quote blockquote::before{content:"\201C";font-size:2.2rem;color:var(--accent);line-height:0;vertical-align:-0.35em;margin-right:.2rem;font-family:var(--serif);font-style:normal}
+.quote .who{display:flex;flex-direction:column;font-size:.85rem;color:var(--mute);border-top:1px solid var(--rule);padding-top:.85rem}
+.quote .who strong{color:var(--fg);font-weight:600}
+
+/* ===== Promise / values band ========================================= */
+.values{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem;margin-top:2rem}
+@media (max-width:760px){.values{grid-template-columns:1fr;gap:1.25rem}}
+.value h3{color:var(--fg);font-family:var(--serif);font-weight:600;font-style:normal;font-size:1.2rem;margin:0 0 .5rem;letter-spacing:-.01em}
+.value p{color:var(--mute);font-size:.95rem;margin:0}
+
+/* ===== Bottom CTA band =============================================== */
+.cta-band{padding:4.5rem 0;text-align:center}
+.cta-band h2{font-size:clamp(1.8rem,4vw,2.6rem);max-width:24ch;margin:0 auto .8rem;color:#fff}
+.cta-band .lede{color:var(--mute-on-dark);max-width:36rem;margin:0 auto 2rem}
+.cta-band .btn-primary{background:#fff;color:var(--fg)}
+.cta-band .btn-primary:hover{background:var(--accent);color:#fff}
+.cta-band .cta-micro{color:var(--mute-on-dark)}
+
+/* ===== Footer ======================================================== */
+footer.site{
+  border-top:1px solid var(--rule);
+  padding:2.5rem 0 3rem;
+  background:var(--bg);
+  font-size:.88rem;color:var(--mute);
+}
+footer.site .row{
+  max-width:var(--maxw);margin:0 auto;padding:0 1.5rem;
+  display:flex;justify-content:space-between;align-items:flex-start;
+  gap:2rem;flex-wrap:wrap;
+}
+footer.site .meta{display:flex;flex-direction:column;gap:.35rem}
+footer.site .meta strong{color:var(--fg);font-size:.95rem;font-weight:600}
+footer.site .links{display:flex;gap:1.25rem;flex-wrap:wrap}
+footer.site .links a{color:var(--mute);font-size:.88rem}
+footer.site .links a:hover{color:var(--accent)}
+footer.site .credit{flex-basis:100%;border-top:1px solid var(--rule);padding-top:1rem;display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem;color:var(--dim);font-size:.8rem}
+footer.site .credit a{color:var(--mute)}
+
+/* ===== Content-page primitives (used by pricing.html & others) ======= */
+.content-h1-block h1{max-width:22ch;margin-bottom:1.25rem}
+.content-h1-block .lede{margin-bottom:1.5rem}
+
+.toc{
+  margin:2.5rem 0;padding:1.4rem 1.6rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+}
+.toc h4{margin:0 0 .6rem;color:var(--accent)}
+.toc ol{margin:0;padding-left:1.25rem;color:var(--mute);font-size:.95rem;columns:2;column-gap:2rem}
+.toc li{margin-bottom:.3rem;break-inside:avoid}
+.toc a{color:var(--mute);font-weight:500}
+.toc a:hover{color:var(--accent)}
+@media (max-width:560px){.toc ol{columns:1}}
+
+.section{padding:2.5rem 0;border-top:1px solid var(--rule)}
+.section:first-of-type{border-top:0;padding-top:1.5rem}
+.section h2 .num{
+  font-family:var(--mono);font-weight:500;font-style:normal;
+  color:var(--accent);font-size:.75em;
+  margin-right:.7rem;vertical-align:.15em;letter-spacing:.02em;
+}
+
+.callout{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:var(--bg-2);border:1px solid var(--rule);
+  border-left:3px solid var(--accent);border-radius:10px;
+  font-size:.96rem;
+}
+.callout strong{color:var(--accent)}
+
+.warn{
+  margin:1.5rem 0;padding:1.1rem 1.4rem;
+  background:#fff7ed;border:1px solid #fed7aa;
+  border-left:3px solid var(--amber);border-radius:10px;
+  font-size:.96rem;color:#7c2d12;
+}
+.warn strong{color:#9a3412}
+
+.kv{
+  display:grid;grid-template-columns:max-content 1fr;
+  gap:.55rem 1.4rem;margin:1.2rem 0;padding:1.2rem 1.4rem;
+  background:var(--card);border:1px solid var(--rule);border-radius:10px;
+  font-size:.96rem;
+}
+.kv dt{color:var(--accent);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.06em;padding-top:.1rem}
+.kv dd{margin:0;color:var(--fg)}
+@media (max-width:560px){.kv{grid-template-columns:1fr;gap:.15rem 0}.kv dt{margin-top:.6rem}.kv dt:first-child{margin-top:0}}
+
+ul.bullets,ol.bullets{margin:.5rem 0 1rem;padding-left:1.2rem;color:var(--fg)}
+ul.bullets li,ol.bullets li{margin-bottom:.45rem}
+ul.bullets li::marker,ol.bullets li::marker{color:var(--accent)}
+ul.bullets li strong,ol.bullets li strong{color:var(--fg)}
+
+.table-wrap{margin:1.5rem 0;overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--card);box-shadow:var(--card-shadow)}
+table{width:100%;border-collapse:collapse;font-size:.95rem;min-width:32rem}
+th,td{padding:.85rem 1.1rem;text-align:left;border-bottom:1px solid var(--rule);vertical-align:top}
+th{background:var(--bg-2);color:var(--fg);font-weight:600;font-size:.74rem;text-transform:uppercase;letter-spacing:.08em;white-space:nowrap}
+td:first-child{color:var(--fg);font-weight:500}
+td.price{color:var(--accent);font-weight:600;white-space:nowrap;font-family:var(--mono);font-feature-settings:"tnum"}
+tr:last-child td{border-bottom:0}
+tbody tr{transition:background .12s ease}
+tbody tr:hover{background:var(--bg-2)}
+
+.cta-mini{
+  margin-top:1.5rem;padding:1.25rem 1.5rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:12px;font-size:1rem;
+}
+.cta-mini a{color:var(--accent);font-weight:600}
+
+.legend{
+  display:flex;flex-wrap:wrap;gap:1.6rem;
+  margin:1.5rem 0 0;padding:1rem 1.3rem;
+  background:var(--bg-2);border:1px solid var(--rule);border-radius:10px;
+  font-size:.88rem;color:var(--mute);
+}
+.legend strong{color:var(--fg);font-weight:600}
+
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1.5rem 0}
+@media (max-width:640px){.two-col{grid-template-columns:1fr}}
+.two-col .col{padding:1.25rem 1.4rem;background:var(--card);border:1px solid var(--rule);border-radius:10px;box-shadow:var(--card-shadow)}
+.two-col .col h4{margin:0 0 .7rem;color:var(--accent)}
+.two-col .col.up h4{color:#be185d}
+.two-col .col.down h4{color:#047857}
+.two-col .col ul{margin:0;padding-left:1.1rem;font-size:.93rem;color:var(--fg)}
+.two-col .col li{margin-bottom:.35rem}
+
+.hero-promise{
+  margin:1.5rem 0 2rem;padding:1.5rem 1.7rem;
+  background:linear-gradient(135deg,var(--bg-2) 0%,#fff 100%);
+  border:1px solid var(--rule-strong);border-radius:14px;
+}
+.hero-promise h3{margin:0 0 .6rem}
+.hero-promise p{margin:0 0 .6rem;font-size:1rem}
+.hero-promise p:last-child{margin-bottom:0}
+
+.tag-row{display:flex;flex-wrap:wrap;gap:.5rem;margin:.5rem 0 1.5rem}
+.tag-row span{
+  font-size:.78rem;color:var(--mute);
+  background:var(--bg-2);border:1px solid var(--rule);
+  padding:.35rem .75rem;border-radius:999px;
+}
+.tag-row span strong{color:var(--fg);font-weight:600}
+
+/* ===== Print ========================================================= */
+@media print{
+  .nav-shell,.cta-band,footer.site,.photo-band{display:none !important}
+  body{background:#fff;color:#000}
+  a{color:#000;text-decoration:underline}
+  .topbar{height:2px;background:#000}
+  .table-wrap,.callout,.warn,.kv,.cta-mini,.hero-promise{box-shadow:none;background:#fff;border:1px solid #ccc}
+  h2,h3{page-break-after:avoid}
+  table,.table-wrap{page-break-inside:avoid}
+}
+
+</style>
+</head>
+<body class="">
+<div class="topbar"></div>
+
+<div class="nav-shell" id="nav-shell">
+  <div class="nav">
+    <a href="index.html" class="brand-mark">
+      <span class="dot" aria-hidden="true"></span>
+      <span class="name">Vanguard Reconstruction<small>Cincinnati Residential Electric</small></span>
+    </a>
+    <div class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="services.html">Services</a>
+      <a href="pricing.html" class="on" aria-current="page">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      <a href="instant-quote.html" class="nav-cta">Get an instant quote</a>
+    </div>
+  </div>
+</div>
+
+<main>
+
+<section class="band band-tight">
+  <div class="wrap-narrow content-h1-block">
+    <span class="eyebrow">Pricing guide</span>
+    <h1>What it <span class="grad-under">actually costs.</span></h1>
+    <p class="lede">Most electrical companies hide pricing behind a "schedule a consultation" button, and honestly, we get why — every house is a little different. But "every house is different" doesn't have to mean "we won't tell you anything." So here it is: a working price guide for residential electrical in the Cincinnati area, written by the people who do the work. Every range is what we'd quote a neighbor.</p>
+
+    
+    <div class="tag-row">
+      <span><strong>Cincinnati & Hamilton County</strong></span>
+      <span><strong>Residential</strong> up to 3-family</span>
+      <span>Materials at <strong>2026 market</strong></span>
+      <span>Crew of <strong>four</strong></span>
+      <span>Written quote in <strong>24 hours</strong></span>
+      
+    </div>
+    
+
+    
+    <div class="hero-promise">
+      <h4>The promise</h4>
+      <p>The number we put in writing is the number you pay. If we open a wall and find a surprise, we stop, take a photo, and show you what changed before we touch anything else. No quiet line items added at the end.</p>
+      <p>And if a job comes in under estimate because something was simpler than we thought? The bill comes in lower. We don't pocket the difference. That part matters to us.</p>
+      
+    </div>
+    
+
+    
+    <div class="legend">
+      <div><strong>How to read the ranges:</strong></div>
+      <div><strong>Low end</strong> — accessible work, no surprises</div>
+      <div><strong>High end</strong> — finished walls, old wiring, awkward access</div>
+      <div><strong>Above range</strong> — we tell you before we start</div>
+      
+    </div>
+    
+
+    
+    <div class="toc">
+      <h4>What's on this page</h4>
+      <ol>
+        <li><a href="#how">How we price (and why)</a></li>
+        <li><a href="#diagnostic">Diagnostic &amp; service calls</a></li>
+        <li><a href="#outlets">Outlets &amp; receptacles</a></li>
+        <li><a href="#switches">Switches, dimmers, smart controls</a></li>
+        <li><a href="#lighting">Lighting &amp; ceiling fans</a></li>
+        <li><a href="#circuits">Adding new circuits</a></li>
+        <li><a href="#panels">Panels &amp; service upgrades</a></li>
+        <li><a href="#sub">Sub-panels &amp; feeders</a></li>
+        <li><a href="#ev">EV chargers</a></li>
+        <li><a href="#rewire">Whole-home rewire</a></li>
+        <li><a href="#kt">Knob-and-tube remediation</a></li>
+        <li><a href="#generator">Generators &amp; transfer switches</a></li>
+        <li><a href="#surge">Surge protection &amp; grounding</a></li>
+        <li><a href="#smoke">Smoke &amp; CO detectors</a></li>
+        <li><a href="#remodel">Kitchen &amp; bathroom remodels</a></li>
+        <li><a href="#outdoor">Outdoor, hot tub, pool</a></li>
+        <li><a href="#trouble">Troubleshooting flat-rates</a></li>
+        <li><a href="#permits">Permits, inspections, materials</a></li>
+        <li><a href="#move">What moves a quote up or down</a></li>
+        <li><a href="#process">How a written quote works</a></li>
+        
+      </ol>
+    </div>
+    
+  </div>
+</section>
+
+<section class="band-tight">
+  <div class="wrap-narrow">
+    
+    <section class="section" id="how">
+      <h2 id="how-h"><a href="#how" class="anchor" aria-hidden="true">#</a><span class="num">01</span>How we price (and why)</h2>
+      
+        <p>Three modes, and we'll tell you which one you're in before we start.</p>
+      
+        <div class="kv">
+          <dt>Flat job</dt><dd>You tell us "replace the panel" or "add an EV charger" and we give you a fixed total in writing. You sign, we do the work, the price doesn't move unless the scope does. <strong>This is the default.</strong></dd>
+          <dt>Hourly diagnostic</dt><dd>You don't know what's wrong yet. We bill our service call rate to figure it out, then either fix it inside that time or hand you a written quote for the actual repair. <strong>The diagnostic fee credits toward the repair</strong> if you book the work with us.</dd>
+          <dt>Time & materials</dt><dd>Reserved for jobs where neither of us can predict the scope — old houses where every wall opens onto a new surprise. We bill hourly plus materials, with a written cap you have to authorize before we exceed.</dd>
+          
+        </div>
+      
+        <h3>What's always included in a flat job</h3>
+      
+        <ul class="bullets">
+          <li>Permit fees (when a permit is required) — we pull it, we pay it, it's in the number.</li>
+          <li>All standard materials, listed by line item on the quote.</li>
+          <li>Travel inside the Cincinnati area.</li>
+          <li>Cleanup. Drop cloths, vacuum, we leave the area cleaner than we found it.</li>
+          <li>A walk-through at the end where we show you what we did and how to use it.</li>
+          
+        </ul>
+      
+        <h3>What's never included unless it's listed</h3>
+      
+        <ul class="bullets">
+          <li>Drywall repair beyond the small holes we made — we'll do clean cuts, patch is a separate trade.</li>
+          <li>Painting.</li>
+          <li>Specialty fixtures or smart devices you want us to install — we'll install yours, or we'll quote ours.</li>
+          <li>Removal of asbestos or known hazardous materials — separate, licensed trade.</li>
+          
+        </ul>
+      
+    </section>
+    
+    <section class="section" id="diagnostic">
+      <h2 id="diagnostic-h"><a href="#diagnostic" class="anchor" aria-hidden="true">#</a><span class="num">02</span>Diagnostic & service calls</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Service</th><th>Range</th><th>Includes</th></tr></thead>
+          <tbody>
+          <tr><td>Standard diagnostic visit</td><td class="price">$125–$185</td><td>First hour on site, basic testing, written findings. Credits toward repair if booked.</td></tr>
+          <tr><td>After-hours / weekend diagnostic</td><td class="price">$165–$225</td><td>Same scope, evenings, Saturdays, Sundays.</td></tr>
+          <tr><td>Emergency same-day (power out, burning smell)</td><td class="price">$225–$350</td><td>Priority dispatch, full diagnostic, temporary make-safe.</td></tr>
+          <tr><td>Each additional hour on site</td><td class="price">$95–$125</td><td>If the diagnostic extends. We tell you before the meter runs over.</td></tr>
+          <tr><td>Photo & phone consult (no truck roll)</td><td class="price">free</td><td>Send us photos and a description. If we can answer without coming out, we do.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="callout"><strong>Diagnostic credits toward the repair.</strong> If we come out, find the problem, and you book us to fix it, the diagnostic fee comes off the repair quote. You don't pay twice for the same hour.</div>
+      
+    </section>
+    
+    <section class="section" id="outlets">
+      <h2 id="outlets-h"><a href="#outlets" class="anchor" aria-hidden="true">#</a><span class="num">03</span>Outlets & receptacles</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Replace standard outlet (existing box)</td><td class="price">$115–$185</td><td>Per outlet. Tamper-resistant, spec-grade. 5+ at the same visit: $95 each. 10+: $85 each.</td></tr>
+          <tr><td>Replace GFCI outlet</td><td class="price">$145–$215</td><td>Per outlet. Includes proper labeling of downstream protected outlets.</td></tr>
+          <tr><td>Add new outlet, existing circuit, accessible</td><td class="price">$175–$295</td><td>Open basement, attic, or unfinished wall above. Cut, fish, patch hole.</td></tr>
+          <tr><td>Add new outlet, finished wall, fish from below</td><td class="price">$275–$475</td><td>Drywall stays mostly closed; we cut one or two access holes.</td></tr>
+          <tr><td>Add new outlet, plaster & lath wall</td><td class="price">$325–$575</td><td>Older homes. More time, more care, occasional surgery.</td></tr>
+          <tr><td>Convert 2-prong to 3-prong (with ground)</td><td class="price">$185–$285</td><td>Per outlet. Requires a real ground path, not a cheater plug.</td></tr>
+          <tr><td>Convert 2-prong to GFCI (no ground available)</td><td class="price">$165–$235</td><td>Per outlet. Code-acceptable on older homes where running a ground is impractical.</td></tr>
+          <tr><td>USB / USB-C combination outlet</td><td class="price">$145–$215</td><td>Add-on to any outlet replacement.</td></tr>
+          <tr><td>Dedicated 20A outlet (kitchen, office, fridge)</td><td class="price">$285–$525</td><td>New circuit, dedicated breaker, single outlet. See "new circuits" below.</td></tr>
+          <tr><td>240V outlet for dryer / range (existing circuit)</td><td class="price">$165–$275</td><td>Receptacle swap on a circuit that already exists.</td></tr>
+          <tr><td>Exterior weatherproof outlet (in-use cover)</td><td class="price">$285–$475</td><td>Through-wall, GFCI-protected, code-compliant cover.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="callout"><strong>Volume discount:</strong> When we're already on site, additional outlets in the same room come in well under the per-unit price. Three outlets in one bedroom is usually cheaper than three separate visits by a meaningful margin.</div>
+      
+    </section>
+    
+    <section class="section" id="switches">
+      <h2 id="switches-h"><a href="#switches" class="anchor" aria-hidden="true">#</a><span class="num">04</span>Switches, dimmers, smart controls</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Replace standard switch</td><td class="price">$95–$165</td><td>Per switch. Spec-grade decora. 5+ at the same visit: $80 each. 10+: $70 each.</td></tr>
+          <tr><td>Replace with dimmer (LED-rated)</td><td class="price">$155–$235</td><td>Per switch. Includes verifying the load is dimmable.</td></tr>
+          <tr><td>Convert single-pole to 3-way</td><td class="price">$285–$525</td><td>Adds a second switch location. Wiring run pricing depends on access.</td></tr>
+          <tr><td>Smart switch install (your device)</td><td class="price">$135–$235</td><td>Per switch. Requires a neutral in the box; we'll tell you before quoting.</td></tr>
+          <tr><td>Smart switch install (we provide)</td><td class="price">$185–$295</td><td>Common-brand smart switches included.</td></tr>
+          <tr><td>Add a neutral wire to an old switch box</td><td class="price">$165–$385</td><td>Often required for smart switches in older homes.</td></tr>
+          <tr><td>Occupancy / vacancy sensor switch</td><td class="price">$165–$245</td><td>Per switch. Closets, bathrooms, laundry.</td></tr>
+          <tr><td>Whole-room smart-lighting commissioning</td><td class="price">$185–$385</td><td>Per room, after install. App setup, scene programming, hand-off.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="callout"><strong>Older houses, the neutral problem:</strong> Most modern smart switches need a neutral wire in the switch box. Pre-1985 wiring often doesn't have one. We always check before quoting, and we'll tell you upfront if a smart switch is going to need extra work to land in your old switch box.</div>
+      
+    </section>
+    
+    <section class="section" id="lighting">
+      <h2 id="lighting-h"><a href="#lighting" class="anchor" aria-hidden="true">#</a><span class="num">05</span>Lighting & ceiling fans</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Swap light fixture (existing box, you supply)</td><td class="price">$135–$235</td><td>Per fixture. Standard ceiling height. Chandeliers and large fixtures see below.</td></tr>
+          <tr><td>Chandelier install (under 50 lbs, 9ft ceiling)</td><td class="price">$235–$425</td><td>Verifies fan-rated box, assembly, hang, level.</td></tr>
+          <tr><td>Chandelier, vaulted / 2-story foyer</td><td class="price">$485–$985</td><td>Lift or scaffold required. Ceiling height and access dictate the range.</td></tr>
+          <tr><td>Ceiling fan swap (existing fan-rated box)</td><td class="price">$185–$295</td><td>Per fan. Includes balance and remote pairing if applicable.</td></tr>
+          <tr><td>New ceiling fan, no existing box, attic access</td><td class="price">$385–$685</td><td>Cut ceiling, install fan-rated brace box, run wire, switch.</td></tr>
+          <tr><td>New ceiling fan, no attic access</td><td class="price">$585–$985</td><td>Working from below, more invasive cuts.</td></tr>
+          <tr><td>Recessed can light, attic access (each)</td><td class="price">$165–$285</td><td>4" or 6" airtight LED can. Cuts ceiling, runs wire, trims.</td></tr>
+          <tr><td>Recessed can light, no attic access (each)</td><td class="price">$285–$485</td><td>Working blind from below. Includes minor drywall patch.</td></tr>
+          <tr><td>Run of 4–6 cans in one room (attic access)</td><td class="price">$725–$1,485</td><td>Per room, single dimmer, layout consult, balanced spacing.</td></tr>
+          <tr><td>Under-cabinet LED lighting</td><td class="price">$385–$885</td><td>Per kitchen run. Hardwired, dimmable, transformer hidden.</td></tr>
+          <tr><td>Closet light with door switch</td><td class="price">$285–$485</td><td>Per closet. LED panel, door-activated jamb switch.</td></tr>
+          <tr><td>Pendant lights over island (each, with wire run)</td><td class="price">$235–$485</td><td>Per pendant. Discount when multiple are run together.</td></tr>
+          <tr><td>Track lighting head replacement</td><td class="price">$115–$185</td><td>Per head. Full track install priced separately.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="warn"><strong>Heavy chandeliers and fans need a fan-rated box.</strong> A standard plastic ceiling box is not rated to hang weight. We don't install a 35-pound chandelier on a box meant to hold a 4-pound fixture, even if the previous electrician did. The price includes verifying or upgrading the box.</div>
+      
+    </section>
+    
+    <section class="section" id="circuits">
+      <h2 id="circuits-h"><a href="#circuits" class="anchor" aria-hidden="true">#</a><span class="num">06</span>Adding new circuits</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>15A or 20A circuit, panel to nearest wall (basement)</td><td class="price">$285–$485</td><td>Short run, exposed conduit or NM cable, breaker, one outlet.</td></tr>
+          <tr><td>20A dedicated circuit, panel to kitchen / room</td><td class="price">$485–$985</td><td>Mid-length run, breaker, one outlet, drywall patch.</td></tr>
+          <tr><td>20A dedicated circuit, finished home, long run</td><td class="price">$685–$1,485</td><td>Cross-house run, fishing through walls, multiple access points.</td></tr>
+          <tr><td>AFCI/GFCI breaker for an existing circuit</td><td class="price">$165–$285</td><td>Per circuit. Often required when adding outlets to an old circuit.</td></tr>
+          <tr><td>240V / 30A circuit for window AC, water heater</td><td class="price">$585–$985</td><td>Includes breaker, run, receptacle.</td></tr>
+          <tr><td>240V / 50A circuit for range, EV, large load</td><td class="price">$685–$1,485</td><td>See EV section below for charger-specific pricing.</td></tr>
+          <tr><td>Sub-feed for a remote box (garage, ADU)</td><td class="price">$985–$2,485</td><td>Distance and trenching dependent. Underground priced separately.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+    </section>
+    
+    <section class="section" id="panels">
+      <h2 id="panels-h"><a href="#panels" class="anchor" aria-hidden="true">#</a><span class="num">07</span>Panels & service upgrades</h2>
+      
+        <p>This is the most-quoted, most-misunderstood job in residential electric. The honest range is wide because the work is wide.</p>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>What's in the number</th></tr></thead>
+          <tbody>
+          <tr><td>100A panel replacement (same location)</td><td class="price">$1,685–$2,685</td><td>New panel, breakers, grounding, permit, inspection.</td></tr>
+          <tr><td>150A panel replacement (same location)</td><td class="price">$2,185–$3,185</td><td>Same scope, larger panel, more breaker space.</td></tr>
+          <tr><td>200A panel replacement (same location)</td><td class="price">$2,485–$3,785</td><td>Default modern upgrade. Includes whole-home surge protector option.</td></tr>
+          <tr><td>200A full service upgrade (meter, mast, panel)</td><td class="price">$3,285–$5,485</td><td>Pole-to-panel: new service entrance cable, mast, weatherhead, meter base, panel, grounding rods, bonding.</td></tr>
+          <tr><td>200A upgrade with overhead-to-underground conversion</td><td class="price">$4,485–$7,985</td><td>Coordinated with Duke Energy. Trench, conduit, riser changes.</td></tr>
+          <tr><td>400A residential service (large home, ADU, dual EV)</td><td class="price">$5,485–$9,985</td><td>Rarely needed. We'll tell you honestly if 200A would do.</td></tr>
+          <tr><td>Panel relocation (move from old spot to new)</td><td class="price">+$685–$2,485</td><td>Adder on top of replacement cost. Distance and wall access drive the number.</td></tr>
+          <tr><td>Federal Pacific / Zinsco replacement</td><td class="price">$2,185–$3,985</td><td>Same as panel replacement, but we never just "rebalance" these. They get replaced.</td></tr>
+          <tr><td>Single breaker swap (any standard breaker)</td><td class="price">$155–$255</td><td>If we're not already on site, this becomes a service call rate.</td></tr>
+          <tr><td>AFCI/GFCI/combination breaker swap (each)</td><td class="price">$185–$285</td><td>Breakers themselves cost more; that's reflected.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="callout"><strong>Why service upgrades cost more than panel swaps:</strong> A panel swap is the gray box inside. A service upgrade is everything from the utility pole to the gray box — the cable, the mast pipe, the meter, the grounding, the connection back to the utility. Different scope of work, different number of permits, different coordination with Duke Energy.</div>
+      
+        <h3>What's not in the panel-replacement number</h3>
+      
+        <ul class="bullets">
+          <li>Bringing every existing circuit up to current code. If your home was wired in 1962 with no AFCI requirement, we don't quietly add AFCI breakers to every circuit unless you ask. Modern code only requires AFCI on <em>new</em> circuits.</li>
+          <li>Fixing problems we find in existing circuits behind the panel. We'll show you, photograph, and quote the fix separately.</li>
+          <li>Drywall patch in the wall behind the panel if we have to open it. We do clean cuts; patching is separate.</li>
+          
+        </ul>
+      
+    </section>
+    
+    <section class="section" id="sub">
+      <h2 id="sub-h"><a href="#sub" class="anchor" aria-hidden="true">#</a><span class="num">08</span>Sub-panels & feeders</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>60A sub-panel, near main, short feeder</td><td class="price">$885–$1,485</td><td>Garage, basement, small addition.</td></tr>
+          <tr><td>100A sub-panel, near main, short feeder</td><td class="price">$1,185–$1,985</td><td>Workshop, large garage, in-law unit.</td></tr>
+          <tr><td>100A sub-panel, long feeder run (50–100 ft)</td><td class="price">$1,685–$2,985</td><td>Detached garage, ADU. Underground adds trenching cost.</td></tr>
+          <tr><td>Trenching for underground feeder (per ft)</td><td class="price">$15–$35</td><td>Per linear foot, depends on soil, hardscape, depth required.</td></tr>
+          <tr><td>Sub-panel for hot tub or pool only</td><td class="price">$685–$1,285</td><td>Smaller scope, dedicated to one load. See outdoor section.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+    </section>
+    
+    <section class="section" id="ev">
+      <h2 id="ev-h"><a href="#ev" class="anchor" aria-hidden="true">#</a><span class="num">09</span>EV chargers</h2>
+      
+        <p>Most quoted job in 2026. The price depends almost entirely on three things: distance from your panel, whether your panel has headroom, and finished-wall vs. exposed run.</p>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>What it covers</th></tr></thead>
+          <tbody>
+          <tr><td>NEMA 14-50 outlet, <10 ft from panel, exposed</td><td class="price">$485–$785</td><td>Garage with panel on adjacent wall. Conduit, breaker, outlet.</td></tr>
+          <tr><td>NEMA 14-50 outlet, 10–25 ft, exposed conduit</td><td class="price">$685–$1,185</td><td>Across the garage, surface-run conduit.</td></tr>
+          <tr><td>NEMA 14-50 outlet, finished wall, fishing required</td><td class="price">$885–$1,485</td><td>Drywall stays mostly closed; access holes patched.</td></tr>
+          <tr><td>Hardwired L2 charger, 40A circuit (you supply charger)</td><td class="price">$785–$1,385</td><td>Most popular spec. Includes installing your charger, not buying it.</td></tr>
+          <tr><td>Hardwired L2 charger, 48–60A circuit</td><td class="price">$985–$1,685</td><td>Future-proof. Pulls 4 gauge wire. Larger breaker.</td></tr>
+          <tr><td>Outdoor weatherproof EV charger install</td><td class="price">$985–$1,985</td><td>Driveway-mount or exterior wall. Weather-rated disconnect, conduit.</td></tr>
+          <tr><td>Load management device (no panel upgrade needed)</td><td class="price">+$485–$885</td><td>Adder. Lets you add a charger to a near-full panel by pausing it when the dryer or AC kicks on.</td></tr>
+          <tr><td>EV install requiring panel upgrade</td><td class="price">$3,485–$5,985</td><td>Combined: panel upgrade + EV circuit. Common in homes built before 2000.</td></tr>
+          <tr><td>Tesla wall connector commissioning</td><td class="price">+$135–$235</td><td>Wi-Fi setup, app pairing, power-sharing config if multiple.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="callout"><strong>The math you should know:</strong> A 48-amp continuous load needs a 60-amp breaker (NEC requires 125% headroom on continuous loads). If someone quotes you a 50-amp circuit for a 48-amp charger, they're either using a 50A-rated charger or they're cutting a corner. We'll always tell you which.</div>
+      
+    </section>
+    
+    <section class="section" id="rewire">
+      <h2 id="rewire-h"><a href="#rewire" class="anchor" aria-hidden="true">#</a><span class="num">10</span>Whole-home rewire</h2>
+      
+        <p>The most expensive, most disruptive, most permanent job we do. Done right, it doesn't need to be done again in your lifetime.</p>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Scope</th><th>Range</th><th>What changes</th></tr></thead>
+          <tbody>
+          <tr><td>Vacant home, drywall open, easy access</td><td class="price">$5–$8 / sqft</td><td>Best case. Mid-renovation timing.</td></tr>
+          <tr><td>Occupied home, finished walls, careful</td><td class="price">$8–$12 / sqft</td><td>Typical. We work room by room, minimize patches.</td></tr>
+          <tr><td>Plaster & lath, decorative ceilings to preserve</td><td class="price">$11–$16 / sqft</td><td>Older Cincinnati homes. Surgical work, higher access cost.</td></tr>
+          <tr><td>Whole-home rewire of 1,200 sqft typical home</td><td class="price">$9,800–$14,500</td><td>Worked example, single-story, finished walls.</td></tr>
+          <tr><td>Whole-home rewire of 2,000 sqft typical home</td><td class="price">$16,000–$24,000</td><td>Worked example, two-story, finished.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <h3>What's in a full rewire</h3>
+      
+        <ul class="bullets">
+          <li>Replacement of every branch circuit with modern NM-B cable.</li>
+          <li>New outlets at code-required spacing in every room.</li>
+          <li>GFCI in all wet locations, AFCI on all living-space circuits.</li>
+          <li>New panel sized for the new load (usually 200A).</li>
+          <li>Smoke and CO detectors hardwired and interconnected per current code.</li>
+          <li>Removal of every accessible knob-and-tube run.</li>
+          <li>Permit, inspection, final sign-off.</li>
+          <li>Clean cuts in drywall; patching is separate (see below).</li>
+          
+        </ul>
+      
+        <h3>What's not in a full rewire</h3>
+      
+        <ul class="bullets">
+          <li>Drywall patch and paint (separate trade, we'll recommend partners).</li>
+          <li>Replacing fixtures — if you want new lights, that's add-on per fixture.</li>
+          <li>Smart switches, smart panels, networked devices — quoted separately.</li>
+          
+        </ul>
+      
+    </section>
+    
+    <section class="section" id="kt">
+      <h2 id="kt-h"><a href="#kt" class="anchor" aria-hidden="true">#</a><span class="num">11</span>Knob-and-tube remediation</h2>
+      
+        <p>Three tiers, cheapest to most thorough. See our <a href="knowledge.html#kt">knowledge page</a> for the longer explanation of why this matters.</p>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Tier</th><th>Range</th><th>Scope</th></tr></thead>
+          <tbody>
+          <tr><td>1. Targeted attic abandonment</td><td class="price">$1,485–$3,985</td><td>Identify K&T circuits in the attic, kill them at the panel, run replacement circuits to the rooms they served. Single-story or attic-only K&T.</td></tr>
+          <tr><td>2. Second-floor + attic rewire</td><td class="price">$4,985–$9,985</td><td>Most common Cincinnati scope. Removes K&T from the high-fire-risk zones, leaves first-floor circuits in modern wiring.</td></tr>
+          <tr><td>3. Full K&T removal & rewire</td><td class="price">$9,985–$22,000</td><td>Every accessible run. Often combined with full panel upgrade. The durable answer for an insurance-difficult home.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="callout"><strong>Insurance leverage:</strong> If your insurer is threatening non-renewal over K&T, get a written tier-2 or tier-3 quote from us. Most carriers will accept "rewire in progress" with a contract and a timeline. We've written letters for half a dozen Cincinnati homeowners; we know what the carriers want to see.</div>
+      
+    </section>
+    
+    <section class="section" id="generator">
+      <h2 id="generator-h"><a href="#generator" class="anchor" aria-hidden="true">#</a><span class="num">12</span>Generators & transfer switches</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Generator interlock kit (portable generator)</td><td class="price">$485–$885</td><td>Cheapest legal way to back-feed your panel. Mechanical interlock prevents back-feed to grid.</td></tr>
+          <tr><td>Manual transfer switch (6–10 circuit)</td><td class="price">$985–$1,685</td><td>Pre-selected critical circuits. Switch them to generator manually.</td></tr>
+          <tr><td>Inlet box for portable generator (outdoor)</td><td class="price">$385–$685</td><td>Generator plugs into outdoor inlet, no extension cords through windows.</td></tr>
+          <tr><td>Standby whole-home generator install (electrical only)</td><td class="price">$2,485–$4,985</td><td>Generator and gas line separate trades. We do automatic transfer switch, sub-panel, controls.</td></tr>
+          <tr><td>Battery backup install (Tesla Powerwall, Enphase, etc.)</td><td class="price">$1,985–$4,985</td><td>Electrical install only. Solar integration priced separately.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+    </section>
+    
+    <section class="section" id="surge">
+      <h2 id="surge-h"><a href="#surge" class="anchor" aria-hidden="true">#</a><span class="num">13</span>Surge protection & grounding</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Whole-home surge protector (panel-mounted)</td><td class="price">$285–$585</td><td>Single biggest dollar-per-protection upgrade. Add to any panel job for cost+install.</td></tr>
+          <tr><td>Driven ground rod (per rod)</td><td class="price">$185–$385</td><td>When existing ground is missing or insufficient. Code requires two.</td></tr>
+          <tr><td>Bonding of metallic systems (gas, water)</td><td class="price">$235–$485</td><td>Required by code. Older homes often missing.</td></tr>
+          <tr><td>Re-grounding service entrance</td><td class="price">$385–$885</td><td>Full grounding electrode system: rods, bonding, conductor sized to service.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+    </section>
+    
+    <section class="section" id="smoke">
+      <h2 id="smoke-h"><a href="#smoke" class="anchor" aria-hidden="true">#</a><span class="num">14</span>Smoke & CO detectors</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Hardwired smoke detector replacement (each)</td><td class="price">$155–$235</td><td>Like-for-like swap. Interconnect verified.</td></tr>
+          <tr><td>Hardwired combination smoke / CO (each)</td><td class="price">$165–$245</td><td>Modern code default. 10-year sealed battery backup.</td></tr>
+          <tr><td>Add hardwired interconnected detector (no existing wire)</td><td class="price">$235–$485</td><td>Per device, when adding to bring older home to code. Wireless-interconnect units lower the cost.</td></tr>
+          <tr><td>Full home smoke/CO retrofit (typical 3-bedroom)</td><td class="price">$685–$1,485</td><td>Every required location, interconnected, code-current.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+    </section>
+    
+    <section class="section" id="remodel">
+      <h2 id="remodel-h"><a href="#remodel" class="anchor" aria-hidden="true">#</a><span class="num">15</span>Kitchen & bathroom remodels</h2>
+      
+        <p>Remodel pricing is usually quoted as a package because the work overlaps. Numbers below assume drywall is open or coming out anyway.</p>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Scope</th><th>Range</th><th>Includes</th></tr></thead>
+          <tbody>
+          <tr><td>Bathroom remodel electrical (basic)</td><td class="price">$985–$1,985</td><td>GFCI outlets, vent fan circuit, vanity light, switch layout, code-current.</td></tr>
+          <tr><td>Bathroom remodel electrical (full, with heated floor)</td><td class="price">$1,485–$3,485</td><td>Adds dedicated heated-floor circuit, additional lighting, mirror lighting.</td></tr>
+          <tr><td>Kitchen remodel electrical (basic)</td><td class="price">$2,485–$4,985</td><td>Two small-appliance circuits, dishwasher, disposal, microwave, fridge, range, range hood, code outlet spacing, under-cabinet, ceiling lights.</td></tr>
+          <tr><td>Kitchen remodel electrical (full reconfigure)</td><td class="price">$4,985–$9,985</td><td>Island circuits, induction range upgrade, recessed lighting package, smart switches, pendant lights, USB outlets.</td></tr>
+          <tr><td>Adding a kitchen island with electrical</td><td class="price">$685–$1,685</td><td>Outlet(s) per code, optional pendant feed from above.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+    </section>
+    
+    <section class="section" id="outdoor">
+      <h2 id="outdoor-h"><a href="#outdoor" class="anchor" aria-hidden="true">#</a><span class="num">16</span>Outdoor, hot tub, pool</h2>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Work</th><th>Range</th><th>Notes</th></tr></thead>
+          <tbody>
+          <tr><td>Exterior weatherproof outlet (each)</td><td class="price">$285–$485</td><td>Through-wall, GFCI, in-use cover.</td></tr>
+          <tr><td>Post light at end of driveway / walkway</td><td class="price">$485–$1,185</td><td>Includes trenching, conduit, switch from inside.</td></tr>
+          <tr><td>Landscape lighting transformer + 4–6 fixtures</td><td class="price">$685–$1,485</td><td>Low-voltage, photocell or timer.</td></tr>
+          <tr><td>Hot tub circuit (240V, GFCI, disconnect)</td><td class="price">$885–$1,685</td><td>Code-compliant disconnect within sight, bonding, GFCI breaker.</td></tr>
+          <tr><td>In-ground pool electrical (basic)</td><td class="price">$2,485–$4,985</td><td>Pump, light, equipment bonding, GFCI. Excludes pool-build trades.</td></tr>
+          <tr><td>Detached garage feeder + sub-panel + 4 circuits</td><td class="price">$2,485–$4,985</td><td>Trenching priced separately. Common ADU prep.</td></tr>
+          <tr><td>Security lighting (motion-activated, hardwired)</td><td class="price">$285–$685</td><td>Per fixture. Photocell optional.</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="warn"><strong>Pool and hot tub bonding is non-negotiable.</strong> Every conductive surface within 5 feet of the water must be bonded together. We've seen DIY hot tub installs in Cincinnati that skipped this. It's the kind of thing nothing happens with until one day something does, and then it's catastrophic.</div>
+      
+    </section>
+    
+    <section class="section" id="trouble">
+      <h2 id="trouble-h"><a href="#trouble" class="anchor" aria-hidden="true">#</a><span class="num">17</span>Troubleshooting flat-rates</h2>
+      
+        <p>Common problems with known fix paths. These are flat once we've confirmed the diagnosis — no hourly meter.</p>
+      
+        
+        <div class="table-wrap"><table>
+          <thead><tr><th>Symptom</th><th>Typical fix</th><th>Range</th></tr></thead>
+          <tbody>
+          <tr><td>Dead outlet, GFCI tripped upstream</td><td>Locate & reset</td><td class="price">$95–$165</td></tr>
+          <tr><td>Dead outlet, bad connection in box</td><td>Re-terminate or replace outlet</td><td class="price">$135–$245</td></tr>
+          <tr><td>Whole half of room dead</td><td>Trace backstabbed connection, replace device</td><td class="price">$185–$385</td></tr>
+          <tr><td>Flickering lights, single fixture</td><td>Bad bulb / fixture / dimmer mismatch</td><td class="price">$95–$285</td></tr>
+          <tr><td>Flickering lights, whole house, dims when fridge starts</td><td>Loose neutral at service. <strong>This is serious.</strong></td><td class="price">$385–$985</td></tr>
+          <tr><td>Breaker trips immediately on reset</td><td>Hard short. Isolate circuit, repair fault.</td><td class="price">$185–$485</td></tr>
+          <tr><td>Breaker trips after running a while</td><td>Overload or thermal-failing breaker. Diagnose, replace breaker or re-allocate load.</td><td class="price">$185–$485</td></tr>
+          <tr><td>AFCI breaker trips randomly</td><td>Identify offending appliance or wire, swap to combo or address fault</td><td class="price">$185–$485</td></tr>
+          <tr><td>Outdoor outlet stopped working after storm</td><td>Replace GFCI, often the only damage</td><td class="price">$185–$385</td></tr>
+          <tr><td>Burning smell at panel or outlet</td><td>Emergency. We'll make safe first, repair second.</td><td class="price">$285–$985+</td></tr>
+          
+          </tbody>
+        </table></div>
+      
+        <div class="warn"><strong>Loose neutral is the most dangerous "small" problem.</strong> Lights brightening on one side of the house while dimming on the other, or appliances dying in batches, is the signature. It can destroy electronics and start fires. If we suspect a loose neutral, we treat it as same-day and we kill power until it's fixed.</div>
+      
+    </section>
+    
+    <section class="section" id="permits">
+      <h2 id="permits-h"><a href="#permits" class="anchor" aria-hidden="true">#</a><span class="num">18</span>Permits, inspections, materials</h2>
+      
+        <h3>Permits in Cincinnati</h3>
+      
+        <p>Most jobs requiring a permit run <strong>$45–$220</strong> in fees through the City of Cincinnati Department of Buildings &amp; Inspections, plus minor county fees for unincorporated Hamilton County. Permit cost is always included in our written quote — you don't write a separate check.</p>
+      
+        <div class="kv">
+          <dt>No permit</dt><dd>Like-for-like swaps: outlet, switch, fixture replacement. Most repairs.</dd>
+          <dt>Permit usually required</dt><dd>New circuits, panel work, service upgrades, EV chargers, hot tubs, rewires, remodels.</dd>
+          <dt>Permit always required</dt><dd>Anything touching the service entrance, the panel, or the meter. Anything new outdoors. Anything insurance might one day ask about.</dd>
+          
+        </div>
+      
+        <h3>Inspections</h3>
+      
+        <p>Cincinnati inspectors typically schedule within <strong>2–5 business days</strong>. We coordinate, we're on site, we walk through with the inspector. You don't have to take a day off work for it.</p>
+      
+        <h3>Materials</h3>
+      
+        <p>We pass through copper, conduit, and breakers at our cost on jobs over $1,500 — if the price of romex goes up 18% next month, that's an honest number that shows up on your line items. We don't mark up materials. We charge for labor and judgment. That's where the value is.</p>
+      
+        <div class="callout"><strong>2026 material reality:</strong> Copper has been volatile. Romex pricing moved 15–30% in the last two years. Steel conduit is steadier. We'll always tell you on the quote which line items are material-cost-sensitive in case you want to wait a month, and which are stable.</div>
+      
+    </section>
+    
+    <section class="section" id="move">
+      <h2 id="move-h"><a href="#move" class="anchor" aria-hidden="true">#</a><span class="num">19</span>What moves a quote up or down</h2>
+      
+        <div class="two-col">
+          <div class="col up">
+            <h4>Moves a quote up</h4>
+            <ul><li>Finished walls everywhere — no attic, no basement access.</li><li>Plaster & lath construction.</li><li>Knob-and-tube or aluminum branch wiring in the work area.</li><li>Second floor with no straight path from the panel.</li><li>Asbestos-era materials (we don't touch them; you'll need an abatement first).</li><li>Decorative ceilings, custom millwork, or tile we have to avoid damaging.</li><li>Federal Pacific or Zinsco panel (we replace, never just match a breaker).</li><li>Insurance-driven timeline (rush coordination with carrier and inspector).</li><li>Crawlspace access only, especially wet or low.</li><li>Permit hassle from previously unpermitted prior work that has to be reconciled.</li></ul>
+          </div>
+          <div class="col down">
+            <h4>Moves a quote down</h4>
+            <ul><li>Open basement or unfinished attic above the work area.</li><li>Modern panel with empty slots and headroom.</li><li>Multiple jobs in one visit (we're already there, materials are already on the truck).</li><li>Vacant home or mid-remodel timing.</li><li>Same-day decision — we hold the slot, you save the second mobilization.</li><li>You supply the fixture, charger, or smart device.</li><li>Flexible scheduling — we work cheaper on weeks where we have gaps.</li><li>Neighbor or referral pricing on shared scope (running the same circuit to two units in a duplex).</li><li>Repeat customer — we already know your panel.</li><li>Combining with a panel upgrade we're already pulling permit for.</li></ul>
+          </div>
+        </div>
+      
+    </section>
+    
+    <section class="section" id="process">
+      <h2 id="process-h"><a href="#process" class="anchor" aria-hidden="true">#</a><span class="num">20</span>How a written quote works</h2>
+      
+        <ol class="bullets">
+          <li><strong>You reach out.</strong> Call, text, email, or the <a href="contact.html">contact form</a>. Tell us what you want done in your own words and send photos if you can. Photos shorten the timeline by a day.</li>
+          <li><strong>We respond same day.</strong> Usually within a few hours during business days. We'll either quote from photos, ask a couple of clarifying questions, or schedule a free site visit if the scope warrants it.</li>
+          <li><strong>Written quote in 24 hours.</strong> PDF, line items, materials, labor, permit, total. Valid for 30 days. Sent to your email and a copy stays in our shop.</li>
+          <li><strong>You sign or you don't.</strong> No pressure, no follow-up calls beyond one polite check-in. If the answer is no, the answer is no.</li>
+          <li><strong>We book the work.</strong> Usually within 1–3 weeks for non-emergency jobs. Same-day or next-day for emergencies.</li>
+          <li><strong>We do the work.</strong> The number on the quote is the number on the bill. Changes only happen with your written approval first.</li>
+          <li><strong>Walk-through at the end.</strong> We show you what we did, how to use it, where the breakers are, what to call us about in the future.</li>
+          <li><strong>Final payment.</strong> Bank transfer, check, or card (3% card fee, we pass it through). 12-month warranty on labor, manufacturer warranty on materials.</li>
+          
+        </ol>
+      
+        <div class="cta-mini"><strong>Ready to get one of these in your inbox?</strong> Send a couple of photos and a sentence about what you want done. We'll have a real number to you within 24 hours. <a href="contact.html">Start a quote →</a></div>
+      
+    </section>
+    
+
+    
+    <section class="section">
+      <h2>One last thing</h2>
+      <p>Most electricians don't publish prices because the honest answer is "it depends," and that's true — but "it depends" doesn't have to mean "secret." We'd rather give you ranges that come in a little wide than make you call three companies before you can plan your weekend.</p>
+      <p>If a quote you get from someone else lands way above or way below these numbers, that's worth asking about. Sometimes there's a real reason. Sometimes there isn't. Either way, you deserve to know which one it is — and we're happy to take a look if you want a second pair of eyes.</p>
+      
+      <p class="sub" style="font-size:.85rem;margin-top:1.5rem">Last updated 2026. Ranges reflect Cincinnati-area residential work with materials at current market. Your actual written quote is always the final number.</p>
+    </section>
+    
+  </div>
+</section>
+
+</main>
+
+<section class="band band-dark cta-band">
+  <div class="wrap-narrow">
+    <h2>Want a written quote you can actually trust?</h2>
+    <p class="lede">Text us a couple of photos and a sentence about what you want done. We'll have a real number in your inbox within 24 hours — and no, we won't call you twenty times after.</p>
+    <div class="cta-cluster center">
+      <a href="instant-quote.html" class="btn btn-primary">Get an instant quote</a>
+      <span class="cta-micro">Itemized PDF in your inbox in three minutes. No sales call.</span>
+    </div>
+  </div>
+</section>
+
+<footer class="site">
+  <div class="row">
+    <div class="meta">
+      <strong>Vanguard Reconstruction</strong>
+      <span>Cincinnati, Ohio</span>
+      <span><a href="tel:+15135550118">(513) 555-0118</a> · <a href="mailto:hello@vre-construction.com">hello@vre-construction.com</a></span>
+    </div>
+    <div class="links">
+      <a href="services.html">Services</a>
+      <a href="pricing.html">Pricing</a>
+      <a href="knowledge.html">Knowledge</a>
+      <a href="contact.html">Contact</a>
+      
+    </div>
+    <div class="credit">
+      <span>Vanguard Reconstruction · Cincinnati · Family-owned, fully insured, background-checked crew.</span>
+      <span>© 2026 <a href="https://allee-ai.com">Allee AI</a>. All rights reserved.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav = document.getElementById('nav-shell');
+  if(!nav) return;
+  var ticking = false;
+  function update(){
+    nav.classList.toggle('scrolled', window.scrollY > 8);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(update); ticking = true; }
+  }, {passive:true});
+  update();
+})();
+</script>
+</body>
+</html>

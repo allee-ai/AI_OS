@@ -1,0 +1,83 @@
+# Homepage structure for vre-construction.com
+# Marketing-grade index. Edit copy here, rebuild with infra/build_vre.py.
+
+meta:
+  title: "Vanguard Reconstruction — Cincinnati Residential Electric"
+  description: "Residential electrical work in Cincinnati and Hamilton County, done thoughtfully. Written quotes in 24 hours. Panels, EV chargers, rewires, lighting, the strange flickering thing nobody else could figure out. Family-owned, fully insured."
+  canonical: "https://vre-construction.com/"
+  og_title: "Vanguard Reconstruction — Cincinnati Residential Electric"
+  og_description: "Thoughtful electrical work in Cincinnati. Written quotes in 24 hours. Family-owned."
+
+# Top of page — the only visible hero
+hero:
+  eyebrow: "Cincinnati residential electric"
+  h1_before: "Electrical work"
+  h1_accent: "without the runaround."
+  h1_after: ""
+  lede: "You shouldn't have to call three companies, get talked down to twice, and wait a week for someone to even quote you. We answer the phone. We text when we're on the way. We explain the work like you're going to read the quote — because you are."
+  primary_cta: { label: "Start a quote", href: "contact.html" }
+  secondary_cta: { label: "See pricing", href: "pricing.html" }
+  microcopy: "Photo-quote in 24 hours. We text. No sales calls."
+
+# Credibility strip
+stats:
+  - { num: "24h",   label: "Written quote, in your inbox" }
+  - { num: "On-time", label: "Or we text before we're not" }
+  - { num: "Insured", label: "& background-checked crew" }
+  - { num: "1–3",   label: "Weeks out, usually" }
+
+# Three numbered steps
+how:
+  eyebrow: "How this goes"
+  title: "Three steps, and we mean it."
+  lede: "Most electrical companies make this part vague on purpose. We'd rather just tell you."
+  steps:
+    - { num: "01", title: "Text us a few photos", text: "Text is honestly easier than the phone for most of this. A picture of the panel, the room, the problem. A sentence about what you want done is plenty — you don't need to know the words." }
+    - { num: "02", title: "We send a written quote", text: "Within 24 hours, in your inbox. Line items, materials, labor, permit, total. Good for 30 days. We won't follow up unless you tell us you want us to." }
+    - { num: "03", title: "We show up when we said", text: "Usually 1–3 weeks out, same-day if your power's out or something smells wrong. We text the morning of, and again when we're parked. The number on the quote is the number on the bill." }
+
+# Photo band between sections (full-bleed)
+photo_band:
+  src: "https://picsum.photos/seed/vre-craft-1/2000/1100"
+  alt: "A Cincinnati home, the kind we work in every day"
+  caption: "For the homes we live in · Cincinnati · 2026"
+
+# Three service pillars
+services:
+  eyebrow: "What we do most"
+  title: "Residential, the whole house."
+  lede: "Single-family through 3-family. If it has a panel and a meter, we can probably help — and if we can't, we'll tell you who can."
+  pillars:
+    - id: "panels"
+      title: "Panels & service upgrades"
+      blurb: "The Federal Pacific in the basement that the inspector flagged. The 100A that can't handle one more thing. Meter-to-panel rebuilds, coordinated with Duke Energy and the City so you don't have to."
+      price: "$1,685 – $5,485"
+      more_href: "pricing.html#panels"
+    - id: "ev"
+      title: "EV chargers"
+      blurb: "Outlet or hardwired, indoors or out. If your panel's tight, we'll usually find a way without an upgrade — and if we can't, we'll tell you on the phone, before anyone gets a quote that surprises them."
+      price: "$485 – $1,985"
+      more_href: "pricing.html#ev"
+    - id: "trouble"
+      title: "The strange stuff"
+      blurb: "Flickering lights, dead outlets, breakers that won't stay set, that one room nobody can figure out. Flat-rate diagnostics that credit toward the fix. Most of it gets solved in one visit."
+      price: "$95 – $485"
+      more_href: "pricing.html#trouble"
+
+# Promise / values block (the inclusivity-as-texture moment)
+values:
+  eyebrow: "How we work"
+  title: "The way we'd want it, if it were our house."
+  items:
+    - { title: "We explain the work",  text: "We talk to whoever's standing there. We don't ask if someone else makes the decisions. We won't make you feel small for asking what a breaker does. If you want the deep version, we'll give it. If you want the short version, we'll give that too." }
+    - { title: "We respect your home",  text: "Drop cloths down. Vacuum out. Shoes off when you ask. We text when we're on the way and again when we're parked, so nobody answers the door surprised. Fully insured. Background-checked crew. The basics, done every time." }
+    - { title: "Every neighbor",        text: "We work for the home, not the homeowner's politics. Family-owned, Cincinnati-based, here for the long run. You don't have to explain yourself to us." }
+
+# Testimonials
+testimonials:
+  eyebrow: "From folks we've worked for"
+  title: "What people say."
+  items:
+    - { quote: "They quoted in writing the same day, showed up exactly when they said, and the price didn't move a dollar. After three other electricians who acted like I wasn't going to understand — this was honestly such a relief.", who: "Sarah K.", where: "Hyde Park · panel upgrade" }
+    - { quote: "Walked me through what was actually wrong versus what could wait. Didn't try to sell me a full rewire I didn't need. Fixed the dangerous part for under $300 and explained it without being weird about it.", who: "Danielle B.", where: "Northside · troubleshooting" }
+    - { quote: "Installed our charger and explained the math behind the breaker size. First contractor in years who treated me like I could understand my own house. I've already sent two friends their way.", who: "Priya D.", where: "Oakley · EV install" }

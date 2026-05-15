@@ -1,0 +1,43 @@
+# Site-wide settings shared by all pages.
+# Edit the nav once here; it propagates to every rendered page.
+
+brand:
+  name: "Vanguard Reconstruction"
+  tagline: "Cincinnati Residential Electric"
+  phone_display: "(513) 555-0118"
+  phone_tel: "+15135550118"
+  email: "hello@vre-construction.com"
+  city: "Cincinnati, Ohio"
+
+nav:
+  - { href: "index.html",     label: "Home" }
+  - { href: "services.html",  label: "Services" }
+  - { href: "pricing.html",   label: "Pricing" }
+  - { href: "knowledge.html", label: "Knowledge" }
+  - { href: "contact.html",   label: "Contact" }
+
+# Primary CTA used everywhere — routes to the instant-quote stepper.
+cta:
+  label: "Get an instant quote"
+  href: "instant-quote.html"
+  microcopy: "Itemized PDF in your inbox in three minutes. No sales call."
+
+footer:
+  business_line: "Vanguard Reconstruction · Cincinnati · Family-owned, fully insured, background-checked crew."
+  copyright: "© 2026 <a href=\"https://allee-ai.com\">Allee AI</a>. All rights reserved."
+  built_by: "Site by <a href=\"https://allee-ai.com\">Allee AI</a>"
+  legal_links:
+    - { href: "services.html",  label: "Services" }
+    - { href: "pricing.html",   label: "Pricing" }
+    - { href: "knowledge.html", label: "Knowledge" }
+    - { href: "contact.html",   label: "Contact" }
+
+fonts: "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Fraunces:opsz,ital,wght@9..144,0,500;9..144,0,600;9..144,1,500;9..144,1,600&family=JetBrains+Mono:wght@500;600&display=swap"
+theme_color: "#7c3aed"
+
+# Placeholder images. Swap URLs in each page's YAML for real photos when ready.
+# picsum.photos is deterministic by seed — same seed always returns same image.
+placeholder_seeds:
+  craft: "https://picsum.photos/seed/vre-craft-1/2000/1100"
+  panel: "https://picsum.photos/seed/vre-panel-2/1600/900"
+  home:  "https://picsum.photos/seed/vre-home-3/1600/900"

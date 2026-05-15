@@ -1,0 +1,116 @@
+meta:
+  title: "Services — Vanguard Reconstruction"
+  description: "What we do, what we don't, and what to expect when we show up. Residential electrical only, Cincinnati, single-family through 3-family."
+
+jsonld: |
+  {
+    "@context": "https://schema.org",
+    "@type": "Service",
+    "serviceType": "Residential electrical contractor",
+    "provider": { "@type": "Electrician", "name": "Vanguard Reconstruction", "areaServed": "Cincinnati, Ohio" },
+    "areaServed": "Cincinnati, Ohio"
+  }
+
+hero:
+  eyebrow: "Services"
+  h1_before: "What we do —"
+  h1_accent: "and what we won't oversell."
+  h1_after: ""
+  lede: "A clear scope is a kindness. It means the work that lands on our truck is work we're fast and accurate at, and the quote you get is the bill you pay. No bait-and-switch, no \"while we're in there\" upsells, no surprises after we leave."
+  tags:
+    - { strong: "Fully insured", text: "(certificate on request)" }
+    - { strong: "Background-checked", text: "crew" }
+    - { strong: "Written quotes", text: "before any work starts" }
+
+# Trust signals strip (women-friendly: insurance, vetting, transparency, communication)
+trust:
+  items:
+    - { num: "$2M", label: "General liability insurance" }
+    - { num: "100%", label: "Background-checked crew" }
+    - { num: "24h", label: "Written quote turnaround" }
+    - { num: "0", label: "Memberships, trip fees, or upsells" }
+
+# Two-column in-scope / not-our-scope
+scope:
+  title: "In scope · not our scope"
+  intro: "Specializing means the panel goes in clean the first time, the work holds up, and the bill is honest. If your job sits in the right column, we'll say so on the first call and refer you to someone good — saves a wasted site visit."
+  in:
+    title: "In scope"
+    items:
+      - "Panel upgrades and service changes (100A → 200A → 400A)"
+      - "Sub-panels and feeder runs"
+      - "Breaker swaps, AFCI/GFCI updates"
+      - "New circuits and dedicated lines (kitchen, bath, laundry, office)"
+      - "240V drops (EV chargers, dryers, ranges, hot tubs)"
+      - "Outlets, switches, dimmers, smart switches"
+      - "Fixture installs and ceiling fans"
+      - "Whole-house surge protection"
+      - "Fault tracing and troubleshooting"
+      - "Knob-and-tube assessments and remediation"
+      - "Pre-purchase electrical walkthroughs"
+      - "Smoke / CO detector hardwiring & interconnect"
+  out:
+    title: "Not our scope"
+    items:
+      - "Drywall, framing, finish carpentry"
+      - "Plumbing rough or repair"
+      - "HVAC install or service"
+      - "Painting, flooring, tile"
+      - "Roofing, siding, gutters"
+      - "Generator install (gas hook-up side)"
+      - "Low-voltage / structured cabling builds"
+      - "Solar & battery systems"
+      - "Anything 4-family-plus or commercial code"
+      - "New construction GC work"
+
+# What every job actually looks like (expectation-setting timeline)
+flow:
+  title: "What every job actually looks like"
+  intro: "From the text you send us tonight to the moment we hand back your keys. Predictable on purpose."
+  steps:
+    - num: "01"
+      title: "You text us"
+      body: "A few photos and a sentence in your own words. You don't need to know what to call it. \"The outlet in the kitchen is warm\" is plenty."
+    - num: "02"
+      title: "We text back (same day)"
+      body: "Usually within a couple of hours, always within 24. If we need to see it in person before quoting, we'll book a short visit that's free."
+    - num: "03"
+      title: "Written quote in your inbox"
+      body: "Itemized. Flat-rate when we can, capped time-and-materials when we can't. Permit fees included. No \"signs here for an unspecified amount.\""
+    - num: "04"
+      title: "We show up when we said"
+      body: "Text the morning of. Text again when we're parked, so nobody answers the door surprised. Shoes off when you ask. Drop cloths down."
+    - num: "05"
+      title: "Walkthrough before we leave"
+      body: "We walk you through what we did, what we found that wasn't in the quote (and why we didn't change it), and what to watch for. You sign off; the bill is exactly the quote."
+
+# Meet the crew (humanizing — women buy from people they can picture)
+crew:
+  title: "Meet the crew"
+  intro: "Four of us total. The person who answered your text is the person who walked the job. Nobody on our payroll has ever called a customer \"sweetheart.\""
+  members:
+    - name: "Cade"
+      role: "Owner · runs the shop"
+      bio: "Started Vanguard after fifteen years across the trades, tired of watching customers get talked down to. Answers texts after 6pm; sleeps eventually."
+      photo: "https://picsum.photos/seed/vre-crew-cade/600/600"
+    - name: "Jordan"
+      role: "Field manager · scheduling & quotes"
+      bio: "Walks every job before we quote it. The voice on the other end of the phone. Has explained what a breaker does to more first-time homebuyers than she can count."
+      photo: "https://picsum.photos/seed/vre-crew-jordan/600/600"
+    - name: "Marcus"
+      role: "Lead electrician"
+      bio: "Twelve years on residential. Panels and rewires are his thing. Will absolutely take his shoes off without being asked."
+      photo: "https://picsum.photos/seed/vre-crew-marcus/600/600"
+    - name: "Devon"
+      role: "Electrician"
+      bio: "Newest on the crew, sharpest with troubleshooting. Apprenticed under Marcus. Background-checked the same week he was hired."
+      photo: "https://picsum.photos/seed/vre-crew-devon/600/600"
+
+# Service area + pricing pointer + how-we-bill clarity
+specifics:
+  area:
+    title: "Service area"
+    body: "Cincinnati and the surrounding residential market — Hyde Park, Oakley, Northside, Clifton, Pleasant Ridge, Madeira, Norwood, Mt. Lookout, Walnut Hills, and out to about a 25-minute drive. Single-family through 3-family buildings. If your job is bigger than that, we'll tell you straight."
+  billing:
+    title: "How we bill (the short version)"
+    body: "Flat-rate quotes for defined work — panels, circuits, fixture installs, EV drops. Capped time-and-materials for diagnostics and open-ended troubleshooting, with the cap agreed up front. No recurring fees, no membership upsells, no surprise trip charges. The quote you get is the bill you pay. **[See the full pricing guide →](pricing.html)**"

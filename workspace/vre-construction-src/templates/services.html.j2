@@ -1,0 +1,135 @@
+{% extends "_base.html.j2" %}
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block jsonld %}{% if jsonld %}<script type="application/ld+json">{{ jsonld | safe }}</script>{% endif %}{% endblock %}
+
+{% block extra_css %}
+.crew{display:grid;grid-template-columns:repeat(4,1fr);gap:1.25rem;margin-top:2.5rem}
+@media (max-width:880px){.crew{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:520px){.crew{grid-template-columns:1fr}}
+.crew-card{
+  display:flex;flex-direction:column;
+  background:var(--card);border:1px solid var(--rule);border-radius:14px;
+  box-shadow:var(--card-shadow);overflow:hidden;
+  transition:transform .2s ease, box-shadow .2s ease, border-color .2s ease;
+}
+.crew-card:hover{transform:translateY(-2px);box-shadow:var(--card-shadow-hover);border-color:var(--rule-strong)}
+.crew-card .photo{aspect-ratio:1/1;background:var(--bg-2);overflow:hidden}
+.crew-card .photo img{width:100%;height:100%;object-fit:cover;display:block}
+.crew-card .body{padding:1.2rem 1.25rem 1.4rem}
+.crew-card .name{font-family:var(--serif);font-weight:600;font-size:1.15rem;letter-spacing:-.01em;color:var(--fg);margin:0 0 .15rem}
+.crew-card .role{font-size:.78rem;color:var(--accent);text-transform:uppercase;letter-spacing:.08em;font-weight:600;margin-bottom:.7rem}
+.crew-card .bio{font-size:.92rem;color:var(--mute);line-height:1.55;margin:0}
+
+.scope-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;margin-top:2rem}
+@media (max-width:720px){.scope-grid{grid-template-columns:1fr}}
+.scope-col{padding:1.6rem 1.5rem;background:var(--card);border:1px solid var(--rule);border-radius:14px;box-shadow:var(--card-shadow)}
+.scope-col.in{border-top:3px solid #10b981}
+.scope-col.out{border-top:3px solid #f59e0b}
+.scope-col h3{margin:0 0 .9rem;font-family:var(--serif);font-style:normal;font-size:1.15rem;color:var(--fg);display:flex;align-items:center;gap:.55rem}
+.scope-col.in h3::before{content:"";width:10px;height:10px;border-radius:50%;background:#10b981}
+.scope-col.out h3::before{content:"";width:10px;height:10px;border-radius:50%;background:#f59e0b}
+.scope-col ul{margin:0;padding-left:1.15rem;color:var(--fg);font-size:.94rem;line-height:1.7}
+.scope-col li{margin-bottom:.3rem}
+.scope-col li::marker{color:var(--mute)}
+
+.specifics{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-top:2rem}
+@media (max-width:720px){.specifics{grid-template-columns:1fr}}
+.specifics .card{padding:1.5rem 1.6rem;background:var(--bg-2);border:1px solid var(--rule);border-radius:12px}
+.specifics .card h3{margin:0 0 .6rem;font-family:var(--serif);font-style:normal;color:var(--fg);font-size:1.1rem}
+.specifics .card p{margin:0;color:var(--mute);font-size:.96rem;line-height:1.65}
+.specifics .card p strong{color:var(--fg)}
+{% endblock %}
+
+{% block content %}
+<section class="band hero">
+  <div class="wrap">
+    <p class="eyebrow">{{ hero.eyebrow }}</p>
+    <h1>{{ hero.h1_before }} <span class="grad-under">{{ hero.h1_accent }}</span>{% if hero.h1_after %} {{ hero.h1_after }}{% endif %}</h1>
+    <p class="lede">{{ hero.lede }}</p>
+    {% if hero.tags %}
+    <div class="tag-row">
+      {% for t in hero.tags %}<span><strong>{{ t.strong }}</strong> {{ t.text }}</span>{% endfor %}
+    </div>
+    {% endif %}
+    <div class="stats">
+      {% for s in trust['items'] %}
+      <div class="stat">
+        <div class="stat-num">{{ s.num }}</div>
+        <div class="stat-label">{{ s.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <h2>{{ scope.title }}</h2>
+    <p class="lede sub">{{ scope.intro }}</p>
+    <div class="scope-grid">
+      <div class="scope-col in">
+        <h3>{{ scope.in.title }}</h3>
+        <ul>{% for i in scope.in['items'] %}<li>{{ i }}</li>{% endfor %}</ul>
+      </div>
+      <div class="scope-col out">
+        <h3>{{ scope.out.title }}</h3>
+        <ul>{% for i in scope.out['items'] %}<li>{{ i }}</li>{% endfor %}</ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <h2>{{ flow.title }}</h2>
+    <p class="lede sub">{{ flow.intro }}</p>
+    <div class="steps" style="grid-template-columns:repeat(5,1fr)">
+      {% for s in flow['steps'] %}
+      <div class="step">
+        <span class="num">{{ s.num }}</span>
+        <h3>{{ s.title }}</h3>
+        <p>{{ s.body }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <h2>{{ crew.title }}</h2>
+    <p class="lede sub">{{ crew.intro }}</p>
+    <div class="crew">
+      {% for m in crew['members'] %}
+      <article class="crew-card">
+        <div class="photo"><img src="{{ m.photo }}" alt="{{ m.name }}, {{ m.role }}" loading="lazy"></div>
+        <div class="body">
+          <p class="name">{{ m.name }}</p>
+          <p class="role">{{ m.role }}</p>
+          <p class="bio">{{ m.bio }}</p>
+        </div>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <div class="specifics">
+      <div class="card">
+        <h3>{{ specifics.area.title }}</h3>
+        <p>{{ specifics.area.body }}</p>
+      </div>
+      <div class="card">
+        <h3>{{ specifics.billing.title }}</h3>
+        <p>{{ specifics.billing.body | md_inline | safe }}</p>
+      </div>
+    </div>
+  </div>
+</section>
+{% endblock %}
+
+{% block bottom_cta_h2 %}Ready to text us a couple of photos?{% endblock %}
+{% block bottom_cta_lede %}You don't need to know what the thing is called. We'll figure it out, write you a real number, and show up when we said.{% endblock %}

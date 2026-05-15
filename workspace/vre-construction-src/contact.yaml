@@ -1,0 +1,85 @@
+meta:
+  title: "Contact — Vanguard Reconstruction"
+  description: "Text us photos for a 24-hour quote. Call, text, or use the form. Cincinnati residential electric."
+
+jsonld: |
+  {
+    "@context": "https://schema.org",
+    "@type": "ContactPage",
+    "url": "https://vre-construction.com/contact.html",
+    "about": { "@id": "https://vre-construction.com/#business" }
+  }
+
+hero:
+  eyebrow: "Get in touch"
+  h1_before: "Text us. We answer"
+  h1_accent: "the same day."
+  h1_after: ""
+  lede: "Honestly, text is easier than the phone for most of this. Send us a couple of photos and a sentence in your own words. We'll have a real number in your inbox within 24 hours — and no, we won't put you on a call list after."
+
+# Big primary contact card
+primary:
+  title: "How to reach us"
+  channels:
+    - icon: "💬"
+      label: "Text (fastest)"
+      value: "(513) 555-0118"
+      href: "sms:+15135550118"
+      sub: "Read faster than voicemail. Photos welcome."
+    - icon: "📞"
+      label: "Call"
+      value: "(513) 555-0118"
+      href: "tel:+15135550118"
+      sub: "Mon–Fri, 8am–6pm. Jordan picks up."
+    - icon: "✉️"
+      label: "Email"
+      value: "hello@vre-construction.com"
+      href: "mailto:hello@vre-construction.com"
+      sub: "Same-day response on business days."
+  micro_notes:
+    - "Spanish-speaking? Just text in Spanish — Jordan replies in Spanish."
+    - "Hard-of-hearing? Text is the easiest way to reach us anytime."
+    - "After-hours emergency (no power, burning smell, sparking)? Call and let it ring — calls outside business hours route to Cade's cell."
+
+# What helps us quote without a site visit
+helps:
+  title: "What helps us quote fast"
+  intro: "Most jobs we can quote from photos alone. If you can send these, you'll usually have a number in your inbox the same day:"
+  items:
+    - "Address and a sentence on the building (single-family / duplex / triplex)"
+    - "What you want done, **in your own words** — we'll translate to code language"
+    - "Age of the panel and main service size, *if you happen to know*"
+    - "A photo of the panel cover (closed is fine)"
+    - "A photo of the room or fixture in question"
+  warn: "Don't take the panel cover off if you're not sure. Energized bus bars are right there. A clear photo of the closed panel with door open is plenty for 90% of quotes."
+
+# The form
+form:
+  title: "Or send a message here"
+  sub: "Same inbox as the email above. We'll get back to you, usually within a few hours."
+  sent_message: "Got it. We'll be in touch shortly — usually same business day."
+  fields:
+    - { name: "name",    label: "Your name",    type: "text",     required: true,  autocomplete: "name" }
+    - { name: "email",   label: "Email",        type: "email",    required: true,  autocomplete: "email" }
+    - { name: "phone",   label: "Phone (so we can text)", type: "tel", required: false, autocomplete: "tel", placeholder: "Optional, but speeds things up" }
+    - { name: "topic",   label: "What's this about?", type: "text", required: false, placeholder: "Panel · Outlets · EV charger · Troubleshoot · Not sure" }
+    - { name: "message", label: "Tell us about it", type: "textarea", required: true, placeholder: "Address, what you'd like done, anything else. You don't need to know the names of anything." }
+  submit_label: "Send message"
+  submit_micro: "We don't share your info. Ever. No mailing list. No sales calls."
+
+# What happens after you hit send (expectation timeline)
+expect:
+  title: "What happens after you hit send"
+  intro: "Predictable on purpose. You'll never wonder if we got it."
+  steps:
+    - { num: "01", title: "Confirmation text or email", body: "Usually within an hour during business hours. \"We got it, we'll have a number for you by [time].\"" }
+    - { num: "02", title: "Written quote in your inbox",  body: "Within 24 hours of you sending us the photos. Itemized. Permit fees included if needed." }
+    - { num: "03", title: "You decide on your timeline",  body: "No pressure call-backs. If we don't hear from you, we don't hound you. The quote is good for 30 days." }
+    - { num: "04", title: "When you're ready, we book it", body: "We text the morning of the appointment. We text again when we're parked, so nobody answers the door surprised." }
+
+# Service area + final note
+specifics:
+  title: "Service area"
+  body: "Cincinnati and surrounding — Hyde Park, Oakley, Northside, Clifton, Pleasant Ridge, Madeira, Norwood, Mt. Lookout, Walnut Hills, and out to about a 25-minute drive. Residential only, single-family through 3-family."
+  outro_title: "One last note"
+  outro: "If your job sits outside our scope — framing, plumbing, HVAC, the rest of the **[services page →](services.html)** — we'll say so on the first call and refer you to someone good. Saves a wasted site visit and gets you to the right person faster."

@@ -1,0 +1,117 @@
+{% extends "_base.html.j2" %}
+{% block title %}{{ meta.title }}{% endblock %}
+{% block description %}{{ meta.description }}{% endblock %}
+{% block canonical %}{{ meta.canonical }}{% endblock %}
+{% block jsonld %}<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Electrician",
+  "@id": "https://vre-construction.com/#business",
+  "name": "{{ site.brand.name }}",
+  "url": "https://vre-construction.com/",
+  "telephone": "{{ site.brand.phone_tel }}",
+  "email": "{{ site.brand.email }}",
+  "address": { "@type": "PostalAddress", "addressLocality": "Cincinnati", "addressRegion": "OH", "addressCountry": "US" },
+  "areaServed": { "@type": "AdministrativeArea", "name": "Hamilton County, Ohio" },
+  "description": "{{ meta.description }}"
+}
+</script>{% endblock %}
+
+{% block content %}
+
+<section class="band hero">
+  <div class="wrap">
+    <span class="eyebrow">{{ hero.eyebrow }}</span>
+    <h1>{{ hero.h1_before }} <span class="grad-under">{{ hero.h1_accent }}</span> {{ hero.h1_after }}</h1>
+    <p class="lede">{{ hero.lede }}</p>
+    <div class="hero-cta-row">
+      <a href="{{ hero.primary_cta.href }}" class="btn btn-primary">{{ hero.primary_cta.label }}</a>
+      <a href="{{ hero.secondary_cta.href }}" class="btn btn-ghost">{{ hero.secondary_cta.label }}</a>
+      <span class="cta-micro">{{ hero.microcopy }}</span>
+    </div>
+
+    <div class="stats">
+      {% for s in stats -%}
+      <div class="stat">
+        <div class="stat-num">{{ s.num }}</div>
+        <div class="stat-label">{{ s.label }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <span class="eyebrow">{{ how.eyebrow }}</span>
+    <h2>{{ how.title }}</h2>
+    <p class="lede sub">{{ how.lede }}</p>
+    <div class="steps">
+      {% for st in how.steps %}
+      <div class="step">
+        <div class="num">{{ st.num }}</div>
+        <h3>{{ st.title }}</h3>
+        <p>{{ st.text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<figure class="photo-band">
+  <img src="{{ photo_band.src }}" alt="{{ photo_band.alt }}" loading="lazy">
+  <figcaption class="photo-caption">{{ photo_band.caption }}</figcaption>
+</figure>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">{{ services.eyebrow }}</span>
+    <h2>{{ services.title }}</h2>
+    <p class="lede sub">{{ services.lede }}</p>
+    <div class="pillars">
+      {% for p in services.pillars %}
+      <article class="pillar">
+        <h3>{{ p.title }}</h3>
+        <p>{{ p.blurb }}</p>
+        <div class="price-inline">{{ p.price }}</div>
+        <a href="{{ p.more_href }}" class="more">See pricing</a>
+      </article>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band band-2">
+  <div class="wrap">
+    <span class="eyebrow">{{ values.eyebrow }}</span>
+    <h2>{{ values.title }}</h2>
+    <div class="values">
+      {% for v in values['items'] %}
+      <div class="value">
+        <h3>{{ v.title }}</h3>
+        <p>{{ v.text }}</p>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+<section class="band">
+  <div class="wrap">
+    <span class="eyebrow">{{ testimonials.eyebrow }}</span>
+    <h2>{{ testimonials.title }}</h2>
+    <div class="quotes">
+      {% for t in testimonials['items'] %}
+      <div class="quote">
+        <blockquote>{{ t.quote }}</blockquote>
+        <div class="who">
+          <strong>{{ t.who }}</strong>
+          <span>{{ t.where }}</span>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</section>
+
+{% endblock %}

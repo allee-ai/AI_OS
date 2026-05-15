@@ -9,15 +9,7 @@ Print this. Tape it to the wall next to the phone.
 
 > "Hey [name], this is [you] with Vanguard Reconstruction in Cincinnati — we're residential electricians, single-family through 3-family. Most of our work is panel upgrades, EV drops, and turnover electrical for landlords. Quick question: who do you call when something electrical pops on one of your properties?"
 
-**Why it works:**
-- Names the niche in the first sentence (residential electrical, ≤3-family, landlord-focused) → instant qualification
-- Lists the three highest-paying, highest-pain jobs (panels, EV, turn electrical) → one will resonate
-- Ends with a question they can answer in 2 seconds → keeps them on the line
 
-**Variants if the first one's not landing:**
-- *"…we specialize in panel swaps and pre-purchase electrical walkthroughs — does either of those come up much in your portfolio?"*
-- *"…we just finished a 200-amp panel swap on a duplex in [neighborhood] for a landlord like you. Wanted to see if you have anything similar coming up."*
-- *"…tenants asking about EV chargers yet? We're doing more of those drops every month."*
 
 ---
 

@@ -1,0 +1,389 @@
+meta:
+  title: "Instant quote — Vanguard Reconstruction"
+  description: "Build a real, itemized electrical estimate in three minutes. Same prices we publish on our pricing page. We send the PDF to your inbox."
+
+hero:
+  eyebrow: "Instant quote"
+  h1_before: "Build a real bid in"
+  h1_accent: "three minutes."
+  lede: "We publish our prices. So we wired them into a calculator. Click what you need, see the range live, get the PDF in your inbox. No salesperson. No callback wait."
+  micro: "This produces a written estimate, not a final invoice. We confirm everything on a 15-minute walkthrough before any work starts."
+
+# ---------- step 1: who are you / what is this for ----------
+property_types:
+  - id: home
+    label: "My home"
+    desc: "I live here. No rush, real walkthrough, explain everything."
+    icon: "🏠"
+  - id: rental
+    label: "A rental I own"
+    desc: "Tenants in or moving in soon. Bid first, schedule second."
+    icon: "🔑"
+  - id: flip
+    label: "Flip in progress"
+    desc: "On the clock. Want a draw schedule and a firm date."
+    icon: "🔨"
+  - id: walkthrough
+    label: "Pre-purchase walkthrough"
+    desc: "Under contract or considering. Want to know what you're buying before close."
+    icon: "🔍"
+
+# ---------- step 2/3: line-item catalog ----------
+# Each category lights up a section of checkboxes + quantity counters.
+# `low` and `high` are USD. `unit` is "each" (default) or "fixed".
+# Items with a `tier_note` get a small-print clarifier under the label.
+categories:
+  - id: outlets_switches
+    label: "Outlets & switches"
+    icon: "🔌"
+    items:
+      - id: outlet_replace
+        label: "Replace standard outlet"
+        low: 115
+        high: 185
+        tier_note: "5+ at one visit drops to $95 ea. 10+: $85 ea. We adjust the bid automatically."
+      - id: outlet_gfci
+        label: "Replace / install GFCI outlet"
+        low: 145
+        high: 215
+      - id: outlet_add_accessible
+        label: "Add new outlet (basement / accessible)"
+        low: 175
+        high: 295
+      - id: outlet_add_finished
+        label: "Add new outlet (finished wall, fish from below)"
+        low: 275
+        high: 475
+      - id: outlet_2to3
+        label: "2-prong → 3-prong (with real ground)"
+        low: 185
+        high: 285
+      - id: outlet_ext
+        label: "Exterior weatherproof outlet"
+        low: 285
+        high: 475
+      - id: switch_replace
+        label: "Replace standard switch"
+        low: 95
+        high: 165
+        tier_note: "5+ at one visit: $80 ea. 10+: $70 ea."
+      - id: switch_dimmer
+        label: "Replace with LED-rated dimmer"
+        low: 155
+        high: 235
+      - id: switch_3way
+        label: "Convert single-pole to 3-way"
+        low: 285
+        high: 525
+      - id: switch_smart
+        label: "Smart switch install (your device)"
+        low: 135
+        high: 235
+
+  - id: lighting
+    label: "Lighting & fans"
+    icon: "💡"
+    items:
+      - id: light_swap
+        label: "Swap light fixture (existing box)"
+        low: 135
+        high: 235
+      - id: chandelier_std
+        label: "Chandelier install (under 50 lbs, 9 ft)"
+        low: 235
+        high: 425
+      - id: chandelier_vault
+        label: "Chandelier in vaulted / 2-story foyer"
+        low: 485
+        high: 985
+      - id: fan_swap
+        label: "Ceiling fan swap (existing fan-rated box)"
+        low: 185
+        high: 295
+      - id: fan_new_attic
+        label: "New ceiling fan (attic access)"
+        low: 385
+        high: 685
+      - id: fan_new_noattic
+        label: "New ceiling fan (no attic access)"
+        low: 585
+        high: 985
+      - id: can_attic
+        label: "Recessed can light (attic access, each)"
+        low: 165
+        high: 285
+      - id: can_noattic
+        label: "Recessed can light (no attic access, each)"
+        low: 285
+        high: 485
+      - id: under_cab
+        label: "Under-cabinet LED run (per kitchen)"
+        low: 385
+        high: 885
+
+  - id: panel
+    label: "Panel & service upgrade"
+    icon: "⚡"
+    items:
+      - id: panel_100
+        label: "100A panel replacement (same location)"
+        low: 1685
+        high: 2685
+      - id: panel_150
+        label: "150A panel replacement (same location)"
+        low: 2185
+        high: 3185
+      - id: panel_200
+        label: "200A panel replacement (same location)"
+        low: 2485
+        high: 3785
+      - id: panel_200_full
+        label: "200A full service upgrade (meter, mast, panel)"
+        low: 3285
+        high: 5485
+      - id: panel_overhead_under
+        label: "Overhead → underground conversion"
+        low: 4485
+        high: 7985
+        tier_note: "Coordinated with Duke Energy. Trench + riser changes."
+      - id: panel_relocate
+        label: "Relocate panel from old spot to new"
+        low: 685
+        high: 2485
+      - id: panel_fpe
+        label: "Federal Pacific / Zinsco replacement"
+        low: 2185
+        high: 3985
+      - id: surge
+        label: "Whole-home surge protector (panel-mounted)"
+        low: 285
+        high: 585
+        tier_note: "Single biggest dollar-per-protection upgrade."
+      - id: ground_rod
+        label: "Driven ground rod (per rod)"
+        low: 185
+        high: 385
+      - id: bonding
+        label: "Bond metallic systems (gas, water)"
+        low: 235
+        high: 485
+
+  - id: circuits
+    label: "Circuits & dedicated loads"
+    icon: "🔋"
+    items:
+      - id: circ_basement
+        label: "15A/20A circuit, panel to nearest wall (basement)"
+        low: 285
+        high: 485
+      - id: circ_kitchen
+        label: "20A dedicated circuit to kitchen / room"
+        low: 485
+        high: 985
+      - id: circ_long
+        label: "20A dedicated circuit, finished home, long run"
+        low: 685
+        high: 1485
+      - id: circ_240_30
+        label: "240V / 30A circuit (window AC, water heater)"
+        low: 585
+        high: 985
+      - id: circ_240_50
+        label: "240V / 50A circuit (range, EV, large load)"
+        low: 685
+        high: 1485
+      - id: subpanel_60
+        label: "60A sub-panel, near main, short feeder"
+        low: 885
+        high: 1485
+      - id: subpanel_100
+        label: "100A sub-panel, near main, short feeder"
+        low: 1185
+        high: 1985
+
+  - id: ev
+    label: "EV charging"
+    icon: "🚗"
+    items:
+      - id: ev_1450_close
+        label: "NEMA 14-50, <10 ft from panel, exposed"
+        low: 485
+        high: 785
+      - id: ev_1450_mid
+        label: "NEMA 14-50, 10–25 ft, exposed conduit"
+        low: 685
+        high: 1185
+      - id: ev_1450_fish
+        label: "NEMA 14-50, finished wall, fishing required"
+        low: 885
+        high: 1485
+      - id: ev_hardwired_40
+        label: "Hardwired L2 charger, 40A circuit (you supply charger)"
+        low: 785
+        high: 1385
+      - id: ev_hardwired_60
+        label: "Hardwired L2 charger, 48–60A circuit"
+        low: 985
+        high: 1685
+      - id: ev_outdoor
+        label: "Outdoor weatherproof EV charger install"
+        low: 985
+        high: 1985
+      - id: ev_load_mgmt
+        label: "Load management device (avoid panel upgrade)"
+        low: 485
+        high: 885
+        tier_note: "Adder. Lets a charger share the panel with your dryer/AC."
+      - id: ev_combo
+        label: "EV install requiring panel upgrade (combined)"
+        low: 3485
+        high: 5985
+
+  - id: safety
+    label: "Smoke, CO & safety"
+    icon: "🛟"
+    items:
+      - id: smoke_swap
+        label: "Hardwired smoke detector replacement (each)"
+        low: 155
+        high: 235
+      - id: smoke_co
+        label: "Hardwired smoke / CO combo (each)"
+        low: 165
+        high: 245
+      - id: smoke_add
+        label: "Add hardwired interconnected detector (no existing wire)"
+        low: 235
+        high: 485
+      - id: smoke_full
+        label: "Full home retrofit (typical 3-bedroom)"
+        low: 685
+        high: 1485
+
+  - id: remodel
+    label: "Bath / kitchen remodel"
+    icon: "🛁"
+    items:
+      - id: bath_basic
+        label: "Bathroom remodel electrical (basic)"
+        low: 985
+        high: 1985
+      - id: bath_full
+        label: "Bathroom remodel + heated floor"
+        low: 1485
+        high: 3485
+      - id: kitchen_basic
+        label: "Kitchen remodel electrical (basic)"
+        low: 2485
+        high: 4985
+      - id: kitchen_full
+        label: "Kitchen remodel (full reconfigure)"
+        low: 4985
+        high: 9985
+      - id: island_add
+        label: "Add a kitchen island with electrical"
+        low: 685
+        high: 1685
+
+  - id: rewire
+    label: "Whole-home rewire"
+    icon: "🏚️"
+    items:
+      - id: rewire_1200
+        label: "Worked example: 1,200 sqft home"
+        low: 9800
+        high: 14500
+        tier_note: "Use this as your placeholder if you don't know exact sqft."
+      - id: rewire_2000
+        label: "Worked example: 2,000 sqft home"
+        low: 16000
+        high: 24000
+      - id: kt_attic
+        label: "K&T: targeted attic abandonment"
+        low: 1485
+        high: 3985
+      - id: kt_second
+        label: "K&T: 2nd floor + attic rewire"
+        low: 4985
+        high: 9985
+      - id: kt_full
+        label: "K&T: full removal & rewire"
+        low: 9985
+        high: 22000
+
+  - id: diag
+    label: "Diagnostic / troubleshooting"
+    icon: "🔧"
+    items:
+      - id: diag_std
+        label: "Standard diagnostic visit"
+        low: 125
+        high: 185
+        tier_note: "First hour on site. Credits toward repair if booked."
+      - id: diag_after
+        label: "After-hours / weekend diagnostic"
+        low: 165
+        high: 225
+      - id: diag_emerg
+        label: "Emergency same-day (power out, burning smell)"
+        low: 225
+        high: 350
+      - id: diag_dead_outlet
+        label: "Dead outlet (trace and fix)"
+        low: 135
+        high: 245
+      - id: diag_flicker
+        label: "Flickering lights (whole house)"
+        low: 385
+        high: 985
+        tier_note: "Often a loose neutral at the service. Serious. We prioritize."
+
+# ---------- step 4: what changes the number ----------
+modifiers:
+  - id: plaster
+    label: "Plaster & lath walls (pre-1940 home)"
+    pct: 25
+    desc: "Slower, more careful work. Adds about 25% to wall-cut items."
+  - id: panel_full
+    label: "Existing panel is more than 80% full"
+    pct: 15
+    desc: "Adds may need a panel-feed analysis or load-management device first."
+  - id: long_run
+    label: "Most runs are 25+ ft from the panel"
+    pct: 20
+    desc: "Adds about 20% on circuit / EV runs."
+  - id: knob_tube
+    label: "Knob & tube still in the walls"
+    pct: 0
+    desc: "We'll add a K&T conversation to the walkthrough — see Knowledge for the strategy."
+  - id: insurance
+    label: "Insurance is requiring this work"
+    pct: 0
+    desc: "We write the bid in the language insurers and underwriters expect."
+  - id: occupied
+    label: "Tenants occupying during the work"
+    pct: 10
+    desc: "Lower-impact scheduling, more cleanup. About +10%."
+
+# ---------- step 5: contact + segmentation ----------
+contact:
+  h2: "Where do we send the estimate?"
+  lede: "PDF goes to your inbox in about a minute. We text the morning of the walkthrough — and again when we're parked out front."
+  privacy: "We don't share your info. Ever. No mailing list. No sales calls."
+  fields:
+    - { name: "name", label: "Your name", type: "text", required: true }
+    - { name: "email", label: "Email", type: "email", required: true }
+    - { name: "phone", label: "Phone (we'll text)", type: "tel", required: true }
+    - { name: "address", label: "Property address (so we can route the right crew)", type: "text", required: false }
+    - { name: "notes", label: "Anything else we should know? Photos? Deadlines?", type: "textarea", required: false }
+
+# ---------- result page CTAs ----------
+result:
+  cta_primary:
+    label: "Email me the PDF estimate"
+  cta_secondary:
+    label: "Text me to book the walkthrough"
+  followup_micro: "If your scope shifts on the walkthrough — and it usually does — the bid moves with it. Walkthrough is free."
+
+outro_cta_h2: "Want a human in the loop sooner?"
+outro_cta_lede: "Skip the calculator and just text us a couple of photos. Same answer, less clicking."

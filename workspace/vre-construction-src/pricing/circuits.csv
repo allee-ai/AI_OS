@@ -1,0 +1,8 @@
+Work,Range,Notes
+"15A or 20A circuit, panel to nearest wall (basement)",$285–$485,"Short run, exposed conduit or NM cable, breaker, one outlet."
+"20A dedicated circuit, panel to kitchen / room",$485–$985,"Mid-length run, breaker, one outlet, drywall patch."
+"20A dedicated circuit, finished home, long run","$685–$1,485","Cross-house run, fishing through walls, multiple access points."
+AFCI/GFCI breaker for an existing circuit,$165–$285,Per circuit. Often required when adding outlets to an old circuit.
+"240V / 30A circuit for window AC, water heater",$585–$985,"Includes breaker, run, receptacle."
+"240V / 50A circuit for range, EV, large load","$685–$1,485",See EV section below for charger-specific pricing.
+"Sub-feed for a remote box (garage, ADU)","$985–$2,485",Distance and trenching dependent. Underground priced separately.

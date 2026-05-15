@@ -1,7 +1,7 @@
 # Vanguard Reconstruction — Investor & Landlord Packet
 
 **Cincinnati residential electrical · single-family through 3-family**
-Cade Allee · **[YOUR CELL]** · cade@vanguard-reconstruction.com · vanguard-reconstruction.com
+Cade Allee · **[YOUR CELL]** · cade@vre-construction.com · vre-construction.com
 
 ---
 
@@ -100,8 +100,8 @@ Volume work across multiple properties can be scheduled as a route — fewer mob
 Three ways. Whichever is easiest.
 
 1. **Text Cade at [YOUR CELL].** Address + 2–3 photos (panel cover on, panel cover off if safe, the issue). Quote back to you.
-2. **Email cade@vanguard-reconstruction.com.** Same info; everything gets read.
-3. **Form**: vanguard-reconstruction.com/contact.html — same intake, lands in the inbox.
+2. **Email cade@vre-construction.com.** Same info; everything gets read.
+3. **Form**: vre-construction.com/contact.html — same intake, lands in the inbox.
 
 Hours: Mon–Fri 8am–6pm. After-hours for live faults and no-power calls.
 

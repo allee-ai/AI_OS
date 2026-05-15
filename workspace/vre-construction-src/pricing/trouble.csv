@@ -1,0 +1,11 @@
+Symptom,Typical fix,Range
+"Dead outlet, GFCI tripped upstream",Locate & reset,$95–$165
+"Dead outlet, bad connection in box",Re-terminate or replace outlet,$135–$245
+Whole half of room dead,"Trace backstabbed connection, replace device",$185–$385
+"Flickering lights, single fixture",Bad bulb / fixture / dimmer mismatch,$95–$285
+"Flickering lights, whole house, dims when fridge starts",Loose neutral at service. **This is serious.**,$385–$985
+Breaker trips immediately on reset,"Hard short. Isolate circuit, repair fault.",$185–$485
+Breaker trips after running a while,"Overload or thermal-failing breaker. Diagnose, replace breaker or re-allocate load.",$185–$485
+AFCI breaker trips randomly,"Identify offending appliance or wire, swap to combo or address fault",$185–$485
+Outdoor outlet stopped working after storm,"Replace GFCI, often the only damage",$185–$385
+Burning smell at panel or outlet,"Emergency. We'll make safe first, repair second.",$285–$985+

@@ -1,0 +1,193 @@
+meta:
+  title: "Knowledge — Vanguard Reconstruction"
+  description: "Plain-English answers to Cincinnati electrical questions: panel sizing, EV chargers, knob-and-tube, breaker trips, what photos help us quote, and the questions worth asking before you hire anyone."
+
+jsonld: |
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "about": { "@id": "https://vre-construction.com/#business" },
+    "mainEntity": [
+      { "@type": "Question", "name": "What size electrical panel do I need?",
+        "acceptedAnswer": { "@type": "Answer", "text": "For most single-family homes in Cincinnati, 200-amp service is the modern standard. 100-amp is fine for a small all-gas home with no central AC and no EV. Add an EV charger, a heat pump, or an induction range and you usually want 200-amp." } },
+      { "@type": "Question", "name": "Why does my breaker keep tripping?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Three reasons in order of likelihood: too much load on the circuit, a failing device on the circuit, or a worn-out breaker. AFCI/GFCI breakers also trip on things a regular breaker would ignore." } },
+      { "@type": "Question", "name": "Is knob-and-tube wiring dangerous?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Knob-and-tube installed correctly and left alone is not inherently dangerous. The problems are insulation packed against it, no ground conductor, brittle cloth insulation, and insurance refusing to write policies on homes with active K&T." } },
+      { "@type": "Question", "name": "Can I install an EV charger on my existing panel?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Sometimes. A Level 2 home charger is typically a 40-60 amp 240V circuit. If your panel has a free 2-pole slot and the main service has headroom, you can add the circuit. If the panel is full or undersized, you need an upgrade or a load-management device." } }
+    ]
+  }
+
+hero:
+  eyebrow: "Knowledge base"
+  h1_before: "The questions you'd rather"
+  h1_accent: "not feel dumb asking."
+  h1_after: ""
+  lede: "Plain-English answers to the electrical questions we hear most. No condescension, no jargon walls, no \"well, technically.\" Skim it, screenshot what you need, send it to whoever's helping you decide. Then text us the ones we didn't answer."
+
+toc:
+  title: "What's in here"
+
+sections:
+  - id: "panels"
+    num: "01"
+    title: "Panel sizing & service"
+    tldr: "Most Cincinnati single-family homes want 200-amp service. 100-amp is fine if your house is all-gas with no EV. The number on your meter and the number on your main breaker aren't always the same — your real ceiling is the smaller of the two."
+    blocks:
+      - { type: "text", md: "The panel is the heart. Everything else is plumbing for electrons." }
+      - { type: "h3", text: "The number you actually need" }
+      - { type: "kv", items: [
+          { dt: "100A", dd: "Older homes, gas heat, gas range, window units. Fine until you add anything modern." },
+          { dt: "150A", dd: "Compromise size, common in 70s/80s homes. Often the panel that's full and tripping today." },
+          { dt: "200A", dd: "Default for new and modernized homes. Room for EV, heat pump, future expansion." },
+          { dt: "400A", dd: "Larger homes, ADU plus main house, two EVs plus heat pump plus hot tub. Rarely needed for a single dwelling unit." } ] }
+      - { type: "callout", md: "**Trick:** The number on the meter and the number on your main breaker are not always the same. Your real ceiling is the *smaller* of the two. A 200-amp meter with a 100-amp main is still a 100-amp service." }
+      - { type: "h3", text: "Signs your panel is at end of life" }
+      - { type: "bullets", items: [
+          "**Federal Pacific Stab-Lok** or **Zinsco** branding. Well-documented failure modes; insurance companies often flag them. Replacement is the right call regardless of current behavior.",
+          "Rust on the bottom of the cabinet. Means water got in. Even if it's dry now, the bus bars may be compromised.",
+          "Breakers warm to the touch under normal load.",
+          "A burnt smell, ever. Once is enough.",
+          "Two wires under one breaker terminal that wasn't designed for tandem.",
+          "Aluminum branch wiring (not service entrance, branch). Different beast than knob-and-tube; needs special handling at every connection." ] }
+
+  - id: "ev"
+    num: "02"
+    title: "EV chargers at home"
+    tldr: "A Level 2 home charger is a 240V, 40–60 amp circuit. Whether your panel can handle one is a math question, not a guess. If the panel is full or undersized, you can upgrade the service or add a load-management device that pauses the car when the dryer kicks on."
+    blocks:
+      - { type: "text", md: "Probably the most-asked question of the last three years. Short version:" }
+      - { type: "table", headers: ["Level", "Voltage / amps", "Miles per hour", "Reality check"], rows: [
+          ["L1", "120V / 12A", "~3–5", "The cable that came with the car. Fine for a plug-in hybrid or short commutes."],
+          ["L2 (low)", "240V / 32A", "~25", "Smallest \"real\" home charger. Full charge overnight on most cars."],
+          ["L2 (high)", "240V / 48–60A", "~35–45", "What most modern EVs can accept. Future-proof."],
+          ["DC fast", "400–800V", "~250+", "Not residential. Don't."] ] }
+      - { type: "h3", text: "Will my panel handle it?" }
+      - { type: "text", md: "The honest answer is \"do the math, don't guess.\" A proper load calculation looks at your panel size, your existing load (heat, AC, water heater, range, dryer), and adds the new charger. If you're already running heat pump plus electric range plus dryer on a 100-amp panel, an EV charger probably wants either a panel upgrade or a smart load-management device that pauses the car when the dryer kicks on." }
+      - { type: "callout", md: "**The cheap fix that's not cheap:** A 40A circuit run from a panel that doesn't really have the headroom *will* work for a while. It will also trip your main on a hot July day with the AC, the dryer, and the car all running. That's not a code violation; it's a math violation." }
+      - { type: "h3", text: "Hardwired vs. plug-in (NEMA 14-50)" }
+      - { type: "text", md: "Hardwired chargers are slightly more efficient and don't depend on a $40 outlet's contact integrity over ten years. Plug-in chargers are portable if you move and easier to swap if the charger itself fails. Either is fine. Don't use a plain dryer cord on a charger meant to be hardwired — the duty cycle is different." }
+
+  - id: "trips"
+    num: "03"
+    title: "Why breakers trip"
+    tldr: "Three reasons, in order of likelihood: too much load on one circuit, a failing device, or a worn-out breaker. AFCI/GFCI breakers are *supposed* to trip on things a regular breaker would ignore — that's a feature."
+    blocks:
+      - { type: "text", md: "Three reasons in order of likelihood:" }
+      - { type: "bullets_ordered", items: [
+          "**Too much on one circuit.** A 15-amp kitchen circuit with the toaster, the microwave, and the air fryer is going to trip. Not a problem with the wiring — the breaker did its job.",
+          "**A failing device.** Old motors, damaged extension cords, a fridge whose compressor is on its last legs. Unplug everything on the circuit. If it stops tripping, plug back in one at a time.",
+          "**A failing breaker.** Breakers wear out, especially the ones that trip often. They become more sensitive over time and eventually trip with no real fault. Replacement is cheap." ] }
+      - { type: "h3", text: "Nuisance trips from AFCI/GFCI" }
+      - { type: "text", md: "Arc-fault and ground-fault breakers (AFCI/GFCI) trip on things a regular breaker would ignore — a slightly leaky neutral, a worn brush in a motor, a hair dryer that's about to die. That's a feature, not a bug. It means the breaker caught something before it became a fire. But older appliances on a newly-AFCI-protected circuit will sometimes trip. The fix is usually the appliance, not the breaker." }
+      - { type: "warn", md: "**Don't:** Replace an AFCI or GFCI breaker with a standard one to stop nuisance trips. You're disabling a safety device that exists because data on house fires said it should." }
+
+  - id: "kt"
+    num: "04"
+    title: "Knob-and-tube reality"
+    tldr: "K&T installed correctly and left alone isn't inherently dangerous. The problems are: insulation packed against it (the big one), no ground wire, brittle cloth jackets, and insurance refusing to write policies on it. Options range from targeted abandonment to full rewire."
+    blocks:
+      - { type: "text", md: "Cincinnati has a lot of pre-1940 houses, and a lot of them still have knob-and-tube somewhere. Here's the honest picture:" }
+      - { type: "h3", text: "What it is" }
+      - { type: "text", md: "Two separate conductors (hot and neutral) run through porcelain knobs and tubes, with cloth and rubber insulation. No ground wire. When installed correctly in open air, it stays cool because it can dissipate heat in all directions." }
+      - { type: "h3", text: "Why it's actually a problem" }
+      - { type: "bullets", items: [
+          "**Insulation buried it.** 1980s blown-in attic insulation packed against the wires traps heat. That's the single biggest fire risk.",
+          "**The cloth is brittle.** Anyone bumping a junction in the attic can crumble decades-old insulation off the conductor.",
+          "**Three-prong outlets on it are lying.** The ground pin isn't connected to anything. Surge protectors plug in but don't actually protect.",
+          "**Insurance.** Many companies won't write a new policy on a house with active knob-and-tube. Some will, with conditions and a higher premium.",
+          "**Splices.** Decades of homeowners cutting in new outlets created untold numbers of in-wall splices that are no longer code-compliant." ] }
+      - { type: "h3", text: "Options, cheapest to most thorough" }
+      - { type: "bullets_ordered", items: [
+          "**Targeted abandonment.** Identify the specific circuits still on K&T, kill them at the panel, run new replacement circuits to the rooms they served. Doable in stages.",
+          "**Full attic and second floor rewire.** The high-risk zones. Often what insurance asks for.",
+          "**Whole-house rewire.** The durable answer. Disruptive but final." ] }
+
+  - id: "gfci"
+    num: "05"
+    title: "GFCI & AFCI in plain English"
+    tldr: "GFCI = shock protection (trips on current leaking to ground). AFCI = fire protection (trips on arcing connections). Required in different rooms by current code. If a GFCI somewhere trips, every outlet downstream goes dead too — check upstream before you call."
+    blocks:
+      - { type: "h3", text: "GFCI — Ground Fault Circuit Interrupter" }
+      - { type: "text", md: "Compares the current going out the hot wire with the current coming back on the neutral. If they differ by more than ~5 milliamps, it trips, because that current is leaking to ground — possibly through a person. Required in bathrooms, kitchens, garages, outdoors, basements, and anywhere near water." }
+      - { type: "h3", text: "AFCI — Arc Fault Circuit Interrupter" }
+      - { type: "text", md: "Listens for the electrical signature of an arc — the rapid on-off-on of a loose connection or damaged wire. Arcing is the proximate cause of a huge percentage of residential fires. Required in most living-space circuits in modern installs." }
+      - { type: "h3", text: "Combination AFCI/GFCI breakers" }
+      - { type: "text", md: "A single breaker that does both. More expensive, takes one slot in the panel, common in newer kitchen and laundry circuits where both protections are required." }
+      - { type: "callout", md: "**If a GFCI outlet trips and nothing reset it, the whole downstream chain is dead.** Check upstream outlets in bathrooms, garages, outdoor outlets, and the basement before you call. Half of \"no power to this outlet\" calls are a tripped GFCI two rooms away." }
+
+  - id: "photos"
+    num: "06"
+    title: "What photos help us quote"
+    tldr: "Closed panel cover with the sticker visible, panel door open with breakers visible, the meter outside, and a wide shot of the room or fixture in question. That's usually 90% of what we need to quote without a site visit."
+    blocks:
+      - { type: "text", md: "If you can safely take these, we can usually quote without a site visit:" }
+      - { type: "bullets", items: [
+          "The panel with the door closed (so we can read the sticker).",
+          "The panel with the door open (so we can read the breakers).",
+          "The panel with the cover off, **only if you're comfortable**. Flashlight, no contact with anything inside.",
+          "The meter outside (so we can see service size and condition of the entrance cable).",
+          "The room or area where the new work is going — wide shot.",
+          "A close-up of any specific outlet, switch, or fixture in question." ] }
+      - { type: "warn", md: "**Don't take the panel cover off if you're not sure.** Energized bus bars are right there. A clear photo of the closed panel with door open is enough for 90% of quotes." }
+
+  - id: "prepurchase"
+    num: "07"
+    title: "Buying a house: what to check"
+    tldr: "Home inspectors cover a lot, but rarely in enough detail. Have someone look at the panel make and age, the service entrance cable, the grounding system, any K&T, GFCI/AFCI coverage, and any visible DIY work. A pre-purchase walkthrough takes about an hour."
+    blocks:
+      - { type: "text", md: "The inspector's report covers a lot, but rarely in enough detail to know what you're really buying. Things we look at on a pre-purchase walkthrough:" }
+      - { type: "bullets", items: [
+          "**Panel make and age.** Federal Pacific or Zinsco changes the math on the offer.",
+          "**Service entrance cable.** Frayed or sun-cracked insulation outside is a near-term replacement.",
+          "**Grounding system.** Two ground rods, bonded water pipe, bonded gas line. Often missing in older homes.",
+          "**Knob-and-tube presence and extent.** Attic and basement reveal most of it.",
+          "**GFCI/AFCI coverage.** Bathrooms, kitchens, outdoor outlets at minimum.",
+          "**Smoke and CO detectors.** Hardwired and interconnected vs. battery-only.",
+          "**Outdoor lighting and outlets.** Often the most weather-damaged and most overlooked.",
+          "**Any visible DIY work.** Backstabbed outlets, missing junction box covers, unprotected splices, switches that don't switch what they're labeled to switch." ] }
+      - { type: "text", md: "A walkthrough takes about an hour and gives you a written summary you can bring to negotiation." }
+
+  - id: "prices"
+    num: "08"
+    title: "Price ranges to expect"
+    tldr: "We publish real Cincinnati numbers, not vague \"$$$\" tiers. Flat rate when we can, capped time-and-materials when we can't. No memberships, no trip fees, no surprises."
+    blocks:
+      - { type: "text", md: "This page used to have rough tiers ($, $$, $$$) because most electricians won't put real numbers in public. We decided that wasn't enough." }
+      - { type: "cta_mini", md: "**The full pricing guide is its own page now.** Real Cincinnati dollar ranges for every common residential job: outlets, switches, lighting, panels, service upgrades, EV chargers, rewires, knob-and-tube remediation, generators, kitchen and bath remodels, troubleshooting flat-rates, and the things that move a quote up or down. [Read the full pricing guide →](pricing.html)" }
+      - { type: "text", md: "Short version: we quote real numbers up front, in writing. Flat rate for defined work, capped time-and-materials for diagnostics. No memberships, no trip charges, no surprise add-ons after the fact. Permit fees included. Materials at cost on jobs over $1,500." }
+
+  - id: "hire"
+    num: "09"
+    title: "Questions to ask anyone you hire"
+    tldr: "Whether it's us or someone else: what's included and what would change it, who's actually doing the work, what happens if something goes wrong, do they pull permits, will they walk you through the change. Hedging on any of these is a red flag."
+    blocks:
+      - { type: "text", md: "Whether it's us or someone else, these are worth asking before you sign anything:" }
+      - { type: "bullets", items: [
+          "\"What's included in the price, and what would change it?\"",
+          "\"Who's actually doing the work — the person I'm talking to, or a sub I haven't met?\"",
+          "\"What happens if something goes wrong six months from now?\"",
+          "\"Do you pull permits when permits are needed?\"",
+          "\"Can you walk me through the change once it's done?\"",
+          "\"What's the soonest you can start, and how long will it take?\"" ] }
+      - { type: "text", md: "An honest contractor answers all of these without hedging. A red flag is the answer \"depends\" to the first question with no follow-up about what specifically depends on what." }
+
+  - id: "safety"
+    num: "10"
+    title: "Safety: when to flip the main"
+    tldr: "You're not overreacting. Flip the main and call us (or 911 if there's smoke or fire) for: burnt smell, sparking, smoke, buzzing or crackling from the panel, water in the panel, or lights pulsing together (loose neutral)."
+    blocks:
+      - { type: "text", md: "You're not overreacting. Flip the main breaker, then call:" }
+      - { type: "bullets", items: [
+          "Burnt or melted-plastic smell coming from any outlet, switch, or the panel itself.",
+          "Sparking from an outlet, switch, or fixture.",
+          "Visible smoke from anywhere electrical.",
+          "Buzzing or crackling from the panel, even faint.",
+          "Water actively entering the panel or running down service entrance cable.",
+          "Lights pulsing in sync with each other (often a loose neutral at the service — utility-side problem)." ] }
+      - { type: "warn", md: "**Loose neutral note.** If lights brighten and dim together when an appliance starts, that's a service-neutral fault. It can fry sensitive electronics. The utility owns the fix up to the meter; we can verify it's not on the house side before you call them." }
+      - { type: "cta_mini", md: "Question this page didn't answer? **[Text it to us](contact.html)** and we'll add the answer here for the next person who asks." }
+
+outro_cta_h2: "Question we didn't answer?"
+outro_cta_lede: "Text it to us. We'll write back with a real answer, no condescension, and we'll add it to this page for the next person who asks the same thing."

@@ -1,0 +1,327 @@
+# Pricing page structure for vre-construction.com
+# Edit prose, callouts, and section ordering here. Tables live in pricing/*.csv.
+# After editing, run: .venv/bin/python infra/build_vre.py
+
+meta:
+  title: "Pricing — Vanguard Reconstruction"
+  description: "The most comprehensive public electrician pricing guide in Cincinnati. Honest ranges for outlets, switches, lighting, panels, service upgrades, EV chargers, rewires, generators, and remodels. Updated 2026."
+  canonical: "https://vre-construction.com/pricing.html"
+  og_title: "Pricing — Vanguard Reconstruction"
+  og_description: "A working price guide for Cincinnati residential electrical: outlets, panels, EV chargers, rewires, and everything in between. Real ranges, not bait numbers."
+
+# Schema.org JSON-LD injected as-is
+jsonld: |
+  {
+    "@context": "https://schema.org",
+    "@type": "PriceSpecification",
+    "@id": "https://vre-construction.com/pricing.html#prices",
+    "name": "Vanguard Reconstruction Residential Electrical Pricing",
+    "description": "Public price ranges for residential electrical work in Cincinnati, Ohio. Materials at current market; final quote always in writing after we see the work.",
+    "priceCurrency": "USD",
+    "validFrom": "2026-01-01",
+    "areaServed": { "@type": "AdministrativeArea", "name": "Hamilton County, Ohio" },
+    "provider": { "@id": "https://vre-construction.com/#business" }
+  }
+
+# Hero section above the TOC
+hero:
+  h1: "What it"
+  h1_accent: "actually costs."
+  lede: "Most electrical companies hide pricing behind a \"schedule a consultation\" button, and honestly, we get why — every house is a little different. But \"every house is different\" doesn't have to mean \"we won't tell you anything.\" So here it is: a working price guide for residential electrical in the Cincinnati area, written by the people who do the work. Every range is what we'd quote a neighbor."
+  tags:
+    - "**Cincinnati & Hamilton County**"
+    - "**Residential** up to 3-family"
+    - "Materials at **2026 market**"
+    - "Crew of **four**"
+    - "Written quote in **24 hours**"
+  promise_title: "The promise"
+  promise:
+    - "The number we put in writing is the number you pay. If we open a wall and find a surprise, we stop, take a photo, and show you what changed before we touch anything else. No quiet line items added at the end."
+    - "And if a job comes in under estimate because something was simpler than we thought? The bill comes in lower. We don't pocket the difference. That part matters to us."
+  legend:
+    - "**How to read the ranges:**"
+    - "**Low end** — accessible work, no surprises"
+    - "**High end** — finished walls, old wiring, awkward access"
+    - "**Above range** — we tell you before we start"
+
+# Auto-generates TOC from the sections list below
+toc_title: "What's on this page"
+
+# The page body. Each section has blocks rendered in order.
+# Block types: text, kv, bullets, bullets_ordered, h3, table, callout, warn, cta_mini, twocol
+sections:
+  - id: how
+    num: "01"
+    title: "How we price (and why)"
+    blocks:
+      - type: text
+        md: "Three modes, and we'll tell you which one you're in before we start."
+      - type: kv
+        items:
+          - [Flat job, "You tell us \"replace the panel\" or \"add an EV charger\" and we give you a fixed total in writing. You sign, we do the work, the price doesn't move unless the scope does. **This is the default.**"]
+          - [Hourly diagnostic, "You don't know what's wrong yet. We bill our service call rate to figure it out, then either fix it inside that time or hand you a written quote for the actual repair. **The diagnostic fee credits toward the repair** if you book the work with us."]
+          - [Time & materials, "Reserved for jobs where neither of us can predict the scope — old houses where every wall opens onto a new surprise. We bill hourly plus materials, with a written cap you have to authorize before we exceed."]
+      - type: h3
+        text: "What's always included in a flat job"
+      - type: bullets
+        items:
+          - "Permit fees (when a permit is required) — we pull it, we pay it, it's in the number."
+          - "All standard materials, listed by line item on the quote."
+          - "Travel inside the Cincinnati area."
+          - "Cleanup. Drop cloths, vacuum, we leave the area cleaner than we found it."
+          - "A walk-through at the end where we show you what we did and how to use it."
+      - type: h3
+        text: "What's never included unless it's listed"
+      - type: bullets
+        items:
+          - "Drywall repair beyond the small holes we made — we'll do clean cuts, patch is a separate trade."
+          - "Painting."
+          - "Specialty fixtures or smart devices you want us to install — we'll install yours, or we'll quote ours."
+          - "Removal of asbestos or known hazardous materials — separate, licensed trade."
+
+  - id: diagnostic
+    num: "02"
+    title: "Diagnostic & service calls"
+    blocks:
+      - type: table
+        csv: diagnostic.csv
+      - type: callout
+        md: "**Diagnostic credits toward the repair.** If we come out, find the problem, and you book us to fix it, the diagnostic fee comes off the repair quote. You don't pay twice for the same hour."
+
+  - id: outlets
+    num: "03"
+    title: "Outlets & receptacles"
+    blocks:
+      - type: table
+        csv: outlets.csv
+      - type: callout
+        md: "**Volume discount:** When we're already on site, additional outlets in the same room come in well under the per-unit price. Three outlets in one bedroom is usually cheaper than three separate visits by a meaningful margin."
+
+  - id: switches
+    num: "04"
+    title: "Switches, dimmers, smart controls"
+    blocks:
+      - type: table
+        csv: switches.csv
+      - type: callout
+        md: "**Older houses, the neutral problem:** Most modern smart switches need a neutral wire in the switch box. Pre-1985 wiring often doesn't have one. We always check before quoting, and we'll tell you upfront if a smart switch is going to need extra work to land in your old switch box."
+
+  - id: lighting
+    num: "05"
+    title: "Lighting & ceiling fans"
+    blocks:
+      - type: table
+        csv: lighting.csv
+      - type: warn
+        md: "**Heavy chandeliers and fans need a fan-rated box.** A standard plastic ceiling box is not rated to hang weight. We don't install a 35-pound chandelier on a box meant to hold a 4-pound fixture, even if the previous electrician did. The price includes verifying or upgrading the box."
+
+  - id: circuits
+    num: "06"
+    title: "Adding new circuits"
+    blocks:
+      - type: table
+        csv: circuits.csv
+
+  - id: panels
+    num: "07"
+    title: "Panels & service upgrades"
+    blocks:
+      - type: text
+        md: "This is the most-quoted, most-misunderstood job in residential electric. The honest range is wide because the work is wide."
+      - type: table
+        csv: panels.csv
+      - type: callout
+        md: "**Why service upgrades cost more than panel swaps:** A panel swap is the gray box inside. A service upgrade is everything from the utility pole to the gray box — the cable, the mast pipe, the meter, the grounding, the connection back to the utility. Different scope of work, different number of permits, different coordination with Duke Energy."
+      - type: h3
+        text: "What's not in the panel-replacement number"
+      - type: bullets
+        items:
+          - "Bringing every existing circuit up to current code. If your home was wired in 1962 with no AFCI requirement, we don't quietly add AFCI breakers to every circuit unless you ask. Modern code only requires AFCI on *new* circuits."
+          - "Fixing problems we find in existing circuits behind the panel. We'll show you, photograph, and quote the fix separately."
+          - "Drywall patch in the wall behind the panel if we have to open it. We do clean cuts; patching is separate."
+
+  - id: sub
+    num: "08"
+    title: "Sub-panels & feeders"
+    blocks:
+      - type: table
+        csv: sub.csv
+
+  - id: ev
+    num: "09"
+    title: "EV chargers"
+    blocks:
+      - type: text
+        md: "Most quoted job in 2026. The price depends almost entirely on three things: distance from your panel, whether your panel has headroom, and finished-wall vs. exposed run."
+      - type: table
+        csv: ev.csv
+      - type: callout
+        md: "**The math you should know:** A 48-amp continuous load needs a 60-amp breaker (NEC requires 125% headroom on continuous loads). If someone quotes you a 50-amp circuit for a 48-amp charger, they're either using a 50A-rated charger or they're cutting a corner. We'll always tell you which."
+
+  - id: rewire
+    num: "10"
+    title: "Whole-home rewire"
+    blocks:
+      - type: text
+        md: "The most expensive, most disruptive, most permanent job we do. Done right, it doesn't need to be done again in your lifetime."
+      - type: table
+        csv: rewire.csv
+      - type: h3
+        text: "What's in a full rewire"
+      - type: bullets
+        items:
+          - "Replacement of every branch circuit with modern NM-B cable."
+          - "New outlets at code-required spacing in every room."
+          - "GFCI in all wet locations, AFCI on all living-space circuits."
+          - "New panel sized for the new load (usually 200A)."
+          - "Smoke and CO detectors hardwired and interconnected per current code."
+          - "Removal of every accessible knob-and-tube run."
+          - "Permit, inspection, final sign-off."
+          - "Clean cuts in drywall; patching is separate (see below)."
+      - type: h3
+        text: "What's not in a full rewire"
+      - type: bullets
+        items:
+          - "Drywall patch and paint (separate trade, we'll recommend partners)."
+          - "Replacing fixtures — if you want new lights, that's add-on per fixture."
+          - "Smart switches, smart panels, networked devices — quoted separately."
+
+  - id: kt
+    num: "11"
+    title: "Knob-and-tube remediation"
+    blocks:
+      - type: text
+        md: "Three tiers, cheapest to most thorough. See our [knowledge page](knowledge.html#kt) for the longer explanation of why this matters."
+      - type: table
+        csv: kt.csv
+      - type: callout
+        md: "**Insurance leverage:** If your insurer is threatening non-renewal over K&T, get a written tier-2 or tier-3 quote from us. Most carriers will accept \"rewire in progress\" with a contract and a timeline. We've written letters for half a dozen Cincinnati homeowners; we know what the carriers want to see."
+
+  - id: generator
+    num: "12"
+    title: "Generators & transfer switches"
+    blocks:
+      - type: table
+        csv: generator.csv
+
+  - id: surge
+    num: "13"
+    title: "Surge protection & grounding"
+    blocks:
+      - type: table
+        csv: surge.csv
+
+  - id: smoke
+    num: "14"
+    title: "Smoke & CO detectors"
+    blocks:
+      - type: table
+        csv: smoke.csv
+
+  - id: remodel
+    num: "15"
+    title: "Kitchen & bathroom remodels"
+    blocks:
+      - type: text
+        md: "Remodel pricing is usually quoted as a package because the work overlaps. Numbers below assume drywall is open or coming out anyway."
+      - type: table
+        csv: remodel.csv
+
+  - id: outdoor
+    num: "16"
+    title: "Outdoor, hot tub, pool"
+    blocks:
+      - type: table
+        csv: outdoor.csv
+      - type: warn
+        md: "**Pool and hot tub bonding is non-negotiable.** Every conductive surface within 5 feet of the water must be bonded together. We've seen DIY hot tub installs in Cincinnati that skipped this. It's the kind of thing nothing happens with until one day something does, and then it's catastrophic."
+
+  - id: trouble
+    num: "17"
+    title: "Troubleshooting flat-rates"
+    blocks:
+      - type: text
+        md: "Common problems with known fix paths. These are flat once we've confirmed the diagnosis — no hourly meter."
+      - type: table
+        csv: trouble.csv
+      - type: warn
+        md: "**Loose neutral is the most dangerous \"small\" problem.** Lights brightening on one side of the house while dimming on the other, or appliances dying in batches, is the signature. It can destroy electronics and start fires. If we suspect a loose neutral, we treat it as same-day and we kill power until it's fixed."
+
+  - id: permits
+    num: "18"
+    title: "Permits, inspections, materials"
+    blocks:
+      - type: h3
+        text: "Permits in Cincinnati"
+      - type: text
+        md: "Most jobs requiring a permit run **$45–$220** in fees through the City of Cincinnati Department of Buildings & Inspections, plus minor county fees for unincorporated Hamilton County. Permit cost is always included in our written quote — you don't write a separate check."
+      - type: kv
+        items:
+          - [No permit, "Like-for-like swaps: outlet, switch, fixture replacement. Most repairs."]
+          - [Permit usually required, "New circuits, panel work, service upgrades, EV chargers, hot tubs, rewires, remodels."]
+          - [Permit always required, "Anything touching the service entrance, the panel, or the meter. Anything new outdoors. Anything insurance might one day ask about."]
+      - type: h3
+        text: "Inspections"
+      - type: text
+        md: "Cincinnati inspectors typically schedule within **2–5 business days**. We coordinate, we're on site, we walk through with the inspector. You don't have to take a day off work for it."
+      - type: h3
+        text: "Materials"
+      - type: text
+        md: "We pass through copper, conduit, and breakers at our cost on jobs over $1,500 — if the price of romex goes up 18% next month, that's an honest number that shows up on your line items. We don't mark up materials. We charge for labor and judgment. That's where the value is."
+      - type: callout
+        md: "**2026 material reality:** Copper has been volatile. Romex pricing moved 15–30% in the last two years. Steel conduit is steadier. We'll always tell you on the quote which line items are material-cost-sensitive in case you want to wait a month, and which are stable."
+
+  - id: move
+    num: "19"
+    title: "What moves a quote up or down"
+    blocks:
+      - type: twocol
+        up_title: "Moves a quote up"
+        up:
+          - "Finished walls everywhere — no attic, no basement access."
+          - "Plaster & lath construction."
+          - "Knob-and-tube or aluminum branch wiring in the work area."
+          - "Second floor with no straight path from the panel."
+          - "Asbestos-era materials (we don't touch them; you'll need an abatement first)."
+          - "Decorative ceilings, custom millwork, or tile we have to avoid damaging."
+          - "Federal Pacific or Zinsco panel (we replace, never just match a breaker)."
+          - "Insurance-driven timeline (rush coordination with carrier and inspector)."
+          - "Crawlspace access only, especially wet or low."
+          - "Permit hassle from previously unpermitted prior work that has to be reconciled."
+        down_title: "Moves a quote down"
+        down:
+          - "Open basement or unfinished attic above the work area."
+          - "Modern panel with empty slots and headroom."
+          - "Multiple jobs in one visit (we're already there, materials are already on the truck)."
+          - "Vacant home or mid-remodel timing."
+          - "Same-day decision — we hold the slot, you save the second mobilization."
+          - "You supply the fixture, charger, or smart device."
+          - "Flexible scheduling — we work cheaper on weeks where we have gaps."
+          - "Neighbor or referral pricing on shared scope (running the same circuit to two units in a duplex)."
+          - "Repeat customer — we already know your panel."
+          - "Combining with a panel upgrade we're already pulling permit for."
+
+  - id: process
+    num: "20"
+    title: "How a written quote works"
+    blocks:
+      - type: bullets_ordered
+        items:
+          - "**You reach out.** Call, text, email, or the [contact form](contact.html). Tell us what you want done in your own words and send photos if you can. Photos shorten the timeline by a day."
+          - "**We respond same day.** Usually within a few hours during business days. We'll either quote from photos, ask a couple of clarifying questions, or schedule a free site visit if the scope warrants it."
+          - "**Written quote in 24 hours.** PDF, line items, materials, labor, permit, total. Valid for 30 days. Sent to your email and a copy stays in our shop."
+          - "**You sign or you don't.** No pressure, no follow-up calls beyond one polite check-in. If the answer is no, the answer is no."
+          - "**We book the work.** Usually within 1–3 weeks for non-emergency jobs. Same-day or next-day for emergencies."
+          - "**We do the work.** The number on the quote is the number on the bill. Changes only happen with your written approval first."
+          - "**Walk-through at the end.** We show you what we did, how to use it, where the breakers are, what to call us about in the future."
+          - "**Final payment.** Bank transfer, check, or card (3% card fee, we pass it through). 12-month warranty on labor, manufacturer warranty on materials."
+      - type: cta_mini
+        md: "**Ready to get one of these in your inbox?** Send a couple of photos and a sentence about what you want done. We'll have a real number to you within 24 hours. [Start a quote →](contact.html)"
+
+# Closing section without a number
+outro:
+  title: "One last thing"
+  paragraphs:
+    - "Most electricians don't publish prices because the honest answer is \"it depends,\" and that's true — but \"it depends\" doesn't have to mean \"secret.\" We'd rather give you ranges that come in a little wide than make you call three companies before you can plan your weekend."
+    - "If a quote you get from someone else lands way above or way below these numbers, that's worth asking about. Sometimes there's a real reason. Sometimes there isn't. Either way, you deserve to know which one it is — and we're happy to take a look if you want a second pair of eyes."
+  footer_note: "Last updated 2026. Ranges reflect Cincinnati-area residential work with materials at current market. Your actual written quote is always the final number."
