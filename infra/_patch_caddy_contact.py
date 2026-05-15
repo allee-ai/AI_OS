@@ -12,7 +12,7 @@ from pathlib import Path
 
 CADDYFILE = Path("/etc/caddy/Caddyfile")
 PROXY_LINE = "    reverse_proxy /contact-submit 127.0.0.1:8042"
-SITES = ["vanguard-relocations.com", "vanguard-reconstruction.com"]
+SITES = ["vanguardrelocations.com", "vre-construction.com"]
 
 
 def main() -> int:

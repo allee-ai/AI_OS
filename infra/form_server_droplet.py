@@ -28,8 +28,8 @@ from fastapi.responses import RedirectResponse, JSONResponse
 # ── routing ──────────────────────────────────────────────────────────────────
 
 ROUTES = {
-    "vanguard-reconstruction.com": "allee@allee-ai.com",
-    "vanguard-relocations.com":    "assistant@allee-ai.com",
+    "vre-construction.com":        "allee@allee-ai.com",
+    "vanguardrelocations.com":     "assistant@allee-ai.com",
     "allee-ai.com":                "allee@allee-ai.com",
     "127.0.0.1":                   "allee@allee-ai.com",
     "localhost":                   "allee@allee-ai.com",
@@ -47,10 +47,10 @@ ALLOW_ORIGINS = [
     "https://allee-ai.com",
     "https://www.allee-ai.com",
     "https://allee-ai.github.io",
-    "https://vanguard-reconstruction.com",
-    "https://www.vanguard-reconstruction.com",
-    "https://vanguard-relocations.com",
-    "https://www.vanguard-relocations.com",
+    "https://vre-construction.com",
+    "https://www.vre-construction.com",
+    "https://vanguardrelocations.com",
+    "https://www.vanguardrelocations.com",
 ]
 
 # ── logging ──────────────────────────────────────────────────────────────────

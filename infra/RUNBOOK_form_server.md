@@ -1,8 +1,8 @@
 # Form-server deployment plan (next session)
 
 The form-server (`infra/form_server.py`) is verified working locally. Routes
-- vanguard-reconstruction.com → allee@allee-ai.com
-- vanguard-relocations.com   → assistant@allee-ai.com
+- vre-construction.com → allee@allee-ai.com
+- vanguardrelocations.com   → assistant@allee-ai.com
 - allee-ai.com               → allee@allee-ai.com (default)
 
 5 successful test emails sent through Proton Bridge in this session.
@@ -10,7 +10,7 @@ The form-server (`infra/form_server.py`) is verified working locally. Routes
 ## Production architecture
 
 ```
-Visitor → https://vanguard-reconstruction.com/contact-submit (POST form)
+Visitor → https://vre-construction.com/contact-submit (POST form)
        → Caddy on droplet matches /contact-submit
        → reverse_proxy 127.0.0.1:8042
        → SSH reverse tunnel (Mac → droplet)
@@ -66,7 +66,7 @@ check before deploy).
 
 ### 3. Caddy on droplet — add handle to BOTH site blocks
 
-In `/etc/caddy/Caddyfile`, inside `vanguard-reconstruction.com, www.vanguard-reconstruction.com {` block AND inside `vanguard-relocations.com, www.vanguard-relocations.com {` block, add **before** `try_files`:
+In `/etc/caddy/Caddyfile`, inside `vre-construction.com, www.vre-construction.com {` block AND inside `vanguardrelocations.com, www.vanguardrelocations.com {` block, add **before** `try_files`:
 ```caddy
 handle /contact-submit {
     reverse_proxy 127.0.0.1:8042
@@ -95,7 +95,7 @@ Form-server reads keychain on every request, so no restart needed.
 
 ## Pieces NOT YET committed/pushed at session end
 
-- `workspace/vanguard-reconstruction/contact.html` has the contact form (action="/contact-submit")
+- `workspace/vre-construction/contact.html` has the contact form (action="/contact-submit")
 - `Vanguard-Relocations/frontend/pages/services.html` has the contact form
 - Both will 404 on submit until Caddy `handle /contact-submit` is added on droplet
 - DON'T deploy via `infra/deploy_site.sh` until tunnel + Caddy are wired

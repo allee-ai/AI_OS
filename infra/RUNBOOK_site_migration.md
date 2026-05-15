@@ -28,7 +28,7 @@ Source of truth for the multi-apex migration. Stack discovered May 5 2026:
 
 ## Onboarding a new apex domain (the canonical recipe)
 
-For each domain (`allee-ai.com`, `bycade.com`, `vanguard-reconstruction.com`, …):
+For each domain (`allee-ai.com`, `bycade.com`, `vre-construction.com`, …):
 
 ### 1. Register & DNS (Cade present at Namecheap)
 
