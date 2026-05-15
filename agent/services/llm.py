@@ -85,6 +85,57 @@ class LLMProvider(ABC):
 
 # ── Ollama ──────────────────────────────────────────────────
 
+# Module-level cache of host health probes (host_url -> (ok, expires_at)).
+# Lets background loops poll resolve_host() cheaply without hammering
+# /api/tags on every generate() call. 30s TTL by default — short enough
+# that a Mac going to sleep mid-day stops being preferred quickly.
+_OLLAMA_HOST_HEALTH: Dict[str, Any] = {}
+_OLLAMA_HOST_TTL_SEC = 30.0
+
+
+def _ollama_hosts() -> List[str]:
+    """Return ordered list of Ollama hosts to try.
+
+    OLLAMA_HOSTS (comma-separated) wins. Otherwise fall back to the
+    single OLLAMA_HOST env. Otherwise localhost. Each entry is stripped
+    and trailing slashes are normalized away.
+    """
+    multi = os.getenv("OLLAMA_HOSTS", "").strip()
+    if multi:
+        hosts = [h.strip().rstrip("/") for h in multi.split(",") if h.strip()]
+        if hosts:
+            return hosts
+    single = os.getenv("OLLAMA_HOST", "").strip().rstrip("/")
+    return [single or "http://localhost:11434"]
+
+
+def _ollama_host_alive(host: str, timeout: float = 2.0) -> bool:
+    """Cached health probe — does GET /api/tags on `host` and caches the
+    result for _OLLAMA_HOST_TTL_SEC. Returns True iff the daemon answered."""
+    import time as _time
+    now = _time.monotonic()
+    cached = _OLLAMA_HOST_HEALTH.get(host)
+    if cached and cached[1] > now:
+        return cached[0]
+    ok = False
+    try:
+        req = urllib.request.Request(f"{host}/api/tags")
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            ok = (r.status == 200)
+    except Exception:
+        ok = False
+    _OLLAMA_HOST_HEALTH[host] = (ok, now + _OLLAMA_HOST_TTL_SEC)
+    return ok
+
+
+def resolve_ollama_host() -> Optional[str]:
+    """Return the first reachable host from _ollama_hosts(), or None."""
+    for h in _ollama_hosts():
+        if _ollama_host_alive(h):
+            return h
+    return None
+
+
 class OllamaProvider(LLMProvider):
     name = "ollama"
     key_env = ""
@@ -99,21 +150,18 @@ class OllamaProvider(LLMProvider):
     ]
 
     def is_available(self) -> bool:
-        try:
-            host = os.getenv("OLLAMA_HOST", "http://localhost:11434")
-            req = urllib.request.Request(f"{host}/api/tags")
-            urllib.request.urlopen(req, timeout=2)
-            return True
-        except Exception:
-            return False
+        return resolve_ollama_host() is not None
 
     def list_models(self) -> List[Dict[str, Any]]:
-        """List actually-pulled Ollama models, falling back to catalog."""
-        if not self.is_available():
+        """List actually-pulled Ollama models from the first reachable host,
+        falling back to catalog."""
+        host = resolve_ollama_host()
+        if host is None:
             return []
         try:
             import ollama as _ollama
-            response = _ollama.list()
+            client = _ollama.Client(host=host)
+            response = client.list()
             models = []
             for m in response.get("models", []):
                 mid = m.get("name", m.get("model", ""))
@@ -140,15 +188,16 @@ class OllamaProvider(LLMProvider):
         except ImportError:
             raise RuntimeError("ollama not installed. Run: pip install ollama")
 
-        # Cloud routing convention: cloud-tagged models (e.g.
-        # "gpt-oss:120b-cloud", "kimi-k2:1t-cloud") route through the
-        # *local* ollama daemon to Ollama Cloud automatically once the
-        # user has run `ollama signin`. No separate host or auth header
-        # required \u2014 the daemon handles it.
+        # Host resolution honors OLLAMA_HOSTS (priority list, e.g. a
+        # Tailscale-reachable Mac first, local CPU second) and falls
+        # back to OLLAMA_HOST (singular) or localhost.
         #
-        # OLLAMA_HOST is honored as a fallback for custom remote daemons
-        # (self-hosted, separate machine, etc).
-        host = os.getenv("OLLAMA_HOST", "").strip()
+        # Cloud-tagged models ("gpt-oss:120b-cloud", "kimi-k2:1t-cloud")
+        # always route through the *local* daemon — Ollama Cloud handles
+        # the dispatch once the user runs `ollama signin`. So for those
+        # we deliberately skip the priority list and use no client host.
+        is_cloud_model = ":" in (model or "") and model.endswith("-cloud")
+        host = None if is_cloud_model else resolve_ollama_host()
         try:
             if host:
                 client = _ollama.Client(host=host)
@@ -165,6 +214,12 @@ class OllamaProvider(LLMProvider):
                 )
             return response["message"]["content"].strip()
         except Exception as e:
+            # If the chosen host failed mid-request (e.g. the Mac went to
+            # sleep between health probe and generate), invalidate its
+            # cache entry so the next call picks the next host in the
+            # priority list immediately.
+            if host:
+                _OLLAMA_HOST_HEALTH[host] = (False, 0.0)
             try:
                 from agent.threads.log.schema import log_event
                 log_event(
