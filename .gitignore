@@ -56,6 +56,8 @@ pids/
 *.seed
 data/.last_state_read
 data/.commit_msg_tmp
+data/.last_cortex_tags.json
+data/.cortex_tag_history.jsonl
 
 # Database files
 *.db

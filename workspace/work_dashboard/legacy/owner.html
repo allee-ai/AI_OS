@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Property Overview — Owner</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #f0f2f5;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .app-nav {
+    display: flex;
+    gap: 4px;
+    background: #1a1a2e;
+    padding: 8px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .app-nav a {
+    color: #aab;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .app-nav a:hover { color: #fff; background: rgba(255,255,255,.1); }
+  .app-nav a.active { color: #fff; background: #4f46e5; }
+
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 20px; }
+  h2 { font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+
+  .section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  /* Property cards */
+  .prop-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    border-left: 4px solid #2d7ff9;
+  }
+  .prop-card h3 { font-size: 15px; margin-bottom: 8px; }
+  .prop-stats {
+    display: flex;
+    gap: 16px;
+    font-size: 13px;
+    color: #666;
+    flex-wrap: wrap;
+  }
+  .prop-stats .stat { display: flex; gap: 4px; }
+  .prop-stats .stat .count { font-weight: 600; color: #1a1a1a; }
+  .stat-completed { color: #155724 !important; }
+  .stat-pending { color: #856404 !important; }
+
+  /* Work orders */
+  .wo-card {
+    background: #fff;
+    border-radius: 8px;
+    padding: 14px 18px;
+    margin-bottom: 10px;
+    border: 1px solid #e0e0e0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+  .wo-info { flex: 1; }
+  .wo-info .wo-prop { font-weight: 600; font-size: 13px; color: #2d7ff9; }
+  .wo-info .wo-desc { margin-top: 4px; }
+  .wo-info .wo-meta { font-size: 12px; color: #888; margin-top: 4px; }
+  .wo-actions { display: flex; gap: 6px; flex-shrink: 0; }
+
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    display: inline-block;
+  }
+  .badge-submitted { background: #fff3cd; color: #856404; }
+  .badge-approved { background: #d4edda; color: #155724; }
+  .badge-denied { background: #f8d7da; color: #721c24; }
+
+  .btn {
+    font-size: 12px; padding: 5px 14px; cursor: pointer;
+    border: 1px solid #d0d0d0; background: #fff;
+    border-radius: 6px; font-weight: 500; transition: all 0.15s;
+  }
+  .btn:hover { background: #f5f5f5; }
+  .btn-approve { color: #155724; border-color: #c3e6cb; }
+  .btn-approve:hover { background: #d4edda; }
+  .btn-deny { color: #721c24; border-color: #f5c6cb; }
+  .btn-deny:hover { background: #f8d7da; }
+
+  .empty { text-align: center; padding: 30px; color: #999; font-size: 14px; }
+
+  /* Summary cards */
+  .summary {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .sum-card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    text-align: center;
+  }
+  .sum-card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .sum-card .value { font-size: 24px; font-weight: 700; }
+</style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="/">Dashboard</a>
+  <a href="/owner" class="active">Owner View</a>
+  <a href="/tenant/7697-oceola">Tenant View</a>
+</nav>
+
+<h1>Property Overview</h1>
+
+<div class="summary">
+  <div class="sum-card"><div class="label">Properties</div><div class="value" id="propCount">0</div></div>
+  <div class="sum-card"><div class="label">Total Billed</div><div class="value" id="totalBilled">$0</div></div>
+  <div class="sum-card"><div class="label">Pending Orders</div><div class="value" id="pendingOrders">0</div></div>
+</div>
+
+<h2>Work Orders</h2>
+<div id="workOrders"><div class="empty">Loading...</div></div>
+
+<h2 style="margin-top: 24px;">Properties</h2>
+<div id="properties"><div class="empty">Loading...</div></div>
+
+<script>
+function fmt(n) {
+  return '$' + (n || 0).toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function loadData() {
+  Promise.all([
+    fetch('/api/owner/properties').then(r => r.json()),
+    fetch('/api/owner/work-orders').then(r => r.json())
+  ]).then(([props, orders]) => {
+    renderProperties(props);
+    renderWorkOrders(orders);
+    updateSummary(props, orders);
+  });
+}
+
+function renderProperties(props) {
+  var el = document.getElementById('properties');
+  if (!props.length) { el.innerHTML = '<div class="empty">No properties yet</div>'; return; }
+  el.innerHTML = props.map(p => {
+    var stats = [];
+    if (p.jobs.completed) stats.push('<span class="stat"><span class="count stat-completed">' + p.jobs.completed.count + '</span> completed</span>');
+    if (p.jobs.scheduled) stats.push('<span class="stat"><span class="count">' + p.jobs.scheduled.count + '</span> scheduled</span>');
+    if (p.jobs.pending) stats.push('<span class="stat"><span class="count stat-pending">' + p.jobs.pending.count + '</span> pending</span>');
+    var totalCost = (p.jobs.completed?.cost || 0) + (p.jobs.scheduled?.cost || 0) + (p.jobs.pending?.cost || 0);
+    var totalPaid = (p.jobs.completed?.paid || 0) + (p.jobs.scheduled?.paid || 0) + (p.jobs.pending?.paid || 0);
+    return '<div class="prop-card"><h3>' + escHtml(p.address) + '</h3><div class="prop-stats">' +
+      stats.join('') +
+      '<span class="stat">Cost: <span class="count">' + fmt(totalCost) + '</span></span>' +
+      '<span class="stat">Paid: <span class="count">' + fmt(totalPaid) + '</span></span>' +
+      '</div></div>';
+  }).join('');
+}
+
+function renderWorkOrders(orders) {
+  var el = document.getElementById('workOrders');
+  if (!orders.length) { el.innerHTML = '<div class="empty">No work orders submitted yet</div>'; return; }
+  el.innerHTML = orders.map(wo => {
+    var badgeClass = 'badge-' + wo.status;
+    var actions = '';
+    if (wo.status === 'submitted') {
+      actions = '<div class="wo-actions">' +
+        '<button class="btn btn-approve" onclick="approveWO(' + wo.id + ')">Approve</button>' +
+        '<button class="btn btn-deny" onclick="denyWO(' + wo.id + ')">Deny</button></div>';
+    }
+    return '<div class="wo-card"><div class="wo-info">' +
+      '<div class="wo-prop">' + escHtml(wo.property_address) + '</div>' +
+      '<div class="wo-desc">' + escHtml(wo.description) + '</div>' +
+      '<div class="wo-meta"><span class="badge ' + badgeClass + '">' + wo.status + '</span> · ' +
+      'Urgency: ' + wo.urgency + (wo.submitted_at ? ' · ' + wo.submitted_at : '') + '</div>' +
+      '</div>' + actions + '</div>';
+  }).join('');
+}
+
+function updateSummary(props, orders) {
+  document.getElementById('propCount').textContent = props.length;
+  var totalBilled = 0;
+  props.forEach(p => {
+    totalBilled += (p.jobs.completed?.cost || 0) + (p.jobs.scheduled?.cost || 0);
+  });
+  document.getElementById('totalBilled').textContent = fmt(totalBilled);
+  var pendingCount = orders.filter(o => o.status === 'submitted').length;
+  document.getElementById('pendingOrders').textContent = pendingCount;
+}
+
+function approveWO(id) {
+  fetch('/api/owner/work-orders/' + id + '/approve', {method: 'POST'})
+    .then(r => r.json())
+    .then(() => loadData());
+}
+
+function denyWO(id) {
+  fetch('/api/owner/work-orders/' + id + '/deny', {method: 'POST'})
+    .then(r => r.json())
+    .then(() => loadData());
+}
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+loadData();
+</script>
+</body>
+</html>

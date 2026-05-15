@@ -417,7 +417,14 @@ def _build_entity_registry() -> Tuple[Dict[str, List[str]], set]:
     for name in names:
         # Tokenise: "user.preferences.likes_coffee" → ["user","preferences","likes","coffee"]
         tokens = re.split(r'[._\s]+', name.lower())
-        tokens = [t for t in tokens if len(t) >= 2]
+        # Min length 3 (kills 'do', 'me', 'we', 'us' etc.) and reject
+        # noise tokens at registry-build time. Without this filter, a
+        # key like 'constraint.do_not_match_performance' would index
+        # 'do' and 'not' as triggers for that entity, so any query
+        # containing the word 'do' would falsely activate the
+        # constraint. We still keep the FULL key as an entity, just
+        # don't make English stopwords a backdoor into it.
+        tokens = [t for t in tokens if len(t) >= 3 and t not in _NOISE_TOKENS]
 
         # Full name is also a token (for exact matching)
         for token in tokens:
@@ -443,13 +450,40 @@ def invalidate_entity_registry() -> None:
     _entity_names = None
 
 
-# Tokens too generic to trigger entity matching on their own
+# Tokens too generic to trigger entity matching on their own.
+# Two roles: (1) skipped during query extraction, (2) skipped during
+# registry build so compound keys can't index English stopwords as
+# triggers. Anything that's a real entity (jake, betsy, sarah, etc.)
+# must NOT be in this set.
 _NOISE_TOKENS = {
+    # generic schema words
     'user', 'general', 'preference', 'preferences', 'action', 'identity',
     'process', 'system', 'assistant', 'information', 'query', 'goal',
     'project', 'type', 'status', 'name', 'value', 'data', 'method',
-    'source', 'level', 'the', 'is', 'are', 'was', 'and', 'for',
-    'that', 'this', 'with', 'not', 'but', 'you', 'your',
+    'source', 'level', 'meta', 'item', 'items', 'thing', 'things',
+    'note', 'notes', 'detail', 'details', 'context', 'state',
+    # articles / prepositions / conjunctions
+    'the', 'and', 'for', 'but', 'nor', 'yet', 'with', 'from', 'into',
+    'onto', 'upon', 'over', 'under', 'about', 'around', 'between',
+    'through', 'against', 'before', 'after', 'during', 'within',
+    # be / aux verbs
+    'are', 'was', 'were', 'been', 'being', 'have', 'has', 'had', 'having',
+    'will', 'would', 'shall', 'should', 'can', 'could', 'may', 'might',
+    'must', 'does', 'did', 'doing',
+    # pronouns
+    'you', 'your', 'yours', 'they', 'them', 'their', 'theirs',
+    'his', 'her', 'hers', 'him', 'who', 'whom', 'whose', 'which',
+    'this', 'that', 'these', 'those', 'what', 'whatever',
+    'when', 'where', 'why', 'how', 'whenever', 'wherever',
+    # generic verbs from conversation
+    'know', 'knows', 'knew', 'tell', 'tells', 'told', 'say', 'says', 'said',
+    'show', 'shows', 'showed', 'get', 'got', 'make', 'made', 'use', 'used',
+    'using', 'see', 'saw', 'seen', 'look', 'looking', 'think', 'thought',
+    'happened', 'happening', 'happen', 'actually', 'really',
+    # negation / common adverbs
+    'not', 'never', 'always', 'often', 'sometimes', 'maybe',
+    # connecting words leftover
+    'just', 'only', 'also', 'still', 'then', 'than',
 }
 
 

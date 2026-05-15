@@ -43,7 +43,7 @@ _RECENCY_BOOST = 0.6
 
 
 # Thread list - linking_core included for UI visibility
-THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core", "field"]
+THREADS = ["identity", "log", "form", "philosophy", "reflex", "linking_core", "field", "work"]
 
 # Top-level modules — scored for relevance alongside threads.
 # Each module provides summarised context (conversations, files, etc.)

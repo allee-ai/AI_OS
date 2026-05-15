@@ -18,6 +18,7 @@ Runs on droplet under systemd. Listens on 127.0.0.1:8042 — Caddy reverse-proxi
 
 from __future__ import annotations
 
+import base64
 import json
 import logging
 import os
@@ -42,15 +43,37 @@ from bid_render import render_bid_pdf, classify_track, PROPERTY_LABELS
 
 # ── routing ──────────────────────────────────────────────────────────────────
 
+# Where lead notifications LAND (the shared pool inbox).
 ROUTES = {
     "vre-construction.com":        "allee@allee-ai.com",
-    "vanguardrelocations.com":     "assistant@allee-ai.com",
+    "vanguardrelocations.com":     "allee@allee-ai.com",
     "allee-ai.com":                "allee@allee-ai.com",
     "127.0.0.1":                   "allee@allee-ai.com",
     "localhost":                   "allee@allee-ai.com",
 }
 
-# ── SMTP via Proton submission ───────────────────────────────────────────────
+# What FROM address each site sends as. Per-site so customer replies
+# land on the right brand inbox and the From matches the verified Resend
+# domain.
+FROM_ROUTES = {
+    "vre-construction.com":    "cade@vre-construction.com",
+    "vanguardrelocations.com": "layton@vanguardrelocations.com",
+    "allee-ai.com":            "allee@allee-ai.com",
+    "127.0.0.1":               "allee@allee-ai.com",
+    "localhost":               "allee@allee-ai.com",
+}
+
+# ── mail backend selection ───────────────────────────────────────────────
+
+# "resend" -> HTTP API (works behind cloud-provider SMTP blocks).
+# "smtp"   -> Proton submission SMTP (legacy path, requires egress port 587).
+MAIL_BACKEND = os.environ.get("MAIL_BACKEND", "smtp").lower()
+
+# ── Resend HTTP API ────────────────────────────────────────────────────────────
+RESEND_API_KEY = os.environ.get("RESEND_API_KEY", "")
+RESEND_URL = "https://api.resend.com/emails"
+
+# ── SMTP via Proton submission (fallback / legacy) ───────────────────────────
 
 SMTP_HOST = os.environ.get("PROTON_SMTP_HOST", "smtp.protonmail.ch")
 SMTP_PORT = int(os.environ.get("PROTON_SMTP_PORT", "587"))
@@ -88,17 +111,75 @@ log = logging.getLogger("form-server")
 # ── helpers ──────────────────────────────────────────────────────────────────
 
 
+def _normalize_site(site: str) -> str:
+    s = (site or "").strip().lower()
+    if s.startswith("www."):
+        s = s[4:]
+    return s.split(":", 1)[0]
+
+
 def _resolve_destination(site: str) -> Optional[str]:
     if not site:
         return None
-    s = site.strip().lower()
-    if s.startswith("www."):
-        s = s[4:]
-    s = s.split(":", 1)[0]
-    return ROUTES.get(s)
+    return ROUTES.get(_normalize_site(site))
 
 
-def _send_email(
+def _resolve_from(site: str) -> str:
+    """Per-site From address. Falls back to SMTP_FROM / allee@."""
+    if site:
+        addr = FROM_ROUTES.get(_normalize_site(site))
+        if addr:
+            return addr
+    return SMTP_FROM or "allee@allee-ai.com"
+
+
+def _send_email_resend(
+    from_addr: str,
+    to_addr: str,
+    subject: str,
+    body: str,
+    reply_to: str = "",
+    attachments: list[tuple[str, bytes, str]] | None = None,
+) -> None:
+    if not RESEND_API_KEY:
+        raise RuntimeError("RESEND_API_KEY not set in environment")
+    payload: dict = {
+        "from": from_addr,
+        "to": [to_addr],
+        "subject": subject,
+        "text": body,
+    }
+    if reply_to:
+        payload["reply_to"] = reply_to
+    if attachments:
+        payload["attachments"] = [
+            {
+                "filename": filename,
+                "content": base64.b64encode(data).decode("ascii"),
+            }
+            for (filename, data, _subtype) in attachments
+        ]
+    req = urllib.request.Request(
+        RESEND_URL,
+        data=json.dumps(payload).encode(),
+        method="POST",
+        headers={
+            "Authorization": f"Bearer {RESEND_API_KEY}",
+            "Content-Type": "application/json",
+        },
+    )
+    ctx = ssl.create_default_context(cafile=certifi.where())
+    try:
+        with urllib.request.urlopen(req, timeout=15, context=ctx) as resp:
+            body_text = resp.read().decode(errors="replace")[:200]
+            log.info("resend: %s %s", resp.status, body_text)
+    except urllib.error.HTTPError as e:
+        detail = e.read().decode(errors="replace")[:400] if e.fp else ""
+        raise RuntimeError(f"resend HTTP {e.code}: {detail}") from e
+
+
+def _send_email_smtp(
+    from_addr: str,
     to_addr: str,
     subject: str,
     body: str,
@@ -108,7 +189,7 @@ def _send_email(
     if not SMTP_PASS:
         raise RuntimeError("PROTON_SMTP_PASS not set in environment")
     msg = MIMEMultipart()
-    msg["From"] = SMTP_FROM
+    msg["From"] = from_addr
     msg["To"] = to_addr
     msg["Subject"] = subject
     if reply_to:
@@ -124,6 +205,22 @@ def _send_email(
         s.starttls()
         s.login(SMTP_USER, SMTP_PASS)
         s.send_message(msg)
+
+
+def _send_email(
+    to_addr: str,
+    subject: str,
+    body: str,
+    reply_to: str = "",
+    attachments: list[tuple[str, bytes, str]] | None = None,
+    from_addr: str = "",
+) -> None:
+    """Dispatcher: routes to Resend HTTP API or Proton SMTP per MAIL_BACKEND."""
+    sender = from_addr or SMTP_FROM or "allee@allee-ai.com"
+    if MAIL_BACKEND == "resend":
+        _send_email_resend(sender, to_addr, subject, body, reply_to, attachments)
+    else:
+        _send_email_smtp(sender, to_addr, subject, body, reply_to, attachments)
 
 
 def _push_lead_to_jake(lead: dict) -> None:
@@ -222,11 +319,14 @@ app.add_middleware(
 def health() -> JSONResponse:
     return JSONResponse({
         "status": "ok",
+        "mail_backend": MAIL_BACKEND,
+        "resend_key_present": bool(RESEND_API_KEY),
         "smtp_host": SMTP_HOST,
         "smtp_user": SMTP_USER,
         "smtp_pass_present": bool(SMTP_PASS),
         "jake_token_present": bool(JAKE_TOKEN),
         "routes": list(ROUTES.keys()),
+        "from_routes": FROM_ROUTES,
     })
 
 
@@ -263,7 +363,7 @@ async def contact_submit(
         f"{message}\n"
     )
     try:
-        _send_email(target, subject, body, reply_to=email)
+        _send_email(target, subject, body, reply_to=email, from_addr=_resolve_from(site))
         log.info("sent %s -> %s: %s from %s", site, target, topic, name)
     except Exception as e:  # noqa: BLE001
         log.exception("smtp send failed: %s", e)
@@ -361,6 +461,7 @@ async def instant_quote_submit(request: Request):
             lead_body,
             reply_to=customer_email or SMTP_USER,
             attachments=[(f"{bid_id}.pdf", pdf_bytes, "pdf")],
+            from_addr=_resolve_from(target_site),
         )
     except Exception as e:
         log.error("lead notify failed for %s: %s", target_site, e)
@@ -386,6 +487,7 @@ async def instant_quote_submit(request: Request):
                 reply_body,
                 reply_to=to_addr,
                 attachments=[(f"{bid_id}.pdf", pdf_bytes, "pdf")],
+                from_addr=_resolve_from(target_site),
             )
         except Exception as e:
             log.error("auto-reply failed for %s: %s", customer_email, e)
@@ -428,7 +530,12 @@ async def instant_quote_submit(request: Request):
 if __name__ == "__main__":
     import uvicorn
     log.info("form-server (droplet) starting on 127.0.0.1:8042")
-    log.info("smtp: %s:%s as %s (pass=%s)", SMTP_HOST, SMTP_PORT, SMTP_USER, "set" if SMTP_PASS else "MISSING")
+    log.info("mail backend: %s", MAIL_BACKEND)
+    if MAIL_BACKEND == "resend":
+        log.info("resend api key: %s", "set" if RESEND_API_KEY else "MISSING")
+    else:
+        log.info("smtp: %s:%s as %s (pass=%s)", SMTP_HOST, SMTP_PORT, SMTP_USER, "set" if SMTP_PASS else "MISSING")
     log.info("jake: %s (token=%s)", JAKE_URL, "set" if JAKE_TOKEN else "MISSING")
-    log.info("routes: %s", ROUTES)
+    log.info("routes (TO): %s", ROUTES)
+    log.info("from_routes: %s", FROM_ROUTES)
     uvicorn.run(app, host="127.0.0.1", port=8042, log_level="info")

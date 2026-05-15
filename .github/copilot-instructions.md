@@ -5,9 +5,88 @@
 > `.venv/bin/python scripts/turn_start.py "<summary>"` and read the banner +
 > STATE it prints. Autopilot reminders also print at the END of that script's
 > output — treat that box as the top of your NEXT turn.
+>
+> **AND** end EVERY turn (autopilot or not) with a `<state-tags>` block:
+> ```
+> <state-tags>
+> prediction: <what I expect next>
+> affect: <one word>
+> metacognition: <confident vs guessing>
+> open-loops: <comma list>
+> </state-tags>
+> ```
+> The next turn-start reads this back as `[cortex.tags]` in the banner and
+> scores my prediction against your actual message. Skip it and the banner
+> will print `!! cortex.tags: habit slipping`. Don't make it nag.
 
 **You are coding on AI_OS, a live running system with its own self-model.**
 The database at `data/db/state.db` is the source of truth about what the system knows, who the user is, what goals are open, what the loops have done, and what just happened. Read it before you change things.
+
+---
+
+## The Architecture (functional, not philosophical)
+
+AI_OS is structured the way a brain is: a **memory system in service of action**, with extended-cognition appendages, a cortex (the LLM), and background loops. Every new feature has a home in this map. If a proposed change doesn't fit, the change is probably wrong — not the map.
+
+### The brain — 6 threads (history + real associations)
+
+| Thread | What it remembers | Brain analog | Stores |
+|--------|-------------------|--------------|--------|
+| `identity` | Self + others + conversations | DMN (mPFC, PCC) | `profiles`, `profile_facts`, `chat.*` (chat lives here as `identity.conversations`) |
+| `log` | What happened when | Hippocampus | `events`, `sessions`, idle/recency |
+| `philosophy` | What I value + aspire to | Limbic / vmPFC | `philosophy_profile_facts`, principles, failure_modes, long-horizon goals |
+| `reflex` | Procedural shortcuts (when X → Y) | Basal ganglia / cerebellum | learned patterns, triggers, meta-thoughts |
+| `sensory` | What's here now (transient afferent) | Dorsal attention + sensory cortex | environment (field), proprioception, ambient |
+| `form` | What I can do (efferent) | Frontoparietal control | `form_tools`, tool call history |
+
+### Salience — 1 function (not a fact thread)
+
+| Component | Role | Brain analog |
+|-----------|------|--------------|
+| `linking_core` | Scores threads, extracts concepts, spreads activation, gates STATE assembly. Owns `key_cooccurrence` (Hebbian matrix). | Salience network (anterior insula, dACC) |
+
+### Extended cognition — 2 appendages (outside the skull but trusted)
+
+| Appendage | Metaphor | Posture |
+|-----------|----------|---------|
+| `workspace` | **The shared desk** | Durable, mutual, authoritative. Files we both reach into. Includes `docs` as `workspace.docs`. |
+| `feeds` | **The agent's phone** | Ephemeral, private, provisional. Read-mostly intake streams. Includes `work` (sales/leads), email, calendar, monitoring as `feeds.<source>`. |
+
+Promotion `feeds → workspace` is *writing it down*. Demotion is *archival*. The categories are dynamics, not just folders.
+
+### The cortex — the LLM itself
+
+The LLM **is** working memory. STATE supplies its contents each turn. Three things the cortex carries forward turn-to-turn as **tags in STATE**, not as separate threads:
+
+- **Prediction** — what does the cortex expect next? Tag forward, compare against reality, surface prediction error.
+- **Affect / mood** — running emotional stance. Tag forward; colors next turn's interpretation.
+- **Metacognition** — confidence + source attribution on facts. "I know this verbatim" vs "I inferred this" vs "I'm guessing."
+
+These are cortex functions. They do NOT become new threads.
+
+### Subconscious loops — background work
+
+| Loop | Function | Brain analog |
+|------|----------|--------------|
+| Consolidation | Compress recent into durable; **includes auto-finetune loop** that turns lived experience into model weight updates | Sleep / replay / systems consolidation |
+| Heartbeat | Health checks, rate limits, safety guards | Brainstem autonomic |
+| Imagination (on-demand) | Re-invoke cortex with counterfactual inputs | DMN simulation |
+| Idle-wander (optional) | Default-mode sampling for incidental insight | DMN at rest |
+| Drive (boredom/curiosity) | Initiate from idle when nothing pending | Homeostatic push |
+
+Homeostasis = composite of log temporal trends + heartbeat safety/limit checks. Not a thread.
+Threat detection = programmatic anomaly + cortex consideration. Not a thread.
+
+### What this means for building
+
+- Every fact has a home in exactly one of the 6 brain threads, the 2 appendages, or as a cortex tag.
+- **`work` is not a thread.** It's `feeds.work` — one source of live external state, peer to future `feeds.email`, `feeds.calendar`, `feeds.monitoring`.
+- **`goals` is not a thread.** Aspirational goals → `philosophy.aspirations`. In-flight intentions → `log.in_flight`. Task-level → ephemeral working memory (cortex only).
+- **`chat` is not a thread.** It's `identity.conversations` (or `log.chat` if treated as event memory — either is defensible; the storage discipline is shared).
+- If you're tempted to add a new top-level thread, first ask: "is this a distinct *function of memory*, or a *source* under an existing function?" Almost always it's a source.
+- If the change is a new *capability* (prediction, metacog tagging, counterfactual sim, drive), it belongs in a subconscious loop or as a cortex-side tag — not a new thread.
+
+This map is functional, not philosophical. Build to it.
 
 ---
 
@@ -132,6 +211,26 @@ Verify:
 - `form.tools.*` shows new tools if you added any.
 
 If STATE degraded, the change broke something. Fix it before declaring done.
+
+### Cortex-tag pass-forward (end every turn with this)
+
+At the **end of every response**, emit a `<state-tags>` block so the next turn's `scripts/turn_start.py` can re-read my own mind. The transcript parser at `agent/subconscious/cortex_tags.py` extracts these and prints them in the next banner under `[cortex.tags]`.
+
+```
+<state-tags>
+prediction: <what I expect to happen next / what cade will ask>
+affect: <one word: focused | convergent | blocked | curious | tired | ...>
+metacognition: <what I'm confident about vs guessing>
+open-loops: <comma-separated short labels of unfinished threads>
+</state-tags>
+```
+
+Rules:
+- One block per turn, at the very end after task_complete summary.
+- Keys are lowercase, hyphens allowed. Unknown keys are preserved under "extra".
+- Keep each value to one line. Concision beats completeness.
+- If a value would be empty or trivial, omit the key entirely.
+- This is **cortex state**, not a new fact thread. It does not belong in identity/log/philosophy/reflex/sensory/form.
 
 ---
 

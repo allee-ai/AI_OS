@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Submit Work Order</title>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #f0f2f5;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 6px; }
+  .address { font-size: 14px; color: #666; margin-bottom: 20px; }
+
+  .section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .section h2 { font-size: 15px; font-weight: 700; margin-bottom: 12px; }
+
+  label { display: block; font-weight: 600; font-size: 13px; margin-bottom: 4px; color: #444; }
+  textarea, select {
+    width: 100%;
+    padding: 10px 12px;
+    border: 1px solid #d0d0d0;
+    border-radius: 6px;
+    font-size: 14px;
+    font-family: inherit;
+    margin-bottom: 14px;
+    resize: vertical;
+  }
+  textarea:focus, select:focus { outline: none; border-color: #2d7ff9; }
+
+  .btn {
+    font-size: 14px; padding: 10px 24px; cursor: pointer;
+    border: none; background: #2d7ff9; color: #fff;
+    border-radius: 8px; font-weight: 600;
+    width: 100%; transition: background 0.15s;
+  }
+  .btn:hover { background: #1a6fe8; }
+  .btn:disabled { background: #ccc; cursor: default; }
+
+  .msg { text-align: center; padding: 14px; border-radius: 8px; margin-bottom: 14px; font-weight: 500; display: none; }
+  .msg-ok { background: #d4edda; color: #155724; }
+  .msg-err { background: #f8d7da; color: #721c24; }
+
+  /* Existing orders */
+  .order {
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    padding: 12px 16px;
+    margin-bottom: 8px;
+  }
+  .order .desc { font-weight: 500; }
+  .order .meta { font-size: 12px; color: #888; margin-top: 4px; }
+  .badge {
+    font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 10px;
+    display: inline-block;
+  }
+  .badge-submitted { background: #fff3cd; color: #856404; }
+  .badge-approved { background: #d4edda; color: #155724; }
+  .badge-denied { background: #f8d7da; color: #721c24; }
+
+  .empty { text-align: center; padding: 20px; color: #999; }
+  .loading { text-align: center; padding: 40px; color: #999; }
+</style>
+</head>
+<body>
+
+<div id="loading" class="loading">Loading property info...</div>
+
+<div id="app" style="display:none">
+  <h1>Submit a Work Order</h1>
+  <div class="address" id="propAddress"></div>
+
+  <div class="section">
+    <h2>What needs to be fixed?</h2>
+    <div class="msg msg-ok" id="msgOk">Work order submitted!</div>
+    <div class="msg msg-err" id="msgErr"></div>
+
+    <label for="desc">Description</label>
+    <textarea id="desc" rows="4" placeholder="Describe the issue..."></textarea>
+
+    <label for="urgency">Urgency</label>
+    <select id="urgency">
+      <option value="low">Low — not urgent</option>
+      <option value="medium" selected>Medium — needs attention soon</option>
+      <option value="high">High — urgent / safety issue</option>
+    </select>
+
+    <button class="btn" id="submitBtn" onclick="submitOrder()">Submit Work Order</button>
+  </div>
+
+  <div class="section">
+    <h2>Your Previous Requests</h2>
+    <div id="orders"><div class="empty">No work orders yet</div></div>
+  </div>
+</div>
+
+<script>
+var SLUG = window.location.pathname.split('/').filter(Boolean).pop();
+var PROP_ID = null;
+
+function escHtml(s) {
+  var d = document.createElement('div');
+  d.textContent = s || '';
+  return d.innerHTML;
+}
+
+function loadProperty() {
+  fetch('/api/tenant/' + SLUG)
+    .then(r => { if (!r.ok) throw new Error('not found'); return r.json(); })
+    .then(data => {
+      PROP_ID = data.property_id;
+      document.getElementById('propAddress').textContent = data.address;
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('app').style.display = '';
+      renderOrders(data.work_orders);
+    })
+    .catch(() => {
+      document.getElementById('loading').textContent = 'Property not found. Check your link.';
+    });
+}
+
+function renderOrders(orders) {
+  var el = document.getElementById('orders');
+  if (!orders.length) { el.innerHTML = '<div class="empty">No work orders yet</div>'; return; }
+  el.innerHTML = orders.map(o => {
+    var badgeClass = 'badge-' + o.status;
+    return '<div class="order"><div class="desc">' + escHtml(o.description) + '</div>' +
+      '<div class="meta"><span class="badge ' + badgeClass + '">' + o.status + '</span> · ' +
+      o.urgency + (o.submitted_at ? ' · ' + o.submitted_at : '') + '</div></div>';
+  }).join('');
+}
+
+function submitOrder() {
+  var desc = document.getElementById('desc').value.trim();
+  var urgency = document.getElementById('urgency').value;
+  var msgOk = document.getElementById('msgOk');
+  var msgErr = document.getElementById('msgErr');
+  msgOk.style.display = 'none';
+  msgErr.style.display = 'none';
+
+  if (!desc) {
+    msgErr.textContent = 'Please describe the issue.';
+    msgErr.style.display = '';
+    return;
+  }
+
+  var btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  btn.textContent = 'Submitting...';
+
+  fetch('/api/tenant/' + SLUG + '/work-order', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({property_id: PROP_ID, description: desc, urgency: urgency})
+  })
+    .then(r => { if (!r.ok) throw new Error('failed'); return r.json(); })
+    .then(() => {
+      msgOk.style.display = '';
+      document.getElementById('desc').value = '';
+      btn.textContent = 'Submit Work Order';
+      btn.disabled = false;
+      loadProperty(); // refresh the list
+    })
+    .catch(() => {
+      msgErr.textContent = 'Something went wrong. Try again.';
+      msgErr.style.display = '';
+      btn.textContent = 'Submit Work Order';
+      btn.disabled = false;
+    });
+}
+
+loadProperty();
+</script>
+</body>
+</html>

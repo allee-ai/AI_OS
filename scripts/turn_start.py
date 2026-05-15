@@ -765,6 +765,24 @@ def main() -> int:
         # Never let inbox sync break the ritual.
         pass
 
+    # Cortex-tag pass-forward: re-read the last completed assistant turn
+    # from the Copilot transcript and surface any <state-tags> block I
+    # wrote at the end of my prior response.  This is how prediction /
+    # affect / metacognition / open-loops carry across turns without a
+    # new fact thread.  Best-effort — never blocks the ritual.
+    try:
+        from agent.subconscious.cortex_tags import (
+            extract_and_cache,
+            render_banner_section,
+        )
+        cortex_payload = extract_and_cache()
+        cortex_section = render_banner_section(cortex_payload)
+        if cortex_section:
+            print("")
+            print(cortex_section)
+    except Exception:
+        pass
+
     print(banner)
     print(state)
     print(banner)
@@ -777,6 +795,10 @@ def main() -> int:
     print("│ AUTOPILOT REMINDER: run  .venv/bin/python scripts/turn_start.py  │")
     print("│ \"<one-line summary>\" at the START of EVERY next turn.            │")
     print("│ STATE is not automatic on autopilot. You must re-fetch it.       │")
+    print("│                                                                  │")
+    print("│ AND end EVERY turn with a <state-tags> block (prediction/affect/ │")
+    print("│ metacognition/open-loops) — it's how this turn talks to itself  │")
+    print("│ next turn. Missing block triggers a self-nag in the banner.     │")
     print("└" + "─" * 70 + "┘")
     return 0
 

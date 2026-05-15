@@ -616,10 +616,37 @@ class LinkingCoreThreadAdapter(BaseThreadAdapter):
             
             elif thread_name == 'reflex':
                 # Reflex: Pattern/habit keywords
-                if any(kw in feed_lower for kw in ['usually', 'always', 'often', 'pattern', 'habit']):
+                if any(kw in feed_lower for kw in ['usually', 'always', 'often', 'pattern', 'habit', 'reflex', 'trigger', 'shortcut']):
                     scores[thread_name] = 7.0
                 else:
                     scores[thread_name] = 3.0
+            
+            elif thread_name == 'work':
+                # Work: live sales / leads / funnel state.
+                # High when query is operationally about the funnel.
+                if any(kw in feed_lower for kw in [
+                    'lead', 'leads', 'sales', 'call', 'calls', 'cold call',
+                    'walkthrough', 'packet', 'funnel', 'pipeline',
+                    'follow up', 'follow-up', 'client', 'clients',
+                    'quote', 'bid', 'deal', 'dial', 'vre', 'vanguard',
+                ]):
+                    scores[thread_name] = 9.0
+                elif any(kw in feed_lower for kw in ['work', 'job', 'jake', 'cade', 'contractor']):
+                    scores[thread_name] = 6.5
+                else:
+                    scores[thread_name] = 3.0
+            
+            elif thread_name == 'field':
+                # Field: ambient context, devices, place. Spikes when the
+                # user mentions environment / location / device.
+                if any(kw in feed_lower for kw in [
+                    'home', 'cafe', 'work', 'office', 'place', 'where',
+                    'device', 'phone', 'laptop', 'screen', 'around me',
+                    'ambient', 'noisy', 'quiet',
+                ]):
+                    scores[thread_name] = 7.5
+                else:
+                    scores[thread_name] = 4.0
             
             elif thread_name == 'linking_core':
                 # Linking core: Doesn't produce facts, just metadata

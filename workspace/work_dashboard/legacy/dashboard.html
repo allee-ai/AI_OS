@@ -1,0 +1,565 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Jake — Project Dashboard</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    color: #1a1a1a;
+    background: #f0f2f5;
+    padding: 20px;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  /* Nav bar */
+  .app-nav {
+    display: flex;
+    gap: 4px;
+    background: #1a1a2e;
+    padding: 8px 16px;
+    border-radius: 10px;
+    margin-bottom: 16px;
+  }
+  .app-nav a {
+    color: #aab;
+    text-decoration: none;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 600;
+  }
+  .app-nav a:hover { color: #fff; background: rgba(255,255,255,.1); }
+  .app-nav a.active { color: #fff; background: #4f46e5; }
+
+  /* Top bar */
+  .topbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+  .topbar h1 { font-size: 20px; font-weight: 700; }
+  .topbar .actions { display: flex; gap: 8px; }
+
+  /* Summary cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .card {
+    background: #fff;
+    border-radius: 10px;
+    padding: 16px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .card .label { font-size: 12px; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+  .card .value { font-size: 24px; font-weight: 700; }
+  .card.due .value { color: #c0392b; }
+  .card.sched .value { color: #2d7ff9; }
+  .card.paid .value { color: #27ae60; }
+
+  /* Sections */
+  .section {
+    background: #fff;
+    border-radius: 10px;
+    padding: 18px 20px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+  .section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+  }
+  .section-header h2 {
+    font-size: 15px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    background: #e8e8e8;
+    color: #666;
+    padding: 2px 8px;
+    border-radius: 10px;
+  }
+  .section.completed .badge { background: #d4edda; color: #155724; }
+  .section.scheduled .badge { background: #cce5ff; color: #004085; }
+  .section.pending .badge { background: #fff3cd; color: #856404; }
+
+  /* Tables */
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  th {
+    text-align: left;
+    padding: 8px 10px;
+    border-bottom: 2px solid #e0e0e0;
+    font-weight: 600;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+    color: #888;
+  }
+  td {
+    padding: 7px 10px;
+    border-bottom: 1px solid #f0f0f0;
+  }
+  tr:last-child td { border-bottom: none; }
+  .r { text-align: right; }
+  .rem { color: #888; }
+  .total-row td {
+    font-weight: 700;
+    border-top: 2px solid #e0e0e0;
+    border-bottom: none;
+    padding-top: 10px;
+    font-size: 13px;
+  }
+
+  /* Buttons */
+  .btn {
+    font-size: 12px;
+    padding: 5px 14px;
+    cursor: pointer;
+    border: 1px solid #d0d0d0;
+    background: #fff;
+    border-radius: 6px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+  .btn:hover { background: #f5f5f5; border-color: #bbb; }
+  .btn-sm { font-size: 11px; padding: 3px 10px; }
+  .btn-done { color: #155724; border-color: #c3e6cb; }
+  .btn-done:hover { background: #d4edda; }
+  .btn-sched { color: #004085; border-color: #b8daff; }
+  .btn-sched:hover { background: #cce5ff; }
+  .btn-del { color: #999; border: none; background: none; padding: 3px 6px; font-size: 14px; }
+  .btn-del:hover { color: #c0392b; }
+  .btn-add { border-style: dashed; color: #888; width: 100%; margin-top: 8px; padding: 6px; }
+  .btn-add:hover { color: #444; border-color: #999; }
+  .btn-primary { background: #2d7ff9; color: #fff; border-color: #2d7ff9; }
+  .btn-primary:hover { background: #1a6fe8; }
+  .btn-invoice { background: #fff; color: #333; }
+
+  /* Zelle */
+  .zelle { font-size: 12px; color: #888; text-align: center; margin-top: 12px; }
+
+  /* Controls column */
+  .ctrl { white-space: nowrap; text-align: right; width: 90px; }
+
+  /* Print / Invoice mode */
+  @media print {
+    body { background: #fff; padding: 30px; }
+    .app-nav, .topbar .actions, .btn-add, .ctrl, .save-status { display: none !important; }
+    .cards { grid-template-columns: repeat(4, 1fr); }
+    .section { box-shadow: none; border: 1px solid #ddd; }
+    .card { box-shadow: none; border: 1px solid #ddd; }
+  }
+  body.invoice-mode .topbar .actions .btn:not(.btn-invoice):not(.btn-pdf),
+  body.invoice-mode .topbar .actions input,
+  body.invoice-mode .btn-add,
+  body.invoice-mode .ctrl,
+  body.invoice-mode .section.pending,
+  body.invoice-mode .save-status { display: none !important; }
+  body.invoice-mode { background: #fff; max-width: 760px; margin: 0 auto; }
+  body.invoice-mode .section { box-shadow: none; border: 1px solid #e0e0e0; }
+  body.invoice-mode .card { box-shadow: none; border: 1px solid #e0e0e0; }
+  body.invoice-mode .cards { grid-template-columns: repeat(4, 1fr); }
+  @media print {
+    .topbar .actions, .btn-add, .ctrl, .section.pending, .save-status { display: none !important; }
+    body { background: #fff; max-width: 760px; margin: 0 auto; }
+    .cards { grid-template-columns: repeat(4, 1fr); }
+    .section { box-shadow: none; border: 1px solid #e0e0e0; }
+    .card { box-shadow: none; border: 1px solid #e0e0e0; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="app-nav">
+  <a href="/" class="active">Dashboard</a>
+  <a href="/owner">Owner View</a>
+  <a href="/tenant/7697-oceola">Tenant View</a>
+</nav>
+
+<div class="topbar">
+  <h1>Jake — Project Dashboard</h1>
+  <div class="actions">
+    <button class="btn btn-invoice" onclick="toggleInvoice()">Invoice View</button>
+    <button class="btn btn-pdf" onclick="savePDF()" style="display:none">Save PDF to Desktop</button>
+    <button class="btn btn-primary" onclick="saveToDisk()">Save</button>
+    <button class="btn" onclick="downloadBackup()">Export</button>
+    <button class="btn" onclick="document.getElementById('loadFile').click()">Import</button>
+    <input type="file" id="loadFile" accept=".json" style="display:none" onchange="loadBackup(this)">
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card"><div class="label">Total Billed</div><div class="value" id="cardBilled">$0</div></div>
+  <div class="card paid"><div class="label">Total Paid</div><div class="value" id="cardPaid">$0</div></div>
+  <div class="card due"><div class="label">Completed Due</div><div class="value" id="cardCompDue">$0</div></div>
+  <div class="card sched"><div class="label">Scheduled</div><div class="value" id="cardSchedCost">$0</div></div>
+</div>
+
+<div class="section completed">
+  <div class="section-header">
+    <h2>Completed <span class="badge" id="compCount">0</span></h2>
+  </div>
+  <table id="completed">
+    <tr><th>Property</th><th>Work</th><th class="r">Cost</th><th></th></tr>
+    <tr class="total-row"><td></td><td>Total</td><td class="r" id="compCost"></td><td></td></tr>
+  </table>
+  <button class="btn btn-add" onclick="addRow('completed')">+ Add item</button>
+</div>
+
+<div class="section scheduled">
+  <div class="section-header">
+    <h2>Scheduled <span class="badge" id="schedCount">0</span></h2>
+  </div>
+  <table id="scheduled">
+    <tr><th>Property</th><th>Work</th><th class="r">Cost</th><th></th></tr>
+    <tr class="total-row"><td></td><td>Total</td><td class="r" id="schedCost"></td><td></td></tr>
+  </table>
+  <button class="btn btn-add" onclick="addRow('scheduled')">+ Add item</button>
+</div>
+
+<div class="section pending">
+  <div class="section-header">
+    <h2>Pending <span class="badge" id="pendCount">0</span></h2>
+  </div>
+  <table id="pending">
+    <tr><th>Property</th><th>Work</th><th class="r">Cost</th><th></th></tr>
+    <tr class="total-row"><td></td><td>Total</td><td class="r" id="pendCost"></td><td></td></tr>
+  </table>
+  <button class="btn btn-add" onclick="addRow('pending')">+ Add item</button>
+</div>
+
+<div class="section">
+  <div class="section-header">
+    <h2>Payments</h2>
+  </div>
+  <table id="payments">
+    <tr><th>Date</th><th>Amount</th><th>Note</th><th></th></tr>
+    <tr class="total-row"><td></td><td class="r" id="payTotal"></td><td></td><td></td></tr>
+  </table>
+  <button class="btn btn-add" onclick="addPayment()">+ Add payment</button>
+</div>
+
+<div class="zelle">Zelle — Thomas Roden, 859-653-7212</div>
+<div style="text-align:center;margin-top:10px;"><button class="btn" id="syncBtn" onclick="syncToVM()" style="font-size:11px;padding:4px 14px;">Sync to VM</button></div>
+<div class="save-status" style="text-align:center;font-size:11px;color:#aaa;margin-top:6px;" id="saveStatus"></div>
+
+<script>
+function num(el) {
+  return parseFloat(el.textContent.replace(/[^0-9.\-]/g, '')) || 0;
+}
+function fmt(n) {
+  return '$' + n.toLocaleString('en-US', {minimumFractionDigits: 0, maximumFractionDigits: 0});
+}
+
+function recalc() {
+  var stats = {};
+  ['completed','scheduled','pending'].forEach(function(id) {
+    var tbl = document.getElementById(id);
+    var rows = tbl.querySelectorAll('tr:not(.total-row)');
+    var cost = 0, count = 0;
+    for (var i = 1; i < rows.length; i++) {
+      var cells = rows[i].querySelectorAll('td');
+      cost += num(cells[2]);
+      count++;
+    }
+    stats[id] = {cost: cost, count: count};
+  });
+
+  document.getElementById('compCost').textContent = fmt(stats.completed.cost);
+  document.getElementById('compCount').textContent = stats.completed.count;
+
+  document.getElementById('schedCost').textContent = fmt(stats.scheduled.cost);
+  document.getElementById('schedCount').textContent = stats.scheduled.count;
+
+  document.getElementById('pendCost').textContent = fmt(stats.pending.cost);
+  document.getElementById('pendCount').textContent = stats.pending.count;
+
+  var ptbl = document.getElementById('payments');
+  var prows = ptbl.querySelectorAll('tr:not(.total-row)');
+  var totalPaid = 0;
+  for (var i = 1; i < prows.length; i++) {
+    totalPaid += num(prows[i].querySelectorAll('td')[1]);
+  }
+  document.getElementById('payTotal').textContent = fmt(totalPaid);
+
+  var totalBilled = stats.completed.cost + stats.scheduled.cost;
+  var completedDue = stats.completed.cost - totalPaid;
+
+  document.getElementById('cardBilled').textContent = fmt(totalBilled);
+  document.getElementById('cardPaid').textContent = fmt(totalPaid);
+  document.getElementById('cardCompDue').textContent = fmt(completedDue);
+  document.getElementById('cardSchedCost').textContent = fmt(stats.scheduled.cost);
+}
+
+function moveRow(btn, targetId) {
+  var row = btn.closest('tr');
+  var target = document.getElementById(targetId);
+  var totalRow = target.querySelector('.total-row');
+  var ctrl = row.querySelector('.ctrl');
+  if (targetId === 'completed') {
+    if (ctrl) ctrl.innerHTML = '<button class="btn btn-del" onclick="delRow(this)">×</button>';
+  } else if (targetId === 'scheduled') {
+    ctrl.innerHTML = '<button class="btn btn-sm btn-done" onclick="moveRow(this,\'completed\')">✓ Done</button> <button class="btn btn-del" onclick="delRow(this)">×</button>';
+  }
+  totalRow.parentNode.insertBefore(row, totalRow);
+  recalc();
+  autoSave();
+}
+
+function delRow(btn) {
+  var row = btn.closest('tr');
+  row.remove();
+  recalc();
+  autoSave();
+}
+
+function addRow(tableId) {
+  var tbl = document.getElementById(tableId);
+  var totalRow = tbl.querySelector('.total-row');
+  var row = tbl.insertRow(totalRow ? totalRow.rowIndex : -1);
+  var cols = 4;
+  for (var i = 0; i < cols; i++) {
+    var cell = row.insertCell(-1);
+    if (i <= 1) { cell.contentEditable = true; }
+    else if (i === 2) { cell.className = 'r'; cell.contentEditable = true; cell.textContent = '0'; }
+    else if (i === 3) {
+      cell.className = 'ctrl';
+      if (tableId === 'pending') cell.innerHTML = '<button class="btn btn-sm btn-sched" onclick="moveRow(this,\'scheduled\')">▲ Sched</button> <button class="btn btn-del" onclick="delRow(this)">×</button>';
+      else if (tableId === 'scheduled') cell.innerHTML = '<button class="btn btn-sm btn-done" onclick="moveRow(this,\'completed\')">✓ Done</button> <button class="btn btn-del" onclick="delRow(this)">×</button>';
+      else if (tableId === 'completed') cell.innerHTML = '<button class="btn btn-del" onclick="delRow(this)">×</button>';
+    }
+  }
+  recalc();
+  autoSave();
+  row.querySelector('td').focus();
+}
+
+function addPayment() {
+  var tbl = document.getElementById('payments');
+  var totalRow = tbl.querySelector('.total-row');
+  var row = tbl.insertRow(totalRow ? totalRow.rowIndex : -1);
+  ['','0',''].forEach(function(v, i) {
+    var cell = row.insertCell(-1);
+    cell.contentEditable = true;
+    cell.textContent = v;
+    if (i === 1) cell.className = 'r';
+  });
+  var ctrl = row.insertCell(-1);
+  ctrl.className = 'ctrl';
+  ctrl.innerHTML = '<button class="btn btn-del" onclick="delRow(this)">×</button>';
+  recalc();
+  autoSave();
+  row.querySelector('td').focus();
+}
+
+document.body.addEventListener('input', function() { recalc(); autoSave(); });
+
+function gatherData() {
+  var data = {};
+  ['completed','scheduled','pending'].forEach(function(id) {
+    var rows = document.getElementById(id).querySelectorAll('tr:not(.total-row)');
+    data[id] = [];
+    for (var i = 1; i < rows.length; i++) {
+      var cells = rows[i].querySelectorAll('td');
+      data[id].push([cells[0].textContent, cells[1].textContent, cells[2].textContent.replace(/[^0-9.\-]/g,'')]);
+    }
+  });
+  var prows = document.getElementById('payments').querySelectorAll('tr:not(.total-row)');
+  data.payments = [];
+  for (var i = 1; i < prows.length; i++) {
+    var cells = prows[i].querySelectorAll('td');
+    data.payments.push([cells[0].textContent, cells[1].textContent.replace(/[^0-9.\-]/g,''), cells[2].textContent]);
+  }
+  return data;
+}
+
+var _saveTimer = null;
+function autoSave() {
+  clearTimeout(_saveTimer);
+  _saveTimer = setTimeout(function() { saveToDisk(true); }, 800);
+}
+
+function saveToDisk(quiet) {
+  var data = JSON.stringify(gatherData(), null, 2);
+  fetch('/api/data', {method:'POST', headers:{'Content-Type':'application/json'}, body: data})
+    .then(function(r) {
+      if (r.ok) document.getElementById('saveStatus').textContent = 'saved to disk — ' + new Date().toLocaleTimeString();
+      else document.getElementById('saveStatus').textContent = 'save failed';
+    })
+    .catch(function() {
+      try { localStorage.setItem('jake_tracker', data); } catch(e) {}
+      document.getElementById('saveStatus').textContent = (quiet ? 'cached locally — ' : 'offline save — ') + new Date().toLocaleTimeString();
+    });
+}
+
+function downloadBackup() {
+  var data = JSON.stringify(gatherData(), null, 2);
+  var blob = new Blob([data], {type: 'application/json'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'jake_tracker_backup.json';
+  a.click();
+  document.getElementById('saveStatus').textContent = 'backup exported';
+}
+
+function loadBackup(input) {
+  var file = input.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      var data = JSON.parse(e.target.result);
+      populateFromData(data);
+      recalc();
+      autoSave();
+      document.getElementById('saveStatus').textContent = 'loaded from backup';
+    } catch(err) {
+      alert('Bad backup file');
+    }
+  };
+  reader.readAsText(file);
+  input.value = '';
+}
+
+function populateFromData(data) {
+  ['completed','scheduled','pending'].forEach(function(id) {
+    var tbl = document.getElementById(id);
+    var rows = tbl.querySelectorAll('tr:not(.total-row)');
+    for (var i = rows.length - 1; i >= 1; i--) rows[i].remove();
+    if (data[id]) {
+      data[id].forEach(function(vals) {
+        var totalRow = tbl.querySelector('.total-row');
+        var row = tbl.insertRow(totalRow ? totalRow.rowIndex : -1);
+        for (var i = 0; i < 4; i++) {
+          var cell = row.insertCell(-1);
+          if (i <= 1) { cell.contentEditable = true; cell.textContent = vals[i] || ''; }
+          else if (i === 2) { cell.className = 'r'; cell.contentEditable = true; cell.textContent = vals[i] || '0'; }
+          else if (i === 3) {
+            cell.className = 'ctrl';
+            if (id === 'pending') cell.innerHTML = '<button class="btn btn-sm btn-sched" onclick="moveRow(this,\'scheduled\')">▲ Sched</button> <button class="btn btn-del" onclick="delRow(this)">×</button>';
+            else if (id === 'scheduled') cell.innerHTML = '<button class="btn btn-sm btn-done" onclick="moveRow(this,\'completed\')">✓ Done</button> <button class="btn btn-del" onclick="delRow(this)">×</button>';
+            else if (id === 'completed') cell.innerHTML = '<button class="btn btn-del" onclick="delRow(this)">×</button>';
+          }
+        }
+      });
+    }
+  });
+  var ptbl = document.getElementById('payments');
+  var prows = ptbl.querySelectorAll('tr:not(.total-row)');
+  for (var i = prows.length - 1; i >= 1; i--) prows[i].remove();
+  if (data.payments) {
+    data.payments.forEach(function(vals) {
+      var totalRow = ptbl.querySelector('.total-row');
+      var row = ptbl.insertRow(totalRow ? totalRow.rowIndex : -1);
+      vals.forEach(function(v, i) {
+        var cell = row.insertCell(-1);
+        cell.contentEditable = true;
+        cell.textContent = v;
+        if (i === 1) cell.className = 'r';
+      });
+      var ctrl = row.insertCell(-1);
+      ctrl.className = 'ctrl';
+      ctrl.innerHTML = '<button class="btn btn-del" onclick="delRow(this)">×</button>';
+    });
+  }
+}
+
+function toggleInvoice() {
+  document.body.classList.toggle('invoice-mode');
+  var btn = document.querySelector('.btn-invoice');
+  var pdfBtn = document.querySelector('.btn-pdf');
+  var h1 = document.querySelector('.topbar h1');
+  if (document.body.classList.contains('invoice-mode')) {
+    btn.textContent = 'Dashboard View';
+    btn.classList.add('btn-primary');
+    h1.textContent = 'Project Overview';
+    pdfBtn.style.display = '';
+  } else {
+    btn.textContent = 'Invoice View';
+    btn.classList.remove('btn-primary');
+    h1.textContent = 'Jake \u2014 Project Dashboard';
+    pdfBtn.style.display = 'none';
+  }
+}
+
+function syncToVM() {
+  var btn = document.getElementById('syncBtn');
+  btn.textContent = 'Syncing...';
+  btn.disabled = true;
+  fetch('/api/sync', {method:'POST'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        btn.textContent = 'Synced \u2713';
+        setTimeout(function(){ btn.textContent = 'Sync to VM'; btn.disabled = false; }, 3000);
+      } else {
+        btn.textContent = 'Failed';
+        console.error(data.output);
+        setTimeout(function(){ btn.textContent = 'Sync to VM'; btn.disabled = false; }, 3000);
+      }
+    })
+    .catch(function() { btn.textContent = 'Error'; btn.disabled = false; });
+}
+
+function savePDF() {
+  var btn = document.querySelector('.btn-pdf');
+  btn.textContent = 'Saving...';
+  btn.disabled = true;
+  fetch('/api/save-pdf', {method:'POST'})
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.error) { alert('Error: ' + data.error); }
+      else { btn.textContent = 'Saved \u2713'; setTimeout(function(){ btn.textContent = 'Save PDF to Desktop'; btn.disabled = false; }, 2000); }
+    })
+    .catch(function() { alert('Server not reachable'); btn.textContent = 'Save PDF to Desktop'; btn.disabled = false; });
+}
+
+// Auto-enter invoice mode if ?invoice=1 (used by PDF printer)
+if (window.location.search.indexOf('invoice=1') !== -1) {
+  document.body.classList.add('invoice-mode');
+  document.querySelector('.topbar').style.display = 'none';
+}
+
+// Load from server
+(function() {
+  fetch('/api/data')
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data && (data.completed || data.scheduled || data.pending)) {
+        populateFromData(data);
+        document.getElementById('saveStatus').textContent = 'loaded from server';
+      }
+      recalc();
+    })
+    .catch(function() {
+      try {
+        var raw = localStorage.getItem('jake_tracker');
+        if (raw) {
+          populateFromData(JSON.parse(raw));
+          document.getElementById('saveStatus').textContent = 'loaded from cache';
+        }
+      } catch(e) {}
+      recalc();
+    });
+})();
+</script>
+
+</body>
+</html>

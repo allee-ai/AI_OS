@@ -1,0 +1,677 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Sales">
+<title>Sales — Vanguard</title>
+<style>
+  :root{
+    --bg:#0a0a0a; --surface:#141414; --surface2:#1c1c1c; --border:#262626;
+    --fg:#f4f4f4; --mute:#9a9a9a; --dim:#666;
+    --accent:#e6b260; --ok:#7fb069; --warn:#d4a05a; --bad:#a86060;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--fg);font:16px/1.5 -apple-system,BlinkMacSystemFont,system-ui,sans-serif;overscroll-behavior:none}
+  button,input,textarea,select{font:inherit;color:inherit}
+  button{cursor:pointer}
+  a{color:var(--accent);text-decoration:none}
+
+  .app{max-width:980px;margin:0 auto;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+
+  /* Header */
+  header.bar{display:flex;align-items:center;justify-content:space-between;padding:14px 4px 12px;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--bg);z-index:5}
+  header.bar h1{font-size:1.1rem;margin:0;font-weight:600;letter-spacing:-0.01em}
+  header.bar .nav{display:flex;gap:8px}
+  header.bar .nav button{background:transparent;border:1px solid var(--border);color:var(--mute);border-radius:8px;padding:8px 14px;font-size:.9rem}
+  header.bar .nav button.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+
+  /* Stats strip */
+  .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:12px 0}
+  .stat{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:10px}
+  .stat .v{font-size:1.6rem;font-weight:700;letter-spacing:-0.02em}
+  .stat .l{font-size:.7rem;color:var(--mute);text-transform:uppercase;letter-spacing:.05em;margin-top:2px}
+
+  /* Filter chips */
+  .filters{display:flex;flex-wrap:wrap;gap:6px;padding:6px 0 12px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .chip{background:var(--surface);border:1px solid var(--border);color:var(--mute);padding:7px 12px;border-radius:999px;font-size:.85rem;white-space:nowrap}
+  .chip.on{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+
+  /* Lead list */
+  .leads{display:flex;flex-direction:column;gap:8px;padding-bottom:120px}
+  .lead{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px}
+  .lead .top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+  .lead .name{font-weight:600;font-size:1.05rem}
+  .lead .co{color:var(--mute);font-size:.9rem;margin-top:2px}
+  .lead .role{color:var(--dim);font-size:.8rem;margin-top:2px}
+  .lead .badge{font-size:.7rem;padding:3px 8px;border-radius:6px;background:var(--surface2);color:var(--mute);text-transform:uppercase;letter-spacing:.04em;white-space:nowrap}
+  .lead .badge.cold{color:var(--mute)}
+  .lead .badge.contacted{background:#1f2a3a;color:#9ec1f0}
+  .lead .badge.packet_sent{background:#2a2510;color:#e6b260}
+  .lead .badge.walkthrough_scheduled{background:#1f2a1f;color:#a8d18a}
+  .lead .badge.quoted{background:#2a1f0e;color:#f0c374}
+  .lead .badge.won{background:#0e2a1f;color:#7fb069;font-weight:700}
+  .lead .badge.dead{background:#2a0e0e;color:#a86060}
+
+  .lead .meta{display:flex;flex-wrap:wrap;gap:10px;margin-top:8px;color:var(--mute);font-size:.85rem}
+  .lead .meta span b{color:var(--fg);font-weight:600}
+  .lead .actions{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:12px}
+  .lead .actions button{background:var(--surface2);border:1px solid var(--border);color:var(--fg);padding:11px 6px;border-radius:8px;font-size:.85rem}
+  .lead .actions button.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+  .lead .actions button.win{background:var(--ok);color:#000;border-color:var(--ok);font-weight:600}
+
+  /* FAB */
+  .fab{position:fixed;right:20px;bottom:calc(20px + env(safe-area-inset-bottom));width:56px;height:56px;border-radius:50%;background:var(--accent);color:#000;border:0;font-size:28px;font-weight:300;box-shadow:0 6px 20px rgba(0,0,0,.5);z-index:10}
+
+  /* Modal */
+  .mask{position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:50;display:none;align-items:flex-end;justify-content:center}
+  .mask.on{display:flex}
+  @media(min-width:720px){.mask.on{align-items:center}}
+  .sheet{background:var(--surface);border:1px solid var(--border);border-radius:14px 14px 0 0;width:100%;max-width:560px;max-height:92vh;overflow-y:auto;padding:18px 18px calc(18px + env(safe-area-inset-bottom))}
+  @media(min-width:720px){.sheet{border-radius:14px}}
+  .sheet h2{margin:0 0 4px;font-size:1.15rem}
+  .sheet .who{color:var(--mute);font-size:.9rem;margin-bottom:14px}
+  .row{display:flex;flex-direction:column;gap:5px;margin-bottom:12px}
+  .row label{font-size:.7rem;color:var(--mute);text-transform:uppercase;letter-spacing:.06em}
+  .row input,.row textarea,.row select{background:var(--surface2);border:1px solid var(--border);color:var(--fg);padding:11px 12px;border-radius:8px;font-size:1rem;width:100%}
+  .row textarea{min-height:80px;resize:vertical}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+
+  .outcomes{display:grid;grid-template-columns:repeat(2,1fr);gap:8px;margin:8px 0 14px}
+  .outcomes button{background:var(--surface2);border:1px solid var(--border);color:var(--fg);padding:14px 6px;border-radius:10px;text-align:left}
+  .outcomes button.sel{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+  .outcomes b{display:block;font-size:.95rem;margin-bottom:2px}
+  .outcomes em{display:block;font-size:.75rem;color:var(--mute);font-style:normal}
+  .outcomes button.sel em{color:#000;opacity:.75}
+
+  .footer-actions{display:flex;gap:8px;margin-top:8px;position:sticky;bottom:0;background:var(--surface);padding-top:10px}
+  .footer-actions .secondary{background:var(--surface2);border:1px solid var(--border);color:var(--fg);padding:13px;border-radius:10px;flex:1}
+  .footer-actions .primary{background:var(--accent);border:0;color:#000;padding:13px;border-radius:10px;flex:1;font-weight:700;font-size:1rem}
+  .footer-actions .primary:disabled{opacity:.4}
+  .footer-actions .danger{background:transparent;border:1px solid var(--bad);color:var(--bad);padding:13px;border-radius:10px}
+
+  .empty{padding:40px 20px;text-align:center;color:var(--mute)}
+  .toast{position:fixed;left:50%;top:80px;transform:translateX(-50%);background:var(--ok);color:#000;padding:10px 16px;border-radius:8px;font-weight:600;z-index:100;display:none}
+  .toast.show{display:block}
+  .toast.err{background:var(--bad);color:#fff}
+
+  /* Login screen */
+  #login-screen{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+  #login-screen.on{display:flex}
+  .login-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:28px 24px;width:100%;max-width:340px}
+  .login-card h1{margin:0 0 4px;font-size:1.4rem;letter-spacing:-0.02em}
+  .login-card .sub{color:var(--mute);font-size:.9rem;margin-bottom:20px}
+  .login-card input{width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--fg);padding:12px 14px;border-radius:8px;font-size:1rem;margin-bottom:10px}
+  .login-card button{width:100%;background:var(--accent);border:0;color:#000;padding:13px;border-radius:8px;font-weight:700;font-size:1rem;margin-top:6px}
+  .login-card .err{color:var(--bad);font-size:.85rem;margin-top:8px;min-height:1em}
+  #app-screen{display:none}
+  #app-screen.on{display:block}
+
+  .calls-history{margin-top:14px;border-top:1px solid var(--border);padding-top:12px}
+  .calls-history h3{font-size:.75rem;color:var(--mute);text-transform:uppercase;letter-spacing:.06em;margin:0 0 8px}
+  .call-row{font-size:.85rem;color:var(--mute);padding:6px 0;border-bottom:1px solid var(--border)}
+  .call-row:last-child{border-bottom:0}
+  .call-row b{color:var(--fg);font-weight:600;text-transform:capitalize}
+  .call-row time{color:var(--dim);font-size:.75rem}
+
+  details{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:8px 12px;margin-bottom:12px}
+  details summary{cursor:pointer;color:var(--mute);font-size:.9rem;font-weight:600}
+  details[open]{padding-bottom:14px}
+</style>
+</head>
+<body>
+
+<div id="toast" class="toast"></div>
+
+<!-- Login screen -->
+<div id="login-screen">
+  <form class="login-card" onsubmit="return doLogin(event)">
+    <h1>Sales</h1>
+    <div class="sub">Vanguard Reconstruction</div>
+    <input id="li-user" placeholder="Username" autocomplete="username" autocapitalize="none" autocorrect="off" required>
+    <input id="li-pass" type="password" placeholder="Password" autocomplete="current-password" required>
+    <button type="submit">Sign in</button>
+    <div class="err" id="li-err"></div>
+  </form>
+</div>
+
+<div id="app-screen">
+
+<div class="app">
+
+<header class="bar">
+  <h1>Sales</h1>
+  <div class="nav">
+    <button id="tab-leads" class="on" onclick="switchTab('leads')">Leads</button>
+    <button id="tab-clients" onclick="switchTab('clients')">Clients</button>
+    <button onclick="openScript()" title="Cold call script">📞</button>
+    <button onclick="logout()" style="color:var(--dim);border-color:var(--border)" title="Sign out">⏻</button>
+  </div>
+</header>
+
+<!-- Leads tab -->
+<div id="leads-tab">
+  <div class="stats">
+    <div class="stat"><div class="v" id="s-calls">0</div><div class="l">Calls today</div></div>
+    <div class="stat"><div class="v" id="s-packets">0</div><div class="l">Packets sent</div></div>
+    <div class="stat"><div class="v" id="s-walks">0</div><div class="l">Walkthroughs</div></div>
+    <div class="stat"><div class="v" id="s-wins">0</div><div class="l">Wins</div></div>
+  </div>
+
+  <div class="filters" id="filters">
+    <button class="chip on" data-status="">All</button>
+    <button class="chip" data-status="cold">Cold</button>
+    <button class="chip" data-status="contacted">Contacted</button>
+    <button class="chip" data-status="packet_sent">Packet sent</button>
+    <button class="chip" data-status="walkthrough_scheduled">Walkthrough</button>
+    <button class="chip" data-status="quoted">Quoted</button>
+    <button class="chip" data-status="won">Won</button>
+    <button class="chip" data-status="dead">Dead</button>
+  </div>
+
+  <div class="leads" id="leads-list"><div class="empty">Loading…</div></div>
+</div>
+
+<!-- Clients tab -->
+<div id="clients-tab" style="display:none">
+  <div style="padding:20px 4px;color:var(--mute);font-size:.95rem">
+    Properties promoted from won leads. Live count: <b id="client-count" style="color:var(--fg)">…</b>
+  </div>
+  <div class="leads" id="clients-list"><div class="empty">Loading…</div></div>
+</div>
+
+<button class="fab" onclick="openLeadEdit(null)">+</button>
+
+<!-- Lead edit modal -->
+<div class="mask" id="edit-mask">
+  <div class="sheet">
+    <h2 id="edit-title">New lead</h2>
+    <div class="who" id="edit-who"></div>
+    <div class="row"><label>Contact name *</label><input id="f-name" autocomplete="off" /></div>
+    <div class="grid2">
+      <div class="row"><label>Company</label><input id="f-co" autocomplete="off" /></div>
+      <div class="row"><label>Role</label><select id="f-role"><option value="">—</option><option>owner</option><option>pm</option><option>investor</option><option>agent</option></select></div>
+    </div>
+    <div class="grid2">
+      <div class="row"><label>Phone</label><input id="f-phone" type="tel" autocomplete="off" /></div>
+      <div class="row"><label>Email</label><input id="f-email" type="email" autocomplete="off" /></div>
+    </div>
+    <div class="row"><label>Property address</label><input id="f-addr" autocomplete="off" /></div>
+    <div class="grid2">
+      <div class="row"><label>Portfolio (units)</label><input id="f-portfolio" type="number" inputmode="numeric" /></div>
+      <div class="row"><label>Source</label><input id="f-source" placeholder="referral / list / drive-by" /></div>
+    </div>
+    <div class="row"><label>Neighborhoods</label><input id="f-neigh" /></div>
+    <div class="row"><label>Status</label>
+      <select id="f-status">
+        <option value="cold">cold</option>
+        <option value="contacted">contacted</option>
+        <option value="packet_sent">packet_sent</option>
+        <option value="walkthrough_scheduled">walkthrough_scheduled</option>
+        <option value="quoted">quoted</option>
+        <option value="won">won</option>
+        <option value="dead">dead</option>
+      </select>
+    </div>
+    <div class="row"><label>Next action</label><input id="f-next" placeholder="follow up Tue / send packet / etc" /></div>
+    <div class="row"><label>Next action date</label><input id="f-next-date" type="date" /></div>
+    <div class="row"><label>Notes</label><textarea id="f-notes"></textarea></div>
+
+    <div class="footer-actions">
+      <button class="danger" id="btn-delete" onclick="deleteLead()" style="display:none">Delete</button>
+      <button class="secondary" onclick="closeMask('edit-mask')">Cancel</button>
+      <button class="primary" id="btn-save" onclick="saveLead()">Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- Log call modal -->
+<div class="mask" id="call-mask">
+  <div class="sheet">
+    <h2>Log call</h2>
+    <div class="who" id="call-who"></div>
+
+    <label style="font-size:.7rem;color:var(--mute);text-transform:uppercase;letter-spacing:.06em">Outcome</label>
+    <div class="outcomes" id="outcomes">
+      <button data-out="no_answer"><b>No answer</b><em>didn't pick up</em></button>
+      <button data-out="voicemail"><b>Voicemail</b><em>left a message</em></button>
+      <button data-out="gatekeeper"><b>Gatekeeper</b><em>front desk / assistant</em></button>
+      <button data-out="brushoff"><b>Brushoff</b><em>"not interested"</em></button>
+      <button data-out="conversation"><b>Conversation</b><em>real talk, no commit</em></button>
+      <button data-out="packet_sent"><b>Packet sent</b><em>got the email</em></button>
+      <button data-out="walkthrough_booked"><b>Walkthrough booked</b><em>on the calendar</em></button>
+      <button data-out="quoted"><b>Quoted</b><em>sent a number</em></button>
+      <button data-out="won"><b>Won 🏁</b><em>signed / paid / starting</em></button>
+      <button data-out="dead"><b>Dead</b><em>not happening</em></button>
+    </div>
+
+    <div class="row"><label>Best phrase they used (verbatim)</label><input id="c-phrase" placeholder='"I just need someone who picks up"' /></div>
+    <div class="row"><label>Objection (if any)</label><input id="c-obj" placeholder="we have someone / not looking" /></div>
+    <div class="row"><label>Notes</label><textarea id="c-notes"></textarea></div>
+
+    <div class="footer-actions">
+      <button class="secondary" onclick="closeMask('call-mask')">Cancel</button>
+      <button class="primary" id="c-save" disabled onclick="submitCall()">Log call</button>
+    </div>
+  </div>
+</div>
+
+<!-- Detail / history modal -->
+<div class="mask" id="detail-mask">
+  <div class="sheet">
+    <h2 id="d-name"></h2>
+    <div class="who" id="d-meta"></div>
+    <div class="footer-actions" style="position:static;padding:0;margin-bottom:14px">
+      <button class="secondary" onclick="callFromDetail()">Log call</button>
+      <button class="secondary" onclick="editFromDetail()">Edit</button>
+      <button class="primary" id="d-promote" onclick="promote()">Promote → Client</button>
+    </div>
+    <div class="calls-history">
+      <h3>Call history</h3>
+      <div id="d-calls"></div>
+    </div>
+    <div class="footer-actions" style="margin-top:14px">
+      <button class="secondary" onclick="closeMask('detail-mask')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- Cold call script modal -->
+<div class="mask" id="script-mask">
+  <div class="sheet" style="max-width:720px">
+    <h2>Cold call script — VRE Construction</h2>
+    <div class="who">90 seconds max. Three outcomes count: walkthrough booked, tool link texted, or email sent.</div>
+    <div id="script-body" style="font-size:.95rem;line-height:1.55;color:var(--fg)"></div>
+    <div class="footer-actions">
+      <button class="secondary" onclick="closeMask('script-mask')">Close</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API = '/api/sales'
+let LEADS = []
+let CURRENT_LEAD = null
+let FILTER = ''
+let SELECTED_OUTCOME = null
+
+function getToken(){ return localStorage.getItem('token') }
+function getRole(){ return localStorage.getItem('role') }
+
+function showLogin(){
+  document.getElementById('login-screen').classList.add('on')
+  document.getElementById('app-screen').classList.remove('on')
+}
+function showApp(){
+  document.getElementById('login-screen').classList.remove('on')
+  document.getElementById('app-screen').classList.add('on')
+}
+
+async function doLogin(e){
+  e.preventDefault()
+  const u = document.getElementById('li-user').value.trim()
+  const p = document.getElementById('li-pass').value
+  const err = document.getElementById('li-err')
+  err.textContent = ''
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({username: u, password: p}),
+    })
+    if (!res.ok) { err.textContent = 'Invalid username or password'; return false }
+    const data = await res.json()
+    if (data.role !== 'sales' && data.role !== 'admin') {
+      err.textContent = 'This account does not have sales access'; return false
+    }
+    localStorage.setItem('token', data.token)
+    localStorage.setItem('role', data.role)
+    localStorage.setItem('username', data.username)
+    showApp()
+    loadAll()
+  } catch (ex) {
+    err.textContent = 'Login failed: ' + ex.message
+  }
+  return false
+}
+
+function logout(){
+  localStorage.removeItem('token')
+  localStorage.removeItem('role')
+  localStorage.removeItem('username')
+  showLogin()
+}
+window.logout = logout
+
+function toast(msg, err=false){
+  const t = document.getElementById('toast')
+  t.textContent = msg
+  t.className = 'toast show' + (err ? ' err' : '')
+  setTimeout(()=>t.className='toast',2200)
+}
+
+async function api(method, path, body){
+  const opts = {method, headers:{'Content-Type':'application/json'}}
+  const tok = getToken()
+  if (tok) opts.headers['Authorization'] = 'Bearer ' + tok
+  if (body) opts.body = JSON.stringify(body)
+  const res = await fetch(API + path, opts)
+  if (res.status === 401) {
+    logout()
+    throw new Error('Session expired — please sign in again')
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(()=>res.statusText)
+    throw new Error(`${res.status}: ${text}`)
+  }
+  return res.json()
+}
+
+function switchTab(tab){
+  document.getElementById('tab-leads').classList.toggle('on', tab==='leads')
+  document.getElementById('tab-clients').classList.toggle('on', tab==='clients')
+  document.getElementById('leads-tab').style.display = tab==='leads' ? 'block':'none'
+  document.getElementById('clients-tab').style.display = tab==='clients' ? 'block':'none'
+  if (tab==='clients') loadClients()
+}
+
+async function loadAll(){
+  try {
+    const [leads, summary] = await Promise.all([
+      api('GET','/leads'),
+      api('GET','/summary'),
+    ])
+    LEADS = leads
+    renderStats(summary)
+    renderLeads()
+  } catch(e) { toast('Load failed: '+e.message, true) }
+}
+
+function renderStats(s){
+  document.getElementById('s-calls').textContent = s.calls_today
+  document.getElementById('s-packets').textContent = s.packets_today
+  document.getElementById('s-walks').textContent = s.walkthroughs_today
+  document.getElementById('s-wins').textContent = s.wins_today
+}
+
+function renderLeads(){
+  const list = document.getElementById('leads-list')
+  const filtered = FILTER ? LEADS.filter(l=>l.status===FILTER) : LEADS
+  if (!filtered.length) { list.innerHTML = '<div class="empty">No leads. Tap + to add one.</div>'; return }
+  list.innerHTML = filtered.map(l => {
+    const meta = []
+    if (l.phone) meta.push(`<span>📞 <b>${esc(l.phone)}</b></span>`)
+    if (l.portfolio_size) meta.push(`<span><b>${l.portfolio_size}</b> units</span>`)
+    if (l.call_count) meta.push(`<span><b>${l.call_count}</b> call${l.call_count===1?'':'s'}</span>`)
+    if (l.next_action) meta.push(`<span>↪ ${esc(l.next_action)}</span>`)
+    return `
+      <div class="lead">
+        <div class="top">
+          <div onclick="openDetail(${l.id})" style="flex:1">
+            <div class="name">${esc(l.contact_name)}</div>
+            ${l.company_name ? `<div class="co">${esc(l.company_name)}</div>` : ''}
+            ${l.contact_role ? `<div class="role">${esc(l.contact_role)}</div>` : ''}
+          </div>
+          <span class="badge ${l.status}">${l.status.replace(/_/g,' ')}</span>
+        </div>
+        ${meta.length ? `<div class="meta">${meta.join('')}</div>` : ''}
+        <div class="actions">
+          ${l.phone ? `<a href="tel:${l.phone.replace(/[^0-9+]/g,'')}"><button>Call</button></a>` : '<button disabled style="opacity:.4">No phone</button>'}
+          <button class="primary" onclick="openCall(${l.id})">Log call</button>
+          <button onclick="openDetail(${l.id})">Detail</button>
+        </div>
+      </div>`
+  }).join('')
+}
+
+function esc(s){ return String(s||'').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])) }
+
+document.getElementById('filters').addEventListener('click', e => {
+  if (e.target.classList.contains('chip')){
+    document.querySelectorAll('#filters .chip').forEach(c=>c.classList.remove('on'))
+    e.target.classList.add('on')
+    FILTER = e.target.dataset.status
+    renderLeads()
+  }
+})
+
+// ── Lead edit ────────────────────────────────────────────────
+function openLeadEdit(id){
+  CURRENT_LEAD = id ? LEADS.find(l=>l.id===id) : null
+  document.getElementById('edit-title').textContent = id ? 'Edit lead' : 'New lead'
+  document.getElementById('edit-who').textContent = id && CURRENT_LEAD ? CURRENT_LEAD.contact_name : ''
+  document.getElementById('btn-delete').style.display = id ? 'block' : 'none'
+  const v = (k, d='') => id && CURRENT_LEAD ? (CURRENT_LEAD[k] ?? d) : d
+  document.getElementById('f-name').value = v('contact_name')
+  document.getElementById('f-co').value = v('company_name')
+  document.getElementById('f-role').value = v('contact_role')
+  document.getElementById('f-phone').value = v('phone')
+  document.getElementById('f-email').value = v('email')
+  document.getElementById('f-addr').value = v('address')
+  document.getElementById('f-portfolio').value = v('portfolio_size','')
+  document.getElementById('f-source').value = v('source')
+  document.getElementById('f-neigh').value = v('neighborhoods')
+  document.getElementById('f-status').value = v('status','cold')
+  document.getElementById('f-next').value = v('next_action')
+  document.getElementById('f-next-date').value = v('next_action_date','')
+  document.getElementById('f-notes').value = v('notes')
+  openMask('edit-mask')
+}
+
+async function saveLead(){
+  const body = {
+    contact_name: document.getElementById('f-name').value.trim(),
+    company_name: orNull(document.getElementById('f-co').value),
+    contact_role: orNull(document.getElementById('f-role').value),
+    phone: orNull(document.getElementById('f-phone').value),
+    email: orNull(document.getElementById('f-email').value),
+    address: orNull(document.getElementById('f-addr').value),
+    portfolio_size: parseInt(document.getElementById('f-portfolio').value)||null,
+    source: orNull(document.getElementById('f-source').value),
+    neighborhoods: orNull(document.getElementById('f-neigh').value),
+    status: document.getElementById('f-status').value || 'cold',
+    next_action: orNull(document.getElementById('f-next').value),
+    next_action_date: orNull(document.getElementById('f-next-date').value),
+    notes: orNull(document.getElementById('f-notes').value),
+  }
+  if (!body.contact_name) { toast('Name required', true); return }
+  try {
+    if (CURRENT_LEAD) {
+      await api('PATCH', `/leads/${CURRENT_LEAD.id}`, body)
+      toast('Saved')
+    } else {
+      await api('POST', '/leads', body)
+      toast('Lead added')
+    }
+    closeMask('edit-mask')
+    loadAll()
+  } catch(e){ toast(e.message, true) }
+}
+
+async function deleteLead(){
+  if (!CURRENT_LEAD) return
+  if (!confirm(`Delete ${CURRENT_LEAD.contact_name}?`)) return
+  try {
+    await api('DELETE', `/leads/${CURRENT_LEAD.id}`)
+    closeMask('edit-mask')
+    toast('Deleted')
+    loadAll()
+  } catch(e){ toast(e.message, true) }
+}
+
+function orNull(v){ v = String(v||'').trim(); return v ? v : null }
+
+// ── Call logging ─────────────────────────────────────────────
+function openCall(id){
+  CURRENT_LEAD = LEADS.find(l=>l.id===id)
+  document.getElementById('call-who').textContent = CURRENT_LEAD ? `${CURRENT_LEAD.contact_name}${CURRENT_LEAD.company_name ? ' · '+CURRENT_LEAD.company_name : ''}` : ''
+  SELECTED_OUTCOME = null
+  document.querySelectorAll('#outcomes button').forEach(b=>b.classList.remove('sel'))
+  document.getElementById('c-phrase').value = ''
+  document.getElementById('c-obj').value = ''
+  document.getElementById('c-notes').value = ''
+  document.getElementById('c-save').disabled = true
+  openMask('call-mask')
+}
+
+document.getElementById('outcomes').addEventListener('click', e => {
+  const btn = e.target.closest('button')
+  if (!btn) return
+  document.querySelectorAll('#outcomes button').forEach(b=>b.classList.remove('sel'))
+  btn.classList.add('sel')
+  SELECTED_OUTCOME = btn.dataset.out
+  document.getElementById('c-save').disabled = false
+})
+
+async function submitCall(){
+  if (!CURRENT_LEAD || !SELECTED_OUTCOME) return
+  try {
+    await api('POST', `/leads/${CURRENT_LEAD.id}/call`, {
+      outcome: SELECTED_OUTCOME,
+      best_phrase: orNull(document.getElementById('c-phrase').value),
+      objection: orNull(document.getElementById('c-obj').value),
+      notes: orNull(document.getElementById('c-notes').value),
+    })
+    toast('Call logged')
+    closeMask('call-mask')
+    loadAll()
+  } catch(e){ toast(e.message, true) }
+}
+
+// ── Detail / promote ─────────────────────────────────────────
+async function openDetail(id){
+  try {
+    const data = await api('GET', `/leads/${id}`)
+    CURRENT_LEAD = data.lead
+    document.getElementById('d-name').textContent = data.lead.contact_name
+    const meta = []
+    if (data.lead.company_name) meta.push(data.lead.company_name)
+    if (data.lead.contact_role) meta.push(data.lead.contact_role)
+    if (data.lead.phone) meta.push(data.lead.phone)
+    if (data.lead.email) meta.push(data.lead.email)
+    if (data.lead.address) meta.push(data.lead.address)
+    document.getElementById('d-meta').textContent = meta.join(' · ')
+    document.getElementById('d-promote').disabled = data.lead.status === 'won' || !!data.lead.promoted_property_id
+    document.getElementById('d-promote').textContent = data.lead.promoted_property_id ? 'Already a client' : 'Promote → Client'
+    const calls = document.getElementById('d-calls')
+    if (!data.calls.length) calls.innerHTML = '<div class="empty" style="padding:12px">No calls logged yet.</div>'
+    else calls.innerHTML = data.calls.map(c => {
+      const date = new Date(c.called_at)
+      const when = date.toLocaleString([], {month:'short',day:'numeric',hour:'numeric',minute:'2-digit'})
+      const bits = []
+      if (c.objection) bits.push(`obj: ${esc(c.objection)}`)
+      if (c.best_phrase) bits.push(`phrase: "${esc(c.best_phrase)}"`)
+      if (c.notes) bits.push(esc(c.notes))
+      return `<div class="call-row"><b>${c.outcome.replace(/_/g,' ')}</b> · <time>${when}</time>${bits.length ? '<br>'+bits.join(' · ') : ''}</div>`
+    }).join('')
+    openMask('detail-mask')
+  } catch(e){ toast(e.message, true) }
+}
+
+function callFromDetail(){ closeMask('detail-mask'); openCall(CURRENT_LEAD.id) }
+function editFromDetail(){ closeMask('detail-mask'); openLeadEdit(CURRENT_LEAD.id) }
+
+async function promote(){
+  if (!CURRENT_LEAD) return
+  if (!confirm(`Promote ${CURRENT_LEAD.contact_name} to client?\nAdds them to the properties list.`)) return
+  try {
+    const r = await api('POST', `/leads/${CURRENT_LEAD.id}/promote`)
+    toast(`Added: ${r.address}`)
+    closeMask('detail-mask')
+    loadAll()
+  } catch(e){ toast(e.message, true) }
+}
+
+// ── Clients tab ──────────────────────────────────────────────
+async function loadClients(){
+  try {
+    const props = await api('GET', '/clients')
+    document.getElementById('client-count').textContent = props.length
+    const list = document.getElementById('clients-list')
+    if (!props.length) list.innerHTML = '<div class="empty">No clients yet. Promote a won lead to add.</div>'
+    else list.innerHTML = props.map(p => `
+      <div class="lead">
+        <div class="top">
+          <div style="flex:1">
+            <div class="name">${esc(p.address)}</div>
+            ${p.owner_name ? `<div class="co">${esc(p.owner_name)}</div>` : ''}
+            ${p.access_notes ? `<div class="role">${esc(p.access_notes)}</div>` : ''}
+          </div>
+        </div>
+      </div>`).join('')
+  } catch(e){
+    document.getElementById('clients-list').innerHTML = '<div class="empty">Could not load clients.</div>'
+  }
+}
+
+// ── Mask helpers ─────────────────────────────────────────────
+function openMask(id){ document.getElementById(id).classList.add('on') }
+function closeMask(id){ document.getElementById(id).classList.remove('on') }
+document.querySelectorAll('.mask').forEach(m => m.addEventListener('click', e => {
+  if (e.target === m) m.classList.remove('on')
+}))
+
+// ── Cold call script ─────────────────────────────────────────
+const SCRIPT_HTML = `
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">1 · Opening (10 sec)</h3>
+<p>"Hey, is this <b>{first name}</b>? — This is <b>{your name}</b> with VRE Construction here in Cincinnati. Quick reason for the call, then I'll get out of your hair: <b>do you work with a permitted electrician right now for your flips / rentals / rehabs?</b>"</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">2A · They have one already</h3>
+<p>"Cool — last thing, then I'm done. If yours ever gets booked out two weeks during a draw window, can I text you a 60-second instant-quote tool we built? You punch in panel/EV/wiring, it spits back a range and a PDF. Costs you nothing to have in your back pocket."</p>
+<p style="color:var(--mute);font-size:.85rem">→ Yes: get cell, text <code>vre-construction.com/quote</code> within 5 min.<br>→ No: "Totally fair. Good luck on the project — bye."</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">2B · They don't have one</h3>
+<p>"Got it. Two reasons we might be worth a 15-minute call: we <b>pull permits in our name</b> and we <b>line-item the estimate</b> so it drops straight into a draw schedule or a lender package. After three jobs, we do a quiet rebate on labor. I won't get into that on the phone — but if any of that sounds useful, can I send you a quote tool you can play with tonight?"</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">3 · "What's this about?"</h3>
+<p>"Fair. Short version: family-owned electrical shop in Cincinnati, focus on flip and rental work because the timelines are tighter and the math has to be cleaner. We built a free instant-quote tool. I'm calling people who do volume to see if it's useful. Are you working flips, rentals, or both?"</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">4 · Objections</h3>
+<p><b>"I have a guy."</b> → "Smart. Mine's a backup play. If yours ever bails, you'll wish you had our number. Want me to text it?"</p>
+<p><b>"Too expensive."</b> → "You haven't seen a price yet. Tool gives you a range in 60 seconds — try it first."</p>
+<p><b>"Send me an email."</b> → "Done — what's the address? One note from hello@vre-construction.com, nothing else. Promise."</p>
+<p><b>"Are you licensed?"</b> → "Yes — Hamilton County electrical, $2M GL, we pull permits in our name. Want the COI with the quote?"</p>
+<p><b>"Why are you calling me?"</b> → cite the source: Zillow / referral / public flip permit / driving for dollars.</p>
+<p><b>"Take me off your list."</b> → "Done. Have a good one." Mark DNC. Do not call again.</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">5 · Investor rebate (closer only)</h3>
+<p style="color:var(--warn)">Only after they're warm and ask "what's the catch":</p>
+<p>"After your third booked job with us, we credit 8 to 12 percent of the labor on the next bid. We don't publish that. Rewards people who actually move volume with us."</p>
+<p style="color:var(--mute);font-size:.85rem">Never lead with this.</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">6 · Close (10 sec)</h3>
+<p>End every call with <b>one</b> of three:</p>
+<ol>
+  <li><b>Walkthrough scheduled</b> — day + time + address. Text confirmation.</li>
+  <li><b>Tool link texted</b> — from 513-555-0118 in 5 min.</li>
+  <li><b>Email sent</b> — one note today, nothing after.</li>
+</ol>
+<p style="color:var(--mute);font-size:.85rem">No outcome = call didn't count.</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">7 · Voicemail</h3>
+<p>"Hey <b>{first name}</b>, this is <b>{your name}</b> with VRE Construction in Cincinnati — we do permitted electrical for flips and rentals. Got a 60-second quote tool I'd like you to have in your back pocket whether you ever use us or not. I'll text you the link from 513-555-0118 — no reply needed if it's not useful. Talk soon." → Then text the link.</p>
+
+<h3 style="margin:14px 0 6px;color:var(--accent);font-size:1rem">Daily targets</h3>
+<p>30 dials · 5–8 real conversations · 1–2 walkthroughs OR 3–4 tool-link texts · 1 follow-up call on every "send me info" from last week.</p>
+`
+
+function openScript(){
+  const body = document.getElementById('script-body')
+  if (!body.innerHTML.trim()) body.innerHTML = SCRIPT_HTML
+  openMask('script-mask')
+}
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+if (getToken()) {
+  showApp()
+  loadAll()
+  setInterval(loadAll, 30000)
+} else {
+  showLogin()
+}
+</script>
+</div><!-- /#app-screen -->
+</body>
+</html>
